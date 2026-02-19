@@ -93,19 +93,34 @@
                         <div><p class="text-gray-400">Maturity Date:</p><p class="font-bold">${p.maturityDate}</p></div>
                     </div>
 
-                    <div class="px-6 pb-8">
-                        <p class="text-[10px] text-gray-400 mb-4 tracking-widest uppercase">Policy Timeline • Yearly</p>
-                        <div class="relative w-full h-1 bg-gray-200 rounded-full">
-                            <div class="absolute h-1 bg-green-500 rounded-full" style="width: ${p.progressPercent}%"></div>
-                            <div class="timeline-dot" style="left: 0"></div>
-                            <div class="timeline-dot" style="left: ${p.progressPercent}%"></div>
-                        </div>
-                        <div class="flex justify-between mt-2 text-[11px] text-gray-400">
-                            <div>Policy Commences<br><span class="font-bold text-gray-600">${p.commenced}</span></div>
-                            <div class="text-center">Premium Payment Ends<br><span class="font-bold text-gray-600">${p.premiumEnds}</span></div>
-                            <div class="text-right">Policy Maturity<br><span class="font-bold text-gray-600">${p.maturityDate}</span></div>
-                        </div>
-                    </div>
+<div class="px-6 pb-8">
+    <p class="text-[10px] text-gray-400 mb-4 tracking-widest uppercase">Policy Timeline • Yearly</p>
+    
+    <div class="flex gap-1 w-full h-1.5 mb-2">
+        ${Array.from({ length: parseInt(p.term) }).map((_, index) => {
+            // Logic: If the index is less than years passed, color it green
+            const yearsPassed = 8; // You can calculate this: (CurrentYear - StartYear)
+            const isCompleted = index < yearsPassed;
+            return `
+                <div class="flex-1 h-full rounded-sm ${isCompleted ? 'bg-green-500' : 'bg-gray-200'}"></div>
+            `;
+        }).join('')}
+    </div>
+
+    <div class="flex justify-between mt-2 text-[11px] text-gray-400">
+        <div class="relative">
+            <div class="absolute -top-4 left-0 w-2 h-2 bg-green-500 rounded-full"></div>
+            Policy Commences<br><span class="font-bold text-gray-600">${p.commenced}</span>
+        </div>
+        <div class="text-center">
+            Premium Payment Ends<br><span class="font-bold text-gray-600">${p.premiumEnds}</span>
+        </div>
+        <div class="text-right relative">
+            <div class="absolute -top-4 right-0 w-2 h-2 bg-gray-200 rounded-full border border-gray-300"></div>
+            Policy Maturity<br><span class="font-bold text-gray-600">${p.maturityDate}</span>
+        </div>
+    </div>
+</div>                    
                 </div>
             `).join('');
         }
@@ -114,3 +129,4 @@
     </script>
 </body>
 </html>
+
