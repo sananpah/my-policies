@@ -11,6 +11,14 @@
         body { background-color: #f1f5f9; font-family: 'Inter', sans-serif; }
         .maroon-text { color: #8b1d1d; }
         
+        /* Requirement: Funky Border for Summary */
+        .summary-card {
+            background: white;
+            border: 2px dashed #b91c1c;
+            border-radius: 12px;
+            box-shadow: 8px 8px 0px 0px rgba(185, 28, 28, 0.1);
+        }
+
         .policy-card { 
             background: white;
             border-top: 2px solid; 
@@ -22,32 +30,54 @@
 
         .funky-title { font-family: 'Playfair Display', serif; }
 
+        /* Requirement: Fixed Vertical Green Dividers */
         .vertical-divider {
             width: 2px;
             height: 18px;
             background-color: #22c55e;
             position: absolute;
             top: -6px;
+            z-index: 10;
         }
         .start-line { left: 0; }
-        .end-line { right: -1px; }
+        .end-line { right: 0; }
+
+        /* Requirement: Fixed Hover Functionality */
+        .segment-container:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+        .tooltip-text {
+            visibility: hidden;
+            opacity: 0;
+            position: absolute;
+            bottom: 180%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1f2937;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            white-space: nowrap;
+            transition: opacity 0.2s;
+            z-index: 50;
+        }
 
         .chevron { transition: transform 0.3s ease; }
         .open .chevron { transform: rotate(180deg); }
-        
         .content-area { display: none; }
         .open .content-area { display: block; }
     </style>
 </head>
 <body class="p-4 md:p-10">
 
-    <div class="max-w-6xl mx-auto mb-6 text-center">
+    <div class="max-w-6xl mx-auto mb-10 text-center">
         <h1 class="text-4xl font-bold maroon-text funky-title uppercase tracking-wider">Nami Insurance Portfolio</h1>
         <div class="h-1 w-24 bg-red-800 mx-auto mt-2 rounded-full"></div>
     </div>
 
-    <div id="summary-bar" class="max-w-6xl mx-auto mb-8 grid grid-cols-2 gap-4">
-        </div>
+    <div id="summary-bar" class="max-w-6xl mx-auto mb-10 grid grid-cols-1 md:grid-cols-2 gap-6"></div>
 
     <div id="policy-container" class="max-w-6xl mx-auto space-y-6"></div>
 
@@ -113,28 +143,26 @@
         ];
 
         function toggleCard(index) {
-            const card = document.getElementById(`card-${index}`);
-            if (card) card.classList.toggle('open');
+            document.getElementById(`card-${index}`).classList.toggle('open');
         }
 
-        function renderSummary() {
+        function render() {
+            // Render Summary
             const totalSA = myPolicies.reduce((acc, p) => acc + parseFloat(p.sumAssured.replace(/[₹,]/g, '')), 0);
             const totalPrem = myPolicies.reduce((acc, p) => acc + parseFloat(p.premium.replace(/[₹,]/g, '')), 0);
             
             document.getElementById('summary-bar').innerHTML = `
-                <div class="bg-white p-4 rounded border-b-2 border-red-800 shadow-sm text-center">
-                    <p class="text-[10px] uppercase font-bold text-gray-400">Total Sum Assured</p>
-                    <p class="text-xl font-bold maroon-text">₹ ${totalSA.toLocaleString('en-IN')}</p>
+                <div class="summary-card p-6 text-center bg-white">
+                    <p class="text-[11px] uppercase font-bold text-gray-500 tracking-tighter">Total Portfolio Value</p>
+                    <p class="text-3xl font-bold maroon-text mt-1">₹ ${totalSA.toLocaleString('en-IN')}</p>
                 </div>
-                <div class="bg-white p-4 rounded border-b-2 border-red-800 shadow-sm text-center">
-                    <p class="text-[10px] uppercase font-bold text-gray-400">Annual Premium Commitment</p>
-                    <p class="text-xl font-bold maroon-text">₹ ${totalPrem.toLocaleString('en-IN')}</p>
+                <div class="summary-card p-6 text-center bg-white" style="border-color: #4c1d95; box-shadow: 8px 8px 0px 0px rgba(76, 29, 149, 0.1);">
+                    <p class="text-[11px] uppercase font-bold text-gray-500 tracking-tighter">Total Annual Commitment</p>
+                    <p class="text-3xl font-bold mt-1" style="color: #4c1d95;">₹ ${totalPrem.toLocaleString('en-IN')}</p>
                 </div>
             `;
-        }
 
-        function render() {
-            renderSummary();
+            // Render Policies
             const container = document.getElementById('policy-container');
             container.innerHTML = myPolicies.map((p, index) => {
                 const startYear = parseInt(p.commenced.split(' ')[2]);
@@ -143,11 +171,13 @@
                 for (let i = 0; i < p.term; i++) {
                     const currentYear = startYear + i;
                     const isPaid = currentYear <= p.lastPaidYear;
-                    const isLastPremiumYear = (i + 1) === p.premiumYears;
+                    // Corrected: End line precisely at the end of the premium paying period
+                    const isLastPremiumYear = (i + 1) === p.premiumYears; 
                     const isFinalYear = (i + 1) === p.term;
                     
                     timelineHtml += `
-                        <div class="flex-1 h-1.5 rounded-sm relative ${isPaid ? 'bg-green-500' : 'bg-gray-200'}">
+                        <div class="segment-container flex-1 h-1.5 rounded-sm relative ${isPaid ? 'bg-green-500' : 'bg-gray-200'}">
+                            <span class="tooltip-text">Y${i+1} - ${currentYear}</span>
                             ${i === 0 ? '<div class="vertical-divider start-line"></div>' : ''}
                             ${isLastPremiumYear ? '<div class="vertical-divider end-line"></div>' : ''}
                             ${isFinalYear ? '<div class="vertical-divider end-line"></div>' : ''}
@@ -171,7 +201,7 @@
                                 <p class="text-md font-bold maroon-text">${p.sumAssured}</p>
                             </div>
                             <div class="border-l border-gray-100 pl-4">
-                                <p class="text-[9px] text-gray-400 uppercase font-bold">Instalment Premium</p>
+                                <p class="text-[9px] text-gray-400 uppercase font-bold">Premium</p>
                                 <p class="text-md font-bold maroon-text">${p.premium}</p>
                             </div>
                         </div>
