@@ -3,51 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Insurance Portfolio</title>
+    <title>Insurance Portfolio Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #f4f6f8; font-family: sans-serif; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
         
-        /* Requirement: Bring back the beautiful brand border */
-        .policy-card { 
-            border: 1px solid #e5e7eb; 
-            border-top: 4px solid #b91c1c; /* Reliance Red */
-            border-radius: 8px;
-            background: white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        body { background-color: #fcfcfc; font-family: 'Inter', sans-serif; }
+        
+        /* Reliance Brand Colors */
+        .brand-red-text { color: #8b1d1d; }
+        .brand-border { border: 1px solid #e5e7eb; border-top: 2px solid #b91c1c; }
+        
+        /* Timeline specific styling */
+        .vertical-divider {
+            width: 2px;
+            height: 18px;
+            background-color: #22c55e;
+            position: absolute;
+            top: -6px;
         }
+        .start-line { left: 0; }
+        .end-line { right: -4px; }
 
-        /* Tooltip for FY Hover */
-        .segment-tooltip:hover::after {
+        /* Hover Tooltip */
+        .segment:hover::after {
             content: attr(data-fy);
             position: absolute;
             bottom: 150%;
             left: 50%;
             transform: translateX(-50%);
-            background: #1f2937;
+            background: #333;
             color: white;
-            padding: 4px 10px;
+            padding: 4px 8px;
             border-radius: 4px;
-            font-size: 11px;
-            font-weight: bold;
+            font-size: 10px;
+            font-weight: 600;
             white-space: nowrap;
-            z-index: 20;
-        }
-
-        /* The Premium End Line Requirement */
-        .premium-end-line {
-            width: 2px;
-            height: 20px;
-            background-color: #22c55e;
-            position: absolute;
-            right: -4px; /* Adjusting gap */
-            top: -7px;
+            z-index: 50;
         }
     </style>
 </head>
-<body class="p-4 md:p-10">
+<body class="p-6 md:p-12">
 
-    <div id="policy-container" class="max-w-6xl mx-auto space-y-10"></div>
+    <div id="policy-container" class="max-w-6xl mx-auto space-y-12"></div>
 
     <script>
         const myPolicies = [
@@ -62,11 +60,12 @@
                 uin: "121N084V03",
                 dueDate: "08 Sep 2026",
                 term: 15,
-                commencedDate: "2017-09-08",
-                premiumEndDate: "2026-09-08",
-                maturityDate: "08 Sep 2032",
+                commenced: "08 Sep 2017",
+                premiumEnds: "08 Sep 2026",
+                maturity: "08 Sep 2032",
                 lastPaidYear: 2025,
-                brandColor: "#b91c1c" // Red
+                premiumYears: 10, // 2017 to 2026 inclusive is 10 payments
+                color: "#b91c1c"
             },
             {
                 name: "HSBC Life Strategic Growth",
@@ -79,82 +78,79 @@
                 uin: "112L099V01",
                 dueDate: "15 Mar 2026",
                 term: 10,
-                commencedDate: "2020-03-15",
-                premiumEndDate: "2025-03-15",
-                maturityDate: "15 Mar 2030",
+                commenced: "15 Mar 2020",
+                premiumEnds: "15 Mar 2025",
+                maturity: "15 Mar 2030",
                 lastPaidYear: 2024,
-                brandColor: "#4c1d95" // Purple
+                premiumYears: 6,
+                color: "#4c1d95"
             }
         ];
 
-        function generateTimeline(p) {
-            const startYear = new Date(p.commencedDate).getFullYear();
-            const premEndYear = new Date(p.premiumEndDate).getFullYear();
-            const premTermLength = premEndYear - startYear + 1;
-
-            let segmentsHtml = `<div class="flex gap-1.5 w-full relative">`;
-
-            for (let i = 0; i < p.term; i++) {
-                const currentYear = startYear + i;
-                const isPaid = currentYear <= p.lastPaidYear;
-                const isPremPeriod = i < premTermLength;
-                const fyLabel = `Y${i+1} - ${currentYear}`;
-
-                segmentsHtml += `
-                    <div class="segment-tooltip flex-1 h-1.5 rounded-sm relative cursor-pointer ${isPaid ? 'bg-green-500' : 'bg-gray-200'}" data-fy="${fyLabel}">
-                        ${(i + 1) === premTermLength ? '<div class="premium-end-line"></div>' : ''}
-                    </div>`;
-            }
-
-            segmentsHtml += `</div>`;
-            return segmentsHtml;
-        }
-
         function render() {
             const container = document.getElementById('policy-container');
-            container.innerHTML = myPolicies.map(p => `
-                <div class="policy-card" style="border-top-color: ${p.brandColor}">
-                    <div class="p-6 flex flex-wrap justify-between items-start border-b border-gray-50">
+            container.innerHTML = myPolicies.map(p => {
+                const startYear = parseInt(p.commenced.split(' ')[2]);
+                
+                let timelineHtml = `<div class="flex gap-1.5 w-full relative">`;
+                for (let i = 0; i < p.term; i++) {
+                    const currentYear = startYear + i;
+                    const isPaid = currentYear <= p.lastPaidYear;
+                    const isLastPremiumYear = (i + 1) === p.premiumYears;
+                    
+                    timelineHtml += `
+                        <div class="segment flex-1 h-1.5 rounded-sm relative ${isPaid ? 'bg-green-500' : 'bg-gray-200'}" 
+                             data-fy="Y${i+1} - ${currentYear}">
+                            ${i === 0 ? '<div class="vertical-divider start-line"></div>' : ''}
+                            ${isLastPremiumYear ? '<div class="vertical-divider end-line"></div>' : ''}
+                        </div>`;
+                }
+                timelineHtml += `</div>`;
+
+                return `
+                <div class="bg-white rounded-lg shadow-sm brand-border overflow-hidden" style="border-top-color: ${p.color}">
+                    <div class="p-6 flex justify-between items-start border-b border-gray-50">
                         <div>
                             <h2 class="text-2xl font-bold text-gray-800">${p.name}</h2>
-                            <p class="text-sm text-gray-500 font-medium">${p.id} • ${p.type}</p>
+                            <p class="text-sm text-gray-400 font-medium tracking-tight">${p.id} • ${p.type}</p>
                         </div>
-                        <div class="flex gap-8 mt-4 md:mt-0 items-center">
-                            <div class="text-right">
-                                <p class="text-[11px] text-gray-400 uppercase">Sum Assured:</p>
+                        <div class="flex gap-12 text-right">
+                            <div>
+                                <p class="text-[11px] text-gray-400 uppercase font-semibold">Sum Assured:</p>
                                 <p class="text-xl font-bold text-gray-800">${p.sumAssured}</p>
                             </div>
-                            <div class="text-right">
-                                <p class="text-[11px] text-gray-400 uppercase">Instalment Premium:</p>
+                            <div>
+                                <p class="text-[11px] text-gray-400 uppercase font-semibold">Instalment Premium:</p>
                                 <p class="text-xl font-bold text-gray-800">${p.premium}</p>
                             </div>
-                            <div class="text-right border-l pl-8">
-                                <p class="text-[11px] text-gray-400 uppercase">Premium Frequency</p>
-                                <p class="text-xl font-bold text-red-800">${p.frequency}</p>
+                            <div class="border-l pl-10">
+                                <p class="text-[11px] text-gray-400 uppercase font-semibold">Premium Frequency</p>
+                                <p class="text-xl font-bold brand-red-text">${p.frequency}</p>
                             </div>
                         </div>
                     </div>
 
-                    <div class="px-6 py-6 grid grid-cols-2 md:grid-cols-6 gap-y-4 text-sm">
-                        <div><p class="text-gray-400 text-xs mb-1">Client ID:</p><p class="font-bold text-gray-800">${p.clientId}</p></div>
-                        <div><p class="text-gray-400 text-xs mb-1">UIN Number:</p><p class="font-bold text-gray-800">${p.uin}</p></div>
-                        <div><p class="text-gray-400 text-xs mb-1">Premium Due Date:</p><p class="font-bold text-gray-800">${p.dueDate}</p></div>
-                        <div><p class="text-gray-400 text-xs mb-1">Policy Term:</p><p class="font-bold text-gray-800">${p.term} Years</p></div>
-                        <div><p class="text-gray-400 text-xs mb-1">Premium Ends:</p><p class="font-bold text-gray-800">08 Sep 2026</p></div>
-                        <div><p class="text-gray-400 text-xs mb-1">Maturity Date:</p><p class="font-bold text-gray-800">${p.maturityDate}</p></div>
+                    <div class="px-6 py-8 grid grid-cols-2 md:grid-cols-6 gap-6 text-sm">
+                        <div><p class="text-gray-400 text-xs font-semibold mb-1">Client ID:</p><p class="font-bold text-gray-800 text-base">${p.clientId}</p></div>
+                        <div><p class="text-gray-400 text-xs font-semibold mb-1">UIN Number:</p><p class="font-bold text-gray-800 text-base">${p.uin}</p></div>
+                        <div><p class="text-gray-400 text-xs font-semibold mb-1">Premium Due Date:</p><p class="font-bold text-gray-800 text-base">${p.dueDate}</p></div>
+                        <div><p class="text-gray-400 text-xs font-semibold mb-1">Policy Term:</p><p class="font-bold text-gray-800 text-base">${p.term} Years</p></div>
+                        <div><p class="text-gray-400 text-xs font-semibold mb-1">Premium Ends:</p><p class="font-bold text-gray-800 text-base">${p.premiumEnds}</p></div>
+                        <div><p class="text-gray-400 text-xs font-semibold mb-1">Maturity Date:</p><p class="font-bold text-gray-800 text-base">${p.maturity}</p></div>
                     </div>
 
-                    <div class="p-6 pb-10">
-                        <p class="text-[10px] text-gray-400 mb-6 font-bold tracking-widest uppercase italic">Policy Timeline • ${p.frequency}</p>
-                        ${generateTimeline(p)}
-                        <div class="flex justify-between mt-4 text-[11px] text-gray-500 leading-tight">
-                            <div>Policy Commences<br><span class="font-bold text-gray-700">08 Sep 2017</span></div>
-                            <div class="text-center">Premium Payment Ends<br><span class="font-bold text-gray-700">08 Sep 2026</span></div>
-                            <div class="text-right">Policy Maturity<br><span class="font-bold text-gray-700">${p.maturityDate}</span></div>
+                    <div class="p-6 pb-12">
+                        <p class="text-[10px] text-gray-400 mb-6 font-bold tracking-widest uppercase">Policy Timeline • ${p.frequency}</p>
+                        ${timelineHtml}
+                        <div class="flex justify-between mt-4 text-[11px] text-gray-400 font-medium">
+                            <div>Policy Commences<br><span class="text-gray-600 font-bold">${p.commenced}</span></div>
+                            <div class="text-center">Premium Payment Ends<br><span class="text-gray-600 font-bold">${p.premiumEnds}</span></div>
+                            <div class="text-right">Policy Maturity<br><span class="text-gray-600 font-bold">${p.maturity}</span></div>
                         </div>
                     </div>
                 </div>
-            `).join('');
+                `;
+            }).join('');
         }
         render();
     </script>
