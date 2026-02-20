@@ -3,18 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Insurance Portfolio Dashboard</title>
+    <title>My Insurance Portfolio</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        /* Funky font for titles */
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;600;700&display=swap');
         
-        body { background-color: #fcfcfc; font-family: 'Inter', sans-serif; }
+        body { background-color: #f8fafc; font-family: 'Inter', sans-serif; }
         
-        /* Reliance Brand Colors */
-        .brand-red-text { color: #8b1d1d; }
-        .brand-border { border: 1px solid #e5e7eb; border-top: 2px solid #b91c1c; }
+        .maroon-text { color: #8b1d1d; }
         
-        /* Timeline specific styling */
+        .policy-card { 
+            background: white;
+            border: 1px solid #e5e7eb;
+            /* Requirement: Border on Top AND Left */
+            border-top: 2px solid #b91c1c; 
+            border-left: 4px solid #b91c1c;
+            border-radius: 4px;
+        }
+
+        .funky-title {
+            font-family: 'Playfair Display', serif;
+            letter-spacing: -0.02em;
+        }
+
         .vertical-divider {
             width: 2px;
             height: 18px;
@@ -25,27 +37,24 @@
         .start-line { left: 0; }
         .end-line { right: -4px; }
 
-        /* Hover Tooltip */
         .segment:hover::after {
             content: attr(data-fy);
             position: absolute;
             bottom: 150%;
             left: 50%;
             transform: translateX(-50%);
-            background: #333;
+            background: #1f2937;
             color: white;
             padding: 4px 8px;
             border-radius: 4px;
             font-size: 10px;
-            font-weight: 600;
             white-space: nowrap;
-            z-index: 50;
         }
     </style>
 </head>
-<body class="p-6 md:p-12">
+<body class="p-4 md:p-10">
 
-    <div id="policy-container" class="max-w-6xl mx-auto space-y-12"></div>
+    <div id="policy-container" class="max-w-6xl mx-auto space-y-8"></div>
 
     <script>
         const myPolicies = [
@@ -59,12 +68,13 @@
                 clientId: "62996974",
                 uin: "121N084V03",
                 dueDate: "08 Sep 2026",
+                lastPaid: "08 Sep 2025",
                 term: 15,
                 commenced: "08 Sep 2017",
                 premiumEnds: "08 Sep 2026",
                 maturity: "08 Sep 2032",
                 lastPaidYear: 2025,
-                premiumYears: 10, // 2017 to 2026 inclusive is 10 payments
+                premiumYears: 10,
                 color: "#b91c1c"
             },
             {
@@ -77,6 +87,7 @@
                 clientId: "77221144",
                 uin: "112L099V01",
                 dueDate: "15 Mar 2026",
+                lastPaid: "15 Mar 2024",
                 term: 10,
                 commenced: "15 Mar 2020",
                 premiumEnds: "15 Mar 2025",
@@ -91,15 +102,15 @@
             const container = document.getElementById('policy-container');
             container.innerHTML = myPolicies.map(p => {
                 const startYear = parseInt(p.commenced.split(' ')[2]);
-                
                 let timelineHtml = `<div class="flex gap-1.5 w-full relative">`;
+                
                 for (let i = 0; i < p.term; i++) {
                     const currentYear = startYear + i;
                     const isPaid = currentYear <= p.lastPaidYear;
                     const isLastPremiumYear = (i + 1) === p.premiumYears;
                     
                     timelineHtml += `
-                        <div class="segment flex-1 h-1.5 rounded-sm relative ${isPaid ? 'bg-green-500' : 'bg-gray-200'}" 
+                        <div class="segment flex-1 h-1.5 rounded-sm relative ${isPaid ? 'bg-green-500' : 'bg-gray-100'}" 
                              data-fy="Y${i+1} - ${currentYear}">
                             ${i === 0 ? '<div class="vertical-divider start-line"></div>' : ''}
                             ${isLastPremiumYear ? '<div class="vertical-divider end-line"></div>' : ''}
@@ -108,44 +119,49 @@
                 timelineHtml += `</div>`;
 
                 return `
-                <div class="bg-white rounded-lg shadow-sm brand-border overflow-hidden" style="border-top-color: ${p.color}">
-                    <div class="p-6 flex justify-between items-start border-b border-gray-50">
+                <div class="policy-card shadow-sm" style="border-top-color: ${p.color}; border-left-color: ${p.color};">
+                    <div class="p-6 flex justify-between items-start">
                         <div>
-                            <h2 class="text-2xl font-bold text-gray-800">${p.name}</h2>
-                            <p class="text-sm text-gray-400 font-medium tracking-tight">${p.id} • ${p.type}</p>
+                            <h2 class="text-2xl font-bold text-gray-800 funky-title mb-1">${p.name}</h2>
+                            <p class="text-sm text-gray-400 font-medium">${p.id} • ${p.type}</p>
                         </div>
-                        <div class="flex gap-12 text-right">
-                            <div>
-                                <p class="text-[11px] text-gray-400 uppercase font-semibold">Sum Assured:</p>
-                                <p class="text-xl font-bold text-gray-800">${p.sumAssured}</p>
+                        <div class="flex gap-8 text-right items-center">
+                            <div class="border-l border-gray-100 pl-6">
+                                <p class="text-[10px] text-gray-400 uppercase font-bold mb-1">Sum Assured:</p>
+                                <p class="text-xl font-bold maroon-text">${p.sumAssured}</p>
                             </div>
-                            <div>
-                                <p class="text-[11px] text-gray-400 uppercase font-semibold">Instalment Premium:</p>
-                                <p class="text-xl font-bold text-gray-800">${p.premium}</p>
+                            <div class="border-l border-gray-100 pl-6">
+                                <p class="text-[10px] text-gray-400 uppercase font-bold mb-1">Instalment Premium:</p>
+                                <p class="text-xl font-bold maroon-text">${p.premium}</p>
                             </div>
-                            <div class="border-l pl-10">
-                                <p class="text-[11px] text-gray-400 uppercase font-semibold">Premium Frequency</p>
-                                <p class="text-xl font-bold brand-red-text">${p.frequency}</p>
+                            <div class="border-l border-gray-100 pl-6">
+                                <p class="text-[10px] text-gray-400 uppercase font-bold mb-1">Premium Frequency</p>
+                                <p class="text-xl font-bold maroon-text">${p.frequency}</p>
                             </div>
                         </div>
                     </div>
 
-                    <div class="px-6 py-8 grid grid-cols-2 md:grid-cols-6 gap-6 text-sm">
-                        <div><p class="text-gray-400 text-xs font-semibold mb-1">Client ID:</p><p class="font-bold text-gray-800 text-base">${p.clientId}</p></div>
-                        <div><p class="text-gray-400 text-xs font-semibold mb-1">UIN Number:</p><p class="font-bold text-gray-800 text-base">${p.uin}</p></div>
-                        <div><p class="text-gray-400 text-xs font-semibold mb-1">Premium Due Date:</p><p class="font-bold text-gray-800 text-base">${p.dueDate}</p></div>
-                        <div><p class="text-gray-400 text-xs font-semibold mb-1">Policy Term:</p><p class="font-bold text-gray-800 text-base">${p.term} Years</p></div>
-                        <div><p class="text-gray-400 text-xs font-semibold mb-1">Premium Ends:</p><p class="font-bold text-gray-800 text-base">${p.premiumEnds}</p></div>
-                        <div><p class="text-gray-400 text-xs font-semibold mb-1">Maturity Date:</p><p class="font-bold text-gray-800 text-base">${p.maturity}</p></div>
+                    <div class="px-6 py-4 grid grid-cols-2 md:grid-cols-6 gap-6 text-[13px]">
+                        <div>
+                            <p class="text-gray-400 mb-1">Client ID :</p>
+                            <p class="font-bold text-gray-800 text-base">${p.clientId}</p>
+                            <p class="text-gray-400 mt-2">Last Premium Paid:</p>
+                            <p class="font-bold text-gray-800">${p.lastPaid}</p>
+                        </div>
+                        <div><p class="text-gray-400 mb-1">UIN Number:</p><p class="font-bold text-gray-800 text-base">${p.uin}</p></div>
+                        <div><p class="text-gray-400 mb-1">Premium Due Date :</p><p class="font-bold text-gray-800 text-base">${p.dueDate}</p></div>
+                        <div><p class="text-gray-400 mb-1">Policy Term :</p><p class="font-bold text-gray-800 text-base">${p.term} Years</p></div>
+                        <div><p class="text-gray-400 mb-1">Premium Ends :</p><p class="font-bold text-gray-800 text-base">${p.premiumEnds}</p></div>
+                        <div><p class="text-gray-400 mb-1">Maturity Date :</p><p class="font-bold text-gray-800 text-base">${p.maturity}</p></div>
                     </div>
 
                     <div class="p-6 pb-12">
                         <p class="text-[10px] text-gray-400 mb-6 font-bold tracking-widest uppercase">Policy Timeline • ${p.frequency}</p>
                         ${timelineHtml}
-                        <div class="flex justify-between mt-4 text-[11px] text-gray-400 font-medium">
-                            <div>Policy Commences<br><span class="text-gray-600 font-bold">${p.commenced}</span></div>
-                            <div class="text-center">Premium Payment Ends<br><span class="text-gray-600 font-bold">${p.premiumEnds}</span></div>
-                            <div class="text-right">Policy Maturity<br><span class="text-gray-600 font-bold">${p.maturity}</span></div>
+                        <div class="flex justify-between mt-4 text-[10px] text-gray-400 font-bold uppercase tracking-tight">
+                            <div>Policy Commences<br><span class="text-gray-500">${p.commenced}</span></div>
+                            <div class="text-center">Premium Payment Ends<br><span class="text-gray-500">${p.premiumEnds}</span></div>
+                            <div class="text-right">Policy Maturity<br><span class="text-gray-500">${p.maturity}</span></div>
                         </div>
                     </div>
                 </div>
