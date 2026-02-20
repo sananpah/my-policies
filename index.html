@@ -41,7 +41,6 @@
         .premium-end-marker { left: 0; } 
         .maturity-marker { right: 0; }
 
-        /* HOVER TOOLTIP ENGINE */
         .segment-container { position: relative; cursor: pointer; }
         .segment-container:hover .tooltip-text { opacity: 1; visibility: visible; transform: translate(-50%, -5px); }
         .tooltip-text {
@@ -83,6 +82,25 @@
 
     <script>
         const myPolicies = [
+            {
+                name: "INLI Life Nishchit Ace",
+                id: "54751949",
+                type: "TRADITIONAL",
+                sumAssured: "₹ 2,626,948.00",
+                premium: "₹ 209,000.00",
+                frequency: "Yearly",
+                clientId: "62996974",
+                uin: "121N180V01",
+                dueDate: "17 Nov 2026",
+                lastPaid: "17 Nov 2025",
+                term: 30,
+                commenced: "17 Nov 2025",
+                premiumEnds: "17 Nov 2034",
+                maturity: "17 Nov 2055",
+                lastPaidYear: 2025,
+                premiumYears: 10,
+                color: "#b91c1c"
+            },
             {
                 name: "INLI Nishchit Pension SL",
                 id: "54679062",
@@ -185,7 +203,6 @@
                 const startYear = parseInt(p.commenced.split(' ')[2]);
                 let timelineHtml = `<div class="flex gap-1 w-full relative">`;
                 
-                // Active Years
                 for (let i = 0; i < p.premiumYears; i++) {
                     const currentYear = startYear + i;
                     const isPaid = currentYear <= p.lastPaidYear;
@@ -196,12 +213,11 @@
                         </div>`;
                 }
 
-                // Growth Period (Clubbed)
                 if (p.term > p.premiumYears) {
                     const waitYears = p.term - p.premiumYears;
                     timelineHtml += `
                         <div class="segment-container flex-[4] h-1.5 rounded-sm relative bg-gray-100 border-l-2 border-white">
-                            <span class="tooltip-text">Growth Phase: ${waitYears} Years of Wealth Accumulation</span>
+                            <span class="tooltip-text">Growth Phase: ${waitYears} Years</span>
                             <div class="vertical-divider premium-end-marker"></div>
                             <div class="vertical-divider maturity-marker"></div>
                         </div>`;
@@ -212,13 +228,13 @@
                 timelineHtml += `</div>`;
 
                 return `
-                <div id="card-${index}" class="policy-card shadow-md open" style="border-color: ${p.color};">
+                <div id="card-${index}" class="policy-card shadow-md" style="border-color: ${p.color};">
                     <div class="p-6 flex justify-between items-center cursor-pointer" onclick="toggleCard(${index})">
                         <div class="flex items-center gap-4">
                             <svg class="chevron w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                             <div>
                                 <h2 class="text-xl font-bold text-gray-800 funky-title">${p.name}</h2>
-                                <p class="text-xs text-gray-400 font-medium tracking-tight uppercase">${p.id} • ${p.type}</p>
+                                <p class="text-xs text-gray-400 font-medium uppercase tracking-tighter">${p.id} • ${p.type}</p>
                             </div>
                         </div>
                         <div class="flex gap-6 text-right items-center">
