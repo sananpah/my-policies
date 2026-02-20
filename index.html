@@ -11,12 +11,11 @@
         body { background-color: #f1f5f9; font-family: 'Inter', sans-serif; }
         .maroon-text { color: #8b1d1d; }
         
-        /* Requirement: Funky Border for Summary */
         .summary-card {
             background: white;
             border: 2px dashed #b91c1c;
             border-radius: 12px;
-            box-shadow: 8px 8px 0px 0px rgba(185, 28, 28, 0.1);
+            box-shadow: 6px 6px 0px 0px rgba(185, 28, 28, 0.1);
         }
 
         .policy-card { 
@@ -30,38 +29,38 @@
 
         .funky-title { font-family: 'Playfair Display', serif; }
 
-        /* Requirement: Fixed Vertical Green Dividers */
+        /* The Critical Fix: Vertical Dividers */
         .vertical-divider {
             width: 2px;
-            height: 18px;
+            height: 20px;
             background-color: #22c55e;
             position: absolute;
-            top: -6px;
-            z-index: 10;
+            top: -7px;
+            z-index: 20;
         }
         .start-line { left: 0; }
-        .end-line { right: 0; }
+        .premium-end-marker { left: 0; } /* Placed at the BEGINNING of the segment */
+        .maturity-marker { right: 0; }   /* Placed at the END of the very last segment */
 
-        /* Requirement: Fixed Hover Functionality */
-        .segment-container:hover .tooltip-text {
-            visibility: visible;
-            opacity: 1;
-        }
+        /* Tooltip Logic */
+        .segment-container { position: relative; }
+        .segment-container:hover .tooltip-text { opacity: 1; visibility: visible; }
         .tooltip-text {
             visibility: hidden;
             opacity: 0;
             position: absolute;
-            bottom: 180%;
+            bottom: 200%;
             left: 50%;
             transform: translateX(-50%);
             background: #1f2937;
             color: white;
-            padding: 4px 8px;
+            padding: 4px 10px;
             border-radius: 4px;
-            font-size: 10px;
+            font-size: 11px;
             white-space: nowrap;
-            transition: opacity 0.2s;
+            transition: all 0.2s;
             z-index: 50;
+            pointer-events: none;
         }
 
         .chevron { transition: transform 0.3s ease; }
@@ -99,7 +98,7 @@
                 premiumEnds: "10 Jan 2028",
                 maturity: "10 Jan 2050",
                 lastPaidYear: 2026,
-                premiumYears: 7,
+                premiumYears: 7, // Divider should be at the start of Y7
                 color: "#b91c1c"
             },
             {
@@ -147,46 +146,47 @@
         }
 
         function render() {
-            // Render Summary
+            // Summary Calculation
             const totalSA = myPolicies.reduce((acc, p) => acc + parseFloat(p.sumAssured.replace(/[₹,]/g, '')), 0);
             const totalPrem = myPolicies.reduce((acc, p) => acc + parseFloat(p.premium.replace(/[₹,]/g, '')), 0);
             
             document.getElementById('summary-bar').innerHTML = `
-                <div class="summary-card p-6 text-center bg-white">
-                    <p class="text-[11px] uppercase font-bold text-gray-500 tracking-tighter">Total Portfolio Value</p>
+                <div class="summary-card p-6 text-center bg-white border-maroon">
+                    <p class="text-[11px] uppercase font-bold text-gray-400">Total Portfolio Value</p>
                     <p class="text-3xl font-bold maroon-text mt-1">₹ ${totalSA.toLocaleString('en-IN')}</p>
                 </div>
-                <div class="summary-card p-6 text-center bg-white" style="border-color: #4c1d95; box-shadow: 8px 8px 0px 0px rgba(76, 29, 149, 0.1);">
-                    <p class="text-[11px] uppercase font-bold text-gray-500 tracking-tighter">Total Annual Commitment</p>
+                <div class="summary-card p-6 text-center bg-white" style="border-color: #4c1d95; box-shadow: 6px 6px 0px 0px rgba(76, 29, 149, 0.1);">
+                    <p class="text-[11px] uppercase font-bold text-gray-400">Total Annual Commitment</p>
                     <p class="text-3xl font-bold mt-1" style="color: #4c1d95;">₹ ${totalPrem.toLocaleString('en-IN')}</p>
                 </div>
             `;
 
-            // Render Policies
             const container = document.getElementById('policy-container');
             container.innerHTML = myPolicies.map((p, index) => {
                 const startYear = parseInt(p.commenced.split(' ')[2]);
-                let timelineHtml = `<div class="flex gap-1.5 w-full relative">`;
+                let timelineHtml = `<div class="flex gap-1 w-full relative">`;
                 
                 for (let i = 0; i < p.term; i++) {
                     const currentYear = startYear + i;
                     const isPaid = currentYear <= p.lastPaidYear;
-                    // Corrected: End line precisely at the end of the premium paying period
-                    const isLastPremiumYear = (i + 1) === p.premiumYears; 
-                    const isFinalYear = (i + 1) === p.term;
+                    
+                    // Requirement Fix: "Beginning of the last premiumEnds year"
+                    // If premiumYears is 7, we want the divider on the 7th segment (index 6)
+                    const isPremiumEndYearStart = (i + 1) === p.premiumYears;
+                    const isFinalYearEnd = (i + 1) === p.term;
                     
                     timelineHtml += `
                         <div class="segment-container flex-1 h-1.5 rounded-sm relative ${isPaid ? 'bg-green-500' : 'bg-gray-200'}">
-                            <span class="tooltip-text">Y${i+1} - ${currentYear}</span>
+                            <span class="tooltip-text">Year ${i+1}: ${currentYear}</span>
                             ${i === 0 ? '<div class="vertical-divider start-line"></div>' : ''}
-                            ${isLastPremiumYear ? '<div class="vertical-divider end-line"></div>' : ''}
-                            ${isFinalYear ? '<div class="vertical-divider end-line"></div>' : ''}
+                            ${isPremiumEndYearStart ? '<div class="vertical-divider premium-end-marker"></div>' : ''}
+                            ${isFinalYearEnd ? '<div class="vertical-divider maturity-marker"></div>' : ''}
                         </div>`;
                 }
                 timelineHtml += `</div>`;
 
                 return `
-                <div id="card-${index}" class="policy-card shadow-md" style="border-color: ${p.color};">
+                <div id="card-${index}" class="policy-card shadow-md open" style="border-color: ${p.color};">
                     <div class="p-6 flex justify-between items-center cursor-pointer" onclick="toggleCard(${index})">
                         <div class="flex items-center gap-4">
                             <svg class="chevron w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
@@ -197,11 +197,11 @@
                         </div>
                         <div class="flex gap-6 text-right items-center">
                             <div class="border-l border-gray-100 pl-4">
-                                <p class="text-[9px] text-gray-400 uppercase font-bold">Sum Assured</p>
+                                <p class="text-[9px] text-gray-400 uppercase font-bold tracking-tighter">Sum Assured</p>
                                 <p class="text-md font-bold maroon-text">${p.sumAssured}</p>
                             </div>
                             <div class="border-l border-gray-100 pl-4">
-                                <p class="text-[9px] text-gray-400 uppercase font-bold">Premium</p>
+                                <p class="text-[9px] text-gray-400 uppercase font-bold tracking-tighter">Premium</p>
                                 <p class="text-md font-bold maroon-text">${p.premium}</p>
                             </div>
                         </div>
@@ -223,7 +223,7 @@
                             <div><p class="text-gray-400 mb-1 font-semibold uppercase text-[10px]">Maturity Date</p><p class="font-bold text-gray-800 text-base">${p.maturity}</p></div>
                         </div>
 
-                        <div class="p-6 pb-10 bg-gray-50/30">
+                        <div class="p-6 pb-10 bg-gray-50/40">
                             <p class="text-[10px] text-gray-400 mb-6 font-bold tracking-widest uppercase">Policy Timeline • ${p.frequency}</p>
                             ${timelineHtml}
                             <div class="flex justify-between mt-4 text-[10px] text-gray-400 font-bold uppercase tracking-tight">
