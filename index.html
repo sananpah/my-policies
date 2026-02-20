@@ -11,7 +11,6 @@
         body { background-color: #f1f5f9; font-family: 'Inter', sans-serif; }
         .maroon-text { color: #8b1d1d; }
         
-        /* Requirement 2: Full border frame */
         .policy-card { 
             background: white;
             border-top: 2px solid; 
@@ -23,7 +22,6 @@
 
         .funky-title { font-family: 'Playfair Display', serif; }
 
-        /* Requirement 4: Vertical green dividers */
         .vertical-divider {
             width: 2px;
             height: 18px;
@@ -37,22 +35,43 @@
         .chevron { transition: transform 0.3s ease; }
         .open .chevron { transform: rotate(180deg); }
         
-        /* Card Toggling */
         .content-area { display: none; }
         .open .content-area { display: block; }
     </style>
 </head>
 <body class="p-4 md:p-10">
 
-    <div class="max-w-6xl mx-auto mb-10 text-center">
+    <div class="max-w-6xl mx-auto mb-6 text-center">
         <h1 class="text-4xl font-bold maroon-text funky-title uppercase tracking-wider">Nami Insurance Portfolio</h1>
         <div class="h-1 w-24 bg-red-800 mx-auto mt-2 rounded-full"></div>
     </div>
+
+    <div id="summary-bar" class="max-w-6xl mx-auto mb-8 grid grid-cols-2 gap-4">
+        </div>
 
     <div id="policy-container" class="max-w-6xl mx-auto space-y-6"></div>
 
     <script>
         const myPolicies = [
+            {
+                name: "Nishchit Samrudhi Income lmtd",
+                id: "54040166",
+                type: "TRADITIONAL",
+                sumAssured: "₹ 1,750,854.00",
+                premium: "₹ 200,000.00",
+                frequency: "Yearly",
+                clientId: "62996974",
+                uin: "121N142V01",
+                dueDate: "10 Jan 2027",
+                lastPaid: "10 Jan 2026",
+                term: 28,
+                commenced: "10 Jan 2022",
+                premiumEnds: "10 Jan 2028",
+                maturity: "10 Jan 2050",
+                lastPaidYear: 2026,
+                premiumYears: 7,
+                color: "#b91c1c"
+            },
             {
                 name: "Reliance Guaranteed Money Back",
                 id: "53044042",
@@ -95,12 +114,27 @@
 
         function toggleCard(index) {
             const card = document.getElementById(`card-${index}`);
-            if (card) {
-                card.classList.toggle('open');
-            }
+            if (card) card.classList.toggle('open');
+        }
+
+        function renderSummary() {
+            const totalSA = myPolicies.reduce((acc, p) => acc + parseFloat(p.sumAssured.replace(/[₹,]/g, '')), 0);
+            const totalPrem = myPolicies.reduce((acc, p) => acc + parseFloat(p.premium.replace(/[₹,]/g, '')), 0);
+            
+            document.getElementById('summary-bar').innerHTML = `
+                <div class="bg-white p-4 rounded border-b-2 border-red-800 shadow-sm text-center">
+                    <p class="text-[10px] uppercase font-bold text-gray-400">Total Sum Assured</p>
+                    <p class="text-xl font-bold maroon-text">₹ ${totalSA.toLocaleString('en-IN')}</p>
+                </div>
+                <div class="bg-white p-4 rounded border-b-2 border-red-800 shadow-sm text-center">
+                    <p class="text-[10px] uppercase font-bold text-gray-400">Annual Premium Commitment</p>
+                    <p class="text-xl font-bold maroon-text">₹ ${totalPrem.toLocaleString('en-IN')}</p>
+                </div>
+            `;
         }
 
         function render() {
+            renderSummary();
             const container = document.getElementById('policy-container');
             container.innerHTML = myPolicies.map((p, index) => {
                 const startYear = parseInt(p.commenced.split(' ')[2]);
@@ -122,7 +156,7 @@
                 timelineHtml += `</div>`;
 
                 return `
-                <div id="card-${index}" class="policy-card shadow-md open" style="border-color: ${p.color};">
+                <div id="card-${index}" class="policy-card shadow-md" style="border-color: ${p.color};">
                     <div class="p-6 flex justify-between items-center cursor-pointer" onclick="toggleCard(${index})">
                         <div class="flex items-center gap-4">
                             <svg class="chevron w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
@@ -145,7 +179,6 @@
 
                     <div class="content-area">
                         <div class="px-10"><div class="h-[1px] w-full bg-gray-100"></div></div>
-                        
                         <div class="px-6 py-6 grid grid-cols-2 md:grid-cols-6 gap-6 text-[13px]">
                             <div>
                                 <p class="text-gray-400 mb-1 font-semibold uppercase text-[10px]">Client ID</p>
@@ -174,8 +207,6 @@
                 `;
             }).join('');
         }
-        
-        // Final call to start the page
         render();
     </script>
 </body>
