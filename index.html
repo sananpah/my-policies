@@ -29,7 +29,6 @@
 
         .funky-title { font-family: 'Playfair Display', serif; }
 
-        /* The Critical Fix: Vertical Dividers */
         .vertical-divider {
             width: 2px;
             height: 20px;
@@ -39,28 +38,30 @@
             z-index: 20;
         }
         .start-line { left: 0; }
-        .premium-end-marker { left: 0; } /* Placed at the BEGINNING of the segment */
-        .maturity-marker { right: 0; }   /* Placed at the END of the very last segment */
+        .premium-end-marker { left: 0; } 
+        .maturity-marker { right: 0; }
 
-        /* Tooltip Logic */
-        .segment-container { position: relative; }
-        .segment-container:hover .tooltip-text { opacity: 1; visibility: visible; }
+        /* HOVER TOOLTIP ENGINE */
+        .segment-container { position: relative; cursor: pointer; }
+        .segment-container:hover .tooltip-text { opacity: 1; visibility: visible; transform: translate(-50%, -5px); }
         .tooltip-text {
             visibility: hidden;
             opacity: 0;
             position: absolute;
-            bottom: 200%;
+            bottom: 220%;
             left: 50%;
             transform: translateX(-50%);
             background: #1f2937;
             color: white;
-            padding: 4px 10px;
+            padding: 5px 12px;
             border-radius: 4px;
             font-size: 11px;
+            font-weight: 600;
             white-space: nowrap;
-            transition: all 0.2s;
-            z-index: 50;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 100;
             pointer-events: none;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
         }
 
         .chevron { transition: transform 0.3s ease; }
@@ -83,6 +84,25 @@
     <script>
         const myPolicies = [
             {
+                name: "INLI Nishchit Pension SL",
+                id: "54679062",
+                type: "TRADITIONAL",
+                sumAssured: "₹ 89,830.00",
+                premium: "₹ 200,000.00",
+                frequency: "Yearly",
+                clientId: "62996974",
+                uin: "121N158V03",
+                dueDate: "30 May 2026",
+                lastPaid: "30 May 2025",
+                term: 52,
+                commenced: "30 May 2025",
+                premiumEnds: "30 May 2030",
+                maturity: "30 May 2077",
+                lastPaidYear: 2025,
+                premiumYears: 6,
+                color: "#b91c1c"
+            },
+            {
                 name: "Nishchit Samrudhi Income lmtd",
                 id: "54040166",
                 type: "TRADITIONAL",
@@ -98,7 +118,7 @@
                 premiumEnds: "10 Jan 2028",
                 maturity: "10 Jan 2050",
                 lastPaidYear: 2026,
-                premiumYears: 7, // Divider should be at the start of Y7
+                premiumYears: 7,
                 color: "#b91c1c"
             },
             {
@@ -146,7 +166,6 @@
         }
 
         function render() {
-            // Summary Calculation
             const totalSA = myPolicies.reduce((acc, p) => acc + parseFloat(p.sumAssured.replace(/[₹,]/g, '')), 0);
             const totalPrem = myPolicies.reduce((acc, p) => acc + parseFloat(p.premium.replace(/[₹,]/g, '')), 0);
             
@@ -166,23 +185,30 @@
                 const startYear = parseInt(p.commenced.split(' ')[2]);
                 let timelineHtml = `<div class="flex gap-1 w-full relative">`;
                 
-                for (let i = 0; i < p.term; i++) {
+                // Active Years
+                for (let i = 0; i < p.premiumYears; i++) {
                     const currentYear = startYear + i;
                     const isPaid = currentYear <= p.lastPaidYear;
-                    
-                    // Requirement Fix: "Beginning of the last premiumEnds year"
-                    // If premiumYears is 7, we want the divider on the 7th segment (index 6)
-                    const isPremiumEndYearStart = (i + 1) === p.premiumYears;
-                    const isFinalYearEnd = (i + 1) === p.term;
-                    
                     timelineHtml += `
                         <div class="segment-container flex-1 h-1.5 rounded-sm relative ${isPaid ? 'bg-green-500' : 'bg-gray-200'}">
                             <span class="tooltip-text">Year ${i+1}: ${currentYear}</span>
                             ${i === 0 ? '<div class="vertical-divider start-line"></div>' : ''}
-                            ${isPremiumEndYearStart ? '<div class="vertical-divider premium-end-marker"></div>' : ''}
-                            ${isFinalYearEnd ? '<div class="vertical-divider maturity-marker"></div>' : ''}
                         </div>`;
                 }
+
+                // Growth Period (Clubbed)
+                if (p.term > p.premiumYears) {
+                    const waitYears = p.term - p.premiumYears;
+                    timelineHtml += `
+                        <div class="segment-container flex-[4] h-1.5 rounded-sm relative bg-gray-100 border-l-2 border-white">
+                            <span class="tooltip-text">Growth Phase: ${waitYears} Years of Wealth Accumulation</span>
+                            <div class="vertical-divider premium-end-marker"></div>
+                            <div class="vertical-divider maturity-marker"></div>
+                        </div>`;
+                } else {
+                    timelineHtml = timelineHtml.slice(0, -6) + '<div class="vertical-divider maturity-marker"></div></div>';
+                }
+                
                 timelineHtml += `</div>`;
 
                 return `
@@ -192,7 +218,7 @@
                             <svg class="chevron w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                             <div>
                                 <h2 class="text-xl font-bold text-gray-800 funky-title">${p.name}</h2>
-                                <p class="text-xs text-gray-400 font-medium">${p.id} • ${p.type}</p>
+                                <p class="text-xs text-gray-400 font-medium tracking-tight uppercase">${p.id} • ${p.type}</p>
                             </div>
                         </div>
                         <div class="flex gap-6 text-right items-center">
@@ -224,7 +250,7 @@
                         </div>
 
                         <div class="p-6 pb-10 bg-gray-50/40">
-                            <p class="text-[10px] text-gray-400 mb-6 font-bold tracking-widest uppercase">Policy Timeline • ${p.frequency}</p>
+                            <p class="text-[10px] text-gray-400 mb-6 font-bold tracking-widest uppercase italic">Policy Timeline • ${p.frequency}</p>
                             ${timelineHtml}
                             <div class="flex justify-between mt-4 text-[10px] text-gray-400 font-bold uppercase tracking-tight">
                                 <div>Commences<br><span class="text-gray-500 font-normal">${p.commenced}</span></div>
