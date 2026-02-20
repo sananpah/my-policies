@@ -3,26 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Insurance Portfolio</title>
+    <title>Insurance Portfolio</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #f8f9fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .policy-card { border: 1px solid #d1d5db; border-top: 2px solid #a855f7; transition: transform 0.2s; }
-        .policy-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .brand-red { color: #8b0000; }
-        .timeline-dot { width: 8px; height: 8px; background: #22c55e; border-radius: 50%; position: absolute; top: -3px; }
+        .segment-tooltip:hover::after {
+            content: attr(data-fy);
+            position: absolute;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            white-space: nowrap;
+            z-index: 10;
+        }
+        .premium-end-line {
+            width: 2px;
+            height: 24px;
+            background-color: #22c55e;
+            position: absolute;
+            top: -10px;
+        }
     </style>
 </head>
-<body class="p-4 md:p-10">
+<body class="bg-gray-100 p-8">
 
-    <div class="max-w-5xl mx-auto">
-        <h1 class="text-3xl font-bold mb-8 text-gray-800">My Insurance Policies</h1>
-        
-        <div id="policy-container" class="space-y-6"></div>
-    </div>
+    <div id="policy-container" class="max-w-5xl mx-auto space-y-6"></div>
 
     <script>
-        // STEP 2: ADD YOUR POLICY DATA HERE
         const myPolicies = [
             {
                 name: "Reliance Guaranteed Money Back",
@@ -34,99 +45,81 @@
                 clientId: "62996974",
                 uin: "121N084V03",
                 dueDate: "08 Sep 2026",
-                term: "15 Years",
-                premiumEnds: "08 Sep 2026",
-                maturityDate: "08 Sep 2032",
-                commenced: "08 Sep 2017",
-                progressPercent: 70 // Green bar length
-            },
-            {
-                name: "HDFC Life Sanchay Plus",
-                id: "99283741",
-                type: "SAVINGS",
-                sumAssured: "₹ 5,00,000.00",
-                premium: "₹ 50,000.00",
-                frequency: "Yearly",
-                clientId: "88776655",
-                uin: "101N116V04",
-                dueDate: "15 Mar 2026",
-                term: "10 Years",
-                premiumEnds: "15 Mar 2029",
-                maturityDate: "15 Mar 2034",
-                commenced: "15 Mar 2019",
-                progressPercent: 45
+                commencedDate: "2017-09-08",
+                premiumEndDate: "2026-09-08",
+                maturityDate: "2032-09-08",
+                totalTermYears: 15
             }
         ];
 
-        function renderPolicies() {
-            const container = document.getElementById('policy-container');
+        function generateTimeline(policy) {
+            const startYear = new Date(policy.commencedDate).getFullYear();
+            const premiumEndYear = new Date(policy.premiumEndDate).getFullYear();
+            const currentYear = new Date().getFullYear(); // 2026 in this context
             
+            const totalPolicyYears = policy.totalTermYears;
+            const premiumPayingYears = premiumEndYear - startYear + 1;
+
+            let html = `<div class="flex gap-1.5 w-full relative items-center">`;
+
+            for (let i = 0; i < totalPolicyYears; i++) {
+                const yearLabel = startYear + i;
+                const isPaid = yearLabel <= 2025; // Based on your "Last Paid: 2025" requirement
+                const isPremiumPeriod = i < premiumPayingYears;
+                
+                // Requirement 3: Financial Year Hover
+                const fyText = `Y${i+1} - ${yearLabel}`;
+
+                html += `
+                    <div 
+                        class="segment-tooltip flex-1 h-1.5 rounded-sm relative cursor-help ${isPaid ? 'bg-green-500' : 'bg-gray-200'}" 
+                        data-fy="${fyText}">
+                        
+                        ${(i + 1) === premiumPayingYears ? '<div class="premium-end-line right-0"></div>' : ''}
+                    </div>`;
+            }
+
+            html += `</div>`;
+            return html;
+        }
+
+        function render() {
+            const container = document.getElementById('policy-container');
             container.innerHTML = myPolicies.map(p => `
-                <div class="bg-white rounded-lg border-l-4 border-red-700 shadow-sm overflow-hidden border border-gray-200">
-                    <div class="p-6 border-b border-gray-100 flex flex-wrap justify-between items-start">
+                <div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+                    <div class="p-6 border-b border-red-100 flex justify-between items-start">
                         <div>
                             <h2 class="text-xl font-bold text-gray-800">${p.name}</h2>
-                            <p class="text-gray-500 text-sm">${p.id} • ${p.type}</p>
+                            <p class="text-xs text-gray-400 uppercase tracking-widest">${p.id} • ${p.type}</p>
                         </div>
-                        <div class="flex gap-8 mt-4 md:mt-0">
-                            <div>
-                                <p class="text-xs text-gray-400">Sum Assured:</p>
-                                <p class="text-lg font-bold text-red-900">${p.sumAssured}</p>
-                            </div>
-                            <div>
-                                <p class="text-xs text-gray-400">Instalment Premium:</p>
-                                <p class="text-lg font-bold text-red-900">${p.premium}</p>
-                            </div>
-                            <div>
-                                <p class="text-xs text-gray-400">Premium Frequency:</p>
-                                <p class="text-lg font-bold text-red-900">${p.frequency}</p>
-                            </div>
+                        <div class="flex gap-10">
+                            <div class="text-right"><p class="text-[10px] text-gray-400">Sum Assured</p><p class="font-bold text-red-800">${p.sumAssured}</p></div>
+                            <div class="text-right"><p class="text-[10px] text-gray-400">Instalment Premium</p><p class="font-bold text-red-800">${p.premium}</p></div>
                         </div>
                     </div>
 
-                    <div class="p-6 grid grid-cols-2 md:grid-cols-6 gap-4 text-sm">
-                        <div><p class="text-gray-400">Client ID:</p><p class="font-bold">${p.clientId}</p></div>
-                        <div><p class="text-gray-400">UIN Number:</p><p class="font-bold">${p.uin}</p></div>
-                        <div><p class="text-gray-400">Premium Due Date:</p><p class="font-bold">${p.dueDate}</p></div>
-                        <div><p class="text-gray-400">Policy Term:</p><p class="font-bold">${p.term}</p></div>
-                        <div><p class="text-gray-400">Premium Ends:</p><p class="font-bold">${p.premiumEnds}</p></div>
-                        <div><p class="text-gray-400">Maturity Date:</p><p class="font-bold">${p.maturityDate}</p></div>
+                    <div class="p-6 grid grid-cols-3 md:grid-cols-6 gap-4 text-sm border-b border-gray-50">
+                        <div><p class="text-gray-400 text-xs">Client ID</p><p class="font-bold">${p.clientId}</p></div>
+                        <div><p class="text-gray-400 text-xs">UIN Number</p><p class="font-bold">${p.uin}</p></div>
+                        <div><p class="text-gray-400 text-xs">Due Date</p><p class="font-bold">08 Sep 2026</p></div>
+                        <div><p class="text-gray-400 text-xs">Policy Term</p><p class="font-bold">${p.totalTermYears} Years</p></div>
+                        <div><p class="text-gray-400 text-xs">Premium Ends</p><p class="font-bold">08 Sep 2026</p></div>
+                        <div><p class="text-gray-400 text-xs">Maturity Date</p><p class="font-bold">08 Sep 2032</p></div>
                     </div>
 
-<div class="px-6 pb-8">
-    <p class="text-[10px] text-gray-400 mb-4 tracking-widest uppercase">Policy Timeline • Yearly</p>
-    
-    <div class="flex gap-1 w-full h-1.5 mb-2">
-        ${Array.from({ length: parseInt(p.term) }).map((_, index) => {
-            // Logic: If the index is less than years passed, color it green
-            const yearsPassed = 8; // You can calculate this: (CurrentYear - StartYear)
-            const isCompleted = index < yearsPassed;
-            return `
-                <div class="flex-1 h-full rounded-sm ${isCompleted ? 'bg-green-500' : 'bg-gray-200'}"></div>
-            `;
-        }).join('')}
-    </div>
-
-    <div class="flex justify-between mt-2 text-[11px] text-gray-400">
-        <div class="relative">
-            <div class="absolute -top-4 left-0 w-2 h-2 bg-green-500 rounded-full"></div>
-            Policy Commences<br><span class="font-bold text-gray-600">${p.commenced}</span>
-        </div>
-        <div class="text-center">
-            Premium Payment Ends<br><span class="font-bold text-gray-600">${p.premiumEnds}</span>
-        </div>
-        <div class="text-right relative">
-            <div class="absolute -top-4 right-0 w-2 h-2 bg-gray-200 rounded-full border border-gray-300"></div>
-            Policy Maturity<br><span class="font-bold text-gray-600">${p.maturityDate}</span>
-        </div>
-    </div>
-</div>                    
+                    <div class="p-6 pt-8">
+                        <p class="text-[10px] text-gray-400 mb-6 uppercase tracking-tighter">Policy Timeline • Yearly</p>
+                        ${generateTimeline(p)}
+                        <div class="flex justify-between mt-4 text-[10px] text-gray-500">
+                            <div>Policy Commences<br><span class="font-bold text-gray-700">08 Sep 2017</span></div>
+                            <div class="text-center">Premium Payment Ends<br><span class="font-bold text-gray-700">08 Sep 2026</span></div>
+                            <div class="text-right">Policy Maturity<br><span class="font-bold text-gray-700">08 Sep 2032</span></div>
+                        </div>
+                    </div>
                 </div>
             `).join('');
         }
-
-        renderPolicies();
+        render();
     </script>
 </body>
 </html>
-
