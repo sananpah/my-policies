@@ -37,20 +37,29 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            height: 55px; /* Slightly larger */
-            opacity: 0.45; /* Brighter color scheme */
+            height: 55px;
+            opacity: 0.45; 
             z-index: 1;
             transition: opacity 0.3s ease;
             pointer-events: none;
         }
         .open .bg-logo-large { opacity: 0; }
 
+        /* --- Paid Stamp Styling --- */
+        .paid-stamp {
+            height: 24px;
+            transform: rotate(-10deg);
+            margin-left: 8px;
+            display: inline-block;
+            vertical-align: middle;
+        }
+
         /* --- Larger Timeline Logo (Expanded View) --- */
         .timeline-logo {
             position: absolute;
             right: 15px;
             top: -30px; 
-            height: 28px; /* Bigger display in expanded view */
+            height: 28px; 
             z-index: 40;
             pointer-events: none;
         }
@@ -109,7 +118,9 @@
     <script>
         const logos = {
             indusInd: "image_4e0b3d.png",
-            kotak: "image_5d7f80.png"
+            kotak: "image_5d7f80.png",
+            axis: "image_7a80d9.png",
+            paidStamp: "paid.jpg"
         };
 
         const myPolicies = [
@@ -131,7 +142,8 @@
                 lastPaidYear: 2025,
                 premiumYears: 10,
                 color: "#b91c1c",
-                brand: "indusInd"
+                brand: "indusInd",
+                isPaidUp: false
             },
             {
                 name: "INLI Nishchit Pension SL",
@@ -151,7 +163,8 @@
                 lastPaidYear: 2025,
                 premiumYears: 6,
                 color: "#b91c1c",
-                brand: "indusInd"
+                brand: "indusInd",
+                isPaidUp: false
             },
             {
                 name: "Nishchit Samrudhi Income lmtd",
@@ -171,7 +184,8 @@
                 lastPaidYear: 2026,
                 premiumYears: 7,
                 color: "#b91c1c",
-                brand: "indusInd"
+                brand: "indusInd",
+                isPaidUp: false
             },
             {
                 name: "Reliance Guaranteed Money Back",
@@ -191,14 +205,15 @@
                 lastPaidYear: 2025,
                 premiumYears: 10,
                 color: "#b91c1c",
-                brand: "indusInd"
+                brand: "indusInd",
+                isPaidUp: false
             },
             {
                 name: "Confident Retirement Savings",
                 id: "79079094",
                 type: "TRADITIONAL",
                 sumAssured: "₹ 323,695.00",
-                premium: "₹ 50,000.00", /* Updated Premium */
+                premium: "₹ 50,000.00",
                 frequency: "Yearly",
                 clientId: "79232865",
                 uin: "107N162V01",
@@ -211,7 +226,8 @@
                 lastPaidYear: 2025,
                 premiumYears: 7,
                 color: "#1e3a8a",
-                brand: "kotak"
+                brand: "kotak",
+                isPaidUp: false
             },
             {
                 name: "Fortune Maximiser",
@@ -231,7 +247,29 @@
                 lastPaidYear: 2025,
                 premiumYears: 10,
                 color: "#1e3a8a",
-                brand: "kotak"
+                brand: "kotak",
+                isPaidUp: false
+            },
+            {
+                name: "Fast Track Super",
+                id: "608480927",
+                type: "ULIP",
+                sumAssured: "₹ 0.00",
+                premium: "₹ 50,000.00",
+                frequency: "Yearly",
+                clientId: "6000981728",
+                uin: "104L082V04",
+                dueDate: "PAID UP",
+                lastPaid: "04 Feb 2026",
+                term: 10,
+                commenced: "04 Feb 2022",
+                premiumEnds: "04 Feb 2026",
+                maturity: "04 Feb 2032",
+                lastPaidYear: 2026,
+                premiumYears: 5,
+                color: "#0c4a6e",
+                brand: "axis",
+                isPaidUp: true /* Triggers the Paid Stamp */
             }
         ];
 
@@ -246,7 +284,7 @@
             
             document.getElementById('summary-bar').innerHTML = `
                 <div class="summary-card p-6 text-center bg-white"><p class="text-[11px] uppercase font-bold text-gray-400">Total Sum Assured</p><p class="text-3xl font-bold maroon-text mt-1">₹ ${totalSA.toLocaleString('en-IN')}</p></div>
-                <div class="summary-card p-6 text-center bg-white" style="border-color: #1e3a8a; box-shadow: 6px 6px 0px 0px rgba(30, 58, 138, 0.1);"><p class="text-[11px] uppercase font-bold text-gray-400">Total Annual Premium</p><p class="text-3xl font-bold mt-1" style="color: #1e3a8a;">₹ ${totalPrem.toLocaleString('en-IN')}</p></div>
+                <div class="summary-card p-6 text-center bg-white" style="border-color: #0c4a6e; box-shadow: 6px 6px 0px 0px rgba(12, 74, 110, 0.1);"><p class="text-[11px] uppercase font-bold text-gray-400">Total Annual Premium</p><p class="text-3xl font-bold mt-1" style="color: #0c4a6e;">₹ ${totalPrem.toLocaleString('en-IN')}</p></div>
             `;
 
             container.innerHTML = myPolicies.map((p, index) => {
@@ -284,7 +322,10 @@
                             <svg class="chevron w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                             <div>
                                 <h2 class="text-xl font-bold text-gray-800 funky-title">${p.name}</h2>
-                                <p class="text-xs text-gray-400 font-medium uppercase tracking-tighter">${p.id} • ${p.type}</p>
+                                <p class="text-xs text-gray-400 font-medium uppercase tracking-tighter">
+                                    ${p.id} • ${p.type}
+                                    ${p.isPaidUp ? `<img src="${logos.paidStamp}" class="paid-stamp" alt="Paid">` : ''}
+                                </p>
                             </div>
                         </div>
                         <div class="flex gap-6 text-right items-center">
