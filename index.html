@@ -21,8 +21,11 @@
         .start-line { left: 0; }
         .premium-end-marker { left: 0; } 
         .maturity-marker { right: 0; }
+        
+        /* HOVER FIXES */
         .segment-container { position: relative; cursor: pointer; z-index: 50; }
-        .segment-container:hover .tooltip-text { opacity: 1; visibility: visible; transform: translate(-50%, -8px); }
+        .segment-container:hover > .tooltip-text { opacity: 1; visibility: visible; transform: translate(-50%, -8px); }
+        
         .tooltip-text {
             visibility: hidden; opacity: 0; position: absolute; bottom: 180%;
             left: 50%; transform: translateX(-50%); background: #1f2937;
@@ -31,6 +34,14 @@
             transition: all 0.2s ease-in-out; z-index: 100; pointer-events: none;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
+
+        /* Specific fix for growth/maturity overlap */
+        .growth-zone { position: absolute; left: 0; top: 0; width: 80%; height: 100%; z-index: 60; }
+        .maturity-zone { position: absolute; right: 0; top: 0; width: 20%; height: 100%; z-index: 60; }
+        .growth-zone:hover .tooltip-text, .maturity-zone:hover .tooltip-text { opacity: 1; visibility: visible; transform: translate(-50%, -8px); }
+        .maturity-zone .tooltip-text { left: auto; right: 0; transform: none; }
+        .maturity-zone:hover .tooltip-text { transform: translateY(-8px); }
+
         .payout-dot { width: 8px; height: 8px; background: #f59e0b; border-radius: 50%; position: absolute; top: 50%; transform: translateY(-50%); border: 1px solid white; }
         .tab-btn { padding: 10px 24px; font-weight: 700; text-transform: uppercase; font-size: 12px; letter-spacing: 1px; border-radius: 8px; transition: all 0.3s ease; border: 1px solid transparent; }
         .tab-btn.active-self { background: #8b1d1d; color: white; box-shadow: 0 4px 12px rgba(139, 29, 29, 0.2); }
@@ -130,12 +141,16 @@
                 if (p.term > p.premiumYears) {
                     let payoutMarkers = "";
                     if (p.payouts) { p.payouts.forEach((po, i) => { const pos = (i + 1) * 30; payoutMarkers += `<div class="payout-dot" style="left: ${pos}%"></div>`; }); }
-                    timelineHtml += `<div class="segment-container flex-[6] h-1.5 rounded-sm relative bg-gray-100 border-l-2 border-white">
-                        <span class="tooltip-text">Growth: ${p.term - p.premiumYears} Yrs${p.payouts ? ' | ' + p.payouts.map(x => `Yr ${x.years}: ${x.amount}`).join(' ') : ''}</span>
+                    timelineHtml += `<div class="flex-[6] h-1.5 rounded-sm relative bg-gray-100 border-l-2 border-white">
+                        <div class="growth-zone">
+                            <span class="tooltip-text">Growth: ${p.term - p.premiumYears} Yrs${p.payouts ? ' | ' + p.payouts.map(x => `Yr ${x.years}: ${x.amount}`).join(' ') : ''}</span>
+                        </div>
                         <div class="vertical-divider premium-end-marker"></div>
                         ${payoutMarkers}<img src="${logoPath}" class="timeline-logo" alt="Logo">
-                        <div class="vertical-divider maturity-marker"></div>
-                        <span class="tooltip-text" style="left: auto; right: 0; transform: none; bottom: 180%;">Maturity: ${p.maturityBonus || 'Standard Payout'}</span>
+                        <div class="maturity-zone">
+                            <div class="vertical-divider maturity-marker"></div>
+                            <span class="tooltip-text">Maturity: ${p.maturityBonus || 'Standard Payout'}</span>
+                        </div>
                     </div>`;
                 }
                 timelineHtml += `</div>`;
