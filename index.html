@@ -31,7 +31,6 @@
 
         .funky-title { font-family: 'Playfair Display', serif; }
 
-        /* --- Bright Background Logo (Collapsed View) --- */
         .bg-logo-large {
             position: absolute;
             top: 50%;
@@ -45,7 +44,6 @@
         }
         .open .bg-logo-large { opacity: 0; }
 
-        /* --- Enhanced PAID Stamp (Bigger & Brighter) --- */
         .paid-stamp {
             height: 45px;
             width: auto;
@@ -58,7 +56,6 @@
             position: relative;
         }
 
-        /* --- Larger Timeline Logo (Expanded View) --- */
         .timeline-logo {
             position: absolute;
             right: 15px;
@@ -68,7 +65,7 @@
             pointer-events: none;
         }
 
-        /* --- Timeline Markers --- */
+        /* Timeline Components */
         .vertical-divider {
             width: 2px;
             height: 20px;
@@ -97,10 +94,23 @@
             border-radius: 4px;
             font-size: 11px;
             font-weight: 600;
-            white-space: nowrap;
+            white-space: pre-wrap;
+            text-align: center;
             transition: all 0.2s ease-in-out;
             z-index: 100;
             pointer-events: none;
+        }
+
+        /* Payout Dot for Timeline */
+        .payout-dot {
+            width: 8px;
+            height: 8px;
+            background: #f59e0b;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            border: 1px solid white;
         }
 
         .chevron { transition: transform 0.3s ease; }
@@ -147,8 +157,7 @@
                 lastPaidYear: 2025,
                 premiumYears: 10,
                 color: "#b91c1c",
-                brand: "indusInd",
-                isPaidUp: false
+                brand: "indusInd"
             },
             {
                 name: "INLI Nishchit Pension SL",
@@ -168,8 +177,7 @@
                 lastPaidYear: 2025,
                 premiumYears: 6,
                 color: "#b91c1c",
-                brand: "indusInd",
-                isPaidUp: false
+                brand: "indusInd"
             },
             {
                 name: "Nishchit Samrudhi Income lmtd",
@@ -189,8 +197,7 @@
                 lastPaidYear: 2026,
                 premiumYears: 7,
                 color: "#b91c1c",
-                brand: "indusInd",
-                isPaidUp: false
+                brand: "indusInd"
             },
             {
                 name: "Reliance Guaranteed Money Back",
@@ -211,7 +218,12 @@
                 premiumYears: 10,
                 color: "#b91c1c",
                 brand: "indusInd",
-                isPaidUp: false
+                // Specific payout details added here
+                payouts: [
+                    { years: "11-14", amount: "₹ 18,591 (Annual)" },
+                    { years: "15", amount: "₹ 49,576" }
+                ],
+                maturityBonus: "Loyalty: ₹ 37,170\nAddn: ₹ 18,591"
             },
             {
                 name: "Confident Retirement Savings",
@@ -231,8 +243,7 @@
                 lastPaidYear: 2025,
                 premiumYears: 7,
                 color: "#1e3a8a",
-                brand: "kotak",
-                isPaidUp: false
+                brand: "kotak"
             },
             {
                 name: "Fortune Maximiser",
@@ -252,8 +263,7 @@
                 lastPaidYear: 2025,
                 premiumYears: 10,
                 color: "#1e3a8a",
-                brand: "kotak",
-                isPaidUp: false
+                brand: "kotak"
             },
             {
                 name: "Fast Track Super",
@@ -293,9 +303,8 @@
                 maturity: "28 Sep 2038",
                 lastPaidYear: 2026,
                 premiumYears: 7,
-                color: "#4338ca", /* Vivid Indigo for Bharti AXA */
-                brand: "bharti",
-                isPaidUp: false
+                color: "#4338ca",
+                brand: "bharti"
             }
         ];
 
@@ -331,11 +340,22 @@
                 }
 
                 if (p.term > p.premiumYears) {
+                    const growthYears = p.term - p.premiumYears;
+                    let payoutMarkers = "";
+                    if (p.payouts) {
+                        p.payouts.forEach((po, i) => {
+                            const pos = (i + 1) * 30; // Spacing logic for dots
+                            payoutMarkers += `<div class="payout-dot" style="left: ${pos}%"></div>`;
+                        });
+                    }
+
                     timelineHtml += `<div class="segment-container flex-[6] h-1.5 rounded-sm relative bg-gray-100 border-l-2 border-white">
-                        <span class="tooltip-text">Growth Phase: ${p.term - p.premiumYears} Years</span>
+                        <span class="tooltip-text">Growth Phase: ${growthYears} Years${p.payouts ? '\n' + p.payouts.map(x => `Yr ${x.years}: ${x.amount}`).join('\n') : ''}</span>
                         <div class="vertical-divider premium-end-marker"></div>
+                        ${payoutMarkers}
                         <img src="${logoPath}" class="timeline-logo" alt="Logo">
                         <div class="vertical-divider maturity-marker"></div>
+                        <span class="tooltip-text" style="left: auto; right: 0; transform: none; bottom: 150%;">Maturity Details:\n${p.maturityBonus || 'Standard Maturity'}</span>
                     </div>`;
                 }
                 timelineHtml += `</div>`;
