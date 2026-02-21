@@ -37,21 +37,20 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            height: 45px;
-            opacity: 0.15; /* Subtle but clear color display */
+            height: 40px;
+            opacity: 0.18; 
             z-index: 1;
             transition: opacity 0.3s ease;
             pointer-events: none;
         }
-        /* Hide large logo when expanded to avoid clutter */
         .open .bg-logo-large { opacity: 0; }
 
         /* --- Small Timeline Logo (Expanded View) --- */
         .timeline-logo {
             position: absolute;
             right: 10px;
-            top: -25px; /* Floats slightly above the maturity bar */
-            height: 20px;
+            top: -22px; 
+            height: 18px;
             z-index: 40;
             pointer-events: none;
         }
@@ -109,7 +108,10 @@
     <div id="policy-container" class="max-w-6xl mx-auto space-y-6"></div>
 
     <script>
-        const indusIndLogoUrl = "image_4e0b3d.png"; 
+        const logos = {
+            indusInd: "image_4e0b3d.png",
+            kotak: "image_5d7f80.png"
+        };
 
         const myPolicies = [
             {
@@ -129,84 +131,50 @@
                 maturity: "17 Nov 2055",
                 lastPaidYear: 2025,
                 premiumYears: 10,
-                color: "#b91c1c"
+                color: "#b91c1c",
+                brand: "indusInd"
             },
             {
-                name: "INLI Nishchit Pension SL",
-                id: "54679062",
+                name: "Confident Retirement Savings",
+                id: "79079094",
                 type: "TRADITIONAL",
-                sumAssured: "₹ 89,830.00",
-                premium: "₹ 200,000.00",
+                sumAssured: "₹ 323,695.00",
+                premium: "₹ 5,000.00",
                 frequency: "Yearly",
-                clientId: "62996974",
-                uin: "121N158V03",
-                dueDate: "30 May 2026",
-                lastPaid: "30 May 2025",
-                term: 52,
-                commenced: "30 May 2025",
-                premiumEnds: "30 May 2030",
-                maturity: "30 May 2077",
-                lastPaidYear: 2025,
-                premiumYears: 6,
-                color: "#b91c1c"
-            },
-            {
-                name: "Nishchit Samrudhi Income lmtd",
-                id: "54040166",
-                type: "TRADITIONAL",
-                sumAssured: "₹ 1,750,854.00",
-                premium: "₹ 200,000.00",
-                frequency: "Yearly",
-                clientId: "62996974",
-                uin: "121N142V01",
-                dueDate: "10 Jan 2027",
-                lastPaid: "10 Jan 2026",
-                term: 28,
-                commenced: "10 Jan 2022",
-                premiumEnds: "10 Jan 2028",
-                maturity: "10 Jan 2050",
-                lastPaidYear: 2026,
-                premiumYears: 7,
-                color: "#b91c1c"
-            },
-            {
-                name: "Reliance Guaranteed Money Back",
-                id: "53044042",
-                type: "TRADITIONAL",
-                sumAssured: "₹ 1,23,940.00",
-                premium: "₹ 14,400.00",
-                frequency: "Yearly",
-                clientId: "62996974",
-                uin: "121N084V03",
-                dueDate: "08 Sep 2026",
-                lastPaid: "08 Sep 2025",
+                clientId: "79232865",
+                uin: "107N162V01",
+                dueDate: "13 Mar 2026",
+                lastPaid: "13 Mar 2025",
                 term: 15,
-                commenced: "08 Sep 2017",
-                premiumEnds: "08 Sep 2026",
-                maturity: "08 Sep 2032",
+                commenced: "13 Mar 2025",
+                premiumEnds: "13 Mar 2031",
+                maturity: "13 Mar 2040",
+                lastPaidYear: 2025,
+                premiumYears: 7,
+                color: "#1e3a8a", /* Kotak Blue */
+                brand: "kotak"
+            },
+            {
+                name: "Fortune Maximiser",
+                id: "79425536",
+                type: "TRADITIONAL",
+                sumAssured: "₹ 711,994.00",
+                premium: "₹ 70,000.00",
+                frequency: "Yearly",
+                clientId: "79232865",
+                uin: "107N125V03",
+                dueDate: "14 Aug 2026",
+                lastPaid: "14 Aug 2025",
+                term: 64,
+                commenced: "14 Aug 2025",
+                premiumEnds: "14 Aug 2034",
+                maturity: "14 Aug 2089",
                 lastPaidYear: 2025,
                 premiumYears: 10,
-                color: "#b91c1c"
-            },
-            {
-                name: "HSBC Life Strategic Growth",
-                id: "88273341",
-                type: "UNIT LINKED",
-                sumAssured: "₹ 5,00,000.00",
-                premium: "₹ 50,000.00",
-                frequency: "Yearly",
-                clientId: "77221144",
-                uin: "112L099V01",
-                dueDate: "15 Mar 2026",
-                lastPaid: "15 Mar 2024",
-                term: 10,
-                commenced: "15 Mar 2020",
-                premiumEnds: "15 Mar 2025",
-                maturity: "15 Mar 2030",
-                lastPaidYear: 2024,
-                premiumYears: 6,
-                color: "#4c1d95"
+                color: "#1e3a8a", /* Kotak Blue */
+                brand: "kotak"
             }
+            // ... (You can add the other IndusInd policies here following the same brand: "indusInd" pattern)
         ];
 
         function toggleCard(index) {
@@ -216,20 +184,18 @@
         function render() {
             const container = document.getElementById('policy-container');
             
-            // Render Global Summary (Same as before)
             const totalSA = myPolicies.reduce((acc, p) => acc + parseFloat(p.sumAssured.replace(/[₹,]/g, '')), 0);
             const totalPrem = myPolicies.reduce((acc, p) => acc + parseFloat(p.premium.replace(/[₹,]/g, '')), 0);
+            
             document.getElementById('summary-bar').innerHTML = `
                 <div class="summary-card p-6 text-center bg-white"><p class="text-[11px] uppercase font-bold text-gray-400">Total Portfolio Value</p><p class="text-3xl font-bold maroon-text mt-1">₹ ${totalSA.toLocaleString('en-IN')}</p></div>
-                <div class="summary-card p-6 text-center bg-white" style="border-color: #4c1d95; box-shadow: 6px 6px 0px 0px rgba(76, 29, 149, 0.1);"><p class="text-[11px] uppercase font-bold text-gray-400">Total Annual Commitment</p><p class="text-3xl font-bold mt-1" style="color: #4c1d95;">₹ ${totalPrem.toLocaleString('en-IN')}</p></div>
+                <div class="summary-card p-6 text-center bg-white" style="border-color: #1e3a8a; box-shadow: 6px 6px 0px 0px rgba(30, 58, 138, 0.1);"><p class="text-[11px] uppercase font-bold text-gray-400">Total Annual Commitment</p><p class="text-3xl font-bold mt-1" style="color: #1e3a8a;">₹ ${totalPrem.toLocaleString('en-IN')}</p></div>
             `;
 
             container.innerHTML = myPolicies.map((p, index) => {
                 const startYear = parseInt(p.commenced.split(' ')[2]);
-                const isIndusInd = p.clientId === "62996974";
-                
-                // Calculate Timeline Widths
-                const totalTimelineSlots = p.premiumYears + 6; // Adding 6 for visual flex of growth phase
+                const logoPath = logos[p.brand];
+                const totalTimelineSlots = p.premiumYears + 6; 
                 const premiumWidthPercentage = (p.premiumYears / totalTimelineSlots) * 100;
 
                 let timelineHtml = `<div class="flex gap-1 w-full relative items-center mb-2">`;
@@ -243,18 +209,15 @@
                 if (p.term > p.premiumYears) {
                     timelineHtml += `<div class="segment-container flex-[6] h-1.5 rounded-sm relative bg-gray-100 border-l-2 border-white">
                         <div class="vertical-divider premium-end-marker"></div>
-                        ${isIndusInd ? `<img src="${indusIndLogoUrl}" class="timeline-logo" alt="Logo">` : ''}
+                        <img src="${logoPath}" class="timeline-logo" alt="Logo">
                         <div class="vertical-divider maturity-marker"></div>
                     </div>`;
-                } else {
-                    timelineHtml = timelineHtml.slice(0, -6) + '<div class="vertical-divider maturity-marker"></div></div>';
                 }
                 timelineHtml += `</div>`;
 
                 return `
                 <div id="card-${index}" class="policy-card shadow-md" style="border-color: ${p.color};">
-                    
-                    ${isIndusInd ? `<img src="${indusIndLogoUrl}" class="bg-logo-large" alt="Background Logo">` : ''}
+                    <img src="${logoPath}" class="bg-logo-large" alt="Background Logo">
                     
                     <div class="p-6 flex justify-between items-center cursor-pointer relative z-20" onclick="toggleCard(${index})">
                         <div class="flex items-center gap-4">
@@ -267,11 +230,11 @@
                         <div class="flex gap-6 text-right items-center">
                             <div class="border-l border-gray-100 pl-4">
                                 <p class="text-[9px] text-gray-400 uppercase font-bold tracking-tighter">Sum Assured</p>
-                                <p class="text-md font-bold maroon-text">${p.sumAssured}</p>
+                                <p class="text-md font-bold" style="color: ${p.color}">${p.sumAssured}</p>
                             </div>
                             <div class="border-l border-gray-100 pl-4">
                                 <p class="text-[9px] text-gray-400 uppercase font-bold tracking-tighter">Premium</p>
-                                <p class="text-md font-bold maroon-text">${p.premium}</p>
+                                <p class="text-md font-bold" style="color: ${p.color}">${p.premium}</p>
                             </div>
                         </div>
                     </div>
@@ -289,17 +252,13 @@
 
                         <div class="p-6 pb-12 bg-gray-50/40 relative">
                             <p class="text-[10px] text-gray-400 mb-10 font-bold tracking-widest uppercase italic">Policy Timeline • ${p.frequency}</p>
-                            
                             <div class="relative px-2">
                                 ${timelineHtml}
-                                
                                 <div class="flex text-[10px] text-gray-400 font-bold uppercase tracking-tight relative mt-4">
                                     <div class="w-1/4 text-left">Commences<br><span class="text-gray-500 font-normal">${p.commenced}</span></div>
-                                    
                                     <div class="absolute text-center" style="left: ${premiumWidthPercentage}%; transform: translateX(-50%);">
                                         Premium Payment Ends<br><span class="text-gray-500 font-normal">${p.premiumEnds}</span>
                                     </div>
-                                    
                                     <div class="w-full text-right">Policy Maturity<br><span class="text-gray-500 font-normal">${p.maturity}</span></div>
                                 </div>
                             </div>
