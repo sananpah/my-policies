@@ -31,26 +31,26 @@
 
         .funky-title { font-family: 'Playfair Display', serif; }
 
-        /* --- Large Background Logo (Collapsed View) --- */
+        /* --- Bright Background Logo (Collapsed View) --- */
         .bg-logo-large {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            height: 40px;
-            opacity: 0.25; /* Increased opacity for brighter look */
+            height: 55px; /* Slightly larger */
+            opacity: 0.45; /* Brighter color scheme */
             z-index: 1;
             transition: opacity 0.3s ease;
             pointer-events: none;
         }
         .open .bg-logo-large { opacity: 0; }
 
-        /* --- Small Timeline Logo (Expanded View) --- */
+        /* --- Larger Timeline Logo (Expanded View) --- */
         .timeline-logo {
             position: absolute;
-            right: 10px;
-            top: -22px; 
-            height: 18px;
+            right: 15px;
+            top: -30px; 
+            height: 28px; /* Bigger display in expanded view */
             z-index: 40;
             pointer-events: none;
         }
@@ -68,7 +68,6 @@
         .premium-end-marker { left: 0; } 
         .maturity-marker { right: 0; }
 
-        /* --- Hover Tooltip Functionality --- */
         .segment-container { position: relative; cursor: pointer; z-index: 50; }
         .segment-container:hover .tooltip-text { opacity: 1; visibility: visible; transform: translate(-50%, -5px); }
         
@@ -110,9 +109,7 @@
     <script>
         const logos = {
             indusInd: "image_4e0b3d.png",
-            kotak: "image_5d7f80.png",
-            reliance: "image_4e0b3d.png", // Fallback for demonstration
-            hsbc: "image_4e0b3d.png"       // Fallback for demonstration
+            kotak: "image_5d7f80.png"
         };
 
         const myPolicies = [
@@ -197,31 +194,11 @@
                 brand: "indusInd"
             },
             {
-                name: "HSBC Life Strategic Growth",
-                id: "88273341",
-                type: "UNIT LINKED",
-                sumAssured: "₹ 5,00,000.00",
-                premium: "₹ 50,000.00",
-                frequency: "Yearly",
-                clientId: "77221144",
-                uin: "112L099V01",
-                dueDate: "15 Mar 2026",
-                lastPaid: "15 Mar 2024",
-                term: 10,
-                commenced: "15 Mar 2020",
-                premiumEnds: "15 Mar 2025",
-                maturity: "15 Mar 2030",
-                lastPaidYear: 2024,
-                premiumYears: 6,
-                color: "#4c1d95",
-                brand: "indusInd"
-            },
-            {
                 name: "Confident Retirement Savings",
                 id: "79079094",
                 type: "TRADITIONAL",
                 sumAssured: "₹ 323,695.00",
-                premium: "₹ 5,000.00",
+                premium: "₹ 50,000.00", /* Updated Premium */
                 frequency: "Yearly",
                 clientId: "79232865",
                 uin: "107N162V01",
@@ -268,7 +245,7 @@
             const totalPrem = myPolicies.reduce((acc, p) => acc + parseFloat(p.premium.replace(/[₹,]/g, '')), 0);
             
             document.getElementById('summary-bar').innerHTML = `
-                <div class="summary-card p-6 text-center bg-white"><p class="text-[11px] uppercase font-bold text-gray-400">Total Portfolio Sum Assured</p><p class="text-3xl font-bold maroon-text mt-1">₹ ${totalSA.toLocaleString('en-IN')}</p></div>
+                <div class="summary-card p-6 text-center bg-white"><p class="text-[11px] uppercase font-bold text-gray-400">Total Sum Assured</p><p class="text-3xl font-bold maroon-text mt-1">₹ ${totalSA.toLocaleString('en-IN')}</p></div>
                 <div class="summary-card p-6 text-center bg-white" style="border-color: #1e3a8a; box-shadow: 6px 6px 0px 0px rgba(30, 58, 138, 0.1);"><p class="text-[11px] uppercase font-bold text-gray-400">Total Annual Premium</p><p class="text-3xl font-bold mt-1" style="color: #1e3a8a;">₹ ${totalPrem.toLocaleString('en-IN')}</p></div>
             `;
 
@@ -331,7 +308,6 @@
                             <div><p class="text-gray-400 mb-1 font-semibold uppercase text-[10px]">Maturity Date</p><p class="font-bold text-gray-800 text-base">${p.maturity}</p></div>
                         </div>
                         <div class="p-6 pb-12 bg-gray-50/40 relative">
-                            <p class="text-[10px] text-gray-400 mb-10 font-bold tracking-widest uppercase italic">Policy Timeline • ${p.frequency}</p>
                             <div class="relative px-2">
                                 ${timelineHtml}
                                 <div class="flex text-[10px] text-gray-400 font-bold uppercase tracking-tight relative mt-4">
