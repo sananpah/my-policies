@@ -45,13 +45,17 @@
         }
         .open .bg-logo-large { opacity: 0; }
 
-        /* --- Paid Stamp Styling --- */
+        /* --- Enhanced PAID Stamp (Bigger & Brighter) --- */
         .paid-stamp {
-            height: 24px;
-            transform: rotate(-10deg);
-            margin-left: 8px;
+            height: 45px; /* Significantly Bigger */
+            width: auto;
+            transform: rotate(-15deg);
+            filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.1)); /* Added Pop */
+            margin-left: 15px;
             display: inline-block;
             vertical-align: middle;
+            z-index: 50;
+            position: relative;
         }
 
         /* --- Larger Timeline Logo (Expanded View) --- */
@@ -77,6 +81,7 @@
         .premium-end-marker { left: 0; } 
         .maturity-marker { right: 0; }
 
+        /* --- Hover Tooltip Functionality --- */
         .segment-container { position: relative; cursor: pointer; z-index: 50; }
         .segment-container:hover .tooltip-text { opacity: 1; visibility: visible; transform: translate(-50%, -5px); }
         
@@ -269,7 +274,7 @@
                 premiumYears: 5,
                 color: "#0c4a6e",
                 brand: "axis",
-                isPaidUp: true /* Triggers the Paid Stamp */
+                isPaidUp: true
             }
         ];
 
