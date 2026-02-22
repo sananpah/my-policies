@@ -22,7 +22,6 @@
         .premium-end-marker { left: 0; } 
         .maturity-marker { right: 0; }
         
-        /* HOVER FIXES */
         .segment-container { position: relative; cursor: pointer; z-index: 50; }
         .segment-container:hover > .tooltip-text { opacity: 1; visibility: visible; transform: translate(-50%, -8px); }
         
@@ -35,14 +34,14 @@
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
 
-        /* Specific fix for growth/maturity overlap */
-        .growth-zone { position: absolute; left: 0; top: 0; width: 80%; height: 100%; z-index: 60; }
-        .maturity-zone { position: absolute; right: 0; top: 0; width: 20%; height: 100%; z-index: 60; }
-        .growth-zone:hover .tooltip-text, .maturity-zone:hover .tooltip-text { opacity: 1; visibility: visible; transform: translate(-50%, -8px); }
+        /* Logic for Segmented Hover Zones in Growth Bar */
+        .hover-zone { position: absolute; top: 0; height: 100%; z-index: 60; cursor: pointer; border-right: 1px solid rgba(255,255,255,0.2); }
+        .hover-zone:hover .tooltip-text { opacity: 1; visibility: visible; transform: translate(-50%, -8px); }
+        .maturity-zone { position: absolute; right: 0; top: 0; width: 15%; height: 100%; z-index: 70; cursor: pointer; }
+        .maturity-zone:hover .tooltip-text { opacity: 1; visibility: visible; transform: translateY(-8px); }
         .maturity-zone .tooltip-text { left: auto; right: 0; transform: none; }
-        .maturity-zone:hover .tooltip-text { transform: translateY(-8px); }
 
-        .payout-dot { width: 8px; height: 8px; background: #f59e0b; border-radius: 50%; position: absolute; top: 50%; transform: translateY(-50%); border: 1px solid white; }
+        .payout-dot { width: 6px; height: 6px; background: #f59e0b; border-radius: 50%; position: absolute; top: 50%; transform: translateY(-50%); border: 1px solid white; }
         .tab-btn { padding: 10px 24px; font-weight: 700; text-transform: uppercase; font-size: 12px; letter-spacing: 1px; border-radius: 8px; transition: all 0.3s ease; border: 1px solid transparent; }
         .tab-btn.active-self { background: #8b1d1d; color: white; box-shadow: 0 4px 12px rgba(139, 29, 29, 0.2); }
         .tab-btn.active-wife { background: #0d9488; color: white; box-shadow: 0 4px 12px rgba(13, 148, 136, 0.2); }
@@ -77,10 +76,34 @@
 
         const allPolicies = [
             /* Self Policies */
-            { owner: "Self", name: "INLI Life Nishchit Ace", id: "54751949", type: "TRADITIONAL", sumAssured: "₹ 2,626,948.00", premium: "₹ 209,000.00", frequency: "Yearly", clientId: "62996974", uin: "121N180V01", dueDate: "17 Nov 2026", lastPaid: "17 Nov 2025", term: 30, commenced: "17 Nov 2025", premiumEnds: "17 Nov 2034", maturity: "17 Nov 2055", lastPaidYear: 2025, premiumYears: 10, color: "#b91c1c", brand: "indusInd" },
-            { owner: "Self", name: "INLI Nishchit Pension SL", id: "54679062", type: "TRADITIONAL", sumAssured: "₹ 89,830.00", premium: "₹ 200,000.00", frequency: "Yearly", clientId: "62996974", uin: "121N158V03", dueDate: "30 May 2026", lastPaid: "30 May 2025", term: 52, commenced: "30 May 2025", premiumEnds: "30 May 2030", maturity: "30 May 2077", lastPaidYear: 2025, premiumYears: 6, color: "#b91c1c", brand: "indusInd" },
-            { owner: "Self", name: "Nishchit Samrudhi Income lmtd", id: "54040166", type: "TRADITIONAL", sumAssured: "₹ 1,750,854.00", premium: "₹ 200,000.00", frequency: "Yearly", clientId: "62996974", uin: "121N142V01", dueDate: "10 Jan 2027", lastPaid: "10 Jan 2026", term: 28, commenced: "10 Jan 2022", premiumEnds: "10 Jan 2028", maturity: "10 Jan 2050", lastPaidYear: 2026, premiumYears: 7, color: "#b91c1c", brand: "indusInd" },
-            { owner: "Self", name: "Reliance Guaranteed Money Back", id: "53044042", type: "TRADITIONAL", sumAssured: "₹ 1,23,940.00", premium: "₹ 14,400.00", frequency: "Yearly", clientId: "62996974", uin: "121N084V03", dueDate: "08 Sep 2026", lastPaid: "08 Sep 2025", term: 15, commenced: "08 Sep 2017", premiumEnds: "08 Sep 2026", maturity: "08 Sep 2032", lastPaidYear: 2025, premiumYears: 10, color: "#b91c1c", brand: "indusInd", payouts: [{ years: "11-14", amount: "₹ 18,591" }, { years: "15", amount: "₹ 49,576" }], maturityBonus: "Loyalty: ₹ 37,170 | Addn: ₹ 18,591" },
+            { 
+                owner: "Self", name: "INLI Life Nishchit Ace", id: "54751949", type: "TRADITIONAL", sumAssured: "₹ 2,626,948.00", premium: "₹ 209,000.00", frequency: "Yearly", clientId: "62996974", uin: "121N180V01", dueDate: "17 Nov 2026", lastPaid: "17 Nov 2025", term: 30, commenced: "17 Nov 2025", premiumEnds: "17 Nov 2034", maturity: "17 Nov 2055", lastPaidYear: 2025, premiumYears: 10, color: "#b91c1c", brand: "indusInd",
+                payouts: [
+                    { range: "11-15 Yr", text: "Income: ₹ 133,974", width: "20%" },
+                    { range: "16-20 Yr", text: "Income: ₹ 160,769", width: "20%" },
+                    { range: "21-25 Yr", text: "Income: ₹ 187,564", width: "20%" },
+                    { range: "25-30 Yr", text: "Income: ₹ 214,359", width: "25%" }
+                ],
+                maturityBenefit: "Sum Assured"
+            },
+            { 
+                owner: "Self", name: "INLI Nishchit Pension SL", id: "54679062", type: "TRADITIONAL", sumAssured: "₹ 89,830.00", premium: "₹ 200,000.00", frequency: "Yearly", clientId: "62996974", uin: "121N158V03", dueDate: "30 May 2026", lastPaid: "30 May 2025", term: 52, commenced: "30 May 2025", premiumEnds: "30 May 2030", maturity: "30 May 2077", lastPaidYear: 2025, premiumYears: 6, color: "#b91c1c", brand: "indusInd",
+                payouts: [{ range: "Annuity", text: "Annuity of Sum Assured till Term", width: "85%" }],
+                maturityBenefit: "Special Surrender Value"
+            },
+            { 
+                owner: "Self", name: "Nishchit Samrudhi Income lmtd", id: "54040166", type: "TRADITIONAL", sumAssured: "₹ 1,750,854.00", premium: "₹ 200,000.00", frequency: "Yearly", clientId: "62996974", uin: "121N142V01", dueDate: "10 Jan 2027", lastPaid: "10 Jan 2026", term: 28, commenced: "10 Jan 2022", premiumEnds: "10 Jan 2028", maturity: "10 Jan 2050", lastPaidYear: 2026, premiumYears: 7, color: "#b91c1c", brand: "indusInd",
+                payouts: [{ range: "8-28 Yr", text: "Annual Income: ₹ 100,000", width: "85%" }],
+                maturityBenefit: "Sum Assured"
+            },
+            { 
+                owner: "Self", name: "Reliance Guaranteed Money Back", id: "53044042", type: "TRADITIONAL", sumAssured: "₹ 1,23,940.00", premium: "₹ 14,400.00", frequency: "Yearly", clientId: "62996974", uin: "121N084V03", dueDate: "08 Sep 2026", lastPaid: "08 Sep 2025", term: 15, commenced: "08 Sep 2017", premiumEnds: "08 Sep 2026", maturity: "08 Sep 2032", lastPaidYear: 2025, premiumYears: 10, color: "#b91c1c", brand: "indusInd", 
+                payouts: [
+                    { range: "11-14 Yr", text: "Annual: ₹ 18,591", width: "40%" },
+                    { range: "15 Yr", text: "Lump Sum: ₹ 49,576", width: "45%" }
+                ], 
+                maturityBenefit: "Loyalty: ₹ 37,170 | Addn: ₹ 18,591" 
+            },
             { owner: "Self", name: "Confident Retirement Savings", id: "79079094", type: "TRADITIONAL", sumAssured: "₹ 323,695.00", premium: "₹ 50,000.00", frequency: "Yearly", clientId: "79232865", uin: "107N162V01", dueDate: "13 Mar 2026", lastPaid: "13 Mar 2025", term: 15, commenced: "13 Mar 2025", premiumEnds: "13 Mar 2031", maturity: "13 Mar 2040", lastPaidYear: 2025, premiumYears: 7, color: "#1e3a8a", brand: "kotak" },
             { owner: "Self", name: "Fortune Maximiser", id: "79425536", type: "TRADITIONAL", sumAssured: "₹ 711,994.00", premium: "₹ 70,000.00", frequency: "Yearly", clientId: "79232865", uin: "107N125V03", dueDate: "14 Aug 2026", lastPaid: "14 Aug 2025", term: 64, commenced: "14 Aug 2025", premiumEnds: "14 Aug 2034", maturity: "14 Aug 2089", lastPaidYear: 2025, premiumYears: 10, color: "#1e3a8a", brand: "kotak" },
             { owner: "Self", name: "Fast Track Super", id: "608480927", type: "ULIP", sumAssured: "₹ 0.00", premium: "₹ 50,000.00", frequency: "Yearly", clientId: "6000981728", uin: "104L082V04", dueDate: "PAID UP", lastPaid: "04 Feb 2026", term: 10, commenced: "04 Feb 2022", premiumEnds: "04 Feb 2026", maturity: "04 Feb 2032", lastPaidYear: 2026, premiumYears: 5, color: "#0c4a6e", brand: "axis", isPaidUp: true },
@@ -139,17 +162,32 @@
                 }
 
                 if (p.term > p.premiumYears) {
-                    let payoutMarkers = "";
-                    if (p.payouts) { p.payouts.forEach((po, i) => { const pos = (i + 1) * 30; payoutMarkers += `<div class="payout-dot" style="left: ${pos}%"></div>`; }); }
                     timelineHtml += `<div class="flex-[6] h-1.5 rounded-sm relative bg-gray-100 border-l-2 border-white">
-                        <div class="growth-zone">
-                            <span class="tooltip-text">Growth: ${p.term - p.premiumYears} Yrs${p.payouts ? ' | ' + p.payouts.map(x => `Yr ${x.years}: ${x.amount}`).join(' ') : ''}</span>
-                        </div>
-                        <div class="vertical-divider premium-end-marker"></div>
-                        ${payoutMarkers}<img src="${logoPath}" class="timeline-logo" alt="Logo">
+                        <div class="vertical-divider premium-end-marker"></div>`;
+                    
+                    // Logic for Segmented Payout Hover Zones
+                    if (p.payouts) {
+                        let currentLeft = 0;
+                        p.payouts.forEach(po => {
+                            timelineHtml += `
+                                <div class="hover-zone" style="left: ${currentLeft}%; width: ${po.width};">
+                                    <span class="tooltip-text">${po.range}: ${po.text}</span>
+                                    <div class="payout-dot" style="left: 0"></div>
+                                </div>`;
+                            currentLeft += parseFloat(po.width);
+                        });
+                    } else {
+                        timelineHtml += `
+                            <div class="hover-zone" style="left: 0; width: 85%;">
+                                <span class="tooltip-text">Growth: ${p.term - p.premiumYears} Yrs</span>
+                            </div>`;
+                    }
+
+                    timelineHtml += `
+                        <img src="${logoPath}" class="timeline-logo" alt="Logo">
                         <div class="maturity-zone">
                             <div class="vertical-divider maturity-marker"></div>
-                            <span class="tooltip-text">Maturity: ${p.maturityBonus || 'Standard Payout'}</span>
+                            <span class="tooltip-text">Maturity: ${p.maturityBenefit || 'Standard Payout'}</span>
                         </div>
                     </div>`;
                 }
