@@ -3,25 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nami Portfolio v3</title>
+    <title>Nami Portfolio - Full Restore</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;600;700&display=swap');
         body { background-color: #f1f5f9; font-family: 'Inter', sans-serif; }
         .maroon-text { color: #8b1d1d; }
-        .summary-card { background: white; border-radius: 12px; transition: all 0.3s ease; border: 1px solid #e2e8f0; }
         
         @keyframes subtleGlow {
             0% { box-shadow: 0 0 5px rgba(139, 29, 29, 0.2); border-color: rgba(139, 29, 29, 0.4); }
-            50% { box-shadow: 0 0 15px rgba(139, 29, 29, 0.5); border-color: rgba(139, 29, 29, 0.8); }
+            50% { box-shadow: 0 0 20px rgba(139, 29, 29, 0.6); border-color: rgba(139, 29, 29, 1); }
             100% { box-shadow: 0 0 5px rgba(139, 29, 29, 0.2); border-color: rgba(139, 29, 29, 0.4); }
         }
         .glow-active { animation: subtleGlow 2s infinite ease-in-out; border-width: 2px !important; }
 
-        .policy-card { background: white; border-top: 2px solid; border-left: 4px solid; border-right: 1px solid; border-bottom: 1px solid; border-radius: 4px; position: relative; transition: all 0.3s ease; overflow: hidden; }
+        .policy-card { background: white; border-top: 2px solid; border-left: 4px solid; border-right: 1px solid; border-bottom: 1px solid; border-radius: 4px; position: relative; transition: all 0.3s ease; overflow: visible; }
         .funky-title { font-family: 'Playfair Display', serif; }
-        .bg-logo-large { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); height: 50px; opacity: 0.15; z-index: 1; pointer-events: none; }
+        .bg-logo-large { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); height: 50px; opacity: 0.1; z-index: 1; pointer-events: none; }
         
+        /* Timeline Elements */
+        .vertical-divider { width: 2px; height: 18px; background-color: #22c55e; position: absolute; top: -6px; z-index: 30; }
+        .timeline-logo { position: absolute; right: 10px; top: -25px; height: 24px; z-index: 40; pointer-events: none; }
+        .payout-dot { width: 6px; height: 6px; background: #f59e0b; border-radius: 50%; position: absolute; top: 50%; transform: translateY(-50%); border: 1px solid white; }
+        
+        /* Tooltips */
+        .segment-container { position: relative; cursor: pointer; z-index: 50; }
+        .segment-container:hover > .tooltip-text { opacity: 1; visibility: visible; transform: translate(-50%, -8px); }
+        .tooltip-text {
+            visibility: hidden; opacity: 0; position: absolute; bottom: 180%;
+            left: 50%; transform: translateX(-50%); background: #1f2937;
+            color: white; padding: 6px 12px; border-radius: 4px; font-size: 10px;
+            font-weight: 600; white-space: nowrap; transition: all 0.2s; z-index: 100;
+        }
+
         .tab-btn { padding: 10px 24px; font-weight: 700; text-transform: uppercase; font-size: 12px; border-radius: 8px; transition: all 0.3s ease; }
         .tab-btn.active-self { background: #8b1d1d; color: white; }
         .tab-btn.active-wife { background: #0d9488; color: white; }
@@ -29,8 +43,10 @@
         
         .content-area { display: none; }
         .open .content-area { display: block; }
-        .section-divider { border-left: 4px solid #8b1d1d; padding-left: 1rem; margin: 2rem 0 1rem 0; font-weight: 800; color: #1e293b; text-transform: uppercase; letter-spacing: 1px; font-size: 0.8rem; }
+        .section-divider { border-left: 4px solid #8b1d1d; padding-left: 1rem; margin: 2.5rem 0 1rem 0; font-weight: 800; color: #1e293b; text-transform: uppercase; letter-spacing: 1px; font-size: 0.8rem; }
         .wife-divider { border-left-color: #0d9488; }
+        .chevron { transition: transform 0.3s; }
+        .open .chevron { transform: rotate(180deg); }
     </style>
 </head>
 <body class="p-4 md:p-10">
@@ -50,7 +66,7 @@
 
     <script>
         let currentOwner = 'Self';
-        const today = new Date();
+        const today = new Date(); // Feb 23, 2026
         const logos = {
             indusInd: "image_4e0b3d.png", kotak: "image_5d7f80.png", axis: "image_7a80d9.png", 
             bharti: "image_86c684.png", sbi: "image_cda45c.png", icici: "image_d82175.png", 
@@ -63,24 +79,28 @@
             /* --- SELF SINGAPORE --- */
             { 
                 owner: "Self", region: "Singapore", name: "Pro-Achiever 2.0", id: "U126327913", type: "ILP", currency: "$", premium: 5000, currentValuation: 22450, 
-                frequency: "Yearly", dueDate: "30 Dec 2026", term: 56, commenced: "30 Dec 2021", premiumEnds: "30 Dec 2031", maturity: "30 Dec 2077", premiumYears: 10, color: "#d31145", brand: "aia"
+                frequency: "Yearly", dueDate: "30 Dec 2026", term: 56, commenced: "30 Dec 2021", premiumEnds: "30 Dec 2031", maturity: "30 Dec 2077", premiumYears: 10, color: "#d31145", brand: "aia", isSingapore: true
             },
             /* --- SELF INDIA --- */
             { 
                 owner: "Self", region: "India", name: "INLI Life Nishchit Ace", id: "54751949", type: "TRADITIONAL", currency: "₹", premium: 209000, 
-                frequency: "Yearly", dueDate: "17 Nov 2026", term: 30, commenced: "17 Nov 2025", premiumEnds: "17 Nov 2034", maturity: "17 Nov 2055", premiumYears: 10, color: "#b91c1c", brand: "indusInd"
+                frequency: "Yearly", dueDate: "17 Nov 2026", term: 30, commenced: "17 Nov 2025", premiumEnds: "17 Nov 2034", maturity: "17 Nov 2055", premiumYears: 10, color: "#b91c1c", brand: "indusInd",
+                payouts: [{ range: "11-15 Yr", text: "Income: ₹ 133,974", width: "20%" }, { range: "16-20 Yr", text: "Income: ₹ 160,769", width: "20%" }, { range: "21-25 Yr", text: "Income: ₹ 187,564", width: "20%" }, { range: "25-30 Yr", text: "Income: ₹ 214,359", width: "25%" }]
             },
             { 
                 owner: "Self", region: "India", name: "INLI Nishchit Pension SL", id: "54679062", type: "TRADITIONAL", currency: "₹", premium: 200000, 
-                frequency: "Yearly", dueDate: "30 May 2026", term: 52, commenced: "30 May 2025", premiumEnds: "30 May 2030", maturity: "30 May 2077", premiumYears: 6, color: "#b91c1c", brand: "indusInd"
+                frequency: "Yearly", dueDate: "30 May 2026", term: 52, commenced: "30 May 2025", premiumEnds: "30 May 2030", maturity: "30 May 2077", premiumYears: 6, color: "#b91c1c", brand: "indusInd",
+                payouts: [{ range: "Annuity", text: "Annuity till Term", width: "85%" }]
             },
             { 
                 owner: "Self", region: "India", name: "Nishchit Samrudhi Income", id: "54040166", type: "TRADITIONAL", currency: "₹", premium: 200000, 
-                frequency: "Yearly", dueDate: "10 Jan 2027", term: 28, commenced: "10 Jan 2022", premiumEnds: "10 Jan 2028", maturity: "10 Jan 2050", premiumYears: 7, color: "#b91c1c", brand: "indusInd"
+                frequency: "Yearly", dueDate: "10 Jan 2027", term: 28, commenced: "10 Jan 2022", premiumEnds: "10 Jan 2028", maturity: "10 Jan 2050", premiumYears: 7, color: "#b91c1c", brand: "indusInd",
+                payouts: [{ range: "8-28 Yr", text: "Annual Income: ₹ 100k", width: "85%" }]
             },
             { 
                 owner: "Self", region: "India", name: "Reliance Money Back", id: "53044042", type: "TRADITIONAL", currency: "₹", premium: 14400, 
-                frequency: "Yearly", dueDate: "08 Sep 2026", term: 15, commenced: "08 Sep 2017", premiumEnds: "08 Sep 2026", maturity: "08 Sep 2032", premiumYears: 10, color: "#b91c1c", brand: "indusInd"
+                frequency: "Yearly", dueDate: "08 Sep 2026", term: 15, commenced: "08 Sep 2017", premiumEnds: "08 Sep 2026", maturity: "08 Sep 2032", premiumYears: 10, color: "#b91c1c", brand: "indusInd",
+                payouts: [{ range: "11-14 Yr", text: "Annual: ₹ 18,591", width: "40%" }, { range: "15 Yr", text: "Lump Sum: ₹ 49,576", width: "45%" }]
             },
             { owner: "Self", region: "India", name: "Kotak Retirement Savings", id: "79079094", type: "TRADITIONAL", currency: "₹", premium: 50000, dueDate: "13 Mar 2026", term: 15, commenced: "13 Mar 2025", premiumEnds: "13 Mar 2031", maturity: "13 Mar 2040", premiumYears: 7, color: "#1e3a8a", brand: "kotak" },
             { owner: "Self", region: "India", name: "Kotak Fortune Maximiser", id: "79425536", type: "TRADITIONAL", currency: "₹", premium: 70000, dueDate: "14 Aug 2026", term: 64, commenced: "14 Aug 2025", premiumEnds: "14 Aug 2034", maturity: "14 Aug 2089", premiumYears: 10, color: "#1e3a8a", brand: "kotak" },
@@ -107,7 +127,7 @@
             const regions = [...new Set(filtered.map(p => p.region))];
             
             let html = "";
-            let summary = { INR: 0, SGD_PREM: 0, SGD_VAL: 0 };
+            let totals = { INR: 0, SGD_PREM: 0, SGD_VAL: 0 };
 
             regions.forEach(region => {
                 html += `<div class="section-divider ${currentOwner === 'Wife' ? 'wife-divider' : ''}">${region} Portfolio</div>`;
@@ -121,47 +141,82 @@
                     const dueDateObj = new Date(p.dueDate === "PAID UP" ? "2099-12-31" : p.dueDate);
                     const isNearDue = (dueDateObj - today) / (1000*60*60*24) <= 45 && p.dueDate !== "PAID UP";
 
-                    if(p.currency === "₹") summary.INR += p.premium;
-                    else { summary.SGD_PREM += p.premium; summary.SGD_VAL += p.currentValuation; }
+                    if(p.currency === "₹") totals.INR += p.premium;
+                    else { totals.SGD_PREM += p.premium; totals.SGD_VAL += p.currentValuation; }
 
-                    const growth = p.currentValuation ? (((p.currentValuation - (p.premium * (currentYear - startYear + 1))) / (p.premium * (currentYear - startYear + 1))) * 100).toFixed(1) : 0;
+                    // Timeline logic
+                    const lastPaidYearAuto = startYear + Math.max(0, currentYear - startYear);
+                    const totalTimelineSlots = p.premiumYears + 6;
+                    const premiumWidthPercentage = (p.premiumYears / totalTimelineSlots) * 100;
+
+                    let timelineHtml = `<div class="flex gap-1 w-full relative items-center mb-2">`;
+                    for (let i = 0; i < p.premiumYears; i++) {
+                        const segYear = startYear + i;
+                        const isPaid = segYear < lastPaidYearAuto || (segYear === lastPaidYearAuto && today >= new Date(`${segYear} ${p.commenced.split(' ')[1]} ${p.commenced.split(' ')[0]}`));
+                        const penaltyText = p.isSingapore ? ` | Penalty: ${(surrenderSchedule[i+1]*100 || 0)}%` : '';
+                        timelineHtml += `<div class="segment-container flex-1 h-1.5 rounded-sm relative ${isPaid ? 'bg-green-500' : 'bg-gray-200'}">
+                            <span class="tooltip-text">Year ${i+1} (${segYear})${penaltyText}</span>
+                            ${i === 0 ? '<div class="vertical-divider left-0"></div>' : ''}
+                        </div>`;
+                    }
+                    timelineHtml += `<div class="flex-[6] h-1.5 rounded-sm relative bg-gray-100 border-l-2 border-white">
+                        <div class="vertical-divider left-0"></div>`;
+                    if (p.payouts) {
+                        let curLeft = 0;
+                        p.payouts.forEach(po => {
+                            timelineHtml += `<div class="absolute h-full" style="left:${curLeft}%; width:${po.width}; cursor:pointer; z-index:60;">
+                                <span class="tooltip-text">${po.range}: ${po.text}</span>
+                                <div class="payout-dot" style="left:0"></div>
+                            </div>`;
+                            curLeft += parseFloat(po.width);
+                        });
+                    } else {
+                        timelineHtml += `<div class="absolute w-full h-full cursor-pointer z-60"><span class="tooltip-text">Growth Phase</span></div>`;
+                    }
+                    timelineHtml += `<img src="${logos[p.brand]}" class="timeline-logo"><div class="absolute right-0 top-0 w-2 h-full"><div class="vertical-divider right-0"></div></div></div></div>`;
 
                     html += `
                     <div id="card-${p.id}" class="policy-card shadow-sm ${isNearDue ? 'glow-active' : ''}" style="border-color: ${p.color}">
                         <img src="${logos[p.brand]}" class="bg-logo-large">
                         <div class="p-6 flex justify-between items-center cursor-pointer relative z-20" onclick="toggleCard('${p.id}')">
                             <div class="flex items-center gap-4">
-                                <div class="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center border border-gray-100">
-                                    <img src="${logos[p.brand]}" class="max-h-5">
-                                </div>
+                                <svg class="chevron w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                                 <div>
                                     <h2 class="text-base font-bold text-gray-800">${p.name}</h2>
-                                    <p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest">${p.id} • ${p.type}</p>
+                                    <p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest">
+                                        ${p.id} • ${p.type} ${p.isPaidUp ? ' (PAID UP)' : ''}
+                                        ${isNearDue ? `<span class="ml-2 px-2 py-0.5 bg-red-100 text-red-600 rounded text-[8px] font-bold">DUE SOON</span>` : ''}
+                                    </p>
                                 </div>
                             </div>
-                            <div class="flex gap-6 text-right">
-                                <div><p class="text-[8px] text-gray-400 uppercase font-bold">Premium</p><p class="text-md font-bold text-gray-800">${p.currency}${p.premium.toLocaleString()}</p></div>
+                            <div class="flex gap-6 text-right items-center">
+                                <div><p class="text-[8px] text-gray-400 uppercase font-bold">Annual Premium</p><p class="text-md font-bold text-gray-800">${p.currency}${p.premium.toLocaleString()}</p></div>
                                 ${p.currentValuation ? `<div><p class="text-[8px] text-gray-400 uppercase font-bold">Valuation</p><p class="text-md font-bold text-green-600">${p.currency}${p.currentValuation.toLocaleString()}</p></div>` : ''}
                             </div>
                         </div>
-                        <div class="content-area bg-gray-50/50 p-6 border-t border-gray-100">
-                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mb-4">
-                                <div><p class="text-[9px] text-gray-400 uppercase font-bold">Commenced</p><p class="font-bold">${p.commenced}</p></div>
-                                <div><p class="text-[9px] text-gray-400 uppercase font-bold">Next Due</p><p class="font-bold ${isNearDue ? 'text-red-600' : ''}">${p.dueDate}</p></div>
-                                <div><p class="text-[9px] text-gray-400 uppercase font-bold">Term</p><p class="font-bold">${p.term} Yrs</p></div>
-                                <div><p class="text-[9px] text-gray-400 uppercase font-bold">Maturity</p><p class="font-bold">${p.maturity}</p></div>
+                        <div class="content-area">
+                            <div class="px-6 py-4 grid grid-cols-2 md:grid-cols-6 gap-4 text-xs bg-white">
+                                <div><p class="text-[9px] text-gray-400 uppercase font-bold mb-1">Commenced</p><p class="font-bold">${p.commenced}</p></div>
+                                <div><p class="text-[9px] text-gray-400 uppercase font-bold mb-1">Next Due</p><p class="font-bold ${isNearDue ? 'text-red-600' : ''}">${p.dueDate}</p></div>
+                                <div><p class="text-[9px] text-gray-400 uppercase font-bold mb-1">Term</p><p class="font-bold">${p.term} Yrs</p></div>
+                                <div><p class="text-[9px] text-gray-400 uppercase font-bold mb-1">Prem. Ends</p><p class="font-bold">${p.premiumEnds}</p></div>
+                                <div class="col-span-2 text-right"><p class="text-[9px] text-gray-400 uppercase font-bold mb-1">Maturity Date</p><p class="font-bold">${p.maturity}</p></div>
                             </div>
-                            ${p.region === "Singapore" ? `
-                            <div class="mt-4 p-4 bg-white rounded border border-gray-200 flex justify-between">
-                                <div>
-                                    <p class="text-[10px] text-gray-400 font-bold uppercase">Liquidity (After ${(penalty*100).toFixed(0)}% Penalty)</p>
-                                    <p class="text-xl font-black text-gray-800">${p.currency}${(p.currentValuation * (1 - penalty)).toLocaleString()}</p>
+                            <div class="p-6 pb-12 bg-gray-50/50 relative">
+                                <div class="relative px-2">
+                                    ${timelineHtml}
+                                    <div class="flex text-[9px] text-gray-400 font-bold uppercase mt-4">
+                                        <div class="w-1/4">Start<br>${p.commenced}</div>
+                                        <div class="absolute text-center" style="left: ${premiumWidthPercentage}%; transform: translateX(-50%);">Prem Ends<br>${p.premiumEnds}</div>
+                                        <div class="w-full text-right">Maturity<br>${p.maturity}</div>
+                                    </div>
                                 </div>
-                                <div class="text-right">
-                                    <p class="text-[10px] text-gray-400 font-bold uppercase">Net Growth</p>
-                                    <p class="text-lg font-bold ${growth >= 0 ? 'text-green-600' : 'text-red-600'}">${growth}%</p>
-                                </div>
-                            </div>` : ''}
+                                ${p.isSingapore ? `
+                                <div class="mt-6 p-4 bg-white border border-gray-100 rounded flex justify-between items-center shadow-sm">
+                                    <div><p class="text-[10px] text-gray-400 uppercase font-bold">Liquidity after penalty</p><p class="text-xl font-black text-gray-800">$${(p.currentValuation * (1 - penalty)).toLocaleString()}</p></div>
+                                    <div class="text-right"><p class="text-[10px] text-red-500 font-bold uppercase">Current Penalty: ${(penalty*100).toFixed(0)}%</p></div>
+                                </div>` : ''}
+                            </div>
                         </div>
                     </div>`;
                 });
@@ -171,14 +226,10 @@
             document.getElementById('summary-section').innerHTML = `
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="summary-card p-5 border-l-4 ${currentOwner === 'Self' ? 'border-red-800' : 'border-teal-600'}">
-                        <p class="text-[10px] font-bold text-gray-400 uppercase">Total Annual Premium (INR)</p>
-                        <p class="text-2xl font-black text-gray-800">₹${summary.INR.toLocaleString('en-IN')}</p>
+                        <p class="text-[10px] font-bold text-gray-400 uppercase">India Premium (Annual)</p>
+                        <p class="text-2xl font-black text-gray-800">₹${totals.INR.toLocaleString('en-IN')}</p>
                     </div>
-                    ${summary.SGD_PREM > 0 ? `
-                    <div class="summary-card p-5 border-l-4 border-pink-600">
-                        <p class="text-[10px] font-bold text-gray-400 uppercase">Singapore Portfolio Value (SGD)</p>
-                        <p class="text-2xl font-black text-pink-700">$${summary.SGD_VAL.toLocaleString()}</p>
-                    </div>` : ''}
+                    ${totals.SGD_PREM > 0 ? `<div class="summary-card p-5 border-l-4 border-pink-600"><p class="text-[10px] font-bold text-gray-400 uppercase">Singapore Portfolio Value</p><p class="text-2xl font-black text-pink-700">$${totals.SGD_VAL.toLocaleString()}</p></div>` : ''}
                 </div>`;
         }
         render();
