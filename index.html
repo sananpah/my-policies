@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nami Portfolio - Final Restore</title>
+    <title>Nami Portfolio - Full Baseline</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;600;700&display=swap');
@@ -19,6 +19,10 @@
             color: #059669; opacity: 0.25; border: 6px solid #059669; padding: 2px 15px;
             border-radius: 8px; transform: rotate(-12deg); pointer-events: none; z-index: 10;
         }
+
+        .type-pill { font-size: 8px; padding: 2px 8px; border-radius: 99px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+        .pill-trad { background: #fef3c7; color: #92400e; border: 1px solid #f59e0b; }
+        .pill-ulip { background: #e0f2fe; color: #075985; border: 1px solid #0ea5e9; }
 
         .vertical-marker { width: 2px; height: 22px; background-color: #22c55e; position: absolute; top: -8px; z-index: 40; }
         .payout-dot { width: 10px; height: 10px; background: #f59e0b; border-radius: 50%; position: absolute; top: 50%; transform: translateY(-50%); border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
@@ -60,20 +64,20 @@
         const TODAY = new Date();
         const DATA = {
             india: [
-                { name: "INLI Life Nishchit Ace", id: "54751949", clientId: "60938507", uin: "128N171V01", premium: 209000, sumAssured: 2626948, dueDate: "17 Nov 2026", commenced: "17 Nov 2025", premiumEnds: "17 Nov 2034", maturity: "17 Nov 2055", premiumYears: 10, color: "#b91c1c", payouts: [{range: "Annual Income (11-30 Yr)", text: "Staged Increase: ₹ 1.33L to ₹ 2.14L"}, {range: "Maturity", text: "SA: ₹ 26,26,948"}] },
-                { name: "INLI Nishchit Pension SL", id: "54679062", clientId: "60938507", uin: "128N161V04", premium: 200000, sumAssured: 89830, dueDate: "30 May 2026", commenced: "30 May 2025", premiumEnds: "30 May 2030", maturity: "30 May 2077", premiumYears: 6, color: "#b91c1c", payouts: [{range: "Annuity", text: "Sum Assured Value Life-Long"}, {range: "Maturity", text: "Special Surrender Value"}] },
-                { name: "Nishchit Samrudhi Income", id: "54040166", clientId: "60938507", uin: "128N154V02", premium: 200000, sumAssured: 1750854, dueDate: "10 Jan 2027", commenced: "10 Jan 2022", premiumEnds: "10 Jan 2028", maturity: "10 Jan 2050", premiumYears: 7, color: "#b91c1c", payouts: [{range: "Income (8-28 Yr)", text: "₹ 1,00,000/yr"}, {range: "Maturity", text: "Sum Assured Value"}] },
-                { name: "Reliance Money Back", id: "53044042", clientId: "60938507", uin: "128N053V02", premium: 14400, sumAssured: 123940, dueDate: "08 Sep 2026", commenced: "08 Sep 2017", premiumEnds: "08 Sep 2026", maturity: "08 Sep 2032", premiumYears: 10, color: "#b91c1c", payouts: [{range: "Income (11-14 Yr)", text: "₹ 18,591"}, {range: "Income (15th Yr)", text: "₹ 49,576"}, {range: "Maturity", text: "Loyalty + Maturity Additions"}] },
-                { name: "Kotak Retirement Savings", id: "79079094", clientId: "61491746", uin: "107N105V02", premium: 50000, sumAssured: 323695, dueDate: "13 Mar 2026", commenced: "13 Mar 2025", premiumEnds: "13 Mar 2031", maturity: "13 Mar 2040", premiumYears: 7, color: "#1e3a8a", payouts: [{range: "Maturity", text: "SA: ₹ 3,23,695 + Bonus"}] },
-                { name: "Kotak Fortune Maximiser", id: "79425536", clientId: "61491746", uin: "107N124V01", premium: 70000, sumAssured: 711994, dueDate: "14 Aug 2026", commenced: "14 Aug 2025", premiumEnds: "14 Aug 2034", maturity: "14 Aug 2089", premiumYears: 10, color: "#1e3a8a", payouts: [{range: "Survival", text: "Annual Cash Payouts"}, {range: "Maturity", text: "Terminal Bonus + SA"}] },
-                { name: "Bharti Life Wealth Pro", id: "503-9562771", clientId: "503-9562771", uin: "130L097V02", premium: 50000, sumAssured: 500000, dueDate: "28 Sep 2026", commenced: "28 Sep 2023", premiumEnds: "28 Sep 2029", maturity: "28 Sep 2038", premiumYears: 7, color: "#4338ca", payouts: [{range: "Maturity", text: "Fund Value + Loyalty"}] },
-                { name: "Axis Max Life", id: "608480927", clientId: "608480927", uin: "104L082V02", premium: 50000, sumAssured: 500000, dueDate: "PAID UP", commenced: "04 Feb 2022", premiumEnds: "04 Feb 2026", maturity: "04 Feb 2032", premiumYears: 5, color: "#0c4a6e", isPaidUp: true, payouts: [{range: "Maturity", text: "Fund Value Payout"}] }
+                { name: "INLI Life Nishchit Ace", id: "54751949", clientId: "60938507", uin: "128N171V01", type: "TRADITIONAL", premium: 209000, sumAssured: 2626948, dueDate: "17 Nov 2026", commenced: "17 Nov 2025", premiumEnds: "17 Nov 2034", maturity: "17 Nov 2055", premiumYears: 10, color: "#b91c1c", payouts: [{range: "Annual Income (11-30 Yr)", text: "₹ 1.33L to ₹ 2.14L"}, {range: "Maturity", text: "SA: ₹ 26,26,948"}] },
+                { name: "INLI Nishchit Pension SL", id: "54679062", clientId: "60938507", uin: "128N161V04", type: "TRADITIONAL", premium: 200000, sumAssured: 89830, dueDate: "30 May 2026", commenced: "30 May 2025", premiumEnds: "30 May 2030", maturity: "30 May 2077", premiumYears: 6, color: "#b91c1c", payouts: [{range: "Annuity", text: "SA Value Life-Long"}, {range: "Maturity", text: "Special Surrender Value"}] },
+                { name: "Nishchit Samrudhi Income", id: "54040166", clientId: "60938507", uin: "128N154V02", type: "TRADITIONAL", premium: 200000, sumAssured: 1750854, dueDate: "10 Jan 2027", commenced: "10 Jan 2022", premiumEnds: "10 Jan 2028", maturity: "10 Jan 2050", premiumYears: 7, color: "#b91c1c", payouts: [{range: "Income (8-28 Yr)", text: "₹ 1,00,000/yr"}, {range: "Maturity", text: "SA Value"}] },
+                { name: "Reliance Money Back", id: "53044042", clientId: "60938507", uin: "128N053V02", type: "TRADITIONAL", premium: 14400, sumAssured: 123940, dueDate: "08 Sep 2026", commenced: "08 Sep 2017", premiumEnds: "08 Sep 2026", maturity: "08 Sep 2032", premiumYears: 10, color: "#b91c1c", payouts: [{range: "Income (11-15 Yr)", text: "₹ 18,591 - ₹ 49,576"}, {range: "Maturity", text: "Loyalty + SA"}] },
+                { name: "Kotak Retirement Savings", id: "79079094", clientId: "61491746", uin: "107N105V02", type: "TRADITIONAL", premium: 50000, sumAssured: 323695, dueDate: "13 Mar 2026", commenced: "13 Mar 2025", premiumEnds: "13 Mar 2031", maturity: "13 Mar 2040", premiumYears: 7, color: "#1e3a8a", payouts: [{range: "Maturity", text: "SA + Bonus"}] },
+                { name: "Kotak Fortune Maximiser", id: "79425536", clientId: "61491746", uin: "107N124V01", type: "TRADITIONAL", premium: 70000, sumAssured: 711994, dueDate: "14 Aug 2026", commenced: "14 Aug 2025", premiumEnds: "14 Aug 2034", maturity: "14 Aug 2089", premiumYears: 10, color: "#1e3a8a", payouts: [{range: "Survival", text: "Annual Payouts"}, {range: "Maturity", text: "Terminal Bonus + SA"}] },
+                { name: "Bharti Life Wealth Pro", id: "503-9562771", clientId: "503-9562771", uin: "130L097V02", type: "ULIP", premium: 50000, sumAssured: 500000, dueDate: "28 Sep 2026", commenced: "28 Sep 2023", premiumEnds: "28 Sep 2029", maturity: "28 Sep 2038", premiumYears: 7, color: "#4338ca", payouts: [{range: "Maturity", text: "Fund Value + Loyalty"}] },
+                { name: "Axis Max Life", id: "608480927", clientId: "608480927", uin: "104L082V02", type: "ULIP", premium: 50000, sumAssured: 500000, dueDate: "PAID UP", commenced: "04 Feb 2022", premiumEnds: "04 Feb 2026", maturity: "04 Feb 2032", premiumYears: 5, color: "#0c4a6e", isPaidUp: true, payouts: [{range: "Maturity", text: "Market Value Payout"}] }
             ],
             wife: [
-                { name: "SBI Smart Privilege Plus", id: "3N307267702", clientId: "WIFE-SBI", uin: "111L107V03", premium: 600000, sumAssured: 4200000, dueDate: "23 Apr 2026", commenced: "23 Apr 2025", premiumEnds: "23 Apr 2029", maturity: "23 Apr 2040", premiumYears: 5, color: "#1e3a8a", payouts: [{range: "Maturity", text: "Fund Value"}] }
+                { name: "SBI Smart Privilege Plus", id: "3N307267702", clientId: "WIFE-SBI", uin: "111L107V03", type: "ULIP", premium: 600000, sumAssured: 4200000, dueDate: "23 Apr 2026", commenced: "23 Apr 2025", premiumEnds: "23 Apr 2029", maturity: "23 Apr 2040", premiumYears: 5, color: "#1e3a8a", payouts: [{range: "Maturity", text: "Fund Value"}] }
             ],
             singapore: [
-                { name: "Pro-Achiever 2.0", id: "U126327913", clientId: "NAMI-SG", uin: "AIA-PA2", premium: 5000, sumAssured: 0, dueDate: "30 Dec 2026", commenced: "30 Dec 2021", premiumEnds: "30 Dec 2031", maturity: "30 Dec 2077", premiumYears: 10, color: "#d31145", currency: "$", payouts: [{range: "Accumulation", text: "Wealth Growth Phase"}] }
+                { name: "Pro-Achiever 2.0", id: "U126327913", clientId: "NAMI-SG", uin: "AIA-PA2", type: "ILP", premium: 5000, sumAssured: 0, dueDate: "30 Dec 2026", commenced: "30 Dec 2021", premiumEnds: "30 Dec 2031", maturity: "30 Dec 2077", premiumYears: 10, color: "#d31145", currency: "$", payouts: [{range: "Accumulation", text: "Wealth Phase"}] }
             ]
         };
 
@@ -105,6 +109,7 @@
                 const diff = Math.ceil((new Date(p.dueDate) - TODAY) / (86400000));
                 const isNear = diff > 0 && diff <= 45 && !p.isPaidUp;
                 const ratio = (p.premiumYears / (p.premiumYears + 6)) * 100;
+                const typeClass = p.type === 'TRADITIONAL' ? 'pill-trad' : 'pill-ulip';
 
                 let bars = `<div class="flex gap-1 relative items-center mb-2">`;
                 for(let i=0; i<p.premiumYears; i++) {
@@ -135,9 +140,9 @@
                         <div class="flex items-center gap-4">
                             <svg class="chevron w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
                             <div>
-                                <h2 class="text-base font-bold text-gray-800 flex items-center gap-2">
-                                    ${p.name}
-                                    ${isNear ? `<span class="bg-red-600 text-white text-[8px] px-2 py-0.5 rounded font-black animate-pulse">DUE SOON</span>` : ''}
+                                <h2 class="text-base font-bold text-gray-800 flex items-center gap-3">
+                                    ${p.name} <span class="type-pill ${typeClass}">${p.type}</span>
+                                    ${isNear ? `<span class="bg-red-600 text-white text-[8px] px-2 py-0.5 rounded font-black animate-pulse uppercase">Due Soon</span>` : ''}
                                 </h2>
                                 <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">ID: ${p.id} • CLIENT: ${p.clientId} • UIN: ${p.uin}</p>
                             </div>
