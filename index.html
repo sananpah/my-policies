@@ -3,57 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nami Portfolio - Final Sync</title>
+    <title>Nami Portfolio - Baseline Final</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;600;700&display=swap');
         body { background-color: #f8fafc; font-family: 'Inter', sans-serif; }
         .maroon-text { color: #8b1d1d; }
         
-        .nav-container { display: flex; justify-content: center; gap: 8px; margin-bottom: 2rem; }
+        /* Navigation & UI */
         .tab-btn { padding: 12px 24px; font-weight: 700; text-transform: uppercase; font-size: 11px; border-radius: 8px; transition: all 0.3s ease; border: 1px solid #e2e8f0; background: white; color: #64748b; cursor: pointer; }
         .tab-btn.active { background: #8b1d1d; color: white; border-color: #8b1d1d; box-shadow: 0 4px 12px rgba(139, 29, 29, 0.2); }
-
-        .paid-watermark {
-            position: absolute; right: 50px; top: 20px; font-weight: 900; font-size: 42px;
-            color: #059669; opacity: 0.25; border: 6px solid #059669; padding: 2px 15px;
-            border-radius: 8px; transform: rotate(-12deg); pointer-events: none; z-index: 10;
-        }
-
-        .type-pill { font-size: 8px; padding: 2px 8px; border-radius: 99px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+        .type-pill { font-size: 8px; padding: 2px 8px; border-radius: 99px; font-weight: 800; text-transform: uppercase; }
         .pill-trad { background: #fef3c7; color: #92400e; border: 1px solid #f59e0b; }
         .pill-ulip { background: #e0f2fe; color: #075985; border: 1px solid #0ea5e9; }
 
+        /* Timeline Markers */
         .vertical-marker { width: 2px; height: 22px; background-color: #cbd5e1; position: absolute; top: -8px; z-index: 40; }
-        
         .payout-dot { width: 10px; height: 10px; background: #f59e0b; border-radius: 50%; position: absolute; top: 50%; transform: translateY(-50%); border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); z-index: 55; }
         
-        /* THE FIX: Absolute Right Anchoring */
-        .maturity-dot { 
-            background: #ef4444; 
-            width: 14px; 
-            height: 14px; 
-            right: 0 !important; 
-            left: auto !important; 
-            transform: translate(50%, -50%); /* Centers the dot ON the line */
-        }
+        /* THE MATURITY DOT: Fixed to right 0 */
+        .maturity-dot { background: #ef4444; width: 14px; height: 14px; right: 0 !important; left: auto !important; transform: translate(50%, -50%); z-index: 60; }
 
+        /* Tooltips */
         .segment-container, .hover-zone { position: relative; cursor: pointer; z-index: 50; }
         .tooltip-text {
             visibility: hidden; opacity: 0; position: absolute; bottom: 220%; left: 50%;
             transform: translateX(-50%); background: #0f172a; color: white;
             padding: 10px 14px; border-radius: 6px; font-size: 11px; font-weight: 700;
-            white-space: nowrap; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 100; pointer-events: none; border: 1px solid rgba(255,255,255,0.2);
+            white-space: nowrap; transition: all 0.2s; z-index: 100; pointer-events: none;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
         }
         .segment-container:hover > .tooltip-text, .hover-zone:hover > .tooltip-text { opacity: 1; visibility: visible; transform: translate(-50%, -8px); }
 
-        .policy-card { background: white; border-left: 5px solid; border-radius: 4px; position: relative; margin-bottom: 1.25rem; }
+        /* Card States */
+        .policy-card { background: white; border-left: 5px solid; border-radius: 4px; position: relative; margin-bottom: 1.25rem; transition: transform 0.2s; }
         .content-area { display: none; }
         .open .content-area { display: block; }
         .chevron { transition: transform 0.3s; }
         .open .chevron { transform: rotate(180deg); }
+        .paid-watermark { position: absolute; right: 50px; top: 20px; font-weight: 900; font-size: 42px; color: #059669; opacity: 0.2; border: 6px solid #059669; padding: 2px 15px; transform: rotate(-12deg); pointer-events: none; }
     </style>
 </head>
 <body class="p-4 md:p-10">
@@ -62,7 +50,7 @@
         <h1 class="text-4xl font-bold maroon-text uppercase tracking-widest" style="font-family: 'Playfair Display', serif;">Insurance Portfolio</h1>
     </div>
 
-    <div class="nav-container">
+    <div class="flex justify-center gap-2 mb-8">
         <button id="btn-india" onclick="render('india')" class="tab-btn active">My India</button>
         <button id="btn-sg" onclick="render('singapore')" class="tab-btn">My Singapore</button>
         <button id="btn-wife" onclick="render('wife')" class="tab-btn">Wife's Portfolio</button>
@@ -77,29 +65,29 @@
             india: [
                 { name: "INLI Life Nishchit Ace", id: "54751949", clientId: "60938507", uin: "128N171V01", type: "TRADITIONAL", premium: 209000, sumAssured: 2626948, dueDate: "17 Nov 2026", commenced: "17 Nov 2025", premiumEnds: "17 Nov 2034", maturity: "17 Nov 2055", premiumYears: 10, color: "#b91c1c", 
                   payouts: [
-                    {range: "Income (11-15 Yr)", text: "₹ 1,33,974", left: "5%"}, 
-                    {range: "Income (16-20 Yr)", text: "₹ 160,769", left: "25%"}, 
-                    {range: "Income (21-25 Yr)", text: "₹ 187,564", left: "45%"}, 
-                    {range: "Income (26-30 Yr)", text: "₹ 214,359", left: "65%"}, 
+                    {range: "Income (11-15 Yr)", text: "₹ 1,33,974", left: "10%"}, 
+                    {range: "Income (16-20 Yr)", text: "₹ 160,769", left: "30%"}, 
+                    {range: "Income (21-25 Yr)", text: "₹ 187,564", left: "55%"}, 
+                    {range: "Income (26-30 Yr)", text: "₹ 214,359", left: "80%"}, 
                     {range: "MATURITY BENEFIT", text: "Sum Assured: ₹ 26,26,948", left: "100%", isMaturity: true}
                   ] 
                 },
                 { name: "INLI Nishchit Pension SL", id: "54679062", clientId: "60938507", uin: "128N161V04", type: "TRADITIONAL", premium: 200000, sumAssured: 89830, dueDate: "30 May 2026", commenced: "30 May 2025", premiumEnds: "30 May 2030", maturity: "30 May 2077", premiumYears: 6, color: "#b91c1c", 
                   payouts: [
-                    {range: "Annual Income", text: "₹ 89,830 / Year", left: "40%"}, 
+                    {range: "Annual Income", text: "₹ 89,830 / Year", left: "50%"}, 
                     {range: "MATURITY BENEFIT", text: "Special Surrender Value", left: "100%", isMaturity: true}
                   ] 
                 },
                 { name: "Nishchit Samrudhi Income", id: "54040166", clientId: "60938507", uin: "128N154V02", type: "TRADITIONAL", premium: 200000, sumAssured: 1750854, dueDate: "10 Jan 2027", commenced: "10 Jan 2022", premiumEnds: "10 Jan 2028", maturity: "10 Jan 2050", premiumYears: 7, color: "#b91c1c", 
                   payouts: [
-                    {range: "Annual Income (8-28 Yr)", text: "₹ 1,00,000 / Year", left: "40%"}, 
+                    {range: "Annual Income (8-28 Yr)", text: "₹ 1,00,000 / Year", left: "50%"}, 
                     {range: "MATURITY BENEFIT", text: "Sum Assured Value", left: "100%", isMaturity: true}
                   ] 
                 },
                 { name: "Reliance Money Back", id: "53044042", clientId: "60938507", uin: "128N053V02", type: "TRADITIONAL", premium: 14400, sumAssured: 123940, dueDate: "08 Sep 2026", commenced: "08 Sep 2017", premiumEnds: "08 Sep 2026", maturity: "08 Sep 2032", premiumYears: 10, color: "#b91c1c", 
                   payouts: [
-                    {range: "Income (11-14 Yr)", text: "₹ 18,591", left: "20%"}, 
-                    {range: "Income (15th Yr)", text: "₹ 49,576", left: "50%"}, 
+                    {range: "Income (11-14 Yr)", text: "₹ 18,591", left: "30%"}, 
+                    {range: "Income (15th Yr)", text: "₹ 49,576", left: "60%"}, 
                     {range: "MATURITY BENEFIT", text: "Loyalty (₹ 37,170) + Maturity (₹ 18,591)", left: "100%", isMaturity: true}
                   ] 
                 },
@@ -121,7 +109,6 @@
             const summary = document.getElementById('summary-bar');
             const list = DATA[mode];
             const curr = mode === 'singapore' ? '$' : '₹';
-            const accent = mode === 'singapore' ? '#d31145' : (mode === 'wife' ? '#0d9488' : '#8b1d1d');
 
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(`btn-${mode === 'singapore' ? 'sg' : mode}`).classList.add('active');
@@ -130,18 +117,23 @@
             list.forEach(p => { if(!p.isPaidUp) tPrem += p.premium; tSA += p.sumAssured; });
 
             summary.innerHTML = `
-                <div class="bg-white p-6 rounded-xl border-l-4 shadow-sm" style="border-left-color:${accent}">
-                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">Annual Commitment</p>
-                    <p class="text-3xl font-black" style="color:${accent}">${curr} ${tPrem.toLocaleString()}</p>
+                <div class="bg-white p-6 rounded-xl border-l-4 shadow-sm border-l-gray-300">
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">Annual Premium</p>
+                    <p class="text-3xl font-black text-gray-800">${curr} ${tPrem.toLocaleString()}</p>
                 </div>
                 <div class="bg-white p-6 rounded-xl border-l-4 shadow-sm border-l-blue-900">
-                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">Total Protection</p>
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">Total Sum Assured</p>
                     <p class="text-3xl font-black text-blue-900">${curr} ${tSA.toLocaleString()}</p>
                 </div>`;
 
             container.innerHTML = list.map(p => {
+                // PAYMENT DUE LOGIC
+                const [d, m, y] = p.dueDate.split(' ');
+                const dueObj = new Date(`${m} ${d} ${y}`);
+                const diffDays = Math.ceil((dueObj - TODAY) / (1000 * 60 * 60 * 24));
+                const isDueSoon = diffDays > 0 && diffDays <= 45 && !p.isPaidUp;
+
                 const startY = parseInt(p.commenced.split(' ')[2]);
-                const ratio = (p.premiumYears / (p.premiumYears + 10)) * 100;
                 const typeClass = p.type === 'TRADITIONAL' ? 'pill-trad' : 'pill-ulip';
 
                 let bars = `<div class="flex gap-1 relative items-center mb-2">`;
@@ -158,7 +150,7 @@
                 
                 if(p.payouts) {
                     p.payouts.forEach((po) => {
-                        bars += `<div class="hover-zone absolute h-full" style="left:${po.left}; width: 40px; transform: translateX(-50%);">
+                        bars += `<div class="hover-zone absolute h-full" style="left:${po.left}; width: 30px; transform: translateX(-50%);">
                             <span class="tooltip-text ${po.isMaturity ? 'bg-red-600' : ''}">${po.range}: ${po.text}</span>
                             <div class="payout-dot ${po.isMaturity ? 'maturity-dot' : ''}"></div>
                         </div>`;
@@ -169,27 +161,28 @@
                 return `
                 <div class="policy-card" style="border-color:${p.color}" id="card-${p.id}">
                     ${p.isPaidUp ? `<div class="paid-watermark">PAID</div>` : ''}
-                    <div class="p-6 flex justify-between items-center cursor-pointer relative z-20" onclick="document.getElementById('card-${p.id}').classList.toggle('open')">
+                    <div class="p-6 flex justify-between items-center cursor-pointer" onclick="document.getElementById('card-${p.id}').classList.toggle('open')">
                         <div class="flex items-center gap-4">
                             <svg class="chevron w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
                             <div>
                                 <h2 class="text-base font-bold text-gray-800 flex items-center gap-3">
                                     ${p.name} <span class="type-pill ${typeClass}">${p.type}</span>
+                                    ${isDueSoon ? `<span class="bg-red-600 text-white text-[9px] px-2 py-0.5 rounded animate-pulse font-black">DUE SOON</span>` : ''}
                                 </h2>
                                 <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">ID: ${p.id} • CLIENT: ${p.clientId} • UIN: ${p.uin}</p>
                             </div>
                         </div>
-                        <div class="flex gap-8 text-right relative z-20">
-                            <div><p class="text-[8px] text-gray-400 font-bold uppercase">Annual Premium</p><p class="text-md font-bold text-gray-900">${curr}${p.premium.toLocaleString()}</p></div>
-                            <div><p class="text-[8px] text-gray-400 font-bold uppercase">Sum Assured</p><p class="text-md font-bold text-gray-900">${curr}${p.sumAssured.toLocaleString()}</p></div>
+                        <div class="flex gap-8 text-right">
+                            <div><p class="text-[8px] text-gray-400 font-bold uppercase">Premium</p><p class="text-md font-bold text-gray-900">${curr}${p.premium.toLocaleString()}</p></div>
+                            <div><p class="text-[8px] text-gray-400 font-bold uppercase">SA</p><p class="text-md font-bold text-gray-900">${curr}${p.sumAssured.toLocaleString()}</p></div>
                         </div>
                     </div>
-                    <div class="content-area bg-gray-50 border-t border-gray-100 p-8 pb-16 px-12 relative">
+                    <div class="content-area bg-gray-50 border-t p-8 pb-16 px-12 relative">
                         ${bars}
                         <div class="flex text-[9px] text-gray-400 font-black uppercase mt-6 relative">
-                            <div class="w-1/4">Started<br><span class="text-gray-700">${p.commenced}</span></div>
-                            <div class="absolute text-center" style="left: ${ratio}%; transform: translateX(-50%);">Premium Ends<br><span class="text-gray-700">${p.premiumEnds}</span></div>
-                            <div class="w-full text-right">Maturity<br><span class="text-gray-700">${p.maturity}</span></div>
+                            <div class="w-1/4">Start<br><span class="text-gray-700">${p.commenced}</span></div>
+                            <div class="w-1/2 text-center">Due Date<br><span class="text-gray-700">${p.dueDate}</span></div>
+                            <div class="w-1/4 text-right">Maturity<br><span class="text-gray-700">${p.maturity}</span></div>
                         </div>
                     </div>
                 </div>`;
