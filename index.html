@@ -10,40 +10,46 @@
         body { background-color: #f8fafc; font-family: 'Inter', sans-serif; }
         .maroon-text { color: #8b1d1d; }
         
-        .tab-btn { padding: 12px 24px; font-weight: 700; text-transform: uppercase; font-size: 11px; border-radius: 8px; transition: all 0.3s ease; border: 1px solid #e2e8f0; background: white; color: #64748b; cursor: pointer; }
-        .tab-btn.active { background: #8b1d1d; color: white; border-color: #8b1d1d; }
+        /* Navigation */
+        .tab-btn { padding: 10px 20px; font-weight: 700; text-transform: uppercase; font-size: 10px; border-radius: 6px; transition: all 0.3s; border: 1px solid #e2e8f0; background: white; color: #64748b; cursor: pointer; }
+        .tab-btn.active { background: #8b1d1d; color: white; border-color: #8b1d1d; box-shadow: 0 4px 10px rgba(139, 29, 29, 0.2); }
+
+        /* TYPE PILLS - Restored Styling */
+        .type-pill { font-size: 9px; padding: 2px 10px; border-radius: 999px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; display: inline-block; line-height: 1.2; }
+        .pill-trad { background: #fef3c7; color: #92400e; border: 1px solid #f59e0b; }
+        .pill-ulip { background: #e0f2fe; color: #075985; border: 1px solid #0ea5e9; }
 
         /* Timeline Anchors */
-        .vertical-marker { width: 2px; height: 26px; background-color: #cbd5e1; position: absolute; top: -10px; z-index: 40; }
-        .end-premium-marker { width: 3px; height: 30px; background-color: #22c55e; position: absolute; top: -12px; z-index: 45; box-shadow: 0 0 8px rgba(34, 197, 94, 0.4); }
+        .vertical-marker { width: 2px; height: 24px; background-color: #cbd5e1; position: absolute; top: -10px; z-index: 40; }
+        .end-premium-marker { width: 3px; height: 32px; background-color: #22c55e; position: absolute; top: -14px; z-index: 45; border-radius: 2px; }
         
         /* Payout Dots */
-        .payout-dot { width: 10px; height: 10px; background: #f59e0b; border-radius: 50%; position: absolute; top: 50%; transform: translateY(-50%); border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); z-index: 55; }
-        .maturity-dot { background: #ef4444; width: 14px; height: 14px; right: 0 !important; left: auto !important; transform: translate(50%, -50%); z-index: 60; }
+        .payout-dot { width: 10px; height: 10px; background: #f59e0b; border-radius: 50%; position: absolute; top: 50%; transform: translateY(-50%); border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 55; }
+        .maturity-dot { background: #ef4444; width: 14px; height: 14px; right: 0 !important; left: auto !important; transform: translate(50%, -50%); z-index: 60; border: 2px solid white; }
 
         /* Tooltips */
         .segment-container, .hover-zone { position: relative; cursor: pointer; z-index: 50; }
         .tooltip-text {
-            visibility: hidden; opacity: 0; position: absolute; bottom: 220%; left: 50%;
+            visibility: hidden; opacity: 0; position: absolute; bottom: 250%; left: 50%;
             transform: translateX(-50%); background: #0f172a; color: white;
-            padding: 10px 14px; border-radius: 6px; font-size: 11px; font-weight: 700;
+            padding: 8px 12px; border-radius: 4px; font-size: 10px; font-weight: 700;
             white-space: nowrap; transition: all 0.2s; z-index: 100; pointer-events: none;
         }
-        .segment-container:hover > .tooltip-text, .hover-zone:hover > .tooltip-text { opacity: 1; visibility: visible; transform: translate(-50%, -8px); }
+        .segment-container:hover > .tooltip-text, .hover-zone:hover > .tooltip-text { opacity: 1; visibility: visible; transform: translate(-50%, -5px); }
 
-        .policy-card { background: white; border-left: 5px solid; border-radius: 4px; position: relative; margin-bottom: 1.25rem; }
+        .policy-card { background: white; border-left: 6px solid; border-radius: 8px; position: relative; margin-bottom: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
         .content-area { display: none; }
         .open .content-area { display: block; }
-        .paid-watermark { position: absolute; right: 50px; top: 20px; font-weight: 900; font-size: 42px; color: #059669; opacity: 0.15; border: 6px solid #059669; padding: 2px 15px; transform: rotate(-12deg); pointer-events: none; }
+        .paid-watermark { position: absolute; right: 80px; top: 15px; font-weight: 900; font-size: 36px; color: #059669; opacity: 0.12; border: 5px solid #059669; padding: 0px 12px; transform: rotate(-12deg); pointer-events: none; border-radius: 4px; }
     </style>
 </head>
-<body class="p-4 md:p-10">
+<body class="p-6 md:p-12">
 
-    <div class="max-w-6xl mx-auto mb-10 text-center">
+    <div class="max-w-6xl mx-auto mb-12 text-center">
         <h1 class="text-4xl font-bold maroon-text uppercase tracking-widest" style="font-family: 'Playfair Display', serif;">Insurance Portfolio</h1>
     </div>
 
-    <div class="flex justify-center gap-2 mb-8">
+    <div class="flex justify-center gap-3 mb-10">
         <button id="btn-india" onclick="render('india')" class="tab-btn active">My India</button>
         <button id="btn-sg" onclick="render('singapore')" class="tab-btn">My Singapore</button>
         <button id="btn-wife" onclick="render('wife')" class="tab-btn">Wife's Portfolio</button>
@@ -56,7 +62,7 @@
         const TODAY = new Date();
         const DATA = {
             india: [
-                { name: "INLI Life Nishchit Ace", id: "54751949", clientId: "60938507", uin: "128N171V01", type: "TRADITIONAL", premium: 209000, sumAssured: 2626948, dueDate: "17 Nov 2026", commenced: "17 Nov 2025", premiumEnds: "17 Nov 2034", maturity: "17 Nov 2055", premiumYears: 10, color: "#b91c1c", 
+                { name: "INLI Life Nishchit Ace", id: "54751949", uin: "128N171V01", type: "TRADITIONAL", premium: 209000, sumAssured: 2626948, dueDate: "17 Nov 2026", commenced: "17 Nov 2025", premiumEnds: "17 Nov 2034", maturity: "17 Nov 2055", premiumYears: 10, color: "#b91c1c", 
                   payouts: [
                     {range: "Income (11-15 Yr)", text: "₹ 1,33,974", left: "15%"}, 
                     {range: "Income (16-20 Yr)", text: "₹ 160,769", left: "35%"}, 
@@ -65,16 +71,17 @@
                     {range: "MATURITY", text: "Sum Assured: ₹ 26,26,948", left: "100%", isMaturity: true}
                   ] 
                 },
-                { name: "INLI Nishchit Pension SL", id: "54679062", clientId: "60938507", uin: "128N161V04", type: "TRADITIONAL", premium: 200000, sumAssured: 89830, dueDate: "30 May 2026", commenced: "30 May 2025", premiumEnds: "30 May 2030", maturity: "30 May 2077", premiumYears: 6, color: "#b91c1c", 
-                  payouts: [ {range: "Annual Income", text: "₹ 89,830 / Year", left: "50%"}, {range: "MATURITY", text: "Special Surrender Value", left: "100%", isMaturity: true} ] 
+                { name: "INLI Nishchit Pension SL", id: "54679062", uin: "128N161V04", type: "TRADITIONAL", premium: 200000, sumAssured: 89830, dueDate: "30 May 2026", commenced: "30 May 2025", premiumEnds: "30 May 2030", maturity: "30 May 2077", premiumYears: 6, color: "#b91c1c", 
+                  payouts: [ {range: "Annual Income", text: "₹ 89,830", left: "50%"}, {range: "MATURITY", text: "Special Surrender Value", left: "100%", isMaturity: true} ] 
                 },
-                { name: "Nishchit Samrudhi Income", id: "54040166", clientId: "60938507", uin: "128N154V02", type: "TRADITIONAL", premium: 200000, sumAssured: 1750854, dueDate: "10 Jan 2027", commenced: "10 Jan 2022", premiumEnds: "10 Jan 2028", maturity: "10 Jan 2050", premiumYears: 7, color: "#b91c1c", 
-                  payouts: [ {range: "Annual Income (8-28 Yr)", text: "₹ 1,00,000 / Year", left: "50%"}, {range: "MATURITY", text: "Sum Assured Value", left: "100%", isMaturity: true} ] 
+                { name: "Nishchit Samrudhi Income", id: "54040166", uin: "128N154V02", type: "TRADITIONAL", premium: 200000, sumAssured: 1750854, dueDate: "10 Jan 2027", commenced: "10 Jan 2022", premiumEnds: "10 Jan 2028", maturity: "10 Jan 2050", premiumYears: 7, color: "#b91c1c", 
+                  payouts: [ {range: "Annual Income", text: "₹ 1,00,000", left: "50%"}, {range: "MATURITY", text: "Sum Assured Value", left: "100%", isMaturity: true} ] 
                 },
-                { name: "Reliance Money Back", id: "53044042", clientId: "60938507", uin: "128N053V02", type: "TRADITIONAL", premium: 14400, sumAssured: 123940, dueDate: "08 Sep 2026", commenced: "08 Sep 2017", premiumEnds: "08 Sep 2026", maturity: "08 Sep 2032", premiumYears: 10, color: "#b91c1c", 
+                { name: "Reliance Money Back", id: "53044042", uin: "128N053V02", type: "TRADITIONAL", premium: 14400, sumAssured: 123940, dueDate: "08 Sep 2026", commenced: "08 Sep 2017", premiumEnds: "08 Sep 2026", maturity: "08 Sep 2032", premiumYears: 10, color: "#b91c1c", 
                   payouts: [ {range: "Income (11-14 Yr)", text: "₹ 18,591", left: "25%"}, {range: "Income (15th Yr)", text: "₹ 49,576", left: "55%"}, {range: "MATURITY", text: "Loyalty + SA", left: "100%", isMaturity: true} ] 
                 },
-                { name: "Kotak Retirement Savings", id: "79079094", clientId: "61491746", uin: "107N105V02", type: "TRADITIONAL", premium: 50000, sumAssured: 323695, dueDate: "13 Mar 2026", commenced: "13 Mar 2025", premiumEnds: "13 Mar 2031", maturity: "13 Mar 2040", premiumYears: 7, color: "#1e3a8a", payouts: [{range: "MATURITY", text: "SA: ₹ 3,23,695 + Bonus", left: "100%", isMaturity: true}] },
+                { name: "Kotak Retirement Savings", id: "79079094", uin: "107N105V02", type: "TRADITIONAL", premium: 50000, sumAssured: 323695, dueDate: "13 Mar 2026", commenced: "13 Mar 2025", premiumEnds: "13 Mar 2031", maturity: "13 Mar 2040", premiumYears: 7, color: "#1e3a8a", payouts: [{range: "MATURITY", text: "SA: ₹ 3,23,695 + Bonus", left: "100%", isMaturity: true}] },
+                { name: "Kotak Fortune Maximiser", id: "79425536", uin: "107N124V01", type: "TRADITIONAL", premium: 70000, sumAssured: 711994, dueDate: "14 Aug 2026", commenced: "14 Aug 2025", premiumEnds: "14 Aug 2034", maturity: "14 Aug 2089", premiumYears: 10, color: "#1e3a8a", payouts: [{range: "Survival", text: "Annual Cash", left: "50%"}, {range: "MATURITY", text: "Bonus + SA", left: "100%", isMaturity: true}] },
                 { name: "Bharti Life Wealth Pro", id: "503-9562771", type: "ULIP", premium: 50000, sumAssured: 500000, dueDate: "28 Sep 2026", commenced: "28 Sep 2023", premiumEnds: "28 Sep 2029", maturity: "28 Sep 2038", premiumYears: 7, color: "#4338ca", payouts: [{range: "MATURITY", text: "Fund Value", left: "100%", isMaturity: true}] },
                 { name: "Axis Max Life", id: "608480927", type: "ULIP", premium: 50000, sumAssured: 500000, dueDate: "PAID UP", commenced: "04 Feb 2022", premiumEnds: "04 Feb 2026", maturity: "04 Feb 2032", premiumYears: 5, color: "#0c4a6e", isPaidUp: true, payouts: [{range: "MATURITY", text: "Market Value", left: "100%", isMaturity: true}] }
             ],
@@ -96,7 +103,6 @@
             document.getElementById(`btn-${mode === 'singapore' ? 'sg' : mode}`).classList.add('active');
 
             container.innerHTML = list.map(p => {
-                // DUE DATE LOGIC
                 const isPaidUp = p.dueDate === "PAID UP";
                 let isDueSoon = false;
                 if(!isPaidUp) {
@@ -109,7 +115,6 @@
                 const typeClass = p.type === 'TRADITIONAL' ? 'pill-trad' : 'pill-ulip';
 
                 let bars = `<div class="flex gap-1 relative items-center mb-2">`;
-                // PREMIUM YEARS
                 for(let i=0; i<p.premiumYears; i++) {
                     const yr = startY + i;
                     const isPd = yr < TODAY.getFullYear() || (yr === TODAY.getFullYear() && TODAY >= new Date(`${yr} ${p.commenced.split(' ')[1]} ${p.commenced.split(' ')[0]}`));
@@ -119,7 +124,6 @@
                         ${i===p.premiumYears-1 ? '<div class="end-premium-marker right-0"></div>' : ''}
                     </div>`;
                 }
-                // INCOME PHASE
                 bars += `<div class="flex-[8] h-3 rounded-sm relative bg-gray-100 border-l-2 border-white">`;
                 if(p.payouts) {
                     p.payouts.forEach((po) => {
@@ -136,36 +140,35 @@
                     ${isPaidUp ? `<div class="paid-watermark">PAID</div>` : ''}
                     <div class="p-6 flex justify-between items-center cursor-pointer" onclick="document.getElementById('card-${p.id}').classList.toggle('open')">
                         <div class="flex items-center gap-4">
-                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
                             <div>
-                                <h2 class="text-base font-bold text-gray-800 flex items-center gap-3">
+                                <h2 class="text-sm font-bold text-gray-800 flex items-center gap-2">
                                     ${p.name} <span class="type-pill ${typeClass}">${p.type}</span>
-                                    ${isDueSoon ? `<span class="bg-red-600 text-white text-[9px] px-2 py-0.5 rounded animate-pulse font-black">DUE SOON</span>` : ''}
+                                    ${isDueSoon ? `<span class="bg-red-600 text-white text-[8px] px-2 py-0.5 rounded animate-pulse font-black">DUE SOON</span>` : ''}
                                 </h2>
-                                <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">ID: ${p.id} • UIN: ${p.uin}</p>
+                                <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">ID: ${p.id} • UIN: ${p.uin}</p>
                             </div>
                         </div>
                         <div class="text-right">
-                            <p class="text-[8px] text-gray-400 font-bold uppercase">Next Premium Due</p>
-                            <p class="text-md font-bold ${isDueSoon ? 'text-red-600' : 'text-gray-900'}">${p.dueDate}</p>
+                            <p class="text-[8px] text-gray-400 font-bold uppercase">Next Due</p>
+                            <p class="text-sm font-bold ${isDueSoon ? 'text-red-600' : 'text-gray-900'}">${p.dueDate}</p>
                         </div>
                     </div>
                     <div class="content-area bg-gray-50 border-t p-8 pb-16 px-12 relative">
                         ${bars}
                         <div class="flex text-[9px] text-gray-400 font-black uppercase mt-6 relative">
-                            <div class="w-1/4">Commenced<br><span class="text-gray-700">${p.commenced}</span></div>
-                            <div class="flex-1 text-center text-green-600">Premium End Date<br><span>${p.premiumEnds}</span></div>
+                            <div class="w-1/4">Start<br><span class="text-gray-700">${p.commenced}</span></div>
+                            <div class="flex-1 text-center text-green-600 font-bold">Premium End Date<br><span>${p.premiumEnds}</span></div>
                             <div class="w-1/4 text-right">Maturity Date<br><span class="text-gray-700">${p.maturity}</span></div>
                         </div>
                     </div>
                 </div>`;
             }).join('');
             
-            // Re-render summary stats
             let tPrem = 0, tSA = 0;
             list.forEach(p => { if(p.dueDate !== "PAID UP") tPrem += p.premium; tSA += p.sumAssured; });
-            summary.innerHTML = `<div class="bg-white p-6 rounded-xl border-l-4 shadow-sm border-l-gray-300"><p class="text-[10px] font-bold text-gray-400 uppercase">Annual Premium</p><p class="text-3xl font-black">${curr} ${tPrem.toLocaleString()}</p></div>
-                                 <div class="bg-white p-6 rounded-xl border-l-4 shadow-sm border-l-blue-900"><p class="text-[10px] font-bold text-gray-400 uppercase">Total SA</p><p class="text-3xl font-black text-blue-900">${curr} ${tSA.toLocaleString()}</p></div>`;
+            summary.innerHTML = `<div class="bg-white p-6 rounded-xl border-l-4 shadow-sm border-l-gray-300"><p class="text-[10px] font-bold text-gray-400 uppercase">Annual Premium</p><p class="text-2xl font-black">${curr} ${tPrem.toLocaleString()}</p></div>
+                                 <div class="bg-white p-6 rounded-xl border-l-4 shadow-sm border-l-blue-900"><p class="text-[10px] font-bold text-gray-400 uppercase">Total Sum Assured</p><p class="text-2xl font-black text-blue-900">${curr} ${tSA.toLocaleString()}</p></div>`;
         }
 
         render('india');
