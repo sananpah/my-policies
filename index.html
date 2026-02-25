@@ -21,9 +21,11 @@
         .end-premium-marker { width: 3px; height: 36px; background-color: #22c55e; position: absolute; top: -16px; z-index: 45; border-radius: 2px; }
         
         .payout-dot { width: 12px; height: 12px; background: #f59e0b; border-radius: 50%; position: absolute; top: 50%; transform: translate(-50%, -50%); border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 55; transition: transform 0.2s; }
-        .bonus-indicator { width: 6px; height: 6px; background: #f59e0b; border-radius: 50%; position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%); }
         .growth-dot { background: #3b82f6; } 
         .maturity-dot { background: #ef4444 !important; width: 18px !important; height: 18px !important; }
+
+        /* Subtle Bonus Payout Dot for Kotak from 2nd Year */
+        .bonus-mini-dot { width: 6px; height: 6px; background: #f59e0b; border-radius: 50%; position: absolute; bottom: -12px; left: 50%; transform: translateX(-50%); border: 1px solid white; box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
 
         .dot-wrapper, .segment-container { position: relative; cursor: pointer; }
         .tooltip-text {
@@ -75,7 +77,7 @@
         const DATA = {
             india: [
                 { name: "INLI Life Nishchit Ace", logo: LOGOS.INDUSIND_NIPPON, id: "54751949", uin: "128N171V01", clientId: "60938507", type: "TRADITIONAL", premium: 209000, sumAssured: 2626948, dueDate: "17 Nov 2026", commenced: "17 Nov 2025", premiumEnds: "17 Nov 2034", maturity: "17 Nov 2055", premiumYears: 10, color: "#8b1d1d", maturityAmt: "₹ 26,26,948", payoutSteps: [{ years: "11-15", val: "₹ 1,33,974" }, { years: "16-20", val: "₹ 1,60,769" }, { years: "21-25", val: "₹ 1,87,564" }, { years: "25-30", val: "₹ 214,359" }] },
-                { name: "INLI Nishchit Pension SL", logo: LOGOS.INDUSIND_NIPPON, id: "54679062", uin: "128N161V04", clientId: "60938507", type: "TRADITIONAL", premium: 200000, sumAssured: 89830, dueDate: "30 May 2026", commenced: "30 May 2025", premiumEnds: "30 May 2030", maturity: "30 May 2077", premiumYears: 6, color: "#8b1d1d", income: "₹ 89,830/yr", maturityAmt: "Special Surrender Value" },
+                { name: "INLI Nishchit Pension SL", logo: LOGOS.INDUSIND_NIPPON, id: "54679062", uin: "128N161V04", clientId: "60938507", type: "TRADITIONAL", premium: 200000, sumAssured: 89830, dueDate: "30 May 2026", commenced: "30 May 2025", premiumEnds: "30 May 2030", maturity: "30 May 2077", premiumYears: 6, color: "#8b1d1d", income: "Yearly Income: ₹ 89,830", maturityAmt: "Special Surrender Value" },
                 { name: "INLI Nishchit Samrudhi Income lmtd", logo: LOGOS.INDUSIND_NIPPON, id: "54040166", uin: "128N154V02", clientId: "60938507", type: "TRADITIONAL", premium: 200000, sumAssured: 1750854, dueDate: "10 Jan 2027", commenced: "10 Jan 2022", premiumEnds: "10 Jan 2028", maturity: "10 Jan 2050", premiumYears: 7, color: "#8b1d1d", income: "8-28 Yr: ₹ 100,000", maturityAmt: "₹ 17,50,854" },
                 { name: "INLI Guranteed Moneyback", logo: LOGOS.INDUSIND_NIPPON, id: "53044042", uin: "128N053V02", clientId: "60938507", type: "TRADITIONAL", premium: 14400, sumAssured: 123940, dueDate: "08 Sep 2026", commenced: "08 Sep 2017", premiumEnds: "08 Sep 2026", maturity: "08 Sep 2032", premiumYears: 10, color: "#8b1d1d", maturityAmt: "Loyalty: ₹ 37,170 + Mat: ₹ 18,591", payoutSteps: [{ years: "11-14", val: "₹ 18,591" }, { years: "15", val: "₹ 49,576" }] },
                 { name: "Kotak Retirement Savings", logo: LOGOS.KOTAK, id: "79079094", uin: "107N105V02", clientId: "61491746", type: "TRADITIONAL", premium: 50000, sumAssured: 323695, dueDate: "13 Mar 2026", commenced: "13 Mar 2025", premiumEnds: "13 Mar 2031", maturity: "13 Mar 2040", premiumYears: 7, color: "#e63946", maturityAmt: "₹ 3,23,695 + Bonus" },
@@ -119,14 +121,14 @@
                     const dueDateObj = new Date(`${p.commenced.split(' ')[1]} ${p.commenced.split(' ')[0]} ${yr}`);
                     const isPd = dueDateObj < TODAY;
                     
-                    // Add small dot indicator for immediate bonus from 13th month (Year 2 onwards)
-                    let bonusDot = "";
+                    // Specific logic for Kotak Annual Bonus from 2nd year
+                    let bonusIndicator = "";
                     if(p.cashBonus === "Immediate" && i > 0) {
-                        bonusDot = `<div class="bonus-indicator"></div>`;
+                        bonusIndicator = `<div class="bonus-mini-dot"></div>`;
                     }
 
                     premiumSegments += `<div class="segment-container flex-1 h-4 rounded-sm ${isPd ? 'bg-green-500' : 'bg-gray-200'} border-r border-white last:border-0">
-                        ${bonusDot}
+                        ${bonusIndicator}
                         <span class="tooltip-text">Year ${i+1} (${yr}): ${isPd ? 'PAID' : 'DUE'}</span>
                         ${i===0 ? '<div class="vertical-marker left-0"></div>' : ''}
                         ${i===p.premiumYears-1 ? `<div class="end-premium-marker right-0"></div>` : ''}
@@ -151,7 +153,7 @@
                         </div>`;
                     });
                 } else if(p.income || p.cashBonus === "Immediate") {
-                    const label = p.cashBonus ? "Annual Cash Bonus" : "Annual Income";
+                    const label = p.cashBonus ? "Annual Cash Bonus" : p.income;
                     for(let i=1; i<=3; i++) {
                         const leftPos = (i * 25); 
                         phaseDots += `<div class="dot-wrapper absolute h-full" style="left:${leftPos}%;">
