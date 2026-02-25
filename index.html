@@ -20,18 +20,18 @@
         .vertical-marker { width: 2px; height: 28px; background-color: #cbd5e1; position: absolute; top: -12px; z-index: 40; }
         .end-premium-marker { width: 3px; height: 36px; background-color: #22c55e; position: absolute; top: -16px; z-index: 45; border-radius: 2px; }
         
-        .payout-dot { width: 12px; height: 12px; background: #f59e0b; border-radius: 50%; position: absolute; top: 50%; transform: translate(-50%, -50%); border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 55; transition: transform 0.2s; }
+        .payout-dot { width: 12px; height: 12px; background: #f59e0b; border-radius: 50%; position: absolute; top: 50%; transform: translate(-50%, -50%); border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 60; transition: transform 0.2s; }
         .growth-dot { background: #3b82f6; } 
-        .payout-dot:hover { transform: translate(-50%, -50%) scale(1.4); }
+        .payout-dot:hover { transform: translate(-50%, -50%) scale(1.4); z-index: 100; }
         .maturity-dot { background: #ef4444 !important; width: 18px !important; height: 18px !important; }
 
         .dot-wrapper, .segment-container { position: relative; cursor: pointer; }
         .tooltip-text {
             visibility: hidden; opacity: 0; position: absolute; bottom: 45px; left: 50%;
-            transform: translateX(-50%); background: #0f172a; color: white;
+            transform: translateX(-50%); background: rgba(15, 23, 42, 0.95); color: white;
             padding: 8px 14px; border-radius: 6px; font-size: 11px; font-weight: 700;
             white-space: nowrap; transition: all 0.2s; z-index: 200; pointer-events: none;
-            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3);
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); backdrop-filter: blur(4px);
         }
         .tooltip-right { left: auto !important; right: 0 !important; transform: none !important; }
         
@@ -74,19 +74,10 @@
 
         const DATA = {
             india: [
-                { 
-                    name: "INLI Life Nishchit Ace", logo: LOGOS.INDUSIND_NIPPON, id: "54751949", uin: "128N171V01", clientId: "60938507", type: "TRADITIONAL", premium: 209000, sumAssured: 2626948, dueDate: "17 Nov 2026", commenced: "17 Nov 2025", premiumEnds: "17 Nov 2034", maturity: "17 Nov 2055", premiumYears: 10, color: "#8b1d1d", 
-                    maturityAmt: "₹ 26,26,948",
-                    payoutSteps: [
-                        { years: "11-15", val: "₹ 1,33,974" }, { years: "16-20", val: "₹ 1,60,769" }, { years: "21-25", val: "₹ 1,87,564" }, { years: "25-30", val: "₹ 214,359" }
-                    ]
-                },
+                { name: "INLI Life Nishchit Ace", logo: LOGOS.INDUSIND_NIPPON, id: "54751949", uin: "128N171V01", clientId: "60938507", type: "TRADITIONAL", premium: 209000, sumAssured: 2626948, dueDate: "17 Nov 2026", commenced: "17 Nov 2025", premiumEnds: "17 Nov 2034", maturity: "17 Nov 2055", premiumYears: 10, color: "#8b1d1d", maturityAmt: "₹ 26,26,948", payoutSteps: [{ years: "11-15", val: "₹ 1,33,974" }, { years: "16-20", val: "₹ 1,60,769" }, { years: "21-25", val: "₹ 1,87,564" }, { years: "25-30", val: "₹ 214,359" }] },
                 { name: "INLI Nishchit Pension SL", logo: LOGOS.INDUSIND_NIPPON, id: "54679062", uin: "128N161V04", clientId: "60938507", type: "TRADITIONAL", premium: 200000, sumAssured: 89830, dueDate: "30 May 2026", commenced: "30 May 2025", premiumEnds: "30 May 2030", maturity: "30 May 2077", premiumYears: 6, color: "#8b1d1d", income: "₹ 89,830/yr", maturityAmt: "Special Surrender Value" },
                 { name: "INLI Nishchit Samrudhi Income lmtd", logo: LOGOS.INDUSIND_NIPPON, id: "54040166", uin: "128N154V02", clientId: "60938507", type: "TRADITIONAL", premium: 200000, sumAssured: 1750854, dueDate: "10 Jan 2027", commenced: "10 Jan 2022", premiumEnds: "10 Jan 2028", maturity: "10 Jan 2050", premiumYears: 7, color: "#8b1d1d", income: "8-28 Yr: ₹ 100,000", maturityAmt: "₹ 17,50,854" },
-                { name: "INLI Guranteed Moneyback", logo: LOGOS.INDUSIND_NIPPON, id: "53044042", uin: "128N053V02", clientId: "60938507", type: "TRADITIONAL", premium: 14400, sumAssured: 123940, dueDate: "08 Sep 2026", commenced: "08 Sep 2017", premiumEnds: "08 Sep 2026", maturity: "08 Sep 2032", premiumYears: 10, color: "#8b1d1d", 
-                    maturityAmt: "Loyalty: ₹ 37,170 + Mat: ₹ 18,591",
-                    payoutSteps: [{ years: "11-14", val: "₹ 18,591" }, { years: "15", val: "₹ 49,576" }]
-                },
+                { name: "INLI Guranteed Moneyback", logo: LOGOS.INDUSIND_NIPPON, id: "53044042", uin: "128N053V02", clientId: "60938507", type: "TRADITIONAL", premium: 14400, sumAssured: 123940, dueDate: "08 Sep 2026", commenced: "08 Sep 2017", premiumEnds: "08 Sep 2026", maturity: "08 Sep 2032", premiumYears: 10, color: "#8b1d1d", maturityAmt: "Loyalty: ₹ 37,170 + Mat: ₹ 18,591", payoutSteps: [{ years: "11-14", val: "₹ 18,591" }, { years: "15", val: "₹ 49,576" }] },
                 { name: "Kotak Retirement Savings", logo: LOGOS.KOTAK, id: "79079094", uin: "107N105V02", clientId: "61491746", type: "TRADITIONAL", premium: 50000, sumAssured: 323695, dueDate: "13 Mar 2026", commenced: "13 Mar 2025", premiumEnds: "13 Mar 2031", maturity: "13 Mar 2040", premiumYears: 7, color: "#e63946", maturityAmt: "₹ 3,23,695 + Bonus" },
                 { name: "Kotak Fortune Maximiser", logo: LOGOS.KOTAK, id: "79425536", uin: "107N124V01", clientId: "61491746", type: "TRADITIONAL", premium: 70000, sumAssured: 711994, dueDate: "14 Aug 2026", commenced: "14 Aug 2025", premiumEnds: "14 Aug 2034", maturity: "14 Aug 2089", premiumYears: 10, color: "#e63946", cashBonus: "Immediate", maturityAmt: "Bonus + SA" },
                 { name: "Bharti AXA Life Wealth Pro", logo: LOGOS.BHARTI, id: "503-9562771", uin: "130A012V02", clientId: "N/A", type: "ULIP", premium: 50000, sumAssured: 0, dueDate: "28 Sep 2026", commenced: "28 Sep 2023", premiumEnds: "28 Sep 2029", maturity: "28 Sep 2038", premiumYears: 7, color: "#005a9c", maturityAmt: "Unit value at that time" },
@@ -123,19 +114,22 @@
                 const splitPct = (p.premiumYears / totalUnits) * 100;
 
                 let premiumSegments = "";
+                let bonusDotsInPremium = "";
+
                 for(let i=0; i<p.premiumYears; i++) {
                     const yr = parseInt(p.commenced.split(' ')[2]) + i;
                     const dueDateObj = new Date(`${p.commenced.split(' ')[1]} ${p.commenced.split(' ')[0]} ${yr}`);
                     const isPd = dueDateObj < TODAY;
                     
-                    let segmentPayoutDot = "";
                     if(p.cashBonus === "Immediate") {
-                        segmentPayoutDot = `<div class="payout-dot" style="left:50%; top: -12px; width:8px; height:8px;"></div>
-                        <span class="tooltip-text">Annual Cash Bonus Received</span>`;
+                        const dotLeft = (i / p.premiumYears) * 100 + (100/p.premiumYears/2);
+                        bonusDotsInPremium += `<div class="dot-wrapper absolute h-full" style="left:${dotLeft}%; width: 20px;">
+                            <span class="tooltip-text">Annual Cash Bonus Received</span>
+                            <div class="payout-dot" style="width:8px; height:8px;"></div>
+                        </div>`;
                     }
 
                     premiumSegments += `<div class="segment-container flex-1 h-4 rounded-sm ${isPd ? 'bg-green-500' : 'bg-gray-200'} border-r border-white last:border-0">
-                        ${segmentPayoutDot}
                         <span class="tooltip-text">Year ${i+1} (${yr}): ${isPd ? 'PAID' : 'DUE'}</span>
                         ${i===0 ? '<div class="vertical-marker left-0"></div>' : ''}
                         ${i===p.premiumYears-1 ? `<div class="end-premium-marker right-0"></div>` : ''}
@@ -193,7 +187,10 @@
                     </div>
                     <div class="content-area bg-gray-50 border-t p-12 pb-24 relative">
                         <div class="flex relative h-4 mb-10">
-                            <div class="flex" style="width: ${splitPct}%">${premiumSegments}</div>
+                            <div class="flex relative" style="width: ${splitPct}%">
+                                ${premiumSegments}
+                                <div class="absolute inset-0 pointer-events-none">${bonusDotsInPremium}</div>
+                            </div>
                             <div class="flex-1 bg-gray-100 relative rounded-r-sm">
                                 ${phaseDots}
                                 <div class="dot-wrapper absolute h-full right-0" style="left: auto !important; right: -8px;">
