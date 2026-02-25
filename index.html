@@ -21,36 +21,35 @@
         .end-premium-marker { width: 3px; height: 36px; background-color: #22c55e; position: absolute; top: -16px; z-index: 45; border-radius: 2px; }
         
         .payout-dot { width: 12px; height: 12px; background: #f59e0b; border-radius: 50%; position: absolute; top: 50%; transform: translate(-50%, -50%); border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 55; transition: transform 0.2s; }
-        .payout-dot:hover { transform: translate(-50%, -50%) scale(1.3); }
-        .maturity-dot { background: #ef4444; width: 16px; height: 16px; z-index: 60; }
+        .payout-dot:hover { transform: translate(-50%, -50%) scale(1.4); }
+        .maturity-dot { background: #ef4444; width: 18px; height: 18px; z-index: 60; }
 
-        .segment-container { position: relative; cursor: pointer; z-index: 50; }
+        .dot-wrapper, .segment-container { position: relative; cursor: pointer; }
         .tooltip-text {
-            visibility: hidden; opacity: 0; position: absolute; bottom: 250%; left: 50%;
+            visibility: hidden; opacity: 0; position: absolute; bottom: 45px; left: 50%;
             transform: translateX(-50%); background: #0f172a; color: white;
             padding: 8px 14px; border-radius: 6px; font-size: 11px; font-weight: 700;
-            white-space: nowrap; transition: all 0.2s; z-index: 100; pointer-events: none;
+            white-space: nowrap; transition: all 0.2s; z-index: 200; pointer-events: none;
             box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3);
         }
-        .segment-container:hover > .tooltip-text, .dot-wrapper:hover > .tooltip-text { opacity: 1; visibility: visible; transform: translate(-50% , -8px); }
+        .dot-wrapper:hover > .tooltip-text, .segment-container:hover > .tooltip-text { opacity: 1; visibility: visible; transform: translate(-50% , -5px); }
 
-        .policy-card { background: white; border-left: 8px solid; border-radius: 16px; position: relative; margin-bottom: 1.5rem; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
-        .policy-card:hover { box-shadow: 0 10px 20px -5px rgba(0,0,0,0.1); }
-        .content-area { display: none; overflow: hidden; }
+        .policy-card { background: white; border-left: 8px solid; border-radius: 16px; position: relative; margin-bottom: 1.5rem; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); overflow: hidden; }
+        .content-area { display: none; }
         .open .content-area { display: block; }
         
+        .paid-watermark { position: absolute; right: 200px; top: 25px; font-weight: 900; font-size: 32px; color: #059669; opacity: 0.15; border: 4px solid #059669; padding: 0px 15px; transform: rotate(-12deg); pointer-events: none; border-radius: 8px; z-index: 10; }
         .logo-img { width: 100px; height: 50px; object-fit: contain; }
         .val-label { font-size: 10px; font-weight: 800; text-transform: uppercase; color: #94a3b8; letter-spacing: 0.05em; margin-bottom: 2px; }
         .val-amount { font-family: 'Inter', sans-serif; font-weight: 900; line-height: 1.1; }
         
-        .grid-header { display: grid; grid-template-columns: 2.5fr 1.5fr 1.5fr 1fr; align-items: center; gap: 2rem; }
+        .grid-header { display: grid; grid-template-columns: 2.8fr 1.5fr 1.5fr 1fr; align-items: center; gap: 2rem; position: relative; z-index: 20; }
     </style>
 </head>
 <body class="p-6 md:p-12 lg:px-24">
 
     <div class="max-w-7xl mx-auto mb-12 text-center">
         <h1 class="text-4xl font-bold maroon-text uppercase tracking-widest" style="font-family: 'Playfair Display', serif;">Nami Insurance Portfolio</h1>
-        <p class="text-gray-400 text-xs font-bold mt-2 uppercase tracking-tighter">Consolidated Baseline View 2026</p>
     </div>
 
     <div class="flex justify-center gap-4 mb-12">
@@ -71,21 +70,21 @@
 
         const DATA = {
             india: [
-                { name: "INLI Life Nishchit Ace", logo: LOGOS.INDUSIND_NIPPON, id: "54751949", type: "TRADITIONAL", premium: 209000, sumAssured: 2626948, dueDate: "17 Nov 2026", commenced: "17 Nov 2025", premiumEnds: "17 Nov 2034", maturity: "17 Nov 2055", premiumYears: 10, color: "#8b1d1d", income: "₹ 1,33,974/yr", maturityAmt: "₹ 26,26,948" },
-                { name: "INLI Nishchit Pension SL", logo: LOGOS.INDUSIND_NIPPON, id: "54679062", type: "TRADITIONAL", premium: 200000, sumAssured: 89830, dueDate: "30 May 2026", commenced: "30 May 2025", premiumEnds: "30 May 2030", maturity: "30 May 2077", premiumYears: 6, color: "#8b1d1d", income: "₹ 89,830/yr", maturityAmt: "SSV Amount" },
-                { name: "INLI Nishchit Samrudhi Income lmtd", logo: LOGOS.INDUSIND_NIPPON, id: "54040166", type: "TRADITIONAL", premium: 200000, sumAssured: 1750854, dueDate: "10 Jan 2027", commenced: "10 Jan 2022", premiumEnds: "10 Jan 2028", maturity: "10 Jan 2050", premiumYears: 7, color: "#8b1d1d", income: "₹ 1,00,000/yr", maturityAmt: "₹ 17,50,854" },
-                { name: "INLI Guranteed Moneyback", logo: LOGOS.INDUSIND_NIPPON, id: "53044042", type: "TRADITIONAL", premium: 14400, sumAssured: 123940, dueDate: "08 Sep 2026", commenced: "08 Sep 2017", premiumEnds: "08 Sep 2026", maturity: "08 Sep 2032", premiumYears: 10, color: "#8b1d1d", income: "Variable SB", maturityAmt: "₹ 55,761" },
-                { name: "Kotak Retirement Savings", logo: LOGOS.KOTAK, id: "79079094", type: "TRADITIONAL", premium: 50000, sumAssured: 323695, dueDate: "13 Mar 2026", commenced: "13 Mar 2025", premiumEnds: "13 Mar 2031", maturity: "13 Mar 2040", premiumYears: 7, color: "#e63946", maturityAmt: "₹ 3,23,695 + Bonus" },
-                { name: "Kotak Fortune Maximiser", logo: LOGOS.KOTAK, id: "79425536", type: "TRADITIONAL", premium: 70000, sumAssured: 711994, dueDate: "14 Aug 2026", commenced: "14 Aug 2025", premiumEnds: "14 Aug 2034", maturity: "14 Aug 2089", premiumYears: 10, color: "#e63946", maturityAmt: "Bonus + SA" },
-                { name: "Bharti AXA Life Wealth Pro", logo: LOGOS.BHARTI, id: "503-9562771", type: "ULIP", premium: 50000, sumAssured: 500000, dueDate: "28 Sep 2026", commenced: "28 Sep 2023", premiumEnds: "28 Sep 2029", maturity: "28 Sep 2038", premiumYears: 7, color: "#005a9c", maturityAmt: "Fund Value" },
-                { name: "Axis Max Life Insurance", logo: LOGOS.AXIS_MAX, id: "608480927", type: "ULIP", premium: 50000, sumAssured: 500000, dueDate: "PAID UP", commenced: "04 Feb 2022", premiumEnds: "04 Feb 2026", maturity: "04 Feb 2032", premiumYears: 5, color: "#ae125d", maturityAmt: "Market Value" }
+                { name: "INLI Life Nishchit Ace", logo: LOGOS.INDUSIND_NIPPON, id: "54751949", uin: "128N171V01", clientId: "60938507", type: "TRADITIONAL", premium: 209000, sumAssured: 2626948, dueDate: "17 Nov 2026", commenced: "17 Nov 2025", premiumEnds: "17 Nov 2034", maturity: "17 Nov 2055", premiumYears: 10, color: "#8b1d1d", income: "₹ 1,33,974/yr", maturityAmt: "₹ 26,26,948" },
+                { name: "INLI Nishchit Pension SL", logo: LOGOS.INDUSIND_NIPPON, id: "54679062", uin: "128N161V04", clientId: "60938507", type: "TRADITIONAL", premium: 200000, sumAssured: 89830, dueDate: "30 May 2026", commenced: "30 May 2025", premiumEnds: "30 May 2030", maturity: "30 May 2077", premiumYears: 6, color: "#8b1d1d", income: "₹ 89,830/yr", maturityAmt: "SSV Amount" },
+                { name: "INLI Nishchit Samrudhi Income lmtd", logo: LOGOS.INDUSIND_NIPPON, id: "54040166", uin: "128N154V02", clientId: "60938507", type: "TRADITIONAL", premium: 200000, sumAssured: 1750854, dueDate: "10 Jan 2027", commenced: "10 Jan 2022", premiumEnds: "10 Jan 2028", maturity: "10 Jan 2050", premiumYears: 7, color: "#8b1d1d", income: "₹ 1,00,000/yr", maturityAmt: "₹ 17,50,854" },
+                { name: "INLI Guranteed Moneyback", logo: LOGOS.INDUSIND_NIPPON, id: "53044042", uin: "128N053V02", clientId: "60938507", type: "TRADITIONAL", premium: 14400, sumAssured: 123940, dueDate: "08 Sep 2026", commenced: "08 Sep 2017", premiumEnds: "08 Sep 2026", maturity: "08 Sep 2032", premiumYears: 10, color: "#8b1d1d", income: "Survival Benefit", maturityAmt: "₹ 55,761" },
+                { name: "Kotak Retirement Savings", logo: LOGOS.KOTAK, id: "79079094", uin: "107N105V02", clientId: "61491746", type: "TRADITIONAL", premium: 50000, sumAssured: 323695, dueDate: "13 Mar 2026", commenced: "13 Mar 2025", premiumEnds: "13 Mar 2031", maturity: "13 Mar 2040", premiumYears: 7, color: "#e63946", maturityAmt: "₹ 3,23,695 + Bonus" },
+                { name: "Kotak Fortune Maximiser", logo: LOGOS.KOTAK, id: "79425536", uin: "107N124V01", clientId: "61491746", type: "TRADITIONAL", premium: 70000, sumAssured: 711994, dueDate: "14 Aug 2026", commenced: "14 Aug 2025", premiumEnds: "14 Aug 2034", maturity: "14 Aug 2089", premiumYears: 10, color: "#e63946", maturityAmt: "Bonus + SA" },
+                { name: "Bharti AXA Life Wealth Pro", logo: LOGOS.BHARTI, id: "503-9562771", uin: "U123-ULIP", clientId: "503-9562771", type: "ULIP", premium: 50000, sumAssured: 500000, dueDate: "28 Sep 2026", commenced: "28 Sep 2023", premiumEnds: "28 Sep 2029", maturity: "28 Sep 2038", premiumYears: 7, color: "#005a9c", maturityAmt: "Fund Value" },
+                { name: "Axis Max Life Insurance", logo: LOGOS.AXIS_MAX, id: "608480927", uin: "AX-12345", clientId: "608480927", type: "ULIP", premium: 50000, sumAssured: 500000, dueDate: "PAID UP", commenced: "04 Feb 2022", premiumEnds: "04 Feb 2026", maturity: "04 Feb 2032", premiumYears: 5, color: "#ae125d", maturityAmt: "Market Value" }
             ],
             wife: [
-                { name: "ICICI Prudential Life", logo: LOGOS.PRUDENTIAL, id: "WIFE-IC-01", type: "TRADITIONAL", premium: 100000, sumAssured: 1200000, dueDate: "15 Oct 2026", commenced: "15 Oct 2023", premiumEnds: "15 Oct 2033", maturity: "15 Oct 2045", premiumYears: 10, color: "#9b2226", maturityAmt: "Fixed Payout" },
-                { name: "SBI Life Smart Privilege Plus", logo: LOGOS.SBI, id: "3N307267702", type: "ULIP", premium: 600000, sumAssured: 4200000, dueDate: "23 Apr 2026", commenced: "23 Apr 2025", premiumEnds: "23 Apr 2029", maturity: "23 Apr 2040", premiumYears: 5, color: "#225a94", maturityAmt: "Fund Value" }
+                { name: "ICICI Prudential Life", logo: LOGOS.PRUDENTIAL, id: "WIFE-ICICI-001", uin: "127N123V01", clientId: "WIFE-POLICY", type: "TRADITIONAL", premium: 100000, sumAssured: 1200000, dueDate: "15 Oct 2026", commenced: "15 Oct 2023", premiumEnds: "15 Oct 2033", maturity: "15 Oct 2045", premiumYears: 10, color: "#9b2226", maturityAmt: "Fixed Payout" },
+                { name: "SBI Life Smart Privilege Plus", logo: LOGOS.SBI, id: "3N307267702", uin: "111L120V03", clientId: "WIFE-SBI", type: "ULIP", premium: 600000, sumAssured: 4200000, dueDate: "23 Apr 2026", commenced: "23 Apr 2025", premiumEnds: "23 Apr 2029", maturity: "23 Apr 2040", premiumYears: 5, color: "#225a94", maturityAmt: "Fund Value" }
             ],
             singapore: [
-                { name: "AIA Pro-Achiever 2.0", logo: LOGOS.AIA, id: "U126327913", type: "ILP", premium: 5000, sumAssured: 0, dueDate: "30 Dec 2026", commenced: "30 Dec 2021", premiumEnds: "30 Dec 2031", maturity: "30 Dec 2077", premiumYears: 10, color: "#d31145", currency: "$", maturityAmt: "Fund Value" }
+                { name: "AIA Pro-Achiever 2.0", logo: LOGOS.AIA, id: "U126327913", uin: "SG-AIA-ILP", clientId: "NAMI-SG", type: "ILP", premium: 5000, sumAssured: 0, dueDate: "30 Dec 2026", commenced: "30 Dec 2021", premiumEnds: "30 Dec 2031", maturity: "30 Dec 2077", premiumYears: 10, color: "#d31145", currency: "$", maturityAmt: "Fund Value" }
             ]
         };
 
@@ -99,7 +98,15 @@
             document.getElementById(`btn-${mode === 'singapore' ? 'sg' : mode}`).classList.add('active');
 
             container.innerHTML = list.map(p => {
-                const totalUnits = p.premiumYears + 15; // Simulated horizon for UI
+                const isPaidUp = p.dueDate === "PAID UP";
+                let isDueSoon = false;
+                if(!isPaidUp) {
+                    const [d, m, y] = p.dueDate.split(' ');
+                    const diffDays = Math.ceil((new Date(`${m} ${d} ${y}`) - TODAY) / (1000 * 60 * 60 * 24));
+                    isDueSoon = diffDays > 0 && diffDays <= 45;
+                }
+
+                const totalUnits = p.premiumYears + 15;
                 const splitPct = (p.premiumYears / totalUnits) * 100;
 
                 let premiumSegments = "";
@@ -107,7 +114,7 @@
                     const yr = parseInt(p.commenced.split(' ')[2]) + i;
                     const isPd = yr < TODAY.getFullYear() || (yr === TODAY.getFullYear() && TODAY >= new Date(`${yr} ${p.commenced.split(' ')[1]} ${p.commenced.split(' ')[0]}`));
                     premiumSegments += `<div class="segment-container flex-1 h-4 rounded-sm ${isPd ? 'bg-green-500' : 'bg-gray-200'} border-r border-white last:border-0">
-                        <span class="tooltip-text">Premium Year ${i+1} (${yr})</span>
+                        <span class="tooltip-text">Premium Year ${i+1} (${yr}): Paid</span>
                         ${i===0 ? '<div class="vertical-marker left-0"></div>' : ''}
                         ${i===p.premiumYears-1 ? `<div class="end-premium-marker right-0"></div>` : ''}
                     </div>`;
@@ -118,7 +125,7 @@
                     for(let i=1; i<=10; i++) {
                         const leftPos = (i * 8) + 5; 
                         payoutDots += `<div class="dot-wrapper absolute h-full" style="left:${leftPos}%;">
-                            <span class="tooltip-text">Annual Income Phase: ${p.income}</span>
+                            <span class="tooltip-text">Annual Payout: ${p.income}</span>
                             <div class="payout-dot"></div>
                         </div>`;
                     }
@@ -126,12 +133,19 @@
                 
                 return `
                 <div class="policy-card" style="border-color:${p.color}" id="card-${p.id}">
+                    ${isPaidUp ? `<div class="paid-watermark">PAID UP</div>` : ''}
                     <div class="p-8 grid-header cursor-pointer" onclick="document.getElementById('card-${p.id}').classList.toggle('open')">
                         <div class="flex items-center gap-8">
                             <img src="${p.logo}" class="logo-img" alt="Logo">
                             <div>
-                                <h2 class="text-lg font-black text-gray-800 leading-tight">${p.name}</h2>
-                                <p class="text-[10px] font-bold text-gray-400 uppercase mt-1 tracking-widest">Policy ID: ${p.id} <span class="type-pill ${p.type === 'TRADITIONAL' ? 'pill-trad' : 'pill-ulip'} ml-3">${p.type}</span></p>
+                                <h2 class="text-lg font-black text-gray-800 leading-tight">
+                                    ${p.name}
+                                    ${isDueSoon ? `<span class="ml-3 bg-red-600 text-white text-[9px] px-2 py-1 rounded animate-pulse font-black">DUE SOON</span>` : ''}
+                                </h2>
+                                <p class="text-[10px] font-bold text-gray-400 uppercase mt-1 tracking-widest">
+                                    ID: ${p.id} • UIN: ${p.uin} • CLIENT: ${p.clientId}
+                                    <span class="type-pill ${p.type === 'TRADITIONAL' ? 'pill-trad' : 'pill-ulip'} ml-3">${p.type}</span>
+                                </p>
                             </div>
                         </div>
 
@@ -151,7 +165,7 @@
                         </div>
                     </div>
 
-                    <div class="content-area bg-gray-50 border-t p-12 pb-20 relative">
+                    <div class="content-area bg-gray-50 border-t p-12 pb-24 relative">
                         <div class="flex relative h-4 mb-10">
                             <div class="flex w-1/2" style="width: ${splitPct}%">${premiumSegments}</div>
                             <div class="flex-1 bg-gray-100 relative rounded-r-sm">
@@ -175,11 +189,13 @@
             let tPrem = 0, tSA = 0;
             list.forEach(p => { if(p.dueDate !== "PAID UP") tPrem += p.premium; tSA += p.sumAssured; });
             summary.innerHTML = `
-                <div class="bg-white p-8 rounded-2xl border-l-8 border-l-emerald-500 shadow-sm flex justify-between items-center">
-                    <div><p class="val-label text-emerald-600">Active Annual Premium</p><p class="text-4xl font-black text-gray-900">${curr} ${tPrem.toLocaleString()}</p></div>
+                <div class="bg-white p-8 rounded-2xl border-l-8 border-l-emerald-500 shadow-sm">
+                    <p class="val-label text-emerald-600">Active Annual Premium</p>
+                    <p class="text-4xl font-black text-gray-900">${curr} ${tPrem.toLocaleString()}</p>
                 </div>
-                <div class="bg-white p-8 rounded-2xl border-l-8 border-l-blue-600 shadow-sm flex justify-between items-center">
-                    <div><p class="val-label text-blue-600">Consolidated Sum Assured</p><p class="text-4xl font-black text-gray-900">${curr} ${tSA.toLocaleString()}</p></div>
+                <div class="bg-white p-8 rounded-2xl border-l-8 border-l-blue-600 shadow-sm">
+                    <p class="val-label text-blue-600">Consolidated Sum Assured</p>
+                    <p class="text-4xl font-black text-gray-900">${curr} ${tSA.toLocaleString()}</p>
                 </div>`;
         }
         render('india');
