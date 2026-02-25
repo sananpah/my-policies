@@ -88,7 +88,7 @@
                     payoutSteps: [{ years: "11-14", val: "₹ 18,591" }, { years: "15", val: "₹ 49,576" }]
                 },
                 { name: "Kotak Retirement Savings", logo: LOGOS.KOTAK, id: "79079094", uin: "107N105V02", clientId: "61491746", type: "TRADITIONAL", premium: 50000, sumAssured: 323695, dueDate: "13 Mar 2026", commenced: "13 Mar 2025", premiumEnds: "13 Mar 2031", maturity: "13 Mar 2040", premiumYears: 7, color: "#e63946", maturityAmt: "₹ 3,23,695 + Bonus" },
-                { name: "Kotak Fortune Maximiser", logo: LOGOS.KOTAK, id: "79425536", uin: "107N124V01", clientId: "61491746", type: "TRADITIONAL", premium: 70000, sumAssured: 711994, dueDate: "14 Aug 2026", commenced: "14 Aug 2025", premiumEnds: "14 Aug 2034", maturity: "14 Aug 2089", premiumYears: 10, color: "#e63946", maturityAmt: "Bonus + SA" },
+                { name: "Kotak Fortune Maximiser", logo: LOGOS.KOTAK, id: "79425536", uin: "107N124V01", clientId: "61491746", type: "TRADITIONAL", premium: 70000, sumAssured: 711994, dueDate: "14 Aug 2026", commenced: "14 Aug 2025", premiumEnds: "14 Aug 2034", maturity: "14 Aug 2089", premiumYears: 10, color: "#e63946", cashBonus: "Immediate", maturityAmt: "Bonus + SA" },
                 { name: "Bharti AXA Life Wealth Pro", logo: LOGOS.BHARTI, id: "503-9562771", uin: "130A012V02", clientId: "N/A", type: "ULIP", premium: 50000, sumAssured: 0, dueDate: "28 Sep 2026", commenced: "28 Sep 2023", premiumEnds: "28 Sep 2029", maturity: "28 Sep 2038", premiumYears: 7, color: "#005a9c", maturityAmt: "Unit value at that time" },
                 { name: "Fast Track Super", logo: LOGOS.AXIS_MAX, id: "608480927", uin: "104L082V02", clientId: "N/A", type: "ULIP", premium: 50000, sumAssured: 0, dueDate: "PAID UP", commenced: "04 Feb 2022", premiumEnds: "04 Feb 2026", maturity: "04 Feb 2032", premiumYears: 5, color: "#ae125d", maturityAmt: "Unit value at that time" }
             ],
@@ -127,7 +127,15 @@
                     const yr = parseInt(p.commenced.split(' ')[2]) + i;
                     const dueDateObj = new Date(`${p.commenced.split(' ')[1]} ${p.commenced.split(' ')[0]} ${yr}`);
                     const isPd = dueDateObj < TODAY;
+                    
+                    let segmentPayoutDot = "";
+                    if(p.cashBonus === "Immediate") {
+                        segmentPayoutDot = `<div class="payout-dot" style="left:50%; top: -12px; width:8px; height:8px;"></div>
+                        <span class="tooltip-text">Annual Cash Bonus Received</span>`;
+                    }
+
                     premiumSegments += `<div class="segment-container flex-1 h-4 rounded-sm ${isPd ? 'bg-green-500' : 'bg-gray-200'} border-r border-white last:border-0">
+                        ${segmentPayoutDot}
                         <span class="tooltip-text">Year ${i+1} (${yr}): ${isPd ? 'PAID' : 'DUE'}</span>
                         ${i===0 ? '<div class="vertical-marker left-0"></div>' : ''}
                         ${i===p.premiumYears-1 ? `<div class="end-premium-marker right-0"></div>` : ''}
@@ -151,11 +159,12 @@
                             <div class="payout-dot"></div>
                         </div>`;
                     });
-                } else if(p.income) {
+                } else if(p.income || p.cashBonus === "Immediate") {
+                    const label = p.cashBonus ? "Annual Cash Bonus" : "Annual Income";
                     for(let i=1; i<=3; i++) {
                         const leftPos = (i * 25); 
                         phaseDots += `<div class="dot-wrapper absolute h-full" style="left:${leftPos}%;">
-                            <span class="tooltip-text">Annual Income: ${p.income}</span>
+                            <span class="tooltip-text">${label}</span>
                             <div class="payout-dot"></div>
                         </div>`;
                     }
