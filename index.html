@@ -17,14 +17,12 @@
         .pill-trad { background: #fef3c7; color: #92400e; border: 1px solid #f59e0b; }
         .pill-ulip { background: #e0f2fe; color: #075985; border: 1px solid #0ea5e9; }
 
-        /* Timeline Markers */
         .vertical-marker { width: 2px; height: 24px; background-color: #cbd5e1; position: absolute; top: -10px; z-index: 40; }
         .end-premium-marker { width: 3px; height: 32px; background-color: #22c55e; position: absolute; top: -14px; z-index: 45; border-radius: 2px; }
         
         .payout-dot { width: 10px; height: 10px; background: #f59e0b; border-radius: 50%; position: absolute; top: 50%; transform: translateY(-50%); border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 55; }
         .maturity-dot { background: #ef4444; width: 14px; height: 14px; right: 0 !important; left: auto !important; transform: translate(50%, -50%); z-index: 60; border: 2px solid white; }
 
-        /* Tooltips */
         .segment-container, .hover-zone { position: relative; cursor: pointer; z-index: 50; }
         .tooltip-text {
             visibility: hidden; opacity: 0; position: absolute; bottom: 250%; left: 50%;
@@ -39,7 +37,6 @@
         .open .content-area { display: block; }
         .paid-watermark { position: absolute; right: 120px; top: 15px; font-weight: 900; font-size: 32px; color: #059669; opacity: 0.12; border: 4px solid #059669; padding: 0px 10px; transform: rotate(-12deg); pointer-events: none; border-radius: 4px; }
 
-        /* Logo Styling */
         .logo-img { width: 64px; height: 40px; object-fit: contain; }
     </style>
 </head>
@@ -61,7 +58,6 @@
     <script>
         const TODAY = new Date();
         
-        // Using your exact GitLab filenames
         const LOGOS = {
             PRUDENTIAL: "image_d82175.png",
             SBI: "image_cda45c.png",
@@ -74,16 +70,16 @@
 
         const DATA = {
             india: [
-                { name: "ICICI Prudential Nishchit Ace", logo: LOGOS.PRUDENTIAL, id: "54751949", clientId: "60938507", uin: "128N171V01", type: "TRADITIONAL", premium: 209000, sumAssured: 2626948, dueDate: "17 Nov 2026", commenced: "17 Nov 2025", premiumEnds: "17 Nov 2034", maturity: "17 Nov 2055", premiumYears: 10, color: "#9b2226", 
+                { name: "INLI Nischit Ace", logo: LOGOS.INDUSIND_NIPPON, id: "54751949", clientId: "60938507", uin: "128N171V01", type: "TRADITIONAL", premium: 209000, sumAssured: 2626948, dueDate: "17 Nov 2026", commenced: "17 Nov 2025", premiumEnds: "17 Nov 2034", maturity: "17 Nov 2055", premiumYears: 10, color: "#bc4749", 
                   payouts: [ {range: "Income Phase", text: "₹ 1,33,974/yr", left: "40%"}, {range: "MATURITY", text: "Benefit: ₹ 26,26,948", left: "100%", isMaturity: true} ] 
                 },
-                { name: "ICICI Prudential Nishchit Pension", logo: LOGOS.PRUDENTIAL, id: "54679062", clientId: "60938507", uin: "128N161V04", type: "TRADITIONAL", premium: 200000, sumAssured: 89830, dueDate: "30 May 2026", commenced: "30 May 2025", premiumEnds: "30 May 2030", maturity: "30 May 2077", premiumYears: 6, color: "#9b2226", 
+                { name: "INLI Nishchit Pension SL", logo: LOGOS.INDUSIND_NIPPON, id: "54679062", clientId: "60938507", uin: "128N161V04", type: "TRADITIONAL", premium: 200000, sumAssured: 89830, dueDate: "30 May 2026", commenced: "30 May 2025", premiumEnds: "30 May 2030", maturity: "30 May 2077", premiumYears: 6, color: "#bc4749", 
                   payouts: [ {range: "Annual Income", text: "₹ 89,830", left: "50%"}, {range: "MATURITY", text: "Benefit: SSV Amount", left: "100%", isMaturity: true} ] 
                 },
-                { name: "ICICI Prudential Samrudhi Income", logo: LOGOS.PRUDENTIAL, id: "54040166", clientId: "60938507", uin: "128N154V02", type: "TRADITIONAL", premium: 200000, sumAssured: 1750854, dueDate: "10 Jan 2027", commenced: "10 Jan 2022", premiumEnds: "10 Jan 2028", maturity: "10 Jan 2050", premiumYears: 7, color: "#9b2226", 
+                { name: "INLI Nishchit Samrudhi Income lmtd", logo: LOGOS.INDUSIND_NIPPON, id: "54040166", clientId: "60938507", uin: "128N154V02", type: "TRADITIONAL", premium: 200000, sumAssured: 1750854, dueDate: "10 Jan 2027", commenced: "10 Jan 2022", premiumEnds: "10 Jan 2028", maturity: "10 Jan 2050", premiumYears: 7, color: "#bc4749", 
                   payouts: [ {range: "Annual Income", text: "₹ 1,00,000", left: "50%"}, {range: "MATURITY", text: "Benefit: ₹ 17,50,854", left: "100%", isMaturity: true} ] 
                 },
-                { name: "IndusInd Nippon Guaranteed Moneyback", logo: LOGOS.INDUSIND_NIPPON, id: "53044042", clientId: "60938507", uin: "128N053V02", type: "TRADITIONAL", premium: 14400, sumAssured: 123940, dueDate: "08 Sep 2026", commenced: "08 Sep 2017", premiumEnds: "08 Sep 2026", maturity: "08 Sep 2032", premiumYears: 10, color: "#bc4749", 
+                { name: "INLI Guranteed Moneyback", logo: LOGOS.INDUSIND_NIPPON, id: "53044042", clientId: "60938507", uin: "128N053V02", type: "TRADITIONAL", premium: 14400, sumAssured: 123940, dueDate: "08 Sep 2026", commenced: "08 Sep 2017", premiumEnds: "08 Sep 2026", maturity: "08 Sep 2032", premiumYears: 10, color: "#bc4749", 
                   payouts: [ {range: "Income Phase", text: "Survival Benefits", left: "40%"}, {range: "MATURITY", text: "Benefit: ₹ 55,761", left: "100%", isMaturity: true} ] 
                 },
                 { name: "Kotak Retirement Savings", logo: LOGOS.KOTAK, id: "79079094", clientId: "61491746", uin: "107N105V02", type: "TRADITIONAL", premium: 50000, sumAssured: 323695, dueDate: "13 Mar 2026", commenced: "13 Mar 2025", premiumEnds: "13 Mar 2031", maturity: "13 Mar 2040", premiumYears: 7, color: "#e63946", payouts: [{range: "MATURITY", text: "Benefit: ₹ 3,23,695 + Bonus", left: "100%", isMaturity: true}] },
@@ -92,6 +88,7 @@
                 { name: "Axis Max Life Insurance", logo: LOGOS.AXIS_MAX, id: "608480927", clientId: "608480927", type: "ULIP", premium: 50000, sumAssured: 500000, dueDate: "PAID UP", commenced: "04 Feb 2022", premiumEnds: "04 Feb 2026", maturity: "04 Feb 2032", premiumYears: 5, color: "#430354", isPaidUp: true, payouts: [{range: "MATURITY", text: "Benefit: Market Value", left: "100%", isMaturity: true}] }
             ],
             wife: [
+                { name: "ICICI Prudential Life", logo: LOGOS.PRUDENTIAL, id: "WIFE-ICICI-001", clientId: "WIFE-POLICY", type: "TRADITIONAL", premium: 100000, sumAssured: 1000000, dueDate: "15 Oct 2026", commenced: "15 Oct 2023", premiumEnds: "15 Oct 2033", maturity: "15 Oct 2043", premiumYears: 10, color: "#9b2226", payouts: [{range: "MATURITY", text: "Benefit: Fixed Payout", left: "100%", isMaturity: true}] },
                 { name: "SBI Life Smart Privilege Plus", logo: LOGOS.SBI, id: "3N307267702", clientId: "WIFE-SBI", type: "ULIP", premium: 600000, sumAssured: 4200000, dueDate: "23 Apr 2026", commenced: "23 Apr 2025", premiumEnds: "23 Apr 2029", maturity: "23 Apr 2040", premiumYears: 5, color: "#005f73", payouts: [{range: "MATURITY", text: "Benefit: Fund Value", left: "100%", isMaturity: true}] }
             ],
             singapore: [
@@ -106,7 +103,7 @@
             const curr = mode === 'singapore' ? '$' : '₹';
 
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(`btn-${mode === 'singapore' ? 'sg' : mode}`).classList.add('active');
+            document.getElementById(`btn-${mode === 'singapore' ? 'sg' : (mode === 'wife' ? 'wife' : 'india')}`).classList.add('active');
 
             container.innerHTML = list.map(p => {
                 const isPaidUp = p.dueDate === "PAID UP";
