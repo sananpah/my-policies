@@ -20,23 +20,28 @@
         .vertical-marker { width: 2px; height: 28px; background-color: #cbd5e1; position: absolute; top: -12px; z-index: 40; }
         .end-premium-marker { width: 3px; height: 36px; background-color: #22c55e; position: absolute; top: -16px; z-index: 45; border-radius: 2px; }
         
-        .payout-dot { width: 12px; height: 12px; background: #f59e0b; border-radius: 50%; position: absolute; top: 50%; transform: translate(-50%, -50%); border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 60; transition: transform 0.2s; }
-        .growth-dot { background: #3b82f6; } 
-        .payout-dot:hover { transform: translate(-50%, -50%) scale(1.4); z-index: 100; }
-        .maturity-dot { background: #ef4444 !important; width: 18px !important; height: 18px !important; }
-
-        .dot-wrapper, .segment-container { position: relative; cursor: pointer; }
+        /* Tooltip Base */
         .tooltip-text {
-            visibility: hidden; opacity: 0; position: absolute; bottom: 45px; left: 50%;
+            visibility: hidden; opacity: 0; position: absolute; left: 50%;
             transform: translateX(-50%); background: rgba(15, 23, 42, 0.95); color: white;
-            padding: 8px 14px; border-radius: 6px; font-size: 11px; font-weight: 700;
-            white-space: nowrap; transition: all 0.2s; z-index: 200; pointer-events: none;
+            padding: 6px 12px; border-radius: 6px; font-size: 10px; font-weight: 800;
+            white-space: nowrap; transition: all 0.2s ease; z-index: 300; pointer-events: none;
             box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); backdrop-filter: blur(4px);
         }
-        .tooltip-right { left: auto !important; right: 0 !important; transform: none !important; }
-        
-        .dot-wrapper:hover > .tooltip-text, .segment-container:hover > .tooltip-text { opacity: 1; visibility: visible; transform: translate(-50% , -5px); }
-        .dot-wrapper:hover > .tooltip-right { transform: translateY(-5px) !important; }
+
+        /* Specific positions to avoid overlap */
+        .year-tooltip { bottom: 50px; } /* Higher up */
+        .bonus-tooltip { bottom: 30px; } /* Closer to dot */
+
+        .dot-wrapper:hover .bonus-tooltip, 
+        .segment-container:hover .year-tooltip { 
+            visibility: visible; opacity: 1; transform: translate(-50%, -5px); 
+        }
+
+        .payout-dot { width: 12px; height: 12px; background: #f59e0b; border-radius: 50%; position: absolute; top: 50%; transform: translate(-50%, -50%); border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 250; transition: transform 0.2s; }
+        .growth-dot { background: #3b82f6; } 
+        .payout-dot:hover { transform: translate(-50%, -50%) scale(1.4); }
+        .maturity-dot { background: #ef4444 !important; width: 18px !important; height: 18px !important; }
 
         .policy-card { background: white; border-left: 8px solid; border-radius: 16px; position: relative; margin-bottom: 1.5rem; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); overflow: hidden; }
         .content-area { display: none; }
@@ -123,14 +128,16 @@
                     
                     if(p.cashBonus === "Immediate") {
                         const dotLeft = (i / p.premiumYears) * 100 + (100/p.premiumYears/2);
-                        bonusDotsInPremium += `<div class="dot-wrapper absolute h-full" style="left:${dotLeft}%; width: 20px;">
-                            <span class="tooltip-text">Annual Cash Bonus Received</span>
+                        bonusDotsInPremium += `
+                        <div class="dot-wrapper absolute h-full" style="left:${dotLeft}%; width: 20px;">
                             <div class="payout-dot" style="width:8px; height:8px;"></div>
+                            <span class="tooltip-text bonus-tooltip">Annual Cash Bonus Received</span>
                         </div>`;
                     }
 
-                    premiumSegments += `<div class="segment-container flex-1 h-4 rounded-sm ${isPd ? 'bg-green-500' : 'bg-gray-200'} border-r border-white last:border-0">
-                        <span class="tooltip-text">Year ${i+1} (${yr}): ${isPd ? 'PAID' : 'DUE'}</span>
+                    premiumSegments += `
+                    <div class="segment-container flex-1 h-4 rounded-sm ${isPd ? 'bg-green-500' : 'bg-gray-200'} border-r border-white last:border-0 relative">
+                        <span class="tooltip-text year-tooltip">Year ${i+1} (${yr}): ${isPd ? 'PAID' : 'DUE'}</span>
                         ${i===0 ? '<div class="vertical-marker left-0"></div>' : ''}
                         ${i===p.premiumYears-1 ? `<div class="end-premium-marker right-0"></div>` : ''}
                     </div>`;
@@ -141,16 +148,16 @@
                     for(let i=1; i<=4; i++) {
                         const leftPos = (i * 20); 
                         phaseDots += `<div class="dot-wrapper absolute h-full" style="left:${leftPos}%;">
-                            <span class="tooltip-text">Growth Phase: Maximizing Fund Value</span>
                             <div class="payout-dot growth-dot"></div>
+                            <span class="tooltip-text bonus-tooltip">Growth Phase: Maximizing Fund Value</span>
                         </div>`;
                     }
                 } else if(p.payoutSteps) {
                     p.payoutSteps.forEach((step, idx) => {
                         const pos = 15 + (idx * 15);
                         phaseDots += `<div class="dot-wrapper absolute h-full" style="left:${pos}%;">
-                            <span class="tooltip-text">Income: ${step.years} yr - ${step.val}</span>
                             <div class="payout-dot"></div>
+                            <span class="tooltip-text bonus-tooltip">Income: ${step.years} yr - ${step.val}</span>
                         </div>`;
                     });
                 } else if(p.income || p.cashBonus === "Immediate") {
@@ -158,8 +165,8 @@
                     for(let i=1; i<=3; i++) {
                         const leftPos = (i * 25); 
                         phaseDots += `<div class="dot-wrapper absolute h-full" style="left:${leftPos}%;">
-                            <span class="tooltip-text">${label}</span>
                             <div class="payout-dot"></div>
+                            <span class="tooltip-text bonus-tooltip">${label}</span>
                         </div>`;
                     }
                 }
@@ -189,13 +196,13 @@
                         <div class="flex relative h-4 mb-10">
                             <div class="flex relative" style="width: ${splitPct}%">
                                 ${premiumSegments}
-                                <div class="absolute inset-0 pointer-events-none">${bonusDotsInPremium}</div>
+                                <div class="absolute inset-0 z-20 pointer-events-auto">${bonusDotsInPremium}</div>
                             </div>
                             <div class="flex-1 bg-gray-100 relative rounded-r-sm">
                                 ${phaseDots}
                                 <div class="dot-wrapper absolute h-full right-0" style="left: auto !important; right: -8px;">
-                                    <span class="tooltip-text tooltip-right bg-red-600">MATURITY: ${p.maturityAmt}</span>
                                     <div class="payout-dot maturity-dot"></div>
+                                    <span class="tooltip-text bonus-tooltip bg-red-600">MATURITY: ${p.maturityAmt}</span>
                                 </div>
                                 <div class="vertical-marker right-0"></div>
                             </div>
