@@ -22,7 +22,7 @@
         .growth-dot { background: #3b82f6; } 
         .maturity-dot { background: #ef4444 !important; width: 18px !important; height: 18px !important; }
         
-        /* RESTORED BONUS CSS */
+        /* Tooltip & Bonus Styles */
         .bonus-container { position: absolute; bottom: -22px; left: 50%; transform: translateX(-50%); z-index: 150; padding: 10px; cursor: pointer; }
         .bonus-payout-dot { width: 8px; height: 8px; background: #f59e0b; border-radius: 50%; border: 1.5px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
         .segment-container { position: relative; cursor: pointer; }
@@ -79,24 +79,21 @@
                 for(let i=0; i<p.premiumYears; i++) {
                     const yr = parseInt(p.commenced.split(' ')[2]) + i;
                     const isPd = new Date(`${p.commenced.split(' ')[1]} ${p.commenced.split(' ')[0]} ${yr}`) < TODAY;
-                    let tip = `Year ${i+1} (${yr}): ${isPd ? 'PAID' : 'DUE'}`;
+                    let paymentStatusTip = `Year ${i+1} (${yr}): ${isPd ? 'PAID' : 'DUE'}`;
                     
-                    if(mode === 'singapore' && i < 10) tip = `Year ${i+1}: Surrender Charge ${SG_CHARGES[i]}%`;
-
-                    /* RESTORED BONUS LOGIC */
-                    let bonusIndicator = "";
+                    let indicator = "";
+                    // Handle Kotak Cash Bonus
                     if(p.cashBonus === "Immediate" && i > 0) {
-                        bonusIndicator = `
-                            <div class="bonus-container">
-                                <div class="bonus-payout-dot"></div>
-                                <span class="tooltip-text bonus-tooltip">Annual Bonus Payout</span>
-                            </div>
-                        `;
+                        indicator = `<div class="bonus-container"><div class="bonus-payout-dot"></div><span class="tooltip-text bonus-tooltip">Annual Bonus Payout</span></div>`;
+                    }
+                    // Handle AIA Surrender Charges (Bottom dots for first 10 years)
+                    if(mode === 'singapore' && i < 10) {
+                        indicator = `<div class="bonus-container"><div class="bonus-payout-dot" style="background:#f97316"></div><span class="tooltip-text bonus-tooltip">Year ${i+1}: Surrender Charge ${SG_CHARGES[i]}%</span></div>`;
                     }
 
                     premiumSegments += `<div class="segment-container flex-1 h-4 rounded-sm ${isPd ? 'bg-green-500' : 'bg-gray-200'} border-r border-white last:border-0">
-                        <span class="tooltip-text year-tooltip">${tip}</span>
-                        ${bonusIndicator}
+                        <span class="tooltip-text year-tooltip">${paymentStatusTip}</span>
+                        ${indicator}
                         ${i===0 ? '<div class="vertical-marker left-0"></div>' : ''}
                         ${i===p.premiumYears-1 ? `<div class="end-premium-marker right-0 ${mode==='singapore'?'surrender-marker':''}"></div>` : ''}
                     </div>`;
@@ -111,10 +108,8 @@
                     for(let i=1; i<=3; i++) phaseDots += `<div class="dot-wrapper absolute h-full" style="left:${i*25}%;"><span class="tooltip-text">${p.income}</span><div class="payout-dot"></div></div>`;
                 }
 
-                const midLabel = mode === 'singapore' ? "Surrender Ends" : "Premium End";
+                const midLabel = mode === 'singapore' ? "Surrender Period Ends" : "Premium End";
                 const midDate = mode === 'singapore' ? (parseInt(p.commenced.split(' ')[2]) + 10) : p.premiumEnds;
-                const safeUin = p.uin || 'N/A';
-                const safeClient = p.clientId || 'N/A';
 
                 return `
                 <div class="policy-card" style="border-color:${p.color}" id="card-${p.id}">
@@ -124,7 +119,7 @@
                             <img src="${p.logo}" class="logo-img">
                             <div>
                                 <h2 class="text-lg font-black text-gray-800">${p.name}</h2>
-                                <p class="text-[10px] font-bold text-gray-400 uppercase">Policy No: ${p.id} • UIN: ${safeUin} • CLIENT: ${safeClient}</p>
+                                <p class="text-[10px] font-bold text-gray-400 uppercase">Policy No: ${p.id} • UIN: ${p.uin || 'N/A'} • CLIENT: ${p.clientId || 'N/A'}</p>
                             </div>
                         </div>
                         <div><p class="val-label">Sum Assured</p><p class="val-amount text-2xl text-blue-700">${curr} ${p.sumAssured.toLocaleString()}</p></div>
