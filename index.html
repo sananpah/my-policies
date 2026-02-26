@@ -16,6 +16,9 @@
         .type-pill { font-size: 9px; padding: 2px 10px; border-radius: 999px; font-weight: 800; text-transform: uppercase; }
         .pill-trad { background: #fef3c7; color: #92400e; border: 1px solid #f59e0b; }
         .pill-ulip { background: #e0f2fe; color: #075985; border: 1px solid #0ea5e9; }
+        /* Added specific colors for Savings/Retirement if needed, currently using trad yellow */
+        .pill-savings { background: #ecfdf5; color: #065f46; border: 1px solid #10b981; }
+        .pill-retirement { background: #fff7ed; color: #9a3412; border: 1px solid #f97316; }
 
         .vertical-marker { width: 2px; height: 28px; background-color: #cbd5e1; position: absolute; top: -12px; z-index: 40; }
         .end-premium-marker { width: 3px; height: 36px; background-color: #22c55e; position: absolute; top: -16px; z-index: 45; border-radius: 2px; }
@@ -24,14 +27,13 @@
         .growth-dot { background: #3b82f6; } 
         .maturity-dot { background: #ef4444 !important; width: 18px !important; height: 18px !important; }
 
-        /* Enhanced Bonus Dot Logic */
         .bonus-container { 
             position: absolute; 
             bottom: -22px; 
             left: 50%; 
             transform: translateX(-50%); 
-            z-index: 150; /* Higher than segment */
-            padding: 10px; /* Larger hit area */
+            z-index: 150;
+            padding: 10px;
             cursor: pointer;
         }
         .bonus-payout-dot { 
@@ -55,11 +57,8 @@
         .bonus-tooltip { bottom: auto !important; top: 25px !important; }
         .tooltip-right { left: auto !important; right: 0 !important; transform: none !important; }
         
-        /* Fixed Interaction Logic */
-        /* Only show year tooltip if we are NOT hovering the bonus container */
         .segment-container:hover > .year-tooltip { opacity: 1; visibility: visible; transform: translate(-50% , -5px); }
         .segment-container:has(.bonus-container:hover) > .year-tooltip { opacity: 0 !important; visibility: hidden !important; }
-
         .bonus-container:hover > .bonus-tooltip { opacity: 1; visibility: visible; transform: translate(-50% , 5px); }
         
         .dot-wrapper:hover > .tooltip-text { opacity: 1; visibility: visible; transform: translate(-50% , -5px); }
@@ -101,12 +100,12 @@
 
         const DATA = {
             india: [
-                { name: "INLI Life Nishchit Ace", logo: LOGOS.INDUSIND_NIPPON, id: "54751949", uin: "128N171V01", clientId: "60938507", type: "TRADITIONAL", premium: 209000, sumAssured: 2626948, dueDate: "17 Nov 2026", commenced: "17 Nov 2025", premiumEnds: "17 Nov 2034", maturity: "17 Nov 2055", premiumYears: 10, color: "#8b1d1d", maturityAmt: "₹ 26,26,948", payoutSteps: [{ years: "11-15", val: "₹ 1,33,974" }, { years: "16-20", val: "₹ 1,60,769" }, { years: "21-25", val: "₹ 1,87,564" }, { years: "25-30", val: "₹ 214,359" }] },
-                { name: "INLI Nishchit Pension SL", logo: LOGOS.INDUSIND_NIPPON, id: "54679062", uin: "128N161V04", clientId: "60938507", type: "TRADITIONAL", premium: 200000, sumAssured: 89830, dueDate: "30 May 2026", commenced: "30 May 2025", premiumEnds: "30 May 2030", maturity: "30 May 2077", premiumYears: 6, color: "#8b1d1d", income: "Yearly Income: ₹ 89,830", maturityAmt: "Special Surrender Value" },
-                { name: "INLI Nishchit Samrudhi Income lmtd", logo: LOGOS.INDUSIND_NIPPON, id: "54040166", uin: "128N154V02", clientId: "60938507", type: "TRADITIONAL", premium: 200000, sumAssured: 1750854, dueDate: "10 Jan 2027", commenced: "10 Jan 2022", premiumEnds: "10 Jan 2028", maturity: "10 Jan 2050", premiumYears: 7, color: "#8b1d1d", income: "8-28 Yr: ₹ 100,000", maturityAmt: "₹ 17,50,854" },
-                { name: "INLI Guranteed Moneyback", logo: LOGOS.INDUSIND_NIPPON, id: "53044042", uin: "128N053V02", clientId: "60938507", type: "TRADITIONAL", premium: 14400, sumAssured: 123940, dueDate: "08 Sep 2026", commenced: "08 Sep 2017", premiumEnds: "08 Sep 2026", maturity: "08 Sep 2032", premiumYears: 10, color: "#8b1d1d", maturityAmt: "Loyalty: ₹ 37,170 + Mat: ₹ 18,591", payoutSteps: [{ years: "11-14", val: "₹ 18,591" }, { years: "15", val: "₹ 49,576" }] },
-                { name: "Kotak Retirement Savings", logo: LOGOS.KOTAK, id: "79079094", uin: "107N105V02", clientId: "61491746", type: "TRADITIONAL", premium: 50000, sumAssured: 323695, dueDate: "13 Mar 2026", commenced: "13 Mar 2025", premiumEnds: "13 Mar 2031", maturity: "13 Mar 2040", premiumYears: 7, color: "#e63946", maturityAmt: "₹ 3,23,695 + Bonus", growthPhase: true },
-                { name: "Kotak Fortune Maximiser", logo: LOGOS.KOTAK, id: "79425536", uin: "107N124V01", clientId: "61491746", type: "TRADITIONAL", premium: 70000, sumAssured: 711994, dueDate: "14 Aug 2026", commenced: "14 Aug 2025", premiumEnds: "14 Aug 2034", maturity: "14 Aug 2089", premiumYears: 10, color: "#e63946", cashBonus: "Immediate", maturityAmt: "₹ 7,11,994 + Bonus" },
+                { name: "INLI Life Nishchit Ace", logo: LOGOS.INDUSIND_NIPPON, id: "54751949", uin: "128N171V01", clientId: "60938507", type: "SAVINGS", premium: 209000, sumAssured: 2626948, dueDate: "17 Nov 2026", commenced: "17 Nov 2025", premiumEnds: "17 Nov 2034", maturity: "17 Nov 2055", premiumYears: 10, color: "#8b1d1d", maturityAmt: "₹ 26,26,948", payoutSteps: [{ years: "11-15", val: "₹ 1,33,974" }, { years: "16-20", val: "₹ 1,60,769" }, { years: "21-25", val: "₹ 1,87,564" }, { years: "25-30", val: "₹ 214,359" }] },
+                { name: "INLI Nishchit Pension SL", logo: LOGOS.INDUSIND_NIPPON, id: "54679062", uin: "128N161V04", clientId: "60938507", type: "RETIREMENT", premium: 200000, sumAssured: 89830, dueDate: "30 May 2026", commenced: "30 May 2025", premiumEnds: "30 May 2030", maturity: "30 May 2077", premiumYears: 6, color: "#8b1d1d", income: "Yearly Income: ₹ 89,830", maturityAmt: "Special Surrender Value" },
+                { name: "INLI Nishchit Samrudhi Income lmtd", logo: LOGOS.INDUSIND_NIPPON, id: "54040166", uin: "128N154V02", clientId: "60938507", type: "SAVINGS", premium: 200000, sumAssured: 1750854, dueDate: "10 Jan 2027", commenced: "10 Jan 2022", premiumEnds: "10 Jan 2028", maturity: "10 Jan 2050", premiumYears: 7, color: "#8b1d1d", income: "8-28 Yr: ₹ 100,000", maturityAmt: "₹ 17,50,854" },
+                { name: "INLI Guaranteed Moneyback", logo: LOGOS.INDUSIND_NIPPON, id: "53044042", uin: "128N053V02", clientId: "60938507", type: "SAVINGS", premium: 14400, sumAssured: 123940, dueDate: "08 Sep 2026", commenced: "08 Sep 2017", premiumEnds: "08 Sep 2026", maturity: "08 Sep 2032", premiumYears: 10, color: "#8b1d1d", maturityAmt: "Loyalty: ₹ 37,170 + Mat: ₹ 18,591", payoutSteps: [{ years: "11-14", val: "₹ 18,591" }, { years: "15", val: "₹ 49,576" }] },
+                { name: "Kotak Retirement Savings", logo: LOGOS.KOTAK, id: "79079094", uin: "107N105V02", clientId: "61491746", type: "RETIREMENT", premium: 50000, sumAssured: 323695, dueDate: "13 Mar 2026", commenced: "13 Mar 2025", premiumEnds: "13 Mar 2031", maturity: "13 Mar 2040", premiumYears: 7, color: "#e63946", maturityAmt: "₹ 3,23,695 + Bonus", growthPhase: true },
+                { name: "Kotak Fortune Maximiser", logo: LOGOS.KOTAK, id: "79425536", uin: "107N124V01", clientId: "61491746", type: "SAVINGS", premium: 70000, sumAssured: 711994, dueDate: "14 Aug 2026", commenced: "14 Aug 2025", premiumEnds: "14 Aug 2034", maturity: "14 Aug 2089", premiumYears: 10, color: "#e63946", cashBonus: "Immediate", maturityAmt: "₹ 7,11,994 + Bonus" },
                 { name: "Bharti AXA Life Wealth Pro", logo: LOGOS.BHARTI, id: "503-9562771", uin: "130A012V02", clientId: "N/A", type: "ULIP", premium: 50000, sumAssured: 0, dueDate: "28 Sep 2026", commenced: "28 Sep 2023", premiumEnds: "28 Sep 2029", maturity: "28 Sep 2038", premiumYears: 7, color: "#005a9c", maturityAmt: "Unit value at that time" },
                 { name: "Fast Track Super", logo: LOGOS.AXIS_MAX, id: "608480927", uin: "104L082V02", clientId: "N/A", type: "ULIP", premium: 50000, sumAssured: 0, dueDate: "PAID UP", commenced: "04 Feb 2022", premiumEnds: "04 Feb 2026", maturity: "04 Feb 2032", premiumYears: 5, color: "#ae125d", maturityAmt: "Unit value at that time" }
             ],
@@ -118,6 +117,13 @@
                 { name: "AIA Pro-Achiever 2.0", logo: LOGOS.AIA, id: "U126327913", uin: "SG-AIA-ILP", clientId: "NAMI-SG", type: "ILP", premium: 5000, sumAssured: 0, dueDate: "30 Dec 2026", commenced: "30 Dec 2021", premiumEnds: "30 Dec 2031", maturity: "30 Dec 2077", premiumYears: 10, color: "#d31145", currency: "$", maturityAmt: "Unit value at that time" }
             ]
         };
+
+        function getPillClass(type) {
+            if (type === 'SAVINGS') return 'pill-savings';
+            if (type === 'RETIREMENT') return 'pill-retirement';
+            if (type === 'ULIP' || type === 'ILP') return 'pill-ulip';
+            return 'pill-trad';
+        }
 
         function render(mode) {
             const container = document.getElementById('policy-container');
@@ -207,7 +213,7 @@
                                 </h2>
                                 <p class="text-[10px] font-bold text-gray-400 uppercase mt-1 tracking-widest">
                                     ID: ${p.id} • UIN: ${p.uin} • CLIENT: ${p.clientId}
-                                    <span class="type-pill ${p.type === 'TRADITIONAL' ? 'pill-trad' : 'pill-ulip'} ml-3">${p.type}</span>
+                                    <span class="type-pill ${getPillClass(p.type)} ml-3">${p.type}</span>
                                 </p>
                             </div>
                         </div>
