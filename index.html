@@ -24,13 +24,26 @@
         .growth-dot { background: #3b82f6; } 
         .maturity-dot { background: #ef4444 !important; width: 18px !important; height: 18px !important; }
 
-        /* Bonus Dot and its specific Tooltip Trigger */
-        .bonus-container { position: absolute; bottom: -22px; left: 50%; transform: translateX(-50%); z-index: 100; cursor: pointer; }
-        .bonus-payout-dot { width: 8px; height: 8px; background: #f59e0b; border-radius: 50%; border: 1.5px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+        /* Enhanced Bonus Dot Logic */
+        .bonus-container { 
+            position: absolute; 
+            bottom: -22px; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            z-index: 150; /* Higher than segment */
+            padding: 10px; /* Larger hit area */
+            cursor: pointer;
+        }
+        .bonus-payout-dot { 
+            width: 8px; height: 8px; 
+            background: #f59e0b; 
+            border-radius: 50%; 
+            border: 1.5px solid white; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2); 
+        }
 
-        .dot-wrapper, .segment-container { position: relative; cursor: pointer; }
+        .segment-container { position: relative; cursor: pointer; }
         
-        /* Universal Tooltip Style */
         .tooltip-text {
             visibility: hidden; opacity: 0; position: absolute; bottom: 45px; left: 50%;
             transform: translateX(-50%); background: #0f172a; color: white;
@@ -39,15 +52,16 @@
             box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3);
         }
         
-        /* Specific Bonus Tooltip position - showing below the dot to avoid collision */
-        .bonus-tooltip { bottom: auto !important; top: 15px !important; }
+        .bonus-tooltip { bottom: auto !important; top: 25px !important; }
         .tooltip-right { left: auto !important; right: 0 !important; transform: none !important; }
         
-        /* Interaction Logic: Segment Hover vs Bonus Container Hover */
+        /* Fixed Interaction Logic */
+        /* Only show year tooltip if we are NOT hovering the bonus container */
         .segment-container:hover > .year-tooltip { opacity: 1; visibility: visible; transform: translate(-50% , -5px); }
+        .segment-container:has(.bonus-container:hover) > .year-tooltip { opacity: 0 !important; visibility: hidden !important; }
+
         .bonus-container:hover > .bonus-tooltip { opacity: 1; visibility: visible; transform: translate(-50% , 5px); }
         
-        /* Other dots */
         .dot-wrapper:hover > .tooltip-text { opacity: 1; visibility: visible; transform: translate(-50% , -5px); }
         .dot-wrapper:hover > .tooltip-right { transform: translateY(-5px) !important; }
 
