@@ -24,10 +24,13 @@
         .growth-dot { background: #3b82f6; } 
         .maturity-dot { background: #ef4444 !important; width: 18px !important; height: 18px !important; }
 
-        /* The Bonus Payout Dot style - placed on the bottom edge */
-        .bonus-payout-dot { width: 8px; height: 8px; background: #f59e0b; border-radius: 50%; position: absolute; bottom: -18px; left: 50%; transform: translateX(-50%); border: 1.5px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.2); z-index: 60; cursor: pointer; }
+        /* Bonus Dot and its specific Tooltip Trigger */
+        .bonus-container { position: absolute; bottom: -22px; left: 50%; transform: translateX(-50%); z-index: 100; cursor: pointer; }
+        .bonus-payout-dot { width: 8px; height: 8px; background: #f59e0b; border-radius: 50%; border: 1.5px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
 
         .dot-wrapper, .segment-container { position: relative; cursor: pointer; }
+        
+        /* Universal Tooltip Style */
         .tooltip-text {
             visibility: hidden; opacity: 0; position: absolute; bottom: 45px; left: 50%;
             transform: translateX(-50%); background: #0f172a; color: white;
@@ -36,15 +39,16 @@
             box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3);
         }
         
-        /* Tooltip for the bottom bonus dots */
-        .bonus-tooltip { bottom: auto !important; top: 25px !important; }
-
+        /* Specific Bonus Tooltip position - showing below the dot to avoid collision */
+        .bonus-tooltip { bottom: auto !important; top: 15px !important; }
         .tooltip-right { left: auto !important; right: 0 !important; transform: none !important; }
         
-        .dot-wrapper:hover > .tooltip-text, 
-        .segment-container:hover > .tooltip-text,
-        .bonus-payout-dot:hover + .tooltip-text { opacity: 1; visibility: visible; transform: translate(-50% , -5px); }
+        /* Interaction Logic: Segment Hover vs Bonus Container Hover */
+        .segment-container:hover > .year-tooltip { opacity: 1; visibility: visible; transform: translate(-50% , -5px); }
+        .bonus-container:hover > .bonus-tooltip { opacity: 1; visibility: visible; transform: translate(-50% , 5px); }
         
+        /* Other dots */
+        .dot-wrapper:hover > .tooltip-text { opacity: 1; visibility: visible; transform: translate(-50% , -5px); }
         .dot-wrapper:hover > .tooltip-right { transform: translateY(-5px) !important; }
 
         .policy-card { background: white; border-left: 8px solid; border-radius: 16px; position: relative; margin-bottom: 1.5rem; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); overflow: hidden; }
@@ -87,8 +91,8 @@
                 { name: "INLI Nishchit Pension SL", logo: LOGOS.INDUSIND_NIPPON, id: "54679062", uin: "128N161V04", clientId: "60938507", type: "TRADITIONAL", premium: 200000, sumAssured: 89830, dueDate: "30 May 2026", commenced: "30 May 2025", premiumEnds: "30 May 2030", maturity: "30 May 2077", premiumYears: 6, color: "#8b1d1d", income: "Yearly Income: ₹ 89,830", maturityAmt: "Special Surrender Value" },
                 { name: "INLI Nishchit Samrudhi Income lmtd", logo: LOGOS.INDUSIND_NIPPON, id: "54040166", uin: "128N154V02", clientId: "60938507", type: "TRADITIONAL", premium: 200000, sumAssured: 1750854, dueDate: "10 Jan 2027", commenced: "10 Jan 2022", premiumEnds: "10 Jan 2028", maturity: "10 Jan 2050", premiumYears: 7, color: "#8b1d1d", income: "8-28 Yr: ₹ 100,000", maturityAmt: "₹ 17,50,854" },
                 { name: "INLI Guranteed Moneyback", logo: LOGOS.INDUSIND_NIPPON, id: "53044042", uin: "128N053V02", clientId: "60938507", type: "TRADITIONAL", premium: 14400, sumAssured: 123940, dueDate: "08 Sep 2026", commenced: "08 Sep 2017", premiumEnds: "08 Sep 2026", maturity: "08 Sep 2032", premiumYears: 10, color: "#8b1d1d", maturityAmt: "Loyalty: ₹ 37,170 + Mat: ₹ 18,591", payoutSteps: [{ years: "11-14", val: "₹ 18,591" }, { years: "15", val: "₹ 49,576" }] },
-                { name: "Kotak Retirement Savings", logo: LOGOS.KOTAK, id: "79079094", uin: "107N105V02", clientId: "61491746", type: "TRADITIONAL", premium: 50000, sumAssured: 323695, dueDate: "13 Mar 2026", commenced: "13 Mar 2025", premiumEnds: "13 Mar 2031", maturity: "13 Mar 2040", premiumYears: 7, color: "#e63946", maturityAmt: "₹ 3,23,695 + Bonus" },
-                { name: "Kotak Fortune Maximiser", logo: LOGOS.KOTAK, id: "79425536", uin: "107N124V01", clientId: "61491746", type: "TRADITIONAL", premium: 70000, sumAssured: 711994, dueDate: "14 Aug 2026", commenced: "14 Aug 2025", premiumEnds: "14 Aug 2034", maturity: "14 Aug 2089", premiumYears: 10, color: "#e63946", cashBonus: "Immediate", maturityAmt: "Bonus + SA" },
+                { name: "Kotak Retirement Savings", logo: LOGOS.KOTAK, id: "79079094", uin: "107N105V02", clientId: "61491746", type: "TRADITIONAL", premium: 50000, sumAssured: 323695, dueDate: "13 Mar 2026", commenced: "13 Mar 2025", premiumEnds: "13 Mar 2031", maturity: "13 Mar 2040", premiumYears: 7, color: "#e63946", maturityAmt: "₹ 3,23,695 + Bonus", growthPhase: true },
+                { name: "Kotak Fortune Maximiser", logo: LOGOS.KOTAK, id: "79425536", uin: "107N124V01", clientId: "61491746", type: "TRADITIONAL", premium: 70000, sumAssured: 711994, dueDate: "14 Aug 2026", commenced: "14 Aug 2025", premiumEnds: "14 Aug 2034", maturity: "14 Aug 2089", premiumYears: 10, color: "#e63946", cashBonus: "Immediate", maturityAmt: "₹ 7,11,994 + Bonus" },
                 { name: "Bharti AXA Life Wealth Pro", logo: LOGOS.BHARTI, id: "503-9562771", uin: "130A012V02", clientId: "N/A", type: "ULIP", premium: 50000, sumAssured: 0, dueDate: "28 Sep 2026", commenced: "28 Sep 2023", premiumEnds: "28 Sep 2029", maturity: "28 Sep 2038", premiumYears: 7, color: "#005a9c", maturityAmt: "Unit value at that time" },
                 { name: "Fast Track Super", logo: LOGOS.AXIS_MAX, id: "608480927", uin: "104L082V02", clientId: "N/A", type: "ULIP", premium: 50000, sumAssured: 0, dueDate: "PAID UP", commenced: "04 Feb 2022", premiumEnds: "04 Feb 2026", maturity: "04 Feb 2032", premiumYears: 5, color: "#ae125d", maturityAmt: "Unit value at that time" }
             ],
@@ -128,25 +132,26 @@
                     const dueDateObj = new Date(`${p.commenced.split(' ')[1]} ${p.commenced.split(' ')[0]} ${yr}`);
                     const isPd = dueDateObj < TODAY;
                     
-                    // Add the Bonus dot specifically for Kotak from Year 2 onwards
                     let bonusIndicator = "";
                     if(p.cashBonus === "Immediate" && i > 0) {
                         bonusIndicator = `
-                            <div class="bonus-payout-dot"></div>
-                            <span class="tooltip-text bonus-tooltip">Annual Bonus Payout</span>
+                            <div class="bonus-container">
+                                <div class="bonus-payout-dot"></div>
+                                <span class="tooltip-text bonus-tooltip">Annual Bonus Payout</span>
+                            </div>
                         `;
                     }
 
-                    premiumSegments += `<div class="segment-container flex-1 h-4 rounded-sm ${isPd ? 'bg-green-500' : 'bg-gray-200'} border-r border-white last:border-0 relative">
+                    premiumSegments += `<div class="segment-container flex-1 h-4 rounded-sm ${isPd ? 'bg-green-500' : 'bg-gray-200'} border-r border-white last:border-0">
                         ${bonusIndicator}
-                        <span class="tooltip-text">Year ${i+1} (${yr}): ${isPd ? 'PAID' : 'DUE'}</span>
+                        <span class="tooltip-text year-tooltip">Year ${i+1} (${yr}): ${isPd ? 'PAID' : 'DUE'}</span>
                         ${i===0 ? '<div class="vertical-marker left-0"></div>' : ''}
                         ${i===p.premiumYears-1 ? `<div class="end-premium-marker right-0"></div>` : ''}
                     </div>`;
                 }
 
                 let phaseDots = "";
-                if(p.type === 'ULIP' || p.type === 'ILP') {
+                if(p.type === 'ULIP' || p.type === 'ILP' || p.growthPhase) {
                     for(let i=1; i<=4; i++) {
                         const leftPos = (i * 20); 
                         phaseDots += `<div class="dot-wrapper absolute h-full" style="left:${leftPos}%;">
@@ -173,6 +178,8 @@
                     }
                 }
                 
+                const maturityDisplay = (p.name.includes("Kotak")) ? `MATURITY: ${curr} ${p.sumAssured.toLocaleString()} + Bonus` : `MATURITY: ${p.maturityAmt}`;
+
                 return `
                 <div class="policy-card" style="border-color:${p.color}" id="card-${p.id}">
                     ${isPaidUp ? `<div class="paid-watermark">PAID UP</div>` : ''}
@@ -200,7 +207,7 @@
                             <div class="flex-1 bg-gray-100 relative rounded-r-sm">
                                 ${phaseDots}
                                 <div class="dot-wrapper absolute h-full right-0" style="left: auto !important; right: -8px;">
-                                    <span class="tooltip-text tooltip-right bg-red-600">MATURITY: ${p.maturityAmt}</span>
+                                    <span class="tooltip-text tooltip-right bg-red-600">${maturityDisplay}</span>
                                     <div class="payout-dot maturity-dot"></div>
                                 </div>
                                 <div class="vertical-marker right-0"></div>
