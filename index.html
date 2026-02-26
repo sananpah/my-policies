@@ -17,20 +17,24 @@
         .pill-retirement { background: #fff7ed; color: #9a3412; border: 1px solid #f97316; }
         .vertical-marker { width: 2px; height: 28px; background-color: #cbd5e1; position: absolute; top: -12px; z-index: 40; }
         .end-premium-marker { width: 3px; height: 36px; background-color: #22c55e; position: absolute; top: -16px; z-index: 45; border-radius: 2px; }
-        .surrender-marker { background-color: #f97316; } /* Orange for Singapore */
+        .surrender-marker { background-color: #f97316; } 
         .payout-dot { width: 12px; height: 12px; background: #f59e0b; border-radius: 50%; position: absolute; top: 50%; transform: translate(-50%, -50%); border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 55; transition: transform 0.2s; }
         .growth-dot { background: #3b82f6; } 
         .maturity-dot { background: #ef4444 !important; width: 18px !important; height: 18px !important; }
+        
+        /* RESTORED BONUS CSS */
         .bonus-container { position: absolute; bottom: -22px; left: 50%; transform: translateX(-50%); z-index: 150; padding: 10px; cursor: pointer; }
         .bonus-payout-dot { width: 8px; height: 8px; background: #f59e0b; border-radius: 50%; border: 1.5px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
         .segment-container { position: relative; cursor: pointer; }
         .tooltip-text { visibility: hidden; opacity: 0; position: absolute; bottom: 45px; left: 50%; transform: translateX(-50%); background: #0f172a; color: white; padding: 8px 14px; border-radius: 6px; font-size: 11px; font-weight: 700; white-space: nowrap; transition: all 0.2s; z-index: 200; pointer-events: none; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); }
         .bonus-tooltip { bottom: auto !important; top: 25px !important; }
         .tooltip-right { left: auto !important; right: 0 !important; transform: none !important; }
+        
         .segment-container:hover > .year-tooltip { opacity: 1; visibility: visible; transform: translate(-50% , -5px); }
         .segment-container:has(.bonus-container:hover) > .year-tooltip { opacity: 0 !important; visibility: hidden !important; }
         .bonus-container:hover > .bonus-tooltip { opacity: 1; visibility: visible; transform: translate(-50% , 5px); }
         .dot-wrapper:hover > .tooltip-text { opacity: 1; visibility: visible; transform: translate(-50% , -5px); }
+
         .policy-card { background: white; border-left: 8px solid; border-radius: 16px; position: relative; margin-bottom: 1.5rem; transition: all 0.3s; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); overflow: hidden; }
         .content-area { display: none; }
         .open .content-area { display: block; }
@@ -79,8 +83,20 @@
                     
                     if(mode === 'singapore' && i < 10) tip = `Year ${i+1}: Surrender Charge ${SG_CHARGES[i]}%`;
 
+                    /* RESTORED BONUS LOGIC */
+                    let bonusIndicator = "";
+                    if(p.cashBonus === "Immediate" && i > 0) {
+                        bonusIndicator = `
+                            <div class="bonus-container">
+                                <div class="bonus-payout-dot"></div>
+                                <span class="tooltip-text bonus-tooltip">Annual Bonus Payout</span>
+                            </div>
+                        `;
+                    }
+
                     premiumSegments += `<div class="segment-container flex-1 h-4 rounded-sm ${isPd ? 'bg-green-500' : 'bg-gray-200'} border-r border-white last:border-0">
                         <span class="tooltip-text year-tooltip">${tip}</span>
+                        ${bonusIndicator}
                         ${i===0 ? '<div class="vertical-marker left-0"></div>' : ''}
                         ${i===p.premiumYears-1 ? `<div class="end-premium-marker right-0 ${mode==='singapore'?'surrender-marker':''}"></div>` : ''}
                     </div>`;
@@ -91,10 +107,14 @@
                     for(let i=1; i<=4; i++) phaseDots += `<div class="dot-wrapper absolute h-full" style="left:${i*20}%;"><span class="tooltip-text">Growth Phase</span><div class="payout-dot growth-dot"></div></div>`;
                 } else if(p.payoutSteps) {
                     p.payoutSteps.forEach((s, idx) => phaseDots += `<div class="dot-wrapper absolute h-full" style="left:${15+(idx*15)}%;"><span class="tooltip-text">Income: ${s.val}</span><div class="payout-dot"></div></div>`);
+                } else if(p.income) {
+                    for(let i=1; i<=3; i++) phaseDots += `<div class="dot-wrapper absolute h-full" style="left:${i*25}%;"><span class="tooltip-text">${p.income}</span><div class="payout-dot"></div></div>`;
                 }
 
                 const midLabel = mode === 'singapore' ? "Surrender Ends" : "Premium End";
                 const midDate = mode === 'singapore' ? (parseInt(p.commenced.split(' ')[2]) + 10) : p.premiumEnds;
+                const safeUin = p.uin || 'N/A';
+                const safeClient = p.clientId || 'N/A';
 
                 return `
                 <div class="policy-card" style="border-color:${p.color}" id="card-${p.id}">
@@ -104,7 +124,7 @@
                             <img src="${p.logo}" class="logo-img">
                             <div>
                                 <h2 class="text-lg font-black text-gray-800">${p.name}</h2>
-                                <p class="text-[10px] font-bold text-gray-400 uppercase">Policy No: ${p.id} • UIN: ${p.uin || 'N/A'} • CLIENT: ${p.clientId || 'N/A'}<span class="type-pill pill-ulip ml-3">${p.type}</span></p>
+                                <p class="text-[10px] font-bold text-gray-400 uppercase">Policy No: ${p.id} • UIN: ${safeUin} • CLIENT: ${safeClient}</p>
                             </div>
                         </div>
                         <div><p class="val-label">Sum Assured</p><p class="val-amount text-2xl text-blue-700">${curr} ${p.sumAssured.toLocaleString()}</p></div>
