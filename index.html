@@ -14,13 +14,13 @@
         .tab-btn.active { background: #8b1d1d; color: white; border-color: #8b1d1d; box-shadow: 0 4px 12px rgba(139, 29, 29, 0.2); }
 
         .type-pill { font-size: 9px; padding: 2px 10px; border-radius: 999px; font-weight: 800; text-transform: uppercase; }
+        .pill-trad { background: #fef3c7; color: #92400e; border: 1px solid #f59e0b; }
         .pill-ulip { background: #e0f2fe; color: #075985; border: 1px solid #0ea5e9; }
         .pill-savings { background: #ecfdf5; color: #065f46; border: 1px solid #10b981; }
         .pill-retirement { background: #fff7ed; color: #9a3412; border: 1px solid #f97316; }
 
         .vertical-marker { width: 2px; height: 28px; background-color: #cbd5e1; position: absolute; top: -12px; z-index: 40; }
         .end-premium-marker { width: 3px; height: 36px; background-color: #22c55e; position: absolute; top: -16px; z-index: 45; border-radius: 2px; }
-        .surrender-marker { background-color: #f97316; } /* Orange for Singapore Surrender End */
         
         .payout-dot { width: 12px; height: 12px; background: #f59e0b; border-radius: 50%; position: absolute; top: 50%; transform: translate(-50%, -50%); border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 55; transition: transform 0.2s; }
         .growth-dot { background: #3b82f6; } 
@@ -47,6 +47,7 @@
         .bonus-container:hover > .bonus-tooltip { opacity: 1; visibility: visible; transform: translate(-50% , 5px); }
         
         .dot-wrapper:hover > .tooltip-text { opacity: 1; visibility: visible; transform: translate(-50% , -5px); }
+        .dot-wrapper:hover > .tooltip-right { transform: translateY(-5px) !important; }
 
         .policy-card { background: white; border-left: 8px solid; border-radius: 16px; position: relative; margin-bottom: 1.5rem; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); overflow: hidden; }
         .content-area { display: none; }
@@ -98,16 +99,15 @@
                 { name: "SBI Life Smart Privilege Plus", logo: LOGOS.SBI, id: "3N307267702", uin: "111L120V03", clientId: "WIFE-SBI", type: "ULIP", premium: 600000, sumAssured: 4200000, dueDate: "23 Apr 2026", commenced: "23 Apr 2025", premiumEnds: "23 Apr 2029", maturity: "23 Apr 2040", premiumYears: 5, color: "#225a94", maturityAmt: "Unit value at that time" }
             ],
             singapore: [
-                { name: "AIA Pro-Achiever 2.0", logo: LOGOS.AIA, id: "U126327913", uin: "SG-AIA-ILP", clientId: "NAMI-SG", type: "ILP", premium: 5000, sumAssured: 0, dueDate: "30 Dec 2026", commenced: "30 Dec 2021", premiumEnds: "N/A", maturity: "30 Dec 2077", premiumYears: 10, color: "#d31145", currency: "$", maturityAmt: "Unit value at that time", isSingapore: true }
+                { name: "AIA Pro-Achiever 2.0", logo: LOGOS.AIA, id: "U126327913", uin: "SG-AIA-ILP", clientId: "NAMI-SG", type: "ILP", premium: 5000, sumAssured: 0, dueDate: "30 Dec 2026", commenced: "30 Dec 2021", premiumEnds: "30 Dec 2031", maturity: "30 Dec 2077", premiumYears: 10, color: "#d31145", currency: "$", maturityAmt: "Unit value at that time" }
             ]
         };
-
-        const SG_SURRENDER_RATES = [100, 100, 80, 70, 60, 50, 45, 35, 20, 5];
 
         function getPillClass(type) {
             if (type === 'SAVINGS') return 'pill-savings';
             if (type === 'RETIREMENT') return 'pill-retirement';
-            return 'pill-ulip';
+            if (type === 'ULIP' || type === 'ILP') return 'pill-ulip';
+            return 'pill-trad';
         }
 
         function render(mode) {
@@ -137,15 +137,21 @@
                     const dueDateObj = new Date(`${p.commenced.split(' ')[1]} ${p.commenced.split(' ')[0]} ${yr}`);
                     const isPd = dueDateObj < TODAY;
                     
-                    let tooltipMsg = `Year ${i+1} (${yr}): ${isPd ? 'PAID' : 'DUE'}`;
-                    if(p.isSingapore && i < 10) {
-                        tooltipMsg = `Year ${i+1}: Full Surrender Charge ${SG_SURRENDER_RATES[i]}%`;
+                    let bonusIndicator = "";
+                    if(p.cashBonus === "Immediate" && i > 0) {
+                        bonusIndicator = `
+                            <div class="bonus-container">
+                                <div class="bonus-payout-dot"></div>
+                                <span class="tooltip-text bonus-tooltip">Annual Bonus Payout</span>
+                            </div>
+                        `;
                     }
 
                     premiumSegments += `<div class="segment-container flex-1 h-4 rounded-sm ${isPd ? 'bg-green-500' : 'bg-gray-200'} border-r border-white last:border-0">
-                        <span class="tooltip-text year-tooltip">${tooltipMsg}</span>
+                        ${bonusIndicator}
+                        <span class="tooltip-text year-tooltip">Year ${i+1} (${yr}): ${isPd ? 'PAID' : 'DUE'}</span>
                         ${i===0 ? '<div class="vertical-marker left-0"></div>' : ''}
-                        ${i===p.premiumYears-1 ? `<div class="end-premium-marker right-0 ${p.isSingapore ? 'surrender-marker' : ''}"></div>` : ''}
+                        ${i===p.premiumYears-1 ? `<div class="end-premium-marker right-0"></div>` : ''}
                     </div>`;
                 }
 
@@ -158,14 +164,31 @@
                             <div class="payout-dot growth-dot"></div>
                         </div>`;
                     }
+                } else if(p.payoutSteps) {
+                    p.payoutSteps.forEach((step, idx) => {
+                        const pos = 15 + (idx * 15);
+                        phaseDots += `<div class="dot-wrapper absolute h-full" style="left:${pos}%;">
+                            <span class="tooltip-text">Income: ${step.years} yr - ${step.val}</span>
+                            <div class="payout-dot"></div>
+                        </div>`;
+                    });
+                } else if(p.income || p.cashBonus === "Immediate") {
+                    const label = p.cashBonus ? "Annual Cash Bonus" : p.income;
+                    for(let i=1; i<=3; i++) {
+                        const leftPos = (i * 25); 
+                        phaseDots += `<div class="dot-wrapper absolute h-full" style="left:${leftPos}%;">
+                            <span class="tooltip-text">${label}</span>
+                            <div class="payout-dot"></div>
+                        </div>`;
+                    }
                 }
-
-                const secondaryLabel = p.isSingapore ? "Surrender Charge Ends" : "Premium End";
-                const secondaryDate = p.isSingapore ? `${parseInt(p.commenced.split(' ')[2]) + 10}` : p.premiumEnds;
+                
+                const maturityDisplay = (p.name.includes("Kotak")) ? `MATURITY: ${curr} ${p.sumAssured.toLocaleString()} + Bonus` : `MATURITY: ${p.maturityAmt}`;
                 const safeClientId = (p.clientId && p.clientId.trim() !== "") ? p.clientId : "N/A";
 
                 return `
                 <div class="policy-card" style="border-color:${p.color}" id="card-${p.id}">
+                    ${isPaidUp ? `<div class="paid-watermark">PAID UP</div>` : ''}
                     <div class="p-8 grid-header cursor-pointer" onclick="document.getElementById('card-${p.id}').classList.toggle('open')">
                         <div class="flex items-center gap-8">
                             <img src="${p.logo}" class="logo-img" alt="Logo">
@@ -190,7 +213,7 @@
                             <div class="flex-1 bg-gray-100 relative rounded-r-sm">
                                 ${phaseDots}
                                 <div class="dot-wrapper absolute h-full right-0" style="left: auto !important; right: -8px;">
-                                    <span class="tooltip-text tooltip-right bg-red-600">MATURITY: ${p.maturityAmt}</span>
+                                    <span class="tooltip-text tooltip-right bg-red-600">${maturityDisplay}</span>
                                     <div class="payout-dot maturity-dot"></div>
                                 </div>
                                 <div class="vertical-marker right-0"></div>
@@ -198,7 +221,7 @@
                         </div>
                         <div class="relative w-full text-[11px] font-black uppercase">
                             <div class="absolute left-0 text-gray-500">Commencement<br><span class="text-gray-900 font-black">${p.commenced}</span></div>
-                            <div class="absolute text-center ${p.isSingapore ? 'text-orange-600' : 'text-green-600'}" style="left: ${splitPct}%; transform: translateX(-50%); width: 140px;">${secondaryLabel}<br><span>${secondaryDate}</span></div>
+                            <div class="absolute text-center text-green-600" style="left: ${splitPct}%; transform: translateX(-50%); width: 140px;">Premium End<br><span>${p.premiumEnds}</span></div>
                             <div class="absolute right-0 text-right text-red-600">Maturity Date<br><span>${p.maturity}</span></div>
                         </div>
                     </div>
