@@ -24,8 +24,8 @@
         .growth-dot { background: #3b82f6; } 
         .maturity-dot { background: #ef4444 !important; width: 18px !important; height: 18px !important; }
 
-        /* Subtle Bonus Payout Dot for Kotak from 2nd Year */
-        .bonus-mini-dot { width: 6px; height: 6px; background: #f59e0b; border-radius: 50%; position: absolute; bottom: -12px; left: 50%; transform: translateX(-50%); border: 1px solid white; box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+        /* The Bonus Payout Dot style - placed on the bottom edge */
+        .bonus-payout-dot { width: 8px; height: 8px; background: #f59e0b; border-radius: 50%; position: absolute; bottom: -18px; left: 50%; transform: translateX(-50%); border: 1.5px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.2); z-index: 60; cursor: pointer; }
 
         .dot-wrapper, .segment-container { position: relative; cursor: pointer; }
         .tooltip-text {
@@ -35,9 +35,16 @@
             white-space: nowrap; transition: all 0.2s; z-index: 200; pointer-events: none;
             box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3);
         }
+        
+        /* Tooltip for the bottom bonus dots */
+        .bonus-tooltip { bottom: auto !important; top: 25px !important; }
+
         .tooltip-right { left: auto !important; right: 0 !important; transform: none !important; }
         
-        .dot-wrapper:hover > .tooltip-text, .segment-container:hover > .tooltip-text { opacity: 1; visibility: visible; transform: translate(-50% , -5px); }
+        .dot-wrapper:hover > .tooltip-text, 
+        .segment-container:hover > .tooltip-text,
+        .bonus-payout-dot:hover + .tooltip-text { opacity: 1; visibility: visible; transform: translate(-50% , -5px); }
+        
         .dot-wrapper:hover > .tooltip-right { transform: translateY(-5px) !important; }
 
         .policy-card { background: white; border-left: 8px solid; border-radius: 16px; position: relative; margin-bottom: 1.5rem; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); overflow: hidden; }
@@ -121,13 +128,16 @@
                     const dueDateObj = new Date(`${p.commenced.split(' ')[1]} ${p.commenced.split(' ')[0]} ${yr}`);
                     const isPd = dueDateObj < TODAY;
                     
-                    // Specific logic for Kotak Annual Bonus from 2nd year
+                    // Add the Bonus dot specifically for Kotak from Year 2 onwards
                     let bonusIndicator = "";
                     if(p.cashBonus === "Immediate" && i > 0) {
-                        bonusIndicator = `<div class="bonus-mini-dot"></div>`;
+                        bonusIndicator = `
+                            <div class="bonus-payout-dot"></div>
+                            <span class="tooltip-text bonus-tooltip">Annual Bonus Payout</span>
+                        `;
                     }
 
-                    premiumSegments += `<div class="segment-container flex-1 h-4 rounded-sm ${isPd ? 'bg-green-500' : 'bg-gray-200'} border-r border-white last:border-0">
+                    premiumSegments += `<div class="segment-container flex-1 h-4 rounded-sm ${isPd ? 'bg-green-500' : 'bg-gray-200'} border-r border-white last:border-0 relative">
                         ${bonusIndicator}
                         <span class="tooltip-text">Year ${i+1} (${yr}): ${isPd ? 'PAID' : 'DUE'}</span>
                         ${i===0 ? '<div class="vertical-marker left-0"></div>' : ''}
