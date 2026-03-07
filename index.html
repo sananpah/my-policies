@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nami Portfolio v3.3.0</title>
+    <title>Nami Portfolio v3.3.5</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Orbitron:wght@800&display=swap');
@@ -12,41 +12,26 @@
         .version-stamp { position: fixed; top: 15px; right: 20px; font-size: 11px; font-weight: 900; color: #1e293b; background: #fff; padding: 6px 12px; border-radius: 8px; border: 1px solid #cbd5e1; z-index: 9999; }
         .brand-header { font-family: 'Orbitron', sans-serif; background: linear-gradient(90deg, #4f46e5, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 
-        /* LARGE & BRIGHT PAID STAMP */
-        .stamp-container {
-            width: 160px; /* Increased size */
-            height: 100px;
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            margin-left: auto;
-            position: relative;
-        }
-
+        .stamp-box { width: 170px; height: 100px; display: flex; align-items: center; justify-content: flex-end; }
         .paid-stamp { 
-            max-width: 110%; /* Makes it slightly overflow for a 'stamped' look */
-            max-height: 110%;
-            object-fit: contain;
-            transform: rotate(-12deg); 
-            filter: drop-shadow(0 10px 15px rgba(0,0,0,0.2)) brightness(1.1) saturate(1.2); 
+            height: 95px; width: auto; object-fit: contain; transform: rotate(-10deg); 
+            filter: drop-shadow(0 12px 20px rgba(0,0,0,0.25)) brightness(1.1) contrast(1.1); 
             image-rendering: -webkit-optimize-contrast;
         }
 
         .segment { height: 100%; position: relative; cursor: pointer; transition: 0.2s; border-radius: 4px; margin: 0 1px; }
-        .segment:hover { filter: brightness(1.2); transform: scaleY(1.15); z-index: 40; }
+        .segment:hover { filter: brightness(1.2); transform: scaleY(1.25); z-index: 40; }
         .bg-past { background: #475569; opacity: 0.8; }
         .bg-premium { background: linear-gradient(180deg, #10b981 0%, #059669 100%); }
         .bg-income { background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%); }
-        .bg-dual-phase { background: linear-gradient(180deg, #10b981 0%, #f59e0b 100%); border: 1px solid #10b981; }
         .bg-growth { background: linear-gradient(180deg, #8b5cf6 0%, #6d28d9 100%); }
         .bg-future { background: #cbd5e1; }
 
-        /* TOOLTIP LOGIC */
         .tooltip { 
-            visibility: hidden; opacity: 0; position: absolute; bottom: 160%; left: 50%; transform: translateX(-50%) translateY(10px); 
+            visibility: hidden; opacity: 0; position: absolute; bottom: 175%; left: 50%; transform: translateX(-50%) translateY(10px); 
             background: #0f172a; color: #fff; padding: 14px 18px; border-radius: 12px; font-size: 11px; 
-            width: 240px; text-align: center; z-index: 3000; transition: 0.3s;
-            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); line-height: 1.6; pointer-events: none;
+            width: 260px; text-align: center; z-index: 3000; transition: 0.3s;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); line-height: 1.6; pointer-events: none;
         }
         .segment:hover .tooltip, .node:hover .tooltip { visibility: visible; opacity: 1; transform: translateX(-50%) translateY(0); }
 
@@ -61,27 +46,29 @@
         .ulip { background: #f5f3ff; color: #5b21b6; border-color: #ddd6fe; }
 
         .timeline-track { position: relative; height: 42px; background: #e2e8f0; border-radius: 24px; width: 100%; display: flex; margin: 40px 0; padding: 0 6px; align-items: center; z-index: 10; overflow: visible; }
-        .node { position: absolute; width: 74px; height: 74px; border-radius: 50%; border: 6px solid #fff; z-index: 500; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; color: white; top: -16px; box-shadow: 0 6px 15px rgba(0,0,0,0.2); cursor: help; }
+        .node { position: absolute; width: 80px; height: 80px; border-radius: 50%; border: 6px solid #fff; z-index: 500; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; color: white; top: -19px; box-shadow: 0 6px 15px rgba(0,0,0,0.25); cursor: help; }
     </style>
 </head>
 <body>
 
-    <div class="version-stamp">BUILD: v3.3.0 | 08-MAR-2026</div>
+    <div class="version-stamp">BUILD: v3.3.5 | 08-MAR-2026</div>
 
-    <div class="max-w-7xl mx-auto flex justify-between items-end mb-14">
-        <div>
-            <h1 class="brand-header text-5xl font-black italic tracking-tighter">NAMI PORTFOLIO</h1>
-            <p class="text-slate-400 font-bold text-[10px] mt-2 uppercase tracking-[0.4em]">Asset Strategy & Control</p>
+    <div id="container-root">
+        <div class="max-w-7xl mx-auto flex justify-between items-end mb-14">
+            <div>
+                <h1 class="brand-header text-5xl font-black italic tracking-tighter">NAMI PORTFOLIO</h1>
+                <p class="text-slate-400 font-bold text-[10px] mt-2 uppercase tracking-[0.4em]">Asset Strategy & Control</p>
+            </div>
+            <div class="flex gap-4">
+                <button onclick="render('india')" id="btn-india" class="px-10 py-3 rounded-2xl font-black border-2 transition-all">INDIA</button>
+                <button onclick="render('wife')" id="btn-wife" class="px-10 py-3 rounded-2xl font-black border-2 transition-all">WIFE</button>
+                <button onclick="render('singapore')" id="btn-singapore" class="px-10 py-3 rounded-2xl font-black border-2 transition-all">SINGAPORE</button>
+            </div>
         </div>
-        <div class="flex gap-4">
-            <button onclick="render('india')" id="btn-india" class="px-10 py-3 rounded-2xl font-black border-2 transition-all">INDIA</button>
-            <button onclick="render('wife')" id="btn-wife" class="px-10 py-3 rounded-2xl font-black border-2 transition-all">WIFE</button>
-            <button onclick="render('singapore')" id="btn-singapore" class="px-10 py-3 rounded-2xl font-black border-2 transition-all">SINGAPORE</button>
-        </div>
+
+        <div id="summary" class="max-w-7xl mx-auto grid grid-cols-2 gap-8 mb-14"></div>
+        <div id="container" class="max-w-7xl mx-auto"></div>
     </div>
-
-    <div id="summary" class="max-w-7xl mx-auto grid grid-cols-2 gap-8 mb-14"></div>
-    <div id="container" class="max-w-7xl mx-auto"></div>
 
     <script type="module">
         import { POLICY_DATA } from './data.js';
@@ -105,58 +92,40 @@
             document.getElementById('container').innerHTML = list.map(p => {
                 const startY = parseInt(p.commenced.split(' ')[2]);
                 const matY = parseInt(p.maturity.split(' ')[2]);
-                const premEndY = parseInt(p.premiumEnds.split(' ')[2]);
+                const premEndObj = new Date(p.premiumEnds);
                 
-                // ROBUST PAID CHECK
-                const isPaid = (p.name.toLowerCase().includes("axis")) || 
-                               (p.name.toLowerCase().includes("bajaj")) || 
-                               (premEndY < CURRENT_YEAR);
-                               
+                // PURE DATE LOGIC: Today vs Premium End Date
+                const isPaid = TODAY > premEndObj || p.dueDate === "PAID UP";
                 const isULIP = p.type.toLowerCase().includes('ulip');
-                const premiumsLeft = Math.max(0, premEndY - CURRENT_YEAR + 1);
-
-                const [d, m, y] = p.dueDate.split(' ');
-                const dueObj = new Date(`${m} ${d}, ${y}`);
-                const diffDays = Math.ceil((dueObj - TODAY) / (1000 * 60 * 60 * 24));
-                const showReminder = !isPaid && diffDays >= 0 && diffDays <= 30;
+                const premiumsLeft = Math.max(0, parseInt(p.premiumEnds.split(' ')[2]) - CURRENT_YEAR + (TODAY < premEndObj ? 1 : 0));
 
                 let timeline = '';
                 for(let yr = startY; yr < matY; yr++) {
                     const polYear = yr - startY + 1;
                     const isPast = yr < CURRENT_YEAR;
-                    let type = "Future Phase";
-                    let color = "bg-future";
-                    let payout = "N/A";
+                    let payoutLabel = "N/A";
 
-                    const isPremActive = yr <= premEndY;
-                    const isBonusActive = p.name.includes("Fortune Maximiser") && polYear >= 2;
+                    if (p.name.includes("Nishchit Ace")) {
+                        if (polYear >= 11 && polYear <= 15) payoutLabel = "₹ 1,33,974";
+                        else if (polYear >= 16 && polYear <= 20) payoutLabel = "₹ 1,60,769";
+                        else if (polYear >= 21 && polYear <= 25) payoutLabel = "₹ 1,87,564";
+                        else if (polYear >= 26 && polYear <= 30) payoutLabel = "₹ 214,359";
+                    } else if (p.name.includes("Moneyback")) {
+                        if (polYear >= 11 && polYear <= 14) payoutLabel = "₹ 18,591";
+                        else if (polYear === 15) payoutLabel = "₹ 49,576";
+                    } else if (p.name.includes("Samrudhi") && polYear >= 8) payoutLabel = "₹ 1,00,000";
+                      else if (p.name.includes("Pension SL")) payoutLabel = "₹ 89,830";
 
-                    // Payout logic
-                    if (p.name.includes("Moneyback")) {
-                        if (polYear >= 11 && polYear <= 14) payout = "₹18,591";
-                        else if (polYear === 15) payout = "₹49,576";
-                    } else if (p.name.includes("Samrudhi") && polYear >= 8) payout = "₹1,00,000";
-                    else if (p.name.includes("Nishchit Ace")) {
-                        if (polYear >= 11 && polYear <= 15) payout = "₹1,33,974";
-                        else if (polYear >= 16 && polYear <= 20) payout = "₹160,769";
-                    } else if (p.name.includes("Pension SL")) payout = "₹89,830";
-                    else if (isBonusActive) payout = "Variable Bonus";
+                    let color = isPast ? "bg-past" : (yr <= parseInt(p.premiumEnds.split(' ')[2]) && !isPaid ? "bg-premium" : (isULIP ? "bg-growth" : "bg-income"));
 
-                    if (isPremActive && isBonusActive) {
-                        color = isPast ? "bg-past" : "bg-dual-phase";
-                        type = "Premium + Bonus Phase";
-                    } else if (isPremActive) {
-                        color = isPast ? "bg-past" : (yr === CURRENT_YEAR && !isPaid ? "bg-premium" : "bg-future");
-                        type = "Premium Phase";
-                    } else {
-                        color = isULIP ? "bg-growth" : (isPast ? "bg-past" : "bg-income");
-                        type = isULIP ? "Unit Growth Phase" : "Annual Payout Phase";
-                    }
-
-                    timeline += `<div class="segment ${color}" style="flex:1"><div class="tooltip"><b class="text-white text-xs uppercase tracking-tight">${type}</b><br><span class="text-orange-400 font-black">Annual: ${payout}</span><br><span class="text-slate-400 text-[10px]">Year ${polYear} (${yr})</span></div></div>`;
+                    timeline += `
+                    <div class="segment ${color}" style="flex:1">
+                        <div class="tooltip">
+                            <b class="text-white text-xs uppercase">Year ${polYear} (${yr})</b><br>
+                            <span class="text-orange-400 font-black">Annual: ${payoutLabel}</span>
+                        </div>
+                    </div>`;
                 }
-
-                const typeClass = isULIP ? 'ulip' : (p.type.toLowerCase().includes('retirement') ? 'retirement' : 'savings');
 
                 return `
                 <div class="policy-card" id="card-${p.id}" style="border-color: ${p.color}">
@@ -164,10 +133,10 @@
                         <div style="flex:1.8">
                             <img src="${p.logo}" class="h-10 object-contain mb-3">
                             <h3 class="font-black text-slate-900 text-lg leading-tight mb-1">${p.name}</h3>
-                            <p class="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Policy Number: ${p.id}</p>
+                            <p class="text-[9px] font-black text-slate-400 uppercase tracking-tighter">ID: ${p.id}</p>
                         </div>
                         <div style="flex:0.7" class="text-center">
-                            <span class="type-badge ${typeClass}">${p.type}</span>
+                            <span class="type-badge ${p.type.toLowerCase()}">${p.type}</span>
                         </div>
                         <div style="flex:1" class="text-right">
                             <p class="text-[9px] font-bold text-slate-400 uppercase">Premium</p>
@@ -178,11 +147,10 @@
                             <p class="text-[9px] font-bold text-slate-400 uppercase">Sum Assured</p>
                             <p class="text-xl font-black text-indigo-600">${sym}${p.sumAssured.toLocaleString()}</p>
                         </div>
-                        <div style="flex:1.4" class="text-right">
+                        <div style="flex:1.4" class="text-right flex justify-end">
                             ${isPaid ? `
-                                <div class="stamp-container">
-                                    <img src="paid.jpg" class="paid-stamp">
-                                </div>` : `
+                                <div class="stamp-box"><img src="paid.jpg" class="paid-stamp"></div>
+                            ` : `
                                 <div class="flex flex-col items-end">
                                     <p class="text-[9px] font-black text-slate-400 uppercase mb-1">Next Due</p>
                                     <div class="inline-flex items-center bg-white px-3 py-1.5 rounded-xl border-2 border-slate-200 shadow-sm">
@@ -193,17 +161,15 @@
                     </div>
                     <div class="content-area">
                         <div class="timeline-track">
-                            <div class="node bg-slate-900" style="left:-37px;">
-                                <span class="mt-1 leading-none">START</span><span class="text-[7px] opacity-60">${startY}</span>
-                                <div class="tooltip"><b class="text-white text-xs">COMMENCEMENT</b><br><span class="text-slate-400 text-[10px]">Policy began in ${startY}</span></div>
+                            <div class="node bg-slate-900" style="left:-40px;">
+                                <span class="mt-1 leading-none uppercase">Start</span><span class="text-[7px] opacity-60">${startY}</span>
                             </div>
                             <div class="flex h-full w-full mx-4">${timeline}</div>
-                            <div class="node bg-pink-600" style="right:-37px;">
-                                <span class="mt-1 leading-none">MAT</span><span class="text-[7px] opacity-80">${matY}</span>
+                            <div class="node bg-pink-600" style="right:-40px;">
+                                <span class="mt-1 leading-none uppercase">Mat</span><span class="text-[7px] opacity-80">${matY}</span>
                                 <div class="tooltip">
-                                    <b class="text-white text-xs">MATURITY SETTLEMENT</b><br>
-                                    <span class="text-pink-400 font-black text-lg">${sym}${p.sumAssured.toLocaleString()}</span><br>
-                                    <span class="text-slate-400 text-[10px]">Expected in ${matY}</span>
+                                    <b class="text-white text-xs uppercase">Maturity</b><br>
+                                    <span class="text-pink-400 font-black text-lg">${p.maturityAmt}</span>
                                 </div>
                             </div>
                         </div>
