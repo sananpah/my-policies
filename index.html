@@ -3,15 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nami Portfolio v3.1.6</title>
+    <title>Nami Portfolio v3.1.7</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Orbitron:wght@800&display=swap');
+        
         body { background-color: #f1f5f9; font-family: 'Inter', sans-serif; color: #1e293b; padding: 40px; }
+        
+        /* VERSION STAMP */
+        .version-stamp { position: fixed; top: 15px; right: 20px; font-size: 11px; font-weight: 900; color: #1e293b; background: #fff; padding: 6px 12px; border-radius: 8px; border: 1px solid #cbd5e1; z-index: 9999; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        
         .brand-header { font-family: 'Orbitron', sans-serif; background: linear-gradient(90deg, #4f46e5, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 
+        /* TIMELINE SECTIONS */
         .segment { height: 100%; position: relative; cursor: pointer; transition: 0.2s; border-radius: 4px; margin: 0 1px; }
-        .segment:hover { filter: brightness(1.2); transform: scaleY(1.1); z-index: 100; }
+        .segment:hover { filter: brightness(1.2); transform: scaleY(1.15); z-index: 100; }
         .bg-past { background: #475569; opacity: 0.8; }
         .bg-premium { background: linear-gradient(180deg, #10b981 0%, #059669 100%); }
         .bg-income { background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%); }
@@ -22,10 +28,11 @@
             visibility: hidden; opacity: 0; position: absolute; bottom: 155%; left: 50%; transform: translateX(-50%) translateY(10px); 
             background: #0f172a; color: #fff; padding: 12px 16px; border-radius: 10px; font-size: 11px; 
             width: 220px; text-align: center; z-index: 1000; transition: 0.3s;
-            box-shadow: 0 15px 30px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); line-height: 1.5;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); line-height: 1.5;
         }
         .segment:hover .tooltip, .node:hover .tooltip { visibility: visible; opacity: 1; transform: translateX(-50%) translateY(0); }
 
+        /* POLICY CARDS */
         .policy-card { background: white; border-radius: 28px; border-left: 14px solid; margin-bottom: 35px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); }
         .card-header { cursor: pointer; display: flex; align-items: center; padding: 35px; gap: 24px; }
         .content-area { display: none; padding: 60px 50px; border-top: 1px solid #f1f5f9; background: #fafbfc; border-radius: 0 0 28px 28px; overflow: visible !important; }
@@ -36,17 +43,21 @@
         .retirement { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
         .ulip { background: #f5f3ff; color: #5b21b6; border-color: #ddd6fe; }
 
+        /* PAID STAMP ENHANCED */
+        .paid-stamp { width: 140px; transform: rotate(-10deg); filter: drop-shadow(0 10px 15px rgba(0,0,0,0.2)) contrast(1.2); opacity: 0.95; }
+
         .timeline-track { position: relative; height: 42px; background: #e2e8f0; border-radius: 24px; width: 100%; display: flex; margin: 30px 0; padding: 0 6px; align-items: center; }
         .node { position: absolute; width: 60px; height: 60px; border-radius: 50%; border: 6px solid #fff; z-index: 200; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; color: white; top: -9px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-        .due-icon { width: 14px; height: 14px; margin-right: 6px; display: inline-block; vertical-align: middle; }
     </style>
 </head>
 <body>
 
+    <div class="version-stamp">BUILD: v3.1.7 | 07-MAR-2026</div>
+
     <div class="max-w-7xl mx-auto flex justify-between items-end mb-14">
         <div>
             <h1 class="brand-header text-5xl font-black italic tracking-tighter">NAMI PORTFOLIO</h1>
-            <p class="text-slate-400 font-bold text-[10px] mt-2 uppercase tracking-[0.4em]">Integrated Asset Dashboard</p>
+            <p class="text-slate-400 font-bold text-[10px] mt-2 uppercase tracking-[0.4em]">Asset Management Control</p>
         </div>
         <div class="flex gap-4">
             <button onclick="render('india')" id="btn-india" class="px-10 py-3 rounded-2xl font-black border-2 transition-all">INDIA</button>
@@ -61,7 +72,7 @@
     <script type="module">
         import { POLICY_DATA } from './data.js';
         const CURRENT_YEAR = 2026;
-        const CURRENT_MONTH = 2; // March
+        const CURRENT_MONTH = 2; // March (0-indexed logic)
 
         window.toggleCard = (id) => document.getElementById(`card-${id}`).classList.toggle('open');
 
@@ -138,15 +149,22 @@
                                 <h3 class="font-black text-slate-900 text-lg leading-tight">${p.name}</h3>
                                 <span class="type-badge ${typeColor}">${p.type}</span>
                             </div>
-                            <p class="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Policy No: ${p.id}</p>
+                            <p class="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Policy Number: ${p.id}</p>
                         </div>
                         <div style="flex:1" class="text-right"><p class="text-[9px] font-bold text-slate-400 uppercase">Premium</p><p class="text-xl font-black text-emerald-600">${sym}${p.premium.toLocaleString()}</p></div>
                         <div style="flex:1.2" class="text-right"><p class="text-[9px] font-bold text-slate-400 uppercase">Sum Assured</p><p class="text-xl font-black text-indigo-600">${sym}${p.sumAssured.toLocaleString()}</p></div>
                         <div style="flex:1" class="text-right">
-                            ${isPaid ? `<img src="paid.jpg" class="h-10 ml-auto">` : `
-                                <div class="inline-flex items-center bg-slate-100 px-3 py-1 rounded-lg border border-slate-200">
-                                    <svg class="due-icon text-slate-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path></svg>
-                                    <span class="text-xs font-black">${p.dueDate}</span>
+                            ${isPaid ? `<img src="paid.jpg" class="paid-stamp ml-auto">` : `
+                                <div class="flex flex-col items-end">
+                                    <p class="text-[9px] font-black text-slate-400 uppercase mb-1">Next Due</p>
+                                    <div class="inline-flex items-center bg-white px-4 py-2 rounded-xl border-2 border-slate-200 shadow-sm">
+                                        <svg class="w-4 h-4 text-emerald-500 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path></svg>
+                                        <span class="text-sm font-black text-slate-900">${p.dueDate}</span>
+                                    </div>
+                                    <div class="mt-2 flex items-center bg-red-50 px-2 py-0.5 rounded border border-red-100">
+                                        <span class="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse mr-2"></span>
+                                        <span class="text-[8px] font-black text-red-600 uppercase">Payment Reminder</span>
+                                    </div>
                                 </div>`}
                         </div>
                     </div>
