@@ -3,42 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nami Portfolio v3.0.5</title>
+    <title>Nami Portfolio v3.0.7</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Orbitron:wght@800&display=swap');
         
         body { background-color: #f8fafc; font-family: 'Inter', sans-serif; color: #1e293b; padding: 40px; }
-        
         .version-stamp { position: fixed; top: 15px; right: 20px; font-size: 10px; font-weight: 800; color: #64748b; background: #fff; padding: 4px 10px; border-radius: 6px; border: 1px solid #e2e8f0; z-index: 9999; }
         .brand-header { font-family: 'Orbitron', sans-serif; background: linear-gradient(90deg, #4f46e5, #db2777); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 
-        /* --- PRECISION HOVER ENGINE --- */
+        /* --- HOVER ENGINE --- */
         .segment { height: 100%; position: relative; cursor: pointer; transition: 0.2s; z-index: 10; border-radius: 2px; }
-        .segment:hover { filter: brightness(1.2); transform: scaleY(1.1); z-index: 100; }
-        
+        .segment:hover { filter: brightness(1.2); transform: scaleY(1.15); z-index: 100; }
         .tooltip { 
-            visibility: hidden; opacity: 0; position: absolute; bottom: 140%; left: 50%; transform: translateX(-50%) translateY(5px); 
+            visibility: hidden; opacity: 0; position: absolute; bottom: 145%; left: 50%; transform: translateX(-50%) translateY(5px); 
             background: #0f172a; color: #fff; padding: 10px 14px; border-radius: 8px; font-size: 11px; 
-            width: 160px; text-align: center; z-index: 1000; pointer-events: none; transition: 0.2s;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.3); line-height: 1.4; border: 1px solid rgba(255,255,255,0.1);
+            width: 170px; text-align: center; z-index: 1000; pointer-events: none; transition: 0.2s;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3); line-height: 1.4; border: 1px solid rgba(255,255,255,0.1);
         }
         .segment:hover .tooltip, .node:hover .tooltip { visibility: visible; opacity: 1; transform: translateX(-50%) translateY(0); }
 
         /* --- LAYOUT --- */
-        .policy-card { background: white; border-radius: 24px; border-left: 12px solid; margin-bottom: 30px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); transition: transform 0.2s; }
+        .policy-card { background: white; border-radius: 24px; border-left: 12px solid; margin-bottom: 30px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); }
         .card-header { cursor: pointer; display: flex; align-items: center; padding: 35px; gap: 20px; }
-        .content-area { display: none; padding: 80px 45px; border-top: 1px solid #f1f5f9; background: #fafafa; border-radius: 0 0 24px 24px; overflow: visible !important; }
+        .content-area { display: none; padding: 85px 45px; border-top: 1px solid #f1f5f9; background: #fafafa; border-radius: 0 0 24px 24px; overflow: visible !important; }
         .open .content-area { display: block; }
 
-        /* --- TIMELINE TRACK --- */
+        /* --- TIMELINE --- */
         .timeline-track { position: relative; height: 38px; background: #e2e8f0; border-radius: 20px; width: 100%; display: flex; margin: 30px 0; padding: 0 4px; align-items: center; }
         .node { position: absolute; width: 56px; height: 56px; border-radius: 50%; border: 6px solid #fff; z-index: 200; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; color: white; top: -9px; box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
 
-        /* --- SEGMENT GAPS --- */
-        .segment-container { display: flex; gap: 3px; height: 28px; width: 100%; }
-
-        /* --- BADGES --- */
+        /* --- TYPE STYLES --- */
         .type-badge { font-size: 9px; font-weight: 900; text-transform: uppercase; padding: 6px 12px; border-radius: 10px; border: 1px solid; }
         .savings { background: #e0f2fe; color: #0369a1; border-color: #bae6fd; }
         .retirement { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
@@ -47,19 +42,17 @@
         .mini-badge { width: 95px; padding: 6px; border-radius: 14px; background: white; border: 2px solid; display: flex; flex-direction: column; align-items: center; }
         .badge-num { font-family: 'Orbitron', sans-serif; font-size: 15px; font-weight: 900; }
         .badge-txt { font-size: 7px; font-weight: 900; text-transform: uppercase; color: #64748b; margin-top: 2px; }
-
-        .paid-stamp { width: 110px; transform: rotate(-12deg); filter: drop-shadow(0 5px 8px rgba(0,0,0,0.15)); transition: transform 0.3s; }
-        .policy-card:hover .paid-stamp { transform: rotate(-8deg) scale(1.05); }
+        .paid-stamp { width: 110px; transform: rotate(-12deg); filter: drop-shadow(0 5px 8px rgba(0,0,0,0.15)); }
     </style>
 </head>
 <body>
 
-    <div class="version-stamp">v3.0.5 | 07-Mar-2026 23:05</div>
+    <div class="version-stamp">v3.0.7 | 07-Mar-2026 23:20</div>
 
     <div class="max-w-7xl mx-auto flex justify-between items-end mb-14">
         <div>
             <h1 class="brand-header text-5xl font-black italic tracking-tighter">NAMI PORTFOLIO</h1>
-            <p class="text-slate-400 font-bold text-[11px] mt-2 uppercase tracking-[0.4em]">Strategic Asset Overview</p>
+            <p class="text-slate-400 font-bold text-[11px] mt-2 uppercase tracking-[0.4em]">Asset Performance Dashboard</p>
         </div>
         <div class="flex gap-4">
             <button onclick="render('india')" id="btn-india" class="px-10 py-3 rounded-2xl font-black border-2 transition-all">INDIA</button>
@@ -74,14 +67,17 @@
     <script type="module">
         import { POLICY_DATA } from './data.js';
 
+        // SET CURRENT CONTEXT TO MARCH 2026
         const CURRENT_YEAR = 2026;
+        const CURRENT_MONTH = 2; // March (0-indexed)
+
         window.toggleCard = (id) => document.getElementById(`card-${id}`).classList.toggle('open');
 
         window.render = function(cat) {
             const list = POLICY_DATA[cat];
             const sym = cat === 'singapore' ? '$' : '₹';
             
-            document.querySelectorAll('button').forEach(b => b.className = "px-10 py-3 rounded-2xl font-black border-2 bg-white text-slate-500 border-slate-200 hover:border-slate-400");
+            document.querySelectorAll('button').forEach(b => b.className = "px-10 py-3 rounded-2xl font-black border-2 bg-white text-slate-500 border-slate-200");
             document.getElementById(`btn-${cat}`).className = "px-10 py-3 rounded-2xl font-black border-2 bg-slate-900 text-white border-slate-900 shadow-lg";
 
             document.getElementById('summary').innerHTML = `
@@ -92,30 +88,64 @@
             document.getElementById('container').innerHTML = list.map(p => {
                 const startY = parseInt(p.commenced.split(' ')[2]);
                 const matY = parseInt(p.maturity.split(' ')[2]);
-                const premEndY = parseInt(p.premiumEnds.split(' ')[2]);
                 
-                // AXIS LOGIC: If premium ends before current year, it's paid.
-                const isPaid = premEndY < CURRENT_YEAR;
-                const isFinalYear = premEndY === CURRENT_YEAR;
-                const premLeft = premEndY - CURRENT_YEAR;
-                const matLeft = matY - CURRENT_YEAR;
+                // Parse Premium Ends Date (e.g., "01 Feb 2026")
+                const pEndParts = p.premiumEnds.split(' ');
+                const premEndY = parseInt(pEndParts[2]);
+                const premEndMonthStr = pEndParts[1];
+                const monthMap = { Jan:0, Feb:1, Mar:2, Apr:3, May:4, Jun:5, Jul:6, Aug:7, Sep:8, Oct:9, Nov:10, Dec:11 };
+                const premEndMonth = monthMap[premEndMonthStr];
+
+                // REFINED PAID LOGIC: Check year AND month
+                const isPaid = premEndY < CURRENT_YEAR || (premEndY === CURRENT_YEAR && premEndMonth < CURRENT_MONTH);
+                const isFinalYear = premEndY === CURRENT_YEAR && !isPaid;
+                
                 const dur = matY - startY;
                 const pW = (p.premiumYears / dur) * 100;
 
+                // --- PREMIUM SEGMENTS ---
                 const premS = Array.from({length: p.premiumYears}).map((_, i) => {
                     const y = startY + i;
-                    const status = y < CURRENT_YEAR ? "PAID" : (y === CURRENT_YEAR ? "DUE NOW" : "FUTURE");
-                    const color = y < CURRENT_YEAR ? 'bg-emerald-600' : (y === CURRENT_YEAR ? 'bg-emerald-400' : 'bg-emerald-100');
+                    // Logic for the specific year segment
+                    let status = "FUTURE";
+                    let color = "bg-emerald-100";
+                    
+                    if (y < CURRENT_YEAR) {
+                        status = "PAID";
+                        color = "bg-emerald-600";
+                    } else if (y === CURRENT_YEAR) {
+                        if (isPaid) {
+                            status = "PAID (FINAL)";
+                            color = "bg-emerald-600";
+                        } else {
+                            status = "DUE NOW";
+                            color = "bg-emerald-400";
+                        }
+                    }
+
                     return `<div class="segment flex-1 ${color}"><div class="tooltip">Year ${i+1} (${y})<br><b>${status}</b></div></div>`;
                 }).join('');
 
-                const incS = p.payoutSteps ? p.payoutSteps.map(s => {
-                    const r = s.years.split('-').map(Number);
-                    const span = ((r[1] || r[0]) - r[0]) + 1;
-                    const w = (span / (dur - p.premiumYears)) * 100;
-                    const color = startY + p.premiumYears + r[0] - 1 < CURRENT_YEAR ? 'bg-orange-500' : 'bg-orange-200';
-                    return `<div class="segment ${color}" style="width:${w}%"><div class="tooltip"><b>PAYOUT: ${s.val}</b><br>Policy Years ${s.years}</div></div>`;
-                }).join('') : `<div class="segment flex-1 bg-orange-50"><div class="tooltip">Growth Phase</div></div>`;
+                // --- PAYOUT/BONUS SEGMENTS ---
+                let incS = '';
+                if (p.name.includes("Fortune Maximiser")) {
+                    const bonusYears = matY - (startY + 1);
+                    incS = Array.from({length: bonusYears}).map((_, i) => {
+                        const y = startY + 1 + i;
+                        const color = y < CURRENT_YEAR ? 'bg-orange-500' : 'bg-orange-200';
+                        return `<div class="segment flex-1 ${color}"><div class="tooltip">Year ${i+2} (${y})<br><b>ANNUAL BONUS</b></div></div>`;
+                    }).join('');
+                } else if (p.payoutSteps) {
+                    incS = p.payoutSteps.map(s => {
+                        const r = s.years.split('-').map(Number);
+                        const span = ((r[1] || r[0]) - r[0]) + 1;
+                        const w = (span / (dur - p.premiumYears)) * 100;
+                        const color = startY + p.premiumYears + r[0] - 1 < CURRENT_YEAR ? 'bg-orange-500' : 'bg-orange-200';
+                        return `<div class="segment ${color}" style="width:${w}%"><div class="tooltip"><b>PAYOUT: ${s.val}</b><br>Policy Years ${s.years}</div></div>`;
+                    }).join('');
+                } else {
+                    incS = `<div class="segment flex-1 bg-orange-50"><div class="tooltip">Growth Phase</div></div>`;
+                }
 
                 let typeColor = p.type.toLowerCase().includes('savings') ? 'savings' : (p.type.toLowerCase().includes('retirement') ? 'retirement' : 'ulip');
 
@@ -123,7 +153,7 @@
                 <div class="policy-card" id="card-${p.id}" style="border-color: ${p.color}">
                     <div class="card-header" onclick="toggleCard('${p.id}')">
                         <div style="flex:2.3">
-                            <img src="${p.logo}" class="h-16 object-contain mb-3">
+                            <img src="${p.logo}" class="h-14 object-contain mb-3">
                             <h3 class="font-black text-slate-900 text-lg leading-tight">${p.name}</h3>
                             <p class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Policy No. ${p.id}</p>
                         </div>
@@ -132,18 +162,18 @@
                         <div style="flex:1" class="text-right"><p class="text-[9px] font-black text-slate-400 uppercase">Sum Assured</p><p class="text-xl font-black text-indigo-600">${sym}${p.sumAssured.toLocaleString()}</p></div>
                         <div style="flex:1" class="flex flex-col gap-2 items-center">
                             <div class="mini-badge" style="border-color:#10b981">
-                                <span class="badge-num">${premLeft > 0 ? premLeft : (isFinalYear ? '1' : '✅')}</span>
-                                <span class="badge-txt">${premLeft > 0 ? 'Years Left' : (isFinalYear ? 'Final Year' : 'Paid')}</span>
+                                <span class="badge-num">${isPaid ? '✅' : (premEndY - CURRENT_YEAR + (isFinalYear ? 0 : 0))}</span>
+                                <span class="badge-txt">${isPaid ? 'Paid' : 'Years Left'}</span>
                             </div>
                         </div>
                         <div style="flex:1" class="text-right">
-                            ${isPaid ? `<img src="paid.jpg" class="paid-stamp">` : `<div><p class="text-[9px] font-black text-slate-400 uppercase mb-1">Next Due</p><span class="text-xs font-black bg-slate-100 px-3 py-1 rounded-lg">${p.dueDate} ${isFinalYear ? '(FINAL)' : ''}</span></div>`}
+                            ${isPaid ? `<img src="paid.jpg" class="paid-stamp">` : `<div><p class="text-[9px] font-black text-slate-400 uppercase mb-1">Next Due</p><span class="text-xs font-black bg-slate-100 px-3 py-1 rounded-lg">${p.dueDate}</span></div>`}
                         </div>
                     </div>
                     <div class="content-area">
                         <div class="timeline-track">
                             <div class="node bg-slate-900" style="left:-28px;"><div class="tooltip">Commenced: ${p.commenced}</div>START</div>
-                            <div class="segment-container">
+                            <div class="flex h-full w-full gap-[3px]">
                                 <div class="flex h-full gap-[3px]" style="width:${pW}%">${premS}</div>
                                 <div class="flex h-full gap-[3px]" style="width:${100-pW}%">${incS}</div>
                             </div>
