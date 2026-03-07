@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nami Portfolio v3.1.9</title>
+    <title>Nami Portfolio v3.2.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Orbitron:wght@800&display=swap');
@@ -33,8 +33,7 @@
         .content-area { display: none; padding: 60px 50px; border-top: 1px solid #f1f5f9; background: #fafbfc; border-radius: 0 0 28px 28px; overflow: visible !important; }
         .open .content-area { display: block; }
 
-        /* UPDATED TYPE BADGE */
-        .type-badge { font-size: 11px; font-weight: 900; text-transform: uppercase; padding: 6px 14px; border-radius: 10px; border: 2px solid; display: inline-block; margin-bottom: 8px; }
+        .type-badge { font-size: 10px; font-weight: 900; text-transform: uppercase; padding: 6px 12px; border-radius: 8px; border: 2px solid; display: inline-block; }
         .savings { background: #f0f9ff; color: #0369a1; border-color: #bae6fd; }
         .retirement { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
         .ulip { background: #f5f3ff; color: #5b21b6; border-color: #ddd6fe; }
@@ -46,7 +45,7 @@
 </head>
 <body>
 
-    <div class="version-stamp">BUILD: v3.1.9 | 08-MAR-2026</div>
+    <div class="version-stamp">BUILD: v3.2.0 | 08-MAR-2026</div>
 
     <div class="max-w-7xl mx-auto flex justify-between items-end mb-14">
         <div>
@@ -85,94 +84,91 @@
             document.getElementById('container').innerHTML = list.map(p => {
                 const startY = parseInt(p.commenced.split(' ')[2]);
                 const matY = parseInt(p.maturity.split(' ')[2]);
-                const pEndParts = p.premiumEnds.split(' ');
-                const premEndY = parseInt(pEndParts[2]);
-                const monthMap = { Jan:0, Feb:1, Mar:2, Apr:3, May:4, Jun:5, Jul:6, Aug:7, Sep:8, Oct:9, Nov:10, Dec:11 };
-                const premEndMonth = monthMap[pEndParts[1]];
-
-                // Axis Max Life & Generic Paid Logic
-                const isAxisMax = p.name.includes("Axis Max Life");
-                const isPaid = isAxisMax || (premEndY < CURRENT_YEAR) || (premEndY === CURRENT_YEAR && premEndMonth < 2); // March is index 2
+                const premEndY = parseInt(p.premiumEnds.split(' ')[2]);
                 
+                const isPaid = (p.name.includes("Axis Max Life")) || (premEndY < CURRENT_YEAR);
+                const isULIP = p.type.toLowerCase().includes('ulip');
+
+                // Reminder Logic
                 const [d, m, y] = p.dueDate.split(' ');
                 const dueObj = new Date(`${m} ${d}, ${y}`);
-                const diffTime = dueObj - TODAY;
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                const diffDays = Math.ceil((dueObj - TODAY) / (1000 * 60 * 60 * 24));
                 const showReminder = !isPaid && diffDays >= 0 && diffDays <= 30;
 
                 let timeline = '';
-                // 1. Premium Phase (Forced past if Paid)
-                const premYears = isPaid ? (premEndY - startY + 1) : (CURRENT_YEAR - startY);
-                if(premYears > 0) timeline += `<div class="segment bg-past" style="flex:${premYears}"><div class="tooltip"><b>Premium Phase</b><br>Years ${startY} - ${isPaid ? premEndY : CURRENT_YEAR-1}</div></div>`;
                 
-                if(!isPaid) {
-                    for(let yr=CURRENT_YEAR; yr <= premEndY; yr++) {
-                        const color = (yr === CURRENT_YEAR) ? 'bg-premium' : 'bg-future';
-                        timeline += `<div class="segment ${color}" style="flex:1"><div class="tooltip"><b>Premium Due</b><br>${yr === CURRENT_YEAR ? 'DUE NOW' : 'Future'}<br>${yr}</div></div>`;
-                    }
-                }
-
-                // 2. Growth/Income Phase
-                const incStart = isPaid ? (premEndY + 1) : (premEndY + 1);
-                for(let yr=Math.max(incStart, CURRENT_YEAR); yr < matY; yr++) {
+                // 1. Core Lifecycle Loop (From Start to Maturity)
+                for(let yr = startY; yr < matY; yr++) {
                     const polYear = yr - startY + 1;
-                    let amt = p.type.toLowerCase().includes('ulip') ? "Market Linked" : "Income Phase";
-                    if (p.name.includes("Moneyback")) {
-                        if (polYear >= 11 && polYear <= 14) amt = "₹18,591";
-                        else if (polYear === 15) amt = "₹49,576";
-                    } else if (p.name.includes("Samrudhi") && polYear >= 8 && polYear <= 28) { amt = "₹1,00,000"; }
-                    else if (p.name.includes("Nishchit Ace")) {
-                        if (polYear >= 11 && polYear <= 15) amt = "₹1,33,974";
-                        else if (polYear >= 16 && polYear <= 20) amt = "₹160,769";
-                        else if (polYear >= 21 && polYear <= 25) amt = "₹187,564";
-                        else if (polYear >= 26 && polYear <= 30) amt = "₹214,359";
-                    } else if (p.name.includes("Pension SL")) { amt = "₹89,830"; }
+                    const isPast = yr < CURRENT_YEAR;
+                    const isCurrent = yr === CURRENT_YEAR;
+                    
+                    let type = "Future";
+                    let color = "bg-future";
+                    let detail = "";
 
-                    const segColor = p.type.toLowerCase().includes('ulip') ? 'bg-growth' : (yr < CURRENT_YEAR ? 'bg-past' : 'bg-income');
-                    timeline += `<div class="segment ${segColor}" style="flex:1"><div class="tooltip"><b>Growth Phase</b><br><span class="text-orange-300 font-bold">${amt}</span><br>${yr}</div></div>`;
+                    // Premium Phase Logic
+                    if (yr <= premEndY) {
+                        color = isPast ? "bg-past" : (isCurrent && !isPaid ? "bg-premium" : "bg-future");
+                        type = "Premium Phase";
+                    }
+
+                    // Bonus/Income Overlays
+                    if (p.name.includes("Fortune Maximiser") && polYear >= 2) {
+                        color = isPast ? "bg-past" : "bg-income";
+                        type = (yr <= premEndY) ? "Premium + Bonus" : "Annual Bonus";
+                        detail = "Variable Bonus Payout";
+                    } else if (yr > premEndY) {
+                        color = isULIP ? "bg-growth" : (isPast ? "bg-past" : "bg-income");
+                        type = isULIP ? "Unit Growth" : "Income Phase";
+                    }
+
+                    // Special Tiers (Nishchit Ace, etc.)
+                    if (p.name.includes("Nishchit Ace") && yr > premEndY) {
+                         if (polYear >= 11 && polYear <= 15) detail = "₹1,33,974";
+                         else if (polYear >= 16 && polYear <= 20) detail = "₹160,769";
+                    }
+
+                    timeline += `<div class="segment ${color}" style="flex:1"><div class="tooltip"><b>${type}</b><br>${detail}<br>Year ${polYear} (${yr})</div></div>`;
                 }
 
-                let matBenefit = p.maturityAmt;
-                if (p.name.includes("Moneyback")) matBenefit = "₹55,761 (Loyalty+Mat)";
-                else if (p.name.includes("Samrudhi") || p.name.includes("Nishchit Ace")) matBenefit = sym + p.sumAssured.toLocaleString();
-                else if (p.name.includes("Pension SL")) matBenefit = "Special Surrender Value";
+                const typeClass = isULIP ? 'ulip' : (p.type.toLowerCase().includes('retirement') ? 'retirement' : 'savings');
 
                 return `
                 <div class="policy-card" id="card-${p.id}" style="border-color: ${p.color}">
                     <div class="card-header" onclick="toggleCard('${p.id}')">
-                        <div style="flex:2.3">
-                            <img src="${p.logo}" class="h-12 object-contain mb-4">
-                            <span class="type-badge ${p.type.toLowerCase().includes('ulip') ? 'ulip' : (p.type.toLowerCase().includes('retirement') ? 'retirement' : 'savings')}">${p.type}</span>
-                            <h3 class="font-black text-slate-900 text-xl leading-tight mb-1">${p.name}</h3>
-                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Policy Number: ${p.id}</p>
+                        <div style="flex:2">
+                            <img src="${p.logo}" class="h-10 object-contain mb-3">
+                            <h3 class="font-black text-slate-900 text-lg leading-tight mb-1">${p.name}</h3>
+                            <p class="text-[9px] font-black text-slate-400 uppercase tracking-tighter">ID: ${p.id}</p>
                         </div>
-                        <div style="flex:1" class="text-right"><p class="text-[9px] font-bold text-slate-400 uppercase">Premium</p><p class="text-2xl font-black text-emerald-600">${sym}${p.premium.toLocaleString()}</p></div>
-                        <div style="flex:1.2" class="text-right"><p class="text-[9px] font-bold text-slate-400 uppercase">Sum Assured</p><p class="text-2xl font-black text-indigo-600">${sym}${p.sumAssured.toLocaleString()}</p></div>
+                        <div style="flex:0.8" class="text-center">
+                            <p class="text-[9px] font-bold text-slate-400 uppercase mb-2">Type</p>
+                            <span class="type-badge ${typeClass}">${p.type}</span>
+                        </div>
+                        <div style="flex:1" class="text-right"><p class="text-[9px] font-bold text-slate-400 uppercase">Premium</p><p class="text-xl font-black text-emerald-600">${sym}${p.premium.toLocaleString()}</p></div>
+                        <div style="flex:1.2" class="text-right"><p class="text-[9px] font-bold text-slate-400 uppercase">Sum Assured</p><p class="text-xl font-black text-indigo-600">${sym}${p.sumAssured.toLocaleString()}</p></div>
                         <div style="flex:1.2" class="text-right">
                             ${isPaid ? `<img src="paid.jpg" class="paid-stamp ml-auto">` : `
                                 <div class="flex flex-col items-end">
-                                    <p class="text-[10px] font-black text-slate-400 uppercase mb-1">Next Due</p>
-                                    <div class="inline-flex items-center bg-white px-4 py-2 rounded-xl border-2 border-slate-200 shadow-sm">
-                                        <svg class="w-4 h-4 ${showReminder ? 'text-red-500' : 'text-emerald-500'} mr-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path></svg>
-                                        <span class="text-base font-black text-slate-900">${p.dueDate}</span>
+                                    <p class="text-[9px] font-black text-slate-400 uppercase mb-1">Next Due</p>
+                                    <div class="inline-flex items-center bg-white px-3 py-1.5 rounded-xl border-2 border-slate-200 shadow-sm">
+                                        <svg class="w-3.5 h-3.5 ${showReminder ? 'text-red-500' : 'text-emerald-500'} mr-2" fill="currentColor" viewBox="0 0 20 20"><path d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"></path></svg>
+                                        <span class="text-sm font-black text-slate-900">${p.dueDate}</span>
                                     </div>
-                                    ${showReminder ? `
-                                    <div class="mt-2 flex items-center bg-red-100 px-2 py-0.5 rounded border border-red-200">
-                                        <span class="w-1.5 h-1.5 bg-red-600 rounded-full animate-pulse mr-2"></span>
-                                        <span class="text-[9px] font-black text-red-700 uppercase">Action Needed</span>
-                                    </div>` : ''}
+                                    ${showReminder ? `<div class="mt-1 flex items-center bg-red-100 px-2 py-0.5 rounded border border-red-200"><span class="w-1 h-1 bg-red-600 rounded-full animate-pulse mr-1"></span><span class="text-[8px] font-black text-red-700 uppercase">Pay Soon</span></div>` : ''}
                                 </div>`}
                         </div>
                     </div>
                     <div class="content-area">
-                        <div class="flex gap-10 mb-8 px-4 border-b border-slate-100 pb-6">
-                            <div><p class="text-[10px] font-bold text-slate-400 uppercase">Client ID</p><p class="text-base font-black text-slate-700">${p.clientId || 'N/A'}</p></div>
-                            <div><p class="text-[10px] font-bold text-slate-400 uppercase">UIN Number</p><p class="text-base font-black text-slate-700">${p.uin || 'N/A'}</p></div>
+                        <div class="flex gap-10 mb-8 border-b border-slate-100 pb-4">
+                            <div><p class="text-[9px] font-bold text-slate-400 uppercase">Client ID</p><p class="text-sm font-black text-slate-700">${p.clientId || 'N/A'}</p></div>
+                            <div><p class="text-[9px] font-bold text-slate-400 uppercase">UIN Number</p><p class="text-sm font-black text-slate-700">${p.uin || 'N/A'}</p></div>
                         </div>
                         <div class="timeline-track">
                             <div class="node bg-slate-900" style="left:-30px;">START</div>
                             <div class="flex h-full w-full mx-2">${timeline}</div>
-                            <div class="node bg-pink-600" style="right:-30px;"><div class="tooltip"><b>Maturity: ${matBenefit}</b><br>${p.maturity}</div>MAT</div>
+                            <div class="node bg-pink-600" style="right:-30px;"><div class="tooltip"><b>Maturity</b><br>${p.maturity}</div>MAT</div>
                         </div>
                     </div>
                 </div>`;
