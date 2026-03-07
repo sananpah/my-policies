@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nami Portfolio v3.3.5</title>
+    <title>Nami Portfolio v3.3.6</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Orbitron:wght@800&display=swap');
@@ -20,7 +20,7 @@
         }
 
         .segment { height: 100%; position: relative; cursor: pointer; transition: 0.2s; border-radius: 4px; margin: 0 1px; }
-        .segment:hover { filter: brightness(1.2); transform: scaleY(1.25); z-index: 40; }
+        .segment:hover { filter: brightness(1.2); transform: scaleY(1.3); z-index: 40; }
         .bg-past { background: #475569; opacity: 0.8; }
         .bg-premium { background: linear-gradient(180deg, #10b981 0%, #059669 100%); }
         .bg-income { background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%); }
@@ -28,14 +28,14 @@
         .bg-future { background: #cbd5e1; }
 
         .tooltip { 
-            visibility: hidden; opacity: 0; position: absolute; bottom: 175%; left: 50%; transform: translateX(-50%) translateY(10px); 
+            visibility: hidden; opacity: 0; position: absolute; bottom: 180%; left: 50%; transform: translateX(-50%) translateY(10px); 
             background: #0f172a; color: #fff; padding: 14px 18px; border-radius: 12px; font-size: 11px; 
-            width: 260px; text-align: center; z-index: 3000; transition: 0.3s;
+            width: 240px; text-align: center; z-index: 3000; transition: 0.3s;
             box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); line-height: 1.6; pointer-events: none;
         }
         .segment:hover .tooltip, .node:hover .tooltip { visibility: visible; opacity: 1; transform: translateX(-50%) translateY(0); }
 
-        .policy-card { background: white; border-radius: 28px; border-left: 14px solid; margin-bottom: 35px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); }
+        .policy-card { background: white; border-radius: 28px; border-left: 14px solid; margin-bottom: 35px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); transition: 0.3s; }
         .card-header { cursor: pointer; display: flex; align-items: center; padding: 35px; gap: 24px; }
         .content-area { display: none; padding: 60px 50px; border-top: 1px solid #f1f5f9; background: #fafbfc; border-radius: 0 0 28px 28px; overflow: visible !important; }
         .open .content-area { display: block; }
@@ -51,24 +51,22 @@
 </head>
 <body>
 
-    <div class="version-stamp">BUILD: v3.3.5 | 08-MAR-2026</div>
+    <div class="version-stamp">BUILD: v3.3.6 | 08-MAR-2026</div>
 
-    <div id="container-root">
-        <div class="max-w-7xl mx-auto flex justify-between items-end mb-14">
-            <div>
-                <h1 class="brand-header text-5xl font-black italic tracking-tighter">NAMI PORTFOLIO</h1>
-                <p class="text-slate-400 font-bold text-[10px] mt-2 uppercase tracking-[0.4em]">Asset Strategy & Control</p>
-            </div>
-            <div class="flex gap-4">
-                <button onclick="render('india')" id="btn-india" class="px-10 py-3 rounded-2xl font-black border-2 transition-all">INDIA</button>
-                <button onclick="render('wife')" id="btn-wife" class="px-10 py-3 rounded-2xl font-black border-2 transition-all">WIFE</button>
-                <button onclick="render('singapore')" id="btn-singapore" class="px-10 py-3 rounded-2xl font-black border-2 transition-all">SINGAPORE</button>
-            </div>
+    <div class="max-w-7xl mx-auto flex justify-between items-end mb-14">
+        <div>
+            <h1 class="brand-header text-5xl font-black italic tracking-tighter">NAMI PORTFOLIO</h1>
+            <p class="text-slate-400 font-bold text-[10px] mt-2 uppercase tracking-[0.4em]">Asset Strategy & Control</p>
         </div>
-
-        <div id="summary" class="max-w-7xl mx-auto grid grid-cols-2 gap-8 mb-14"></div>
-        <div id="container" class="max-w-7xl mx-auto"></div>
+        <div class="flex gap-4">
+            <button onclick="render('india')" id="btn-india" class="px-10 py-3 rounded-2xl font-black border-2 transition-all">INDIA</button>
+            <button onclick="render('wife')" id="btn-wife" class="px-10 py-3 rounded-2xl font-black border-2 transition-all">WIFE</button>
+            <button onclick="render('singapore')" id="btn-singapore" class="px-10 py-3 rounded-2xl font-black border-2 transition-all">SINGAPORE</button>
+        </div>
     </div>
+
+    <div id="summary" class="max-w-7xl mx-auto grid grid-cols-2 gap-8 mb-14"></div>
+    <div id="container" class="max-w-7xl mx-auto"></div>
 
     <script type="module">
         import { POLICY_DATA } from './data.js';
@@ -92,19 +90,22 @@
             document.getElementById('container').innerHTML = list.map(p => {
                 const startY = parseInt(p.commenced.split(' ')[2]);
                 const matY = parseInt(p.maturity.split(' ')[2]);
+                const premEndYear = parseInt(p.premiumEnds.split(' ')[2]);
                 const premEndObj = new Date(p.premiumEnds);
                 
-                // PURE DATE LOGIC: Today vs Premium End Date
                 const isPaid = TODAY > premEndObj || p.dueDate === "PAID UP";
                 const isULIP = p.type.toLowerCase().includes('ulip');
-                const premiumsLeft = Math.max(0, parseInt(p.premiumEnds.split(' ')[2]) - CURRENT_YEAR + (TODAY < premEndObj ? 1 : 0));
+                const premiumsLeft = Math.max(0, premEndYear - CURRENT_YEAR + (TODAY < premEndObj ? 1 : 0));
 
                 let timeline = '';
                 for(let yr = startY; yr < matY; yr++) {
                     const polYear = yr - startY + 1;
                     const isPast = yr < CURRENT_YEAR;
                     let payoutLabel = "N/A";
+                    let phaseLabel = "";
+                    let color = "bg-future";
 
+                    // DETECT PAYOUTS
                     if (p.name.includes("Nishchit Ace")) {
                         if (polYear >= 11 && polYear <= 15) payoutLabel = "₹ 1,33,974";
                         else if (polYear >= 16 && polYear <= 20) payoutLabel = "₹ 1,60,769";
@@ -114,15 +115,28 @@
                         if (polYear >= 11 && polYear <= 14) payoutLabel = "₹ 18,591";
                         else if (polYear === 15) payoutLabel = "₹ 49,576";
                     } else if (p.name.includes("Samrudhi") && polYear >= 8) payoutLabel = "₹ 1,00,000";
-                      else if (p.name.includes("Pension SL")) payoutLabel = "₹ 89,830";
+                    else if (p.name.includes("Pension SL")) payoutLabel = "₹ 89,830";
 
-                    let color = isPast ? "bg-past" : (yr <= parseInt(p.premiumEnds.split(' ')[2]) && !isPaid ? "bg-premium" : (isULIP ? "bg-growth" : "bg-income"));
+                    // LOGIC FOR HOVER TEXT & COLORS
+                    if (yr <= premEndYear) {
+                        if (isPast || isPaid) {
+                            color = "bg-past";
+                            phaseLabel = "Premium Paid";
+                        } else {
+                            color = yr === CURRENT_YEAR ? "bg-premium" : "bg-future";
+                            phaseLabel = "Premium Active";
+                        }
+                    } else {
+                        color = isULIP ? "bg-growth" : "bg-income";
+                        phaseLabel = isULIP ? "Unit Growth" : "Income Phase";
+                    }
 
                     timeline += `
                     <div class="segment ${color}" style="flex:1">
                         <div class="tooltip">
-                            <b class="text-white text-xs uppercase">Year ${polYear} (${yr})</b><br>
-                            <span class="text-orange-400 font-black">Annual: ${payoutLabel}</span>
+                            <b class="text-white text-xs uppercase">${phaseLabel}</b><br>
+                            <span class="text-orange-400 font-black">Payout: ${payoutLabel}</span><br>
+                            <span class="text-slate-400 text-[10px]">Year ${polYear} (${yr})</span>
                         </div>
                     </div>`;
                 }
