@@ -33,20 +33,25 @@
             border-radius: 6px; font-size: 11px; width: 220px; z-index: 100; text-align: center;
             box-shadow: 0 10px 25px rgba(0,0,0,0.3); pointer-events: none; line-height: 1.4;
         }
-        .segment:hover .tooltip, .node-circle:hover .tooltip { visibility: visible; opacity: 1; transform: translateX(-50%) translateY(-5px); transition: 0.2s; }
+        /* Fix for left-side truncation */
+        .start-node .tooltip { transform: translateX(0); left: 0; text-align: left; }
+        
+        .segment:hover .tooltip, .node-circle:hover .tooltip { visibility: visible; opacity: 1; transform: translateY(-5px); transition: 0.2s; }
+        .start-node:hover .tooltip { transform: translateX(0) translateY(-5px); }
 
         @keyframes alert-glow { 0%, 100% { background: #fee2e2; } 50% { background: #fecaca; box-shadow: 0 0 12px #ef4444; } }
         .due-reminder { animation: alert-glow 2s infinite; border-radius: 4px; padding: 4px 8px; }
 
-        /* Circular Node Style */
-        .node-circle { position: absolute; top: -11px; width: 40px; height: 40px; border-radius: 50%; border: 4px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.2); z-index: 60; cursor: help; display: flex; items-center; justify-center; font-size: 8px; font-weight: 900; color: white; letter-spacing: -0.5px; }
+        .node-circle { position: absolute; top: -11px; width: 40px; height: 40px; border-radius: 50%; border: 4px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.2); z-index: 60; cursor: help; display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 900; color: white; }
 
         .marker-label { position: absolute; top: 42px; font-size: 11px; font-weight: 800; color: #64748b; white-space: nowrap; transform: translateX(-50%); }
+        
+        .paid-up-img { width: 70px; height: auto; transform: rotate(-5deg); filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1)); }
     </style>
 </head>
 <body class="p-4 md:p-10">
 
-    <div class="version-stamp">v2.3.0 | 07-Mar-2026 21:41</div>
+    <div class="version-stamp">v2.4.0 | 07-Mar-2026 21:48</div>
 
     <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center mb-10">
         <h1 class="brand-header text-3xl font-black italic tracking-tight">NAMI INSURANCE PORTFOLIO</h1>
@@ -93,28 +98,35 @@
                     if ((due - TODAY) / (1000 * 60 * 60 * 24) <= 45) dateClass = "due-reminder text-red-700";
                 }
 
-                // 1. Premium Phase Segments
+                // 1. Premium Phase (Special check for Kotak Payouts during premium term)
                 const premSegments = Array.from({length: p.premiumYears}).map((_, i) => {
                     const yr = startYear + i;
+                    const policyYr = i + 1;
+                    let extraTip = "";
+                    
+                    // Specific logic for Kotak Fortune Maximiser annual payouts
+                    if (p.name.includes("Fortune Maximiser") && policyYr >= 2) {
+                        extraTip = `<br><b class="text-orange-400">Cashback Payout Active</b>`;
+                    }
+
                     return `<div class="segment flex-1 ${yr < CURRENT_YEAR ? 'bg-emerald-600' : 'bg-emerald-200'}">
-                        <div class="tooltip">YEAR ${i+1} (${yr})<br>PREMIUM PHASE</div>
+                        <div class="tooltip">YEAR ${policyYr} (${yr})<br>PREMIUM PHASE${extraTip}</div>
+                        ${extraTip ? '<div class="absolute bottom-0 left-0 w-full h-1 bg-orange-400"></div>' : ''}
                     </div>`;
                 }).join('');
 
-                // 2. Income/Growth Phase Segments (Fixed for Nishchit Ace)
+                // 2. Income/Growth Phase
                 const incomeYearsTotal = totalDuration - p.premiumYears;
                 let incomeSegments = '';
                 
                 if (p.payoutSteps) {
-                    // Logic to breakout specific payout dots/segments
                     p.payoutSteps.forEach(step => {
                         const range = step.years.split('-').map(Number);
-                        const startStep = range[0];
-                        const endStep = range[1] || range[0];
-                        const stepSpan = (endStep - startStep) + 1;
+                        const stepSpan = ( (range[1] || range[0]) - range[0] ) + 1;
                         const stepWidth = (stepSpan / incomeYearsTotal) * 100;
+                        const startAbs = startYear + p.premiumYears + range[0] - 1;
 
-                        incomeSegments += `<div class="segment flex h-full ${startYear + p.premiumYears + startStep - 1 < CURRENT_YEAR ? 'bg-orange-500' : 'bg-orange-200'}" style="width: ${stepWidth}%">
+                        incomeSegments += `<div class="segment flex h-full ${startAbs < CURRENT_YEAR ? 'bg-orange-500' : 'bg-orange-200'}" style="width: ${stepWidth}%">
                             <div class="tooltip">PAYOUT PERIOD: Years ${step.years}<br><b>AMOUNT: ${step.val}</b></div>
                         </div>`;
                     });
@@ -131,7 +143,7 @@
                             <img src="${p.logo}" class="w-10 h-10 object-contain border rounded p-1 bg-white">
                             <div>
                                 <h3 class="font-black text-slate-800 text-sm uppercase">${p.name}</h3>
-                                <p class="text-[10px] font-bold text-slate-400"># ${p.id}</p>
+                                <p class="text-[10px] font-bold text-slate-400">Policy Number: ${p.id}</p>
                             </div>
                         </div>
                         <div class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">${p.type}</div>
@@ -145,7 +157,7 @@
                         </div>
                         <div class="text-right">
                             <p class="text-[9px] font-bold text-slate-400 uppercase">Next Due</p>
-                            ${isPaid ? '<span class="paid-stamp">PAID UP</span>' : `<span class="${dateClass} text-xs uppercase">${p.dueDate}</span>`}
+                            ${isPaid ? '<img src="paid-up.jpg" class="paid-up-img" alt="PAID UP">' : `<span class="${dateClass} text-xs uppercase">${p.dueDate}</span>`}
                         </div>
                         <svg class="w-5 h-5 ml-auto text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="4" d="M19 9l-7 7-7-7"></path></svg>
                     </div>
@@ -161,7 +173,7 @@
                         </div>
 
                         <div class="timeline-track">
-                            <div class="node-circle bg-slate-800 flex items-center justify-center" style="left: -20px;">
+                            <div class="node-circle start-node bg-slate-800" style="left: -20px;">
                                 <div class="tooltip">COMMENCED: ${p.commenced}</div>START
                             </div>
 
@@ -170,7 +182,7 @@
                                 <div class="flex h-full" style="width: ${100 - premWidth}%">${incomeSegments}</div>
                             </div>
                             
-                            <div class="node-circle bg-emerald-600 flex items-center justify-center" style="left: calc(${premWidth}% - 20px);">
+                            <div class="node-circle bg-emerald-600" style="left: calc(${premWidth}% - 20px);">
                                 <div class="tooltip">PREMIUM PAYMENTS COMPLETED: ${p.premiumEnds}</div>END
                             </div>
 
@@ -178,8 +190,8 @@
                             <div class="marker-label" style="left: ${premWidth}%; color: #059669;">${p.premiumEnds}</div>
                             <div class="marker-label" style="left: 100%; color: #ef4444;">${p.maturity}</div>
                             
-                            <div class="node-circle bg-red-600 flex items-center justify-center" style="right: -20px;">
-                                <div class="tooltip" style="left: -100px; width: 260px;"><b>FINAL MATURITY VALUE</b><br>${p.maturityAmt}<br>DATE: ${p.maturity}</div>MAT
+                            <div class="node-circle bg-red-600" style="right: -20px;">
+                                <div class="tooltip" style="left: -180px; width: 220px;"><b>FINAL MATURITY VALUE</b><br>${p.maturityAmt}</div>MAT
                             </div>
                         </div>
                     </div>
