@@ -11,20 +11,14 @@
         .maroon-text { color: #8b1d1d; }
         .tab-btn { padding: 10px 24px; font-weight: 700; text-transform: uppercase; font-size: 11px; border-radius: 8px; transition: all 0.3s; border: 1px solid #e2e8f0; background: white; color: #64748b; cursor: pointer; }
         .tab-btn.active { background: #8b1d1d; color: white; border-color: #8b1d1d; box-shadow: 0 4px 12px rgba(139, 29, 29, 0.2); }
-        
-        /* Timeline Elements */
         .vertical-marker { width: 2px; height: 28px; background-color: #cbd5e1; position: absolute; top: -12px; z-index: 40; }
         .end-premium-marker { width: 3px; height: 36px; background-color: #22c55e; position: absolute; top: -16px; z-index: 45; border-radius: 2px; }
         .payout-dot { width: 12px; height: 12px; background: #f59e0b; border-radius: 50%; position: absolute; top: 50%; transform: translate(-50%, -50%); border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 55; }
         .growth-dot { background: #3b82f6; }
         .maturity-dot { background: #ef4444 !important; width: 18px !important; height: 18px !important; }
-        
-        /* Tooltips */
         .segment-container { position: relative; cursor: pointer; }
         .tooltip-text { visibility: hidden; opacity: 0; position: absolute; bottom: 45px; left: 50%; transform: translateX(-50%); background: #0f172a; color: white; padding: 8px 14px; border-radius: 6px; font-size: 11px; font-weight: 700; white-space: nowrap; transition: all 0.2s; z-index: 200; pointer-events: none; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); }
         .segment-container:hover > .tooltip-text, .dot-wrapper:hover > .tooltip-text { opacity: 1; visibility: visible; transform: translate(-50% , -5px); }
-        
-        /* Layout Elements */
         .policy-card { background: white; border-left: 8px solid; border-radius: 16px; position: relative; margin-bottom: 1.5rem; transition: all 0.3s; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); overflow: hidden; }
         .content-area { display: none; }
         .open .content-area { display: block; }
@@ -33,8 +27,7 @@
         .val-label { font-size: 10px; font-weight: 800; text-transform: uppercase; color: #94a3b8; margin-bottom: 2px; }
         .val-amount { font-weight: 900; line-height: 1.1; }
         .grid-header { display: grid; grid-template-columns: 2.5fr 1.2fr 1.2fr 1.1fr; align-items: center; gap: 1.5rem; position: relative; z-index: 20; }
-
-        /* Alert Animation */
+        .type-badge { font-size: 9px; padding: 2px 8px; border-radius: 99px; background: #f1f5f9; color: #475569; font-weight: 800; text-transform: uppercase; margin-top: 4px; display: inline-block; border: 1px solid #e2e8f0; }
         .due-alert { background: #fee2e2; color: #dc2626; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 900; animation: pulse 2s infinite; display: inline-block; margin-bottom: 4px; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
     </style>
@@ -54,7 +47,7 @@
     <div id="policy-container" class="max-w-7xl mx-auto"></div>
 
     <script type="module">
-        import { POLICY_DATA } from './data.js?v=1.0.8';
+        import { POLICY_DATA } from './data.js?v=1.1.0';
         const TODAY = new Date();
 
         window.render = function(mode) {
@@ -63,76 +56,57 @@
             const list = POLICY_DATA[mode];
             const curr = mode === 'singapore' ? '$' : '₹';
 
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            const targetBtn = mode === 'singapore' ? 'btn-sg' : `btn-${mode}`;
-            document.getElementById(targetBtn).classList.add('active');
-
             container.innerHTML = list.map(p => {
                 const isPaidUp = p.dueDate === "PAID UP";
-                
-                // Calculate Due Soon Alert (45 days)
                 let dueAlertHTML = "";
                 if(!isPaidUp) {
                     const dDate = new Date(p.dueDate);
-                    const diffTime = dDate - TODAY;
-                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                    if(diffDays > 0 && diffDays <= 45) {
-                        dueAlertHTML = `<div class="due-alert">DUE IN ${diffDays} DAYS</div>`;
-                    }
+                    const diffDays = Math.ceil((dDate - TODAY) / (1000 * 60 * 60 * 24));
+                    if(diffDays > 0 && diffDays <= 45) dueAlertHTML = `<div class="due-alert">DUE IN ${diffDays} DAYS</div>`;
                 }
 
-                const startYear = parseInt(p.commenced.split(' ')[2]);
+                const [commDay, commMonth, commYear] = p.commenced.split(' ');
+                const startYear = parseInt(commYear);
                 const maturityYear = parseInt(p.maturity.split(' ')[2]);
                 const totalDuration = maturityYear - startYear;
                 const premPct = (p.premiumYears / totalDuration) * 100;
 
-                // 1. Premium Blocks
+                // 1. Premium Segments
                 let premiumSegments = "";
                 for(let i=0; i<p.premiumYears; i++) {
                     const yr = startYear + i;
-                    const isPd = new Date(`${p.commenced.split(' ')[1]} 01, ${yr + 1}`) < TODAY;
+                    const anniversaryDate = new Date(`${commMonth} ${commDay}, ${yr}`);
+                    const isPd = anniversaryDate <= TODAY;
                     premiumSegments += `<div class="segment-container flex-1 h-4 ${isPd ? 'bg-green-500' : 'bg-gray-200'} border-r border-white relative">
-                        <span class="tooltip-text">Year ${i+1} (${yr}): ${isPd ? 'PAID' : 'DUE'}</span>
+                        <span class="tooltip-text">Year ${i+1} (${yr})</span>
                         ${i===0 ? '<div class="vertical-marker left-0"></div>' : ''}
                         ${i===p.premiumYears-1 ? `<div class="end-premium-marker right-0"></div>` : ''}
                     </div>`;
                 }
 
-                // 2. Growth Phase Progress
+                // 2. CONSOLIDATED Growth/Income Phase
                 const growthYears = totalDuration - p.premiumYears;
-                const elapsedGrowth = Math.max(0, (TODAY.getFullYear() - (startYear + p.premiumYears)));
+                const elapsedGrowth = Math.max(0, TODAY.getFullYear() - (startYear + p.premiumYears));
                 const growthProgressPct = Math.min(100, (elapsedGrowth / growthYears) * 100);
 
-                let phaseContent = "";
-                if(p.type === 'ULIP' || p.type === 'ILP' || p.growthPhase) {
-                    phaseContent = `
-                        <div class="flex-1 bg-gray-100 relative rounded-r-sm overflow-hidden segment-container">
-                            <span class="tooltip-text">Growth Phase</span>
-                            <div class="absolute top-0 left-0 h-full bg-orange-600" style="width: ${growthProgressPct}%"></div>
-                            ${[1, 2, 3, 4].map(i => `<div class="dot-wrapper absolute h-full" style="left:${i*20}%; z-index:60;"><div class="payout-dot growth-dot"></div></div>`).join('')}
-                            <div class="dot-wrapper absolute h-full right-0" style="right: -8px; z-index:70;"><span class="tooltip-text" style="left:auto; right:0; transform:none;">MATURITY: ${p.maturityAmt}</span><div class="payout-dot maturity-dot"></div></div>
-                        </div>`;
-                } else {
-                    let subSegments = "";
-                    for(let j=1; j<=growthYears; j++) {
-                        const yr = startYear + p.premiumYears + j - 1;
-                        const isPd = new Date(`${p.commenced.split(' ')[1]} 01, ${yr + 1}`) < TODAY;
-                        let label = "Growth Phase";
-                        if(p.payoutSteps) {
-                            const step = p.payoutSteps.find(s => {
-                                const range = s.years.split('-').map(Number);
-                                const currentPolicyYear = p.premiumYears + j;
-                                return range.length === 2 ? (currentPolicyYear >= range[0] && currentPolicyYear <= range[1]) : (currentPolicyYear === parseInt(s.years));
-                            });
-                            if(step) label = `Income: ${step.val}`;
-                        }
-                        subSegments += `<div class="segment-container flex-1 h-4 ${isPd ? 'bg-orange-600' : 'bg-gray-100'} border-r border-white relative">
-                            <span class="tooltip-text">${label} (${yr})</span>
-                            ${j === growthYears ? '<div class="dot-wrapper absolute right-0" style="right:-8px;"><span class="tooltip-text" style="left:auto; right:0; transform:none;">MATURITY: ${p.maturityAmt}</span><div class="payout-dot maturity-dot"></div></div>' : ''}
-                        </div>`;
-                    }
-                    phaseContent = `<div class="flex flex-1">${subSegments}</div>`;
+                // Build consolidated tooltip for Income policies
+                let incomeTooltip = "Growth Phase";
+                if(p.payoutSteps) {
+                    incomeTooltip = p.payoutSteps.map(s => `${s.val} (Yrs ${s.years})`).join(' | ');
                 }
+
+                const phaseContent = `
+                    <div class="flex-1 bg-gray-100 relative rounded-r-sm overflow-hidden segment-container">
+                        <span class="tooltip-text">${incomeTooltip}</span>
+                        <div class="absolute top-0 left-0 h-full bg-orange-600" style="width: ${growthProgressPct}%"></div>
+                        
+                        ${(p.type === 'ULIP' || p.type === 'ILP') ? [1, 2, 3, 4].map(i => `<div class="dot-wrapper absolute h-full" style="left:${i*20}%; z-index:60;"><div class="payout-dot growth-dot"></div></div>`).join('') : ''}
+                        
+                        <div class="dot-wrapper absolute h-full right-0" style="right: -8px; z-index:70;">
+                            <span class="tooltip-text" style="left:auto; right:0; transform:none;">MATURITY: ${p.maturityAmt}</span>
+                            <div class="payout-dot maturity-dot"></div>
+                        </div>
+                    </div>`;
 
                 return `
                 <div class="policy-card" style="border-color:${p.color}" id="card-${p.id}">
@@ -141,10 +115,11 @@
                         <div class="flex items-center gap-6">
                             <img src="${p.logo}" class="logo-img">
                             <div>
-                                <h2 class="text-lg font-black text-gray-800 tracking-tight">${p.name}</h2>
+                                <h2 class="text-lg font-black text-gray-800">${p.name}</h2>
                                 <p class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
-                                    ID: ${p.id} | UIN: ${p.uin || 'N/A'} | Client: ${p.clientId || 'N/A'}
+                                    ID: ${p.id} | UIN: ${p.uin || 'N/A'}
                                 </p>
+                                <div class="type-badge">${p.type}</div>
                             </div>
                         </div>
                         <div><p class="val-label">Sum Assured</p><p class="val-amount text-2xl text-blue-700">${curr} ${p.sumAssured.toLocaleString()}</p></div>
