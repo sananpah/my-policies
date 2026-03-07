@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nami Portfolio v3.2.1</title>
+    <title>Nami Portfolio v3.2.2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Orbitron:wght@800&display=swap');
@@ -12,11 +12,14 @@
         .version-stamp { position: fixed; top: 15px; right: 20px; font-size: 11px; font-weight: 900; color: #1e293b; background: #fff; padding: 6px 12px; border-radius: 8px; border: 1px solid #cbd5e1; z-index: 9999; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
         .brand-header { font-family: 'Orbitron', sans-serif; background: linear-gradient(90deg, #4f46e5, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 
+        /* SEGMENT COLORS */
         .segment { height: 100%; position: relative; cursor: pointer; transition: 0.2s; border-radius: 4px; margin: 0 1px; }
         .segment:hover { filter: brightness(1.2); transform: scaleY(1.15); z-index: 100; }
         .bg-past { background: #475569; opacity: 0.8; }
         .bg-premium { background: linear-gradient(180deg, #10b981 0%, #059669 100%); }
         .bg-income { background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%); }
+        /* NEW DUAL PHASE COLOR */
+        .bg-dual-phase { background: linear-gradient(180deg, #10b981 0%, #f59e0b 100%); border: 1px solid #10b981; }
         .bg-growth { background: linear-gradient(180deg, #8b5cf6 0%, #6d28d9 100%); }
         .bg-future { background: #cbd5e1; }
 
@@ -45,7 +48,7 @@
 </head>
 <body>
 
-    <div class="version-stamp">BUILD: v3.2.1 | 08-MAR-2026</div>
+    <div class="version-stamp">BUILD: v3.2.2 | 08-MAR-2026</div>
 
     <div class="max-w-7xl mx-auto flex justify-between items-end mb-14">
         <div>
@@ -89,7 +92,7 @@
                 const isPaid = (p.name.includes("Axis Max Life")) || (premEndY < CURRENT_YEAR);
                 const isULIP = p.type.toLowerCase().includes('ulip');
 
-                // Date logic for 30-day window
+                // Reminder Logic
                 const [d, m, y] = p.dueDate.split(' ');
                 const dueObj = new Date(`${m} ${d}, ${y}`);
                 const diffDays = Math.ceil((dueObj - TODAY) / (1000 * 60 * 60 * 24));
@@ -100,22 +103,28 @@
                     const polYear = yr - startY + 1;
                     const isPast = yr < CURRENT_YEAR;
                     const isCurrent = yr === CURRENT_YEAR;
+                    
                     let type = "Future";
                     let color = "bg-future";
                     let detail = "";
 
-                    if (yr <= premEndY) {
+                    const hasBonus = p.name.includes("Fortune Maximiser") && polYear >= 2;
+                    const isPremiumActive = yr <= premEndY;
+
+                    if (isPremiumActive && hasBonus) {
+                        // HYBRID PHASE
+                        color = isPast ? "bg-past" : "bg-dual-phase";
+                        type = "Premium + Bonus";
+                        detail = "Active Pay + Annual Accrual";
+                    } else if (isPremiumActive) {
+                        // PURE PREMIUM
                         color = isPast ? "bg-past" : (isCurrent && !isPaid ? "bg-premium" : "bg-future");
                         type = "Premium Phase";
-                    }
-
-                    if (p.name.includes("Fortune Maximiser") && polYear >= 2) {
-                        color = isPast ? "bg-past" : "bg-income";
-                        type = (yr <= premEndY) ? "Premium + Bonus" : "Annual Bonus";
-                        detail = "Variable Bonus Payout";
-                    } else if (yr > premEndY) {
+                    } else if (hasBonus || yr > premEndY) {
+                        // PURE INCOME/GROWTH
                         color = isULIP ? "bg-growth" : (isPast ? "bg-past" : "bg-income");
-                        type = isULIP ? "Unit Growth" : "Income Phase";
+                        type = isULIP ? "Unit Growth" : "Annual Bonus/Income";
+                        if(p.name.includes("Fortune Maximiser")) detail = "Variable Bonus Payout";
                     }
 
                     timeline += `<div class="segment ${color}" style="flex:1"><div class="tooltip"><b>${type}</b><br>${detail}<br>Year ${polYear} (${yr})</div></div>`;
