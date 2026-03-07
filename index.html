@@ -3,194 +3,139 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nami Insurance Portfolio</title>
+    <title>Insurance Portfolio Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;600;700;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
         body { background-color: #f8fafc; font-family: 'Inter', sans-serif; }
-        .maroon-text { color: #8b1d1d; }
-        .tab-btn { padding: 10px 24px; font-weight: 700; text-transform: uppercase; font-size: 11px; border-radius: 8px; transition: all 0.3s; border: 1px solid #e2e8f0; background: white; color: #64748b; cursor: pointer; }
-        .tab-btn.active { background: #8b1d1d; color: white; border-color: #8b1d1d; box-shadow: 0 4px 12px rgba(139, 29, 29, 0.2); }
-        .vertical-marker { width: 2px; height: 28px; background-color: #cbd5e1; position: absolute; top: -12px; z-index: 40; }
-        .end-premium-marker { width: 3px; height: 36px; background-color: #22c55e; position: absolute; top: -16px; z-index: 45; border-radius: 2px; }
         
-        .payout-dot { width: 12px; height: 12px; background: #f59e0b; border-radius: 50%; position: absolute; top: 50%; transform: translate(-50%, -50%); border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 55; }
-        .growth-dot { background: #3b82f6; }
-        .maturity-dot { background: #ef4444 !important; width: 18px !important; height: 18px !important; margin-left: 9px; }
-        
+        /* Tooltip Logic */
         .segment-container { position: relative; cursor: pointer; }
-        .dot-wrapper { position: absolute; cursor: pointer; height: 100%; z-index: 70; }
+        .tooltip-text { 
+            visibility: hidden; opacity: 0; position: absolute; 
+            bottom: 40px; left: 50%; transform: translateX(-50%); 
+            background: #1e293b; color: white; padding: 10px 14px; 
+            border-radius: 8px; font-size: 11px; font-weight: 700; 
+            white-space: pre-wrap; width: max-content; max-width: 280px; 
+            text-align: center; line-height: 1.6; transition: all 0.2s ease-in-out; 
+            z-index: 100; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3);
+            pointer-events: none;
+        }
+        .segment-container:hover > .tooltip-text { visibility: visible; opacity: 1; transform: translate(-50%, -5px); }
         
-        /* Updated Tooltip CSS to support longer strings and prevent mixing */
-        .tooltip-text { visibility: hidden; opacity: 0; position: absolute; bottom: 45px; left: 50%; transform: translateX(-50%); background: #0f172a; color: white; padding: 10px 14px; border-radius: 6px; font-size: 11px; font-weight: 700; white-space: pre-wrap; width: max-content; max-width: 320px; text-align: center; line-height: 1.5; transition: all 0.2s; z-index: 200; pointer-events: none; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); }
-        
-        .segment-container:hover > .tooltip-text:not(.tooltip-bottom) { opacity: 1; visibility: visible; transform: translate(-50% , -5px); }
-        
-        /* Maturity specific hover */
-        .tooltip-maturity { right: 0; left: auto; transform: translateY(0); }
-        .dot-wrapper:hover > .tooltip-maturity { opacity: 1; visibility: visible; transform: translateY(-5px); }
-        
-        /* Kotak Annual Bonus Tooltip CSS */
-        .bonus-payout-dot { width: 10px; height: 10px; background: #eab308; border-radius: 50%; position: absolute; bottom: -4px; left: 50%; transform: translateX(-50%); border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 55; }
-        .bonus-container { position: absolute; width: 100%; height: 100%; top: 0; left: 0; z-index: 50; }
-        .tooltip-bottom { bottom: -35px !important; top: auto !important; }
-        .bonus-container:hover > .tooltip-bottom { opacity: 1; visibility: visible; transform: translate(-50%, 5px) !important; }
+        /* Specific Maturity Tooltip Positioning */
+        .maturity-wrapper:hover > .tooltip-maturity { visibility: visible; opacity: 1; transform: translate(-20%, -5px); }
+        .tooltip-maturity { left: auto; right: 0; transform: none; }
 
-        .policy-card { background: white; border-left: 8px solid; border-radius: 16px; position: relative; margin-bottom: 1.5rem; transition: all 0.3s; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); overflow: hidden; }
+        .policy-card { background: white; border-left: 8px solid; border-radius: 16px; margin-bottom: 1.5rem; transition: all 0.3s; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
         .content-area { display: none; }
         .open .content-area { display: block; }
-        .paid-watermark { position: absolute; right: 200px; top: 25px; font-weight: 900; font-size: 32px; color: #059669; opacity: 0.15; border: 4px solid #059669; padding: 0px 15px; transform: rotate(-12deg); pointer-events: none; border-radius: 8px; z-index: 10; }
-        .logo-img { width: 100px; height: 50px; object-fit: contain; }
-        .val-label { font-size: 10px; font-weight: 800; text-transform: uppercase; color: #94a3b8; margin-bottom: 2px; }
-        .val-amount { font-weight: 900; line-height: 1.1; }
-        .grid-header { display: grid; grid-template-columns: 2.5fr 1.2fr 1.2fr 1.1fr; align-items: center; gap: 1.5rem; position: relative; z-index: 20; }
-        .type-badge { font-size: 9px; padding: 2px 8px; border-radius: 99px; background: #f1f5f9; color: #475569; font-weight: 800; text-transform: uppercase; margin-top: 4px; display: inline-block; border: 1px solid #e2e8f0; }
-        .due-alert { background: #fee2e2; color: #dc2626; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 900; animation: pulse 2s infinite; display: inline-block; margin-bottom: 4px; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        
+        .payout-dot { width: 12px; height: 12px; background: #3b82f6; border-radius: 50%; position: absolute; top: 50%; transform: translate(-50%, -50%); border: 2px solid white; z-index: 50; }
+        .maturity-dot { background: #ef4444 !important; width: 18px !important; height: 18px !important; }
+        
+        .tab-btn { padding: 10px 24px; font-weight: 700; text-transform: uppercase; font-size: 11px; border-radius: 8px; transition: all 0.3s; border: 1px solid #e2e8f0; background: white; color: #64748b; cursor: pointer; }
+        .tab-btn.active { background: #8b1d1d; color: white; border-color: #8b1d1d; }
+        
+        .paid-watermark { position: absolute; right: 200px; top: 25px; font-weight: 900; font-size: 28px; color: #059669; opacity: 0.15; border: 4px solid #059669; padding: 2px 12px; transform: rotate(-12deg); border-radius: 8px; pointer-events: none; }
     </style>
 </head>
-<body class="p-6 md:p-12 lg:px-24">
-    <div class="max-w-7xl mx-auto mb-12 text-center">
-        <h1 class="text-4xl font-bold maroon-text uppercase tracking-widest" style="font-family: 'Playfair Display', serif;">Nami Insurance Portfolio</h1>
-    </div>
-
-    <div class="flex justify-center gap-4 mb-12">
-        <button id="btn-india" class="tab-btn active">My India</button>
-        <button id="btn-sg" class="tab-btn">My Singapore</button>
+<body class="p-6 md:p-12">
+    <div class="max-w-7xl mx-auto mb-10 flex justify-center gap-4">
+        <button id="btn-india" class="tab-btn active">India Portfolio</button>
         <button id="btn-wife" class="tab-btn">Wife's Portfolio</button>
+        <button id="btn-singapore" class="tab-btn">Singapore</button>
     </div>
 
-    <div id="summary-bar" class="max-w-7xl mx-auto mb-10 grid grid-cols-1 md:grid-cols-2 gap-8"></div>
     <div id="policy-container" class="max-w-7xl mx-auto"></div>
 
     <script type="module">
-        import { POLICY_DATA } from './data.js?v=1.1.2';
+        import { POLICY_DATA } from './data.js';
         const TODAY = new Date();
 
-        window.render = function(mode) {
+        function render(mode) {
             const container = document.getElementById('policy-container');
-            const summary = document.getElementById('summary-bar');
             const list = POLICY_DATA[mode];
-            const curr = mode === 'singapore' ? '$' : '₹';
+            const currency = mode === 'singapore' ? '$' : '₹';
 
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            const targetBtn = mode === 'singapore' ? 'btn-sg' : `btn-${mode}`;
-            document.getElementById(targetBtn).classList.add('active');
+            document.getElementById(`btn-${mode}`).classList.add('active');
 
             container.innerHTML = list.map(p => {
                 const isPaidUp = p.dueDate === "PAID UP";
-                let dueAlertHTML = "";
-                if(!isPaidUp) {
-                    const dDate = new Date(p.dueDate);
-                    const diffDays = Math.ceil((dDate - TODAY) / (1000 * 60 * 60 * 24));
-                    if(diffDays > 0 && diffDays <= 45) dueAlertHTML = `<div class="due-alert">DUE IN ${diffDays} DAYS</div>`;
-                }
-
-                const [commDay, commMonth, commYear] = p.commenced.split(' ');
-                const startYear = parseInt(commYear);
+                const startYear = parseInt(p.commenced.split(' ')[2]);
                 const maturityYear = parseInt(p.maturity.split(' ')[2]);
                 const totalDuration = maturityYear - startYear;
                 const premPct = (p.premiumYears / totalDuration) * 100;
 
-                // 1. Premium Segments
-                let premiumSegments = "";
-                for(let i=0; i<p.premiumYears; i++) {
-                    const yr = startYear + i;
-                    const anniversaryDate = new Date(`${commMonth} ${commDay}, ${yr}`);
-                    const isPd = anniversaryDate <= TODAY;
-                    
-                    let bonusHtml = "";
-                    if (p.cashBonus === "Immediate" && i > 0) {
-                        bonusHtml = `
-                        <div class="bonus-container">
-                            <div class="bonus-payout-dot"></div>
-                            <span class="tooltip-text tooltip-bottom">Annual Bonus Payout</span>
-                        </div>`;
-                    }
-
-                    premiumSegments += `<div class="segment-container flex-1 h-4 ${isPd ? 'bg-green-500' : 'bg-gray-200'} border-r border-white relative">
-                        <span class="tooltip-text">Year ${i+1} (${yr})</span>
-                        ${bonusHtml}
-                        ${i===0 ? '<div class="vertical-marker left-0"></div>' : ''}
-                        ${i===p.premiumYears-1 ? `<div class="end-premium-marker right-0"></div>` : ''}
-                    </div>`;
+                // Format Annual Income Payout Steps
+                let incomeDetails = "Growth Phase";
+                if (p.payoutSteps) {
+                    incomeDetails = "Annual Income Period:\n" + p.payoutSteps.map(s => `Yrs ${s.years}: ${s.val}`).join('\n');
+                } else if (p.income) {
+                    incomeDetails = p.income;
                 }
 
-                // 2. CONSOLIDATED Growth/Income Phase (Decoupled tooltips)
-                const growthYears = totalDuration - p.premiumYears;
-                const elapsedGrowth = Math.max(0, TODAY.getFullYear() - (startYear + p.premiumYears));
-                const growthProgressPct = Math.min(100, (elapsedGrowth / growthYears) * 100);
-
-                // Dynamically load exact text strings if present in data.js, fallback to map if older structure
-                let incomeTooltip = "Growth Phase";
-                if (p.annualIncome) {
-                    incomeTooltip = p.annualIncome;
-                } else if (p.payoutSteps) {
-                    incomeTooltip = p.payoutSteps.map(s => `${curr} ${s.val} (Yrs ${s.years})`).join(' | ');
-                }
-
-                let maturityTooltipText = p.maturityBenefit || p.maturityAmt || "Sum Assured Value";
-
-                const phaseContent = `
-                    <div class="flex-1 relative flex">
-                        <div class="flex-1 bg-gray-100 relative rounded-r-sm segment-container">
-                            <span class="tooltip-text">Annual Income: ${incomeTooltip}</span>
-                            <div class="absolute top-0 left-0 h-full bg-orange-600 rounded-r-sm" style="width: ${growthProgressPct}%"></div>
-                            
-                            ${(p.type === 'ULIP' || p.type === 'ILP') ? [1, 2, 3, 4].map(i => `<div class="dot-wrapper absolute h-full" style="left:${i*20}%; z-index:60;"><div class="payout-dot growth-dot"></div></div>`).join('') : ''}
-                        </div>
-                        
-                        <div class="dot-wrapper right-0" style="width: 18px; z-index: 75;">
-                            <span class="tooltip-text tooltip-maturity">Maturity Benefit: ${maturityTooltipText}</span>
-                            <div class="payout-dot maturity-dot"></div>
-                        </div>
-                    </div>`;
+                // Growth calculation
+                const endPremYear = startYear + p.premiumYears;
+                const elapsedGrowth = Math.max(0, TODAY.getFullYear() - endPremYear);
+                const totalGrowthYears = maturityYear - endPremYear;
+                const growthProgress = Math.min(100, (elapsedGrowth / totalGrowthYears) * 100);
 
                 return `
-                <div class="policy-card" style="border-color:${p.color}" id="card-${p.id}">
-                    ${isPaidUp ? `<div class="paid-watermark">PAID UP</div>` : ''}
-                    <div class="p-8 grid-header cursor-pointer" onclick="document.getElementById('card-${p.id}').classList.toggle('open')">
-                        <div class="flex items-center gap-6">
-                            <img src="${p.logo}" class="logo-img">
+                <div class="policy-card open" style="border-color:${p.color}" id="card-${p.id}">
+                    ${isPaidUp ? '<div class="paid-watermark">PAID UP</div>' : ''}
+                    <div class="p-6 grid grid-cols-1 md:grid-cols-4 items-center gap-6">
+                        <div class="flex items-center gap-4">
+                            <img src="${p.logo}" class="w-12 h-12 object-contain">
                             <div>
-                                <h2 class="text-lg font-black text-gray-800">${p.name}</h2>
-                                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
-                                    ID: ${p.id} | UIN: ${p.uin || 'N/A'}
-                                </p>
-                                <div class="type-badge">${p.type || 'Standard'}</div>
+                                <h2 class="font-black text-gray-800 leading-tight">${p.name}</h2>
+                                <p class="text-[10px] text-gray-400 font-bold uppercase mt-1">ID: ${p.id}</p>
                             </div>
                         </div>
-                        <div><p class="val-label">Sum Assured</p><p class="val-amount text-2xl text-blue-700">${curr} ${p.sumAssured.toLocaleString()}</p></div>
-                        <div><p class="val-label">Premium</p><p class="val-amount text-2xl text-emerald-600">${curr} ${p.premium.toLocaleString()}</p></div>
+                        <div><p class="text-[10px] font-bold text-gray-400 uppercase">Sum Assured</p><p class="text-xl font-black text-blue-700">${currency} ${p.sumAssured.toLocaleString()}</p></div>
+                        <div><p class="text-[10px] font-bold text-gray-400 uppercase">Premium</p><p class="text-xl font-black text-emerald-600">${currency} ${p.premium.toLocaleString()}</p></div>
                         <div class="text-right">
-                            ${dueAlertHTML}
-                            <p class="val-label">Next Due</p>
-                            <p class="text-sm font-black ${isPaidUp ? 'text-emerald-600' : 'text-gray-900'}">${p.dueDate}</p>
+                            <p class="text-[10px] font-bold text-gray-400 uppercase">Next Due</p>
+                            <p class="font-black ${isPaidUp ? 'text-emerald-600' : 'text-gray-900'}">${p.dueDate}</p>
                         </div>
                     </div>
-                    <div class="content-area bg-gray-50 border-t p-12 pb-24 relative">
-                        <div class="flex h-4 mb-10 w-full">
-                            <div class="flex" style="width: ${premPct}%">${premiumSegments}</div>
-                            ${phaseContent}
+
+                    <div class="content-area bg-gray-50 p-8 border-t">
+                        <div class="flex h-5 mb-8 w-full items-center">
+                            <div class="h-full flex" style="width: ${premPct}%">
+                                ${Array.from({length: p.premiumYears}).map((_, i) => `
+                                    <div class="flex-1 h-full bg-emerald-500 border-r border-white relative segment-container">
+                                        <span class="tooltip-text text-xs">Year ${i+1} Premium</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            
+                            <div class="flex-1 h-full bg-gray-200 relative segment-container">
+                                <span class="tooltip-text">${incomeDetails}</span>
+                                <div class="absolute top-0 left-0 h-full bg-orange-400" style="width: ${growthProgress}%"></div>
+                            </div>
+
+                            <div class="relative ml-[-9px] maturity-wrapper segment-container" style="z-index: 60;">
+                                <span class="tooltip-text tooltip-maturity">Maturity Benefit:\n${p.maturityAmt}</span>
+                                <div class="payout-dot maturity-dot"></div>
+                            </div>
                         </div>
-                        <div class="relative w-full text-[11px] font-black uppercase flex justify-between">
-                            <div>Commencement<br><span class="text-gray-900">${p.commenced}</span></div>
-                            <div class="text-center text-green-600">Premium End<br><span>${p.premiumEnds}</span></div>
-                            <div class="text-right text-red-600">Maturity Date<br><span>${p.maturity}</span></div>
+
+                        <div class="flex justify-between text-[10px] font-black uppercase text-gray-500">
+                            <div>Commenced: ${p.commenced}</div>
+                            <div class="text-center">Premium End: ${p.premiumEnds}</div>
+                            <div class="text-right">Maturity: ${p.maturity}</div>
                         </div>
                     </div>
                 </div>`;
             }).join('');
+        }
 
-            let tP = 0, tS = 0;
-            list.forEach(p => { if(p.dueDate !== "PAID UP") tP += p.premium; tS += p.sumAssured; });
-            summary.innerHTML = `<div class="bg-white p-8 rounded-2xl border-l-8 border-l-emerald-500 shadow-sm"><p class="val-label text-emerald-600">Active Annual Premium</p><p class="text-4xl font-black text-gray-900">${curr} ${tP.toLocaleString()}</p></div>
-                <div class="bg-white p-8 rounded-2xl border-l-8 border-l-blue-600 shadow-sm"><p class="val-label text-blue-600">Consolidated Sum Assured</p><p class="text-4xl font-black text-gray-900">${curr} ${tS.toLocaleString()}</p></div>`;
-        };
+        ['india', 'wife', 'singapore'].forEach(mode => {
+            document.getElementById(`btn-${mode}`).addEventListener('click', () => render(mode));
+        });
 
-        document.getElementById('btn-india').addEventListener('click', () => render('india'));
-        document.getElementById('btn-sg').addEventListener('click', () => render('singapore'));
-        document.getElementById('btn-wife').addEventListener('click', () => render('wife'));
         render('india');
     </script>
 </body>
