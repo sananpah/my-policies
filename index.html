@@ -3,64 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nami Portfolio v3.1.1</title>
+    <title>Nami Portfolio v3.1.2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Orbitron:wght@800&display=swap');
-        body { background-color: #f0f4f8; font-family: 'Inter', sans-serif; color: #1e293b; padding: 40px; }
+        
+        body { background-color: #f1f5f9; font-family: 'Inter', sans-serif; color: #1e293b; padding: 40px; }
         .version-stamp { position: fixed; top: 15px; right: 20px; font-size: 10px; font-weight: 800; color: #64748b; background: #fff; padding: 4px 10px; border-radius: 6px; border: 1px solid #e2e8f0; z-index: 9999; }
         .brand-header { font-family: 'Orbitron', sans-serif; background: linear-gradient(90deg, #4f46e5, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 
-        .segment { height: 100%; position: relative; cursor: pointer; transition: 0.3s; border-radius: 4px; }
-        .segment:hover { filter: brightness(1.3); transform: scaleY(1.2); z-index: 100; }
+        /* --- VIBRANT TIMELINE --- */
+        .segment { height: 100%; position: relative; cursor: pointer; transition: 0.3s; border-radius: 4px; margin: 0 2px; }
+        .segment:hover { filter: brightness(1.2); transform: scaleY(1.1); z-index: 100; }
         
-        .bg-vibrant-premium { background: linear-gradient(180deg, #10b981 0%, #059669 100%); }
-        .bg-vibrant-past { background: #334155; opacity: 0.8; }
-        .bg-vibrant-income { background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%); }
-        .bg-vibrant-future { background: #cbd5e1; }
+        .bg-past { background: #475569; opacity: 0.85; }
+        .bg-premium { background: linear-gradient(180deg, #10b981 0%, #059669 100%); }
+        .bg-income { background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%); }
+        .bg-future { background: #cbd5e1; }
 
         .tooltip { 
             visibility: hidden; opacity: 0; position: absolute; bottom: 155%; left: 50%; transform: translateX(-50%) translateY(10px); 
-            background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(8px); color: #fff; padding: 12px 16px; border-radius: 10px; font-size: 11px; 
-            width: 220px; text-align: center; z-index: 1000; pointer-events: none; transition: 0.3s;
-            box-shadow: 0 15px 30px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1);
+            background: #0f172a; color: #fff; padding: 12px 16px; border-radius: 10px; font-size: 11px; 
+            width: 210px; text-align: center; z-index: 1000; pointer-events: none; transition: 0.3s;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); line-height: 1.5;
         }
         .segment:hover .tooltip, .node:hover .tooltip { visibility: visible; opacity: 1; transform: translateX(-50%) translateY(0); }
 
-        .policy-card { background: white; border-radius: 28px; border-left: 14px solid; margin-bottom: 35px; box-shadow: 0 12px 20px -5px rgba(0,0,0,0.08); }
+        /* --- CARDS --- */
+        .policy-card { background: white; border-radius: 28px; border-left: 14px solid; margin-bottom: 35px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); }
         .card-header { cursor: pointer; display: flex; align-items: center; padding: 35px; gap: 24px; }
-        .content-area { display: none; padding: 90px 50px; border-top: 1px solid #f1f5f9; background: #fcfdfe; border-radius: 0 0 28px 28px; overflow: visible !important; }
+        .content-area { display: none; padding: 100px 50px; border-top: 1px solid #f1f5f9; background: #fafbfc; border-radius: 0 0 28px 28px; overflow: visible !important; }
         .open .content-area { display: block; }
 
         .timeline-track { position: relative; height: 42px; background: #e2e8f0; border-radius: 24px; width: 100%; display: flex; margin: 30px 0; padding: 0 6px; align-items: center; }
-        .node { position: absolute; width: 60px; height: 60px; border-radius: 50%; border: 6px solid #fff; z-index: 200; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; color: white; top: -9px; box-shadow: 0 6px 15px rgba(0,0,0,0.2); }
+        .node { position: absolute; width: 60px; height: 60px; border-radius: 50%; border: 6px solid #fff; z-index: 200; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; color: white; top: -9px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
 
-        .paid-stamp { width: 120px; transform: rotate(-12deg); filter: drop-shadow(0 8px 12px rgba(0,0,0,0.15)); }
-        .mini-badge { width: 95px; padding: 6px; border-radius: 14px; background: white; border: 2px solid; display: flex; flex-direction: column; align-items: center; }
+        .paid-stamp { width: 120px; transform: rotate(-12deg); filter: drop-shadow(0 8px 12px rgba(0,0,0,0.1)); }
+        .mini-badge { width: 95px; padding: 8px; border-radius: 16px; background: white; border: 2px solid; display: flex; flex-direction: column; align-items: center; }
     </style>
 </head>
 <body>
 
-    <div class="version-stamp">v3.1.1 | 07-Mar-2026 23:45</div>
+    <div class="version-stamp">v3.1.2 | 07-Mar-2026 23:50</div>
 
-    <div id="container" class="max-w-7xl mx-auto pt-10"></div>
+    <div class="max-w-7xl mx-auto flex justify-between items-end mb-14">
+        <div>
+            <h1 class="brand-header text-5xl font-black italic tracking-tighter">NAMI PORTFOLIO</h1>
+            <p class="text-slate-400 font-bold text-[10px] mt-2 uppercase tracking-[0.4em]">Asset Management Suite</p>
+        </div>
+        <div class="flex gap-4">
+            <button onclick="render('india')" id="btn-india" class="px-10 py-3 rounded-2xl font-black border-2 transition-all">INDIA</button>
+            <button onclick="render('wife')" id="btn-wife" class="px-10 py-3 rounded-2xl font-black border-2 transition-all">WIFE</button>
+            <button onclick="render('singapore')" id="btn-singapore" class="px-10 py-3 rounded-2xl font-black border-2 transition-all">SINGAPORE</button>
+        </div>
+    </div>
+
+    <div id="summary" class="max-w-7xl mx-auto grid grid-cols-2 gap-8 mb-14"></div>
+    <div id="container" class="max-w-7xl mx-auto"></div>
 
     <script type="module">
         import { POLICY_DATA } from './data.js';
         const CURRENT_YEAR = 2026;
-        const CURRENT_MONTH = 2; 
+        const CURRENT_MONTH = 2; // March
 
         window.toggleCard = (id) => document.getElementById(`card-${id}`).classList.toggle('open');
 
-        function createSegment(flex, color, label, amt, yearInfo) {
-            return `<div class="segment" style="flex:${flex}; margin: 0 2px;" class="${color}">
-                <div class="${color} h-full w-full rounded-[4px]"></div>
-                <div class="tooltip"><b>${label}</b><br><span class="text-orange-300">${amt}</span><br>${yearInfo}</div>
-            </div>`;
-        }
-
         window.render = function(cat) {
             const list = POLICY_DATA[cat];
+            const sym = cat === 'singapore' ? '$' : '₹';
+            
+            // UI Switcher
+            document.querySelectorAll('button').forEach(b => b.className = "px-10 py-3 rounded-2xl font-black border-2 bg-white text-slate-400 border-slate-200 shadow-sm");
+            document.getElementById(`btn-${cat}`).className = "px-10 py-3 rounded-2xl font-black border-2 bg-slate-900 text-white border-slate-900 shadow-lg";
+
+            // Dashboard Summary
+            document.getElementById('summary').innerHTML = `
+                <div class="bg-white p-10 rounded-3xl border-b-[12px] border-indigo-600 shadow-sm"><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Total Premium</p><p class="text-5xl font-black text-slate-900">${sym}${list.reduce((s,p)=>s+p.premium,0).toLocaleString()}</p></div>
+                <div class="bg-white p-10 rounded-3xl border-b-[12px] border-pink-600 shadow-sm"><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Sum Assured</p><p class="text-5xl font-black text-slate-900">${sym}${list.reduce((s,p)=>s+p.sumAssured,0).toLocaleString()}</p></div>
+            `;
+
             document.getElementById('container').innerHTML = list.map(p => {
                 const startY = parseInt(p.commenced.split(' ')[2]);
                 const matY = parseInt(p.maturity.split(' ')[2]);
@@ -69,43 +90,42 @@
                 const isPaid = premEndY < CURRENT_YEAR || (premEndY === CURRENT_YEAR && 1 < CURRENT_MONTH);
                 const dur = matY - startY;
 
-                // --- SMART GROUPING ENGINE ---
-                let premSegments = '';
-                // Past Years (Grouped)
-                const pastCount = CURRENT_YEAR - startY;
-                if (pastCount > 0) premSegments += createSegment(pastCount, 'bg-vibrant-past', 'History', 'Premiums Paid', `${startY} - ${CURRENT_YEAR-1}`);
-                // Current/Future Years (Individual)
-                for(let y=CURRENT_YEAR; y <= premEndY; y++) {
-                    const color = (y === CURRENT_YEAR && !isPaid) ? 'bg-vibrant-premium' : 'bg-vibrant-future';
-                    const status = (y === CURRENT_YEAR && !isPaid) ? 'DUE NOW' : 'FUTURE';
-                    premSegments += createSegment(1, color, status, 'Premium Payment', `Year ${y}`);
+                // --- TIMELINE BUILDER ---
+                let timelineSegments = '';
+                
+                // 1. Premium Phase
+                const pastPremCount = CURRENT_YEAR - startY;
+                if(pastPremCount > 0) timelineSegments += `<div class="segment bg-past" style="flex:${pastPremCount}"><div class="tooltip"><b>Past Premiums</b><br>Paid ${startY}-${CURRENT_YEAR-1}</div></div>`;
+                
+                for(let y=CURRENT_YEAR; y <= premEndY; y++){
+                    const color = (y === CURRENT_YEAR && !isPaid) ? 'bg-premium' : 'bg-future';
+                    timelineSegments += `<div class="segment ${color}" style="flex:1"><div class="tooltip"><b>Premium Year</b><br>${y === CURRENT_YEAR && !isPaid ? 'DUE NOW' : 'Future'}<br>${y}</div></div>`;
                 }
 
-                let incSegments = '';
-                const incomeStart = startY + p.premiumYears;
-                for(let y=incomeStart; y < matY; y++) {
+                // 2. Income/Growth Phase
+                const incStart = startY + p.premiumYears;
+                for(let y=incStart; y < matY; y++) {
                     const polYear = y - startY + 1;
-                    let amt = "Guaranteed Payout";
+                    let amt = "Guaranteed Income";
                     let label = "Income Phase";
 
                     if (p.name.includes("Fortune Maximiser") && polYear >= 2) { label = "Annual Bonus"; amt = "Variable"; }
                     else if (p.name.includes("Pension SL")) { amt = "₹89,830"; }
                     else if (p.name.includes("Samrudhi")) { amt = "₹1,00,000"; }
-                    else if (p.name.includes("Nishchit Ace")) { amt = polYear <= 10 ? "₹0 (Accumulation)" : "₹1,01,154"; }
+                    else if (p.name.includes("Ace")) { amt = polYear <= 10 ? "₹0 (Accumulation)" : "₹1,01,154"; }
                     else if (p.name.includes("Moneyback")) {
                         if (polYear >= 11 && polYear <= 14) amt = "₹18,591";
                         else if (polYear === 15) amt = "₹49,576";
                         else amt = "₹0";
                     }
 
-                    // Group far-future income to save space
-                    const flex = (y > CURRENT_YEAR + 5) ? (matY - (CURRENT_YEAR + 5)) : 1;
-                    const yInfo = flex > 1 ? `${y} - ${matY-1}` : `Year ${polYear} (${y})`;
-                    incSegments += createSegment(flex, y < CURRENT_YEAR ? 'bg-vibrant-past' : 'bg-vibrant-income', label, amt, yInfo);
-                    if (flex > 1) break; 
+                    const isFarFuture = y > CURRENT_YEAR + 5;
+                    const flex = isFarFuture ? (matY - (CURRENT_YEAR + 5)) : 1;
+                    timelineSegments += `<div class="segment ${y < CURRENT_YEAR ? 'bg-past' : 'bg-income'}" style="flex:${flex}"><div class="tooltip"><b>${label}</b><br><span class="text-orange-300 font-bold">${amt}</span><br>${flex > 1 ? y + ' - ' + (matY-1) : 'Year ' + polYear + ' (' + y + ')'}</div></div>`;
+                    if(isFarFuture) break;
                 }
 
-                const matBenefit = p.name.includes("Moneyback") ? "₹55,761 (Loyalty+Mat)" : (p.name.includes("Samrudhi") ? "Sum Assured" : p.maturityAmt);
+                const matBenefit = p.name.includes("Moneyback") ? "₹55,761 (Loyalty+Mat)" : (p.name.includes("Samrudhi") || p.name.includes("Ace") ? sym + p.sumAssured.toLocaleString() : p.maturityAmt);
 
                 return `
                 <div class="policy-card" id="card-${p.id}" style="border-color: ${p.color}">
@@ -113,21 +133,22 @@
                         <div style="flex:2.3">
                             <img src="${p.logo}" class="h-14 object-contain mb-3">
                             <h3 class="font-black text-slate-900 text-lg">${p.name}</h3>
-                            <p class="text-[10px] font-black text-slate-400">ID: ${p.id}</p>
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Policy No. ${p.id}</p>
                         </div>
-                        <div style="flex:1" class="text-right"><p class="text-[9px] font-bold text-slate-400">PREMIUM</p><p class="text-xl font-black text-emerald-600">₹${p.premium.toLocaleString()}</p></div>
-                        <div style="flex:1" class="flex flex-col items-center">
+                        <div style="flex:1" class="text-right"><p class="text-[10px] font-bold text-slate-400 uppercase">Premium</p><p class="text-xl font-black text-emerald-600">${sym}${p.premium.toLocaleString()}</p></div>
+                        <div style="flex:1.2" class="text-right"><p class="text-[10px] font-bold text-slate-400 uppercase">Sum Assured</p><p class="text-xl font-black text-indigo-600">${sym}${p.sumAssured.toLocaleString()}</p></div>
+                        <div style="flex:1" class="flex justify-center">
                             ${!isPaid ? `<div class="mini-badge" style="border-color:#10b981"><span class="badge-num text-lg font-black">${premEndY-CURRENT_YEAR}</span><span class="badge-txt text-[7px]">Years Left</span></div>` : ''}
                         </div>
                         <div style="flex:1" class="text-right">
-                            ${isPaid ? `<img src="paid.jpg" class="paid-stamp">` : `<span class="text-xs font-black bg-slate-100 px-3 py-1 rounded-lg">${p.dueDate}</span>`}
+                            ${isPaid ? `<img src="paid.jpg" class="paid-stamp">` : `<span class="text-xs font-black bg-slate-100 px-3 py-1 rounded-lg border border-slate-200">${p.dueDate}</span>`}
                         </div>
                     </div>
                     <div class="content-area">
                         <div class="timeline-track">
                             <div class="node bg-slate-900" style="left:-30px;">START</div>
-                            <div class="flex h-full w-full mx-2">${premSegments}${incSegments}</div>
-                            <div class="node bg-pink-600" style="right:-30px;"><div class="tooltip"><b>Maturity: ${matBenefit}</b><br>${p.maturity}</div>MAT</div>
+                            <div class="flex h-full w-full mx-2">${timelineSegments}</div>
+                            <div class="node bg-pink-600" style="right:-30px;"><div class="tooltip"><b>Maturity: ${matBenefit}</b><br>Date: ${p.maturity}</div>MAT</div>
                         </div>
                     </div>
                 </div>`;
