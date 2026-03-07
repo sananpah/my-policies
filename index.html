@@ -11,36 +11,26 @@
         .maroon-text { color: #8b1d1d; }
         .tab-btn { padding: 10px 24px; font-weight: 700; text-transform: uppercase; font-size: 11px; border-radius: 8px; transition: all 0.3s; border: 1px solid #e2e8f0; background: white; color: #64748b; cursor: pointer; }
         .tab-btn.active { background: #8b1d1d; color: white; border-color: #8b1d1d; box-shadow: 0 4px 12px rgba(139, 29, 29, 0.2); }
-        .type-pill { font-size: 9px; padding: 2px 10px; border-radius: 999px; font-weight: 800; text-transform: uppercase; }
-        .pill-ulip { background: #e0f2fe; color: #075985; border: 1px solid #0ea5e9; }
-        .pill-savings { background: #ecfdf5; color: #065f46; border: 1px solid #10b981; }
-        .pill-retirement { background: #fff7ed; color: #9a3412; border: 1px solid #f97316; }
         .vertical-marker { width: 2px; height: 28px; background-color: #cbd5e1; position: absolute; top: -12px; z-index: 40; }
         .end-premium-marker { width: 3px; height: 36px; background-color: #22c55e; position: absolute; top: -16px; z-index: 45; border-radius: 2px; }
-        .surrender-marker { background-color: #f97316; } 
-        .payout-dot { width: 12px; height: 12px; background: #f59e0b; border-radius: 50%; position: absolute; top: 50%; transform: translate(-50%, -50%); border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 55; transition: transform 0.2s; }
-        .growth-dot { background: #3b82f6; } 
+        .payout-dot { width: 12px; height: 12px; background: #f59e0b; border-radius: 50%; position: absolute; top: 50%; transform: translate(-50%, -50%); border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 55; }
         .maturity-dot { background: #ef4444 !important; width: 18px !important; height: 18px !important; }
         
-        .bonus-container { position: absolute; bottom: -22px; left: 50%; transform: translateX(-50%); z-index: 150; padding: 10px; cursor: pointer; }
-        .bonus-payout-dot { width: 8px; height: 8px; background: #f59e0b; border-radius: 50%; border: 1.5px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+        .bg-growth-passed { background-color: #ea580c; } 
+        .bg-growth-future { background-color: #f1f5f9; border: 1px dashed #cbd5e1; }
+        
         .segment-container { position: relative; cursor: pointer; }
         .tooltip-text { visibility: hidden; opacity: 0; position: absolute; bottom: 45px; left: 50%; transform: translateX(-50%); background: #0f172a; color: white; padding: 8px 14px; border-radius: 6px; font-size: 11px; font-weight: 700; white-space: nowrap; transition: all 0.2s; z-index: 200; pointer-events: none; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); }
-        .bonus-tooltip { bottom: auto !important; top: 25px !important; }
-        .tooltip-right { left: auto !important; right: 0 !important; transform: none !important; }
         
-        .segment-container:hover > .year-tooltip { opacity: 1; visibility: visible; transform: translate(-50% , -5px); }
-        .segment-container:has(.bonus-container:hover) > .year-tooltip { opacity: 0 !important; visibility: hidden !important; }
-        .bonus-container:hover > .bonus-tooltip { opacity: 1; visibility: visible; transform: translate(-50% , 5px); }
-        .dot-wrapper:hover > .tooltip-text { opacity: 1; visibility: visible; transform: translate(-50% , -5px); }
+        .segment-container:hover > .tooltip-text { opacity: 1; visibility: visible; transform: translate(-50% , -5px); }
 
         .policy-card { background: white; border-left: 8px solid; border-radius: 16px; position: relative; margin-bottom: 1.5rem; transition: all 0.3s; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); overflow: hidden; }
         .content-area { display: none; }
         .open .content-area { display: block; }
         .paid-watermark { position: absolute; right: 200px; top: 25px; font-weight: 900; font-size: 32px; color: #059669; opacity: 0.15; border: 4px solid #059669; padding: 0px 15px; transform: rotate(-12deg); pointer-events: none; border-radius: 8px; z-index: 10; }
         .logo-img { width: 100px; height: 50px; object-fit: contain; }
-        .val-label { font-size: 10px; font-weight: 800; text-transform: uppercase; color: #94a3b8; letter-spacing: 0.05em; margin-bottom: 2px; }
-        .val-amount { font-family: 'Inter', sans-serif; font-weight: 900; line-height: 1.1; }
+        .val-label { font-size: 10px; font-weight: 800; text-transform: uppercase; color: #94a3b8; margin-bottom: 2px; }
+        .val-amount { font-weight: 900; line-height: 1.1; }
         .grid-header { display: grid; grid-template-columns: 2.8fr 1.5fr 1.5fr 1fr; align-items: center; gap: 2rem; position: relative; z-index: 20; }
     </style>
 </head>
@@ -57,19 +47,8 @@
     <div id="policy-container" class="max-w-7xl mx-auto"></div>
 
     <script type="module">
-        import { POLICY_DATA } from './data.js?v=1.0.1';
-        
-        // Use a fixed "today" or real time
+        import { POLICY_DATA } from './data.js?v=1.0.4';
         const TODAY = new Date();
-        const SG_CHARGES = [100, 100, 80, 70, 60, 50, 45, 35, 20, 5];
-
-        // Helper to parse "31 Jan 2008" style dates
-        function parseDate(dateStr) {
-            if (!dateStr || dateStr === "PAID UP") return null;
-            const parts = dateStr.split(' ');
-            if (parts.length !== 3) return null;
-            return new Date(`${parts[1]} ${parts[0]}, ${parts[2]}`);
-        }
 
         window.render = function(mode) {
             const container = document.getElementById('policy-container');
@@ -77,63 +56,53 @@
             const list = POLICY_DATA[mode];
             const curr = mode === 'singapore' ? '$' : '₹';
 
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(mode === 'singapore' ? 'btn-sg' : `btn-${mode}`).classList.add('active');
-
             container.innerHTML = list.map(p => {
                 const isPaidUp = p.dueDate === "PAID UP";
-                
-                // RESTORED NOTIFICATION LOGIC
-                let isDueSoon = false;
-                const dueDateObj = parseDate(p.dueDate);
-                if (dueDateObj) {
-                    const diffTime = dueDateObj - TODAY;
-                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                    // Trigger if due within 45 days and not in the past
-                    if (diffDays >= 0 && diffDays <= 45) isDueSoon = true;
-                }
+                const startDay = parseInt(p.commenced.split(' ')[0]);
+                const startMonth = p.commenced.split(' ')[1];
+                const startYear = parseInt(p.commenced.split(' ')[2]);
+                const maturityYear = parseInt(p.maturity.split(' ')[2]);
+                const totalDuration = maturityYear - startYear;
+                const premPct = (p.premiumYears / totalDuration) * 100;
 
-                const splitPct = (p.premiumYears / 25) * 100;
                 let premiumSegments = "";
-
                 for(let i=0; i<p.premiumYears; i++) {
-                    const commParts = p.commenced.split(' ');
-                    const startYear = parseInt(commParts[2]);
-                    const currentSegYear = startYear + i;
-                    
-                    // Logic to check if this segment's anniversary has passed
-                    const anniversaryDate = new Date(`${commParts[1]} ${commParts[0]}, ${currentSegYear}`);
+                    const yr = startYear + i;
+                    const anniversaryDate = new Date(`${startMonth} ${startDay}, ${yr}`);
                     const isPd = anniversaryDate < TODAY;
                     
-                    let paymentStatusTip = `Year ${i+1} (${currentSegYear}): ${isPd ? 'PAID' : 'DUE'}`;
-                    
-                    let indicator = "";
-                    if(p.cashBonus === "Immediate" && i > 0) {
-                        indicator = `<div class="bonus-container"><div class="bonus-payout-dot"></div><span class="tooltip-text bonus-tooltip">Annual Bonus Payout</span></div>`;
-                    }
-                    if(mode === 'singapore' && i < 10) {
-                        indicator = `<div class="bonus-container"><div class="bonus-payout-dot" style="background:#f97316"></div><span class="tooltip-text bonus-tooltip">Year ${i+1}: Surrender Charge ${SG_CHARGES[i]}%</span></div>`;
-                    }
-
-                    premiumSegments += `<div class="segment-container flex-1 h-4 rounded-sm ${isPd ? 'bg-green-500' : 'bg-gray-200'} border-r border-white last:border-0">
-                        <span class="tooltip-text year-tooltip">${paymentStatusTip}</span>
-                        ${indicator}
+                    premiumSegments += `<div class="segment-container flex-1 h-4 ${isPd ? 'bg-green-500' : 'bg-gray-200'} border-r border-white relative">
+                        <span class="tooltip-text">Year ${i+1} (${yr}): ${isPd ? 'PAID' : 'DUE'}</span>
                         ${i===0 ? '<div class="vertical-marker left-0"></div>' : ''}
-                        ${i===p.premiumYears-1 ? `<div class="end-premium-marker right-0 ${mode==='singapore'?'surrender-marker':''}"></div>` : ''}
+                        ${i===p.premiumYears-1 ? `<div class="end-premium-marker right-0"></div>` : ''}
                     </div>`;
                 }
 
-                let phaseDots = "";
-                if(p.type === 'ULIP' || p.type === 'ILP' || p.growthPhase) {
-                    for(let i=1; i<=4; i++) phaseDots += `<div class="dot-wrapper absolute h-full" style="left:${i*20}%;"><span class="tooltip-text">Growth Phase</span><div class="payout-dot growth-dot"></div></div>`;
-                } else if(p.payoutSteps) {
-                    p.payoutSteps.forEach((s, idx) => phaseDots += `<div class="dot-wrapper absolute h-full" style="left:${15+(idx*15)}%;"><span class="tooltip-text">Income: ${s.val}</span><div class="payout-dot"></div></div>`);
-                } else if(p.income) {
-                    for(let i=1; i<=3; i++) phaseDots += `<div class="dot-wrapper absolute h-full" style="left:${i*25}%;"><span class="tooltip-text">${p.income}</span><div class="payout-dot"></div></div>`;
-                }
+                let growthSegments = "";
+                const growthYears = totalDuration - p.premiumYears;
+                for(let j=1; j<=growthYears; j++) {
+                    const totalPolicyYear = p.premiumYears + j;
+                    const currentCalYear = startYear + totalPolicyYear - 1;
+                    const anniversaryDate = new Date(`${startMonth} ${startDay}, ${currentCalYear}`);
+                    const isPassed = anniversaryDate < TODAY;
+                    
+                    let payoutLabel = "Growth Phase";
+                    if(p.payoutSteps) {
+                        const step = p.payoutSteps.find(s => {
+                            if (s.years.includes('-')) {
+                                const [low, high] = s.years.split('-').map(Number);
+                                return totalPolicyYear >= low && totalPolicyYear <= high;
+                            }
+                            return totalPolicyYear === parseInt(s.years);
+                        });
+                        if(step) payoutLabel = `Income: ${step.val}`;
+                    }
 
-                const midLabel = mode === 'singapore' ? "Surrender Period Ends" : "Premium End";
-                const midDate = mode === 'singapore' ? (parseInt(p.commenced.split(' ')[2]) + 10) : p.premiumEnds;
+                    growthSegments += `<div class="segment-container flex-1 h-4 ${isPassed ? 'bg-growth-passed' : 'bg-growth-future'} relative border-r border-white last:border-0">
+                        <span class="tooltip-text">${payoutLabel} (${currentCalYear})</span>
+                        ${j === growthYears ? '<div class="dot-wrapper absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 z-50"><span class="tooltip-text" style="right:0; left:auto; transform:none;">MATURITY: ${p.maturityAmt}</span><div class="payout-dot maturity-dot"></div></div>' : ''}
+                    </div>`;
+                }
 
                 return `
                 <div class="policy-card" style="border-color:${p.color}" id="card-${p.id}">
@@ -141,40 +110,25 @@
                     <div class="p-8 grid-header cursor-pointer" onclick="document.getElementById('card-${p.id}').classList.toggle('open')">
                         <div class="flex items-center gap-8">
                             <img src="${p.logo}" class="logo-img">
-                            <div>
-                                <h2 class="text-lg font-black text-gray-800">
-                                    ${p.name}
-                                    ${isDueSoon ? `<span class="ml-3 bg-red-600 text-white text-[9px] px-2 py-1 rounded animate-pulse font-black inline-block align-middle">DUE SOON</span>` : ''}
-                                </h2>
-                                <p class="text-[10px] font-bold text-gray-400 uppercase">Policy No: ${p.id} • UIN: ${p.uin || 'N/A'} • CLIENT: ${p.clientId || 'N/A'}</p>
-                            </div>
+                            <div><h2 class="text-lg font-black text-gray-800">${p.name}</h2><p class="text-[10px] font-bold text-gray-400 uppercase">Policy No: ${p.id}</p></div>
                         </div>
                         <div><p class="val-label">Sum Assured</p><p class="val-amount text-2xl text-blue-700">${curr} ${p.sumAssured.toLocaleString()}</p></div>
                         <div><p class="val-label">Annual Premium</p><p class="val-amount text-2xl text-emerald-600">${curr} ${p.premium.toLocaleString()}</p></div>
                         <div class="text-right"><p class="val-label">Next Due</p><p class="text-sm font-black text-gray-900">${p.dueDate}</p></div>
                     </div>
                     <div class="content-area bg-gray-50 border-t p-12 pb-24 relative">
-                        <div class="flex relative h-4 mb-10">
-                            <div class="flex" style="width: ${splitPct}%">${premiumSegments}</div>
-                            <div class="flex-1 bg-gray-100 relative rounded-r-sm">
-                                ${phaseDots}
-                                <div class="dot-wrapper absolute h-full right-0" style="right: -8px;"><span class="tooltip-text tooltip-right bg-red-600">MATURITY: ${p.maturityAmt}</span><div class="payout-dot maturity-dot"></div></div>
-                                <div class="vertical-marker right-0"></div>
-                            </div>
+                        <div class="flex h-4 mb-10 w-full">
+                            <div class="flex" style="width: ${premPct}%">${premiumSegments}</div>
+                            <div class="flex flex-1">${growthSegments}</div>
                         </div>
-                        <div class="relative w-full text-[11px] font-black uppercase">
-                            <div class="absolute left-0 text-gray-500">Commencement<br><span class="text-gray-900">${p.commenced}</span></div>
-                            <div class="absolute text-center ${mode==='singapore'?'text-orange-600':'text-green-600'}" style="left: ${splitPct}%; transform: translateX(-50%);">${midLabel}<br><span>${midDate}</span></div>
-                            <div class="absolute right-0 text-right text-red-600">Maturity Date<br><span>${p.maturity}</span></div>
+                        <div class="relative w-full text-[11px] font-black uppercase flex justify-between">
+                            <div>Commencement<br><span class="text-gray-900">${p.commenced}</span></div>
+                            <div class="text-center text-green-600">Premium End<br><span>${p.premiumEnds}</span></div>
+                            <div class="text-right text-red-600">Maturity Date<br><span>${p.maturity}</span></div>
                         </div>
                     </div>
                 </div>`;
             }).join('');
-            
-            let tP = 0, tS = 0;
-            list.forEach(p => { if(p.dueDate !== "PAID UP") tP += p.premium; tS += p.sumAssured; });
-            summary.innerHTML = `<div class="bg-white p-8 rounded-2xl border-l-8 border-l-emerald-500 shadow-sm"><p class="val-label text-emerald-600">Active Annual Premium</p><p class="text-4xl font-black text-gray-900">${curr} ${tP.toLocaleString()}</p></div>
-                <div class="bg-white p-8 rounded-2xl border-l-8 border-l-blue-600 shadow-sm"><p class="val-label text-blue-600">Consolidated Sum Assured</p><p class="text-4xl font-black text-gray-900">${curr} ${tS.toLocaleString()}</p></div>`;
         };
 
         document.getElementById('btn-india').addEventListener('click', () => render('india'));
@@ -184,4 +138,3 @@
     </script>
 </body>
 </html>
-
