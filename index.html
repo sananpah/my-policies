@@ -3,72 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nami Portfolio v3.3.8</title>
+    <title>Nami Portfolio v3.3.9</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Orbitron:wght@800&family=JetBrains+Mono:wght@500&display=swap');
-        body { background-color: #f1f5f9; font-family: 'Inter', sans-serif; color: #1e293b; padding: 40px; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Orbitron:wght@800&family=JetBrains+Mono:wght@700&display=swap');
+        body { background-color: #f8fafc; font-family: 'Inter', sans-serif; color: #0f172a; padding: 40px; }
         
-        .version-stamp { position: fixed; top: 15px; right: 20px; font-size: 11px; font-weight: 900; color: #1e293b; background: #fff; padding: 6px 12px; border-radius: 8px; border: 1px solid #cbd5e1; z-index: 9999; }
-        .brand-header { font-family: 'Orbitron', sans-serif; background: linear-gradient(90deg, #4f46e5, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .version-stamp { position: fixed; top: 15px; right: 20px; font-size: 10px; font-weight: 900; color: #64748b; background: #fff; padding: 4px 12px; border-radius: 20px; border: 1px solid #e2e8f0; z-index: 9999; }
+        .brand-header { font-family: 'Orbitron', sans-serif; background: linear-gradient(90deg, #1e293b, #475569); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 
-        .stamp-box { width: 170px; height: 100px; display: flex; align-items: center; justify-content: flex-end; }
-        .paid-stamp { 
-            height: 95px; width: auto; object-fit: contain; transform: rotate(-10deg); 
-            filter: drop-shadow(0 12px 20px rgba(0,0,0,0.25)) brightness(1.1) contrast(1.1); 
-            image-rendering: -webkit-optimize-contrast;
-        }
+        /* LOGO & BRANDING */
+        .logo-container { filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1)) brightness(1.1); transition: 0.3s; }
+        .policy-card:hover .logo-container { transform: scale(1.05); filter: brightness(1.2); }
 
-        .segment { height: 100%; position: relative; cursor: pointer; transition: 0.2s; border-radius: 4px; margin: 0 1px; }
-        .segment:hover { filter: brightness(1.2); transform: scaleY(1.35); z-index: 40; }
-        .bg-past { background: #475569; opacity: 0.8; }
-        .bg-premium { background: linear-gradient(180deg, #10b981 0%, #059669 100%); }
-        .bg-income { background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%); }
-        .bg-growth { background: linear-gradient(180deg, #8b5cf6 0%, #6d28d9 100%); }
-        .bg-waiting { background: repeating-linear-gradient(45deg, #cbd5e1, #cbd5e1 10px, #94a3b8 10px, #94a3b8 20px); }
-        .bg-future { background: #e2e8f0; }
+        /* COLOR ENGINE */
+        .bg-passed { background: #14532d; } /* Dark Green */
+        .bg-current { background: #22c55e; box-shadow: 0 0 15px #22c55e; z-index: 10; } /* Light Green */
+        .bg-parrot { background: #a3e635; } /* Parrot Green */
+        .bg-wait-past { background: #451a03; } /* Dark Brown/Amber for passed waiting */
+        .bg-wait-future { background: #f59e0b; } /* Bright Gold for future waiting */
 
+        .segment { height: 100%; position: relative; cursor: pointer; transition: 0.2s; border-radius: 2px; margin: 0 1px; }
+        .segment:hover { filter: contrast(1.2) brightness(1.2); transform: scaleY(1.4); z-index: 50; }
+
+        /* TOOLTIP */
         .tooltip { 
-            visibility: hidden; opacity: 0; position: absolute; bottom: 190%; left: 50%; transform: translateX(-50%) translateY(10px); 
-            background: #0f172a; color: #fff; padding: 14px 18px; border-radius: 12px; font-size: 11px; 
-            width: 240px; text-align: center; z-index: 3000; transition: 0.3s;
-            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); line-height: 1.6; pointer-events: none;
+            visibility: hidden; opacity: 0; position: absolute; bottom: 200%; left: 50%; transform: translateX(-50%) translateY(10px); 
+            background: #0f172a; color: #fff; padding: 12px 16px; border-radius: 8px; font-size: 11px; 
+            width: 220px; text-align: center; z-index: 3000; transition: 0.3s; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.4);
         }
-        .segment:hover .tooltip, .node:hover .tooltip { visibility: visible; opacity: 1; transform: translateX(-50%) translateY(0); }
+        .segment:hover .tooltip { visibility: visible; opacity: 1; transform: translateX(-50%) translateY(0); }
 
-        .policy-card { background: white; border-radius: 28px; border-left: 14px solid; margin-bottom: 35px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); }
-        .card-header { cursor: pointer; display: flex; align-items: center; padding: 35px; gap: 24px; }
-        .content-area { display: none; padding: 40px 50px; border-top: 1px solid #f1f5f9; background: #fafbfc; border-radius: 0 0 28px 28px; }
-        .open .content-area { display: block; }
+        /* CARDS */
+        .policy-card { background: white; border-radius: 32px; margin-bottom: 30px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); }
+        .card-header { display: flex; align-items: center; padding: 30px 40px; gap: 30px; cursor: pointer; }
+        
+        .type-badge-funky { 
+            font-size: 10px; font-weight: 900; padding: 6px 14px; border-radius: 30px; 
+            display: inline-flex; align-items: center; gap: 6px;
+            box-shadow: inset 0 0 10px rgba(255,255,255,0.5); border: 1px solid rgba(0,0,0,0.05);
+        }
 
-        .type-badge { font-size: 10px; font-weight: 900; text-transform: uppercase; padding: 6px 12px; border-radius: 12px; border: 2px solid; display: inline-flex; align-items: center; gap: 6px; }
-        .savings { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
-        .retirement { background: #fff7ed; color: #c2410c; border-color: #ffedd5; }
-        .ulip { background: #f5f3ff; color: #6d28d9; border-color: #ddd6fe; }
+        .data-label { font-family: 'JetBrains+Mono', monospace; font-size: 11px; color: #64748b; text-transform: uppercase; }
+        .data-value { font-family: 'JetBrains+Mono', monospace; font-size: 13px; font-weight: 700; color: #1e293b; }
 
-        .timeline-track { position: relative; height: 42px; background: #e2e8f0; border-radius: 24px; width: 100%; display: flex; margin: 40px 0; padding: 0 6px; align-items: center; z-index: 10; overflow: visible; }
-        .node { position: absolute; width: 80px; height: 80px; border-radius: 50%; border: 6px solid #fff; z-index: 500; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; color: white; top: -19px; box-shadow: 0 6px 15px rgba(0,0,0,0.25); cursor: help; }
-        .countdown-pill { font-family: 'JetBrains+Mono', monospace; font-size: 9px; letter-spacing: -0.02em; }
+        .timeline-track { position: relative; height: 32px; background: #f1f5f9; border-radius: 10px; width: 100%; display: flex; margin: 40px 0; padding: 0 4px; align-items: center; }
+        .node-label { font-size: 9px; font-weight: 900; color: #94a3b8; position: absolute; top: 40px; white-space: nowrap; }
     </style>
 </head>
 <body>
 
-    <div class="version-stamp">BUILD: v3.3.8 | 08-MAR-2026</div>
+    <div class="version-stamp">BUILD: v3.3.9 | MARCH 2026</div>
 
-    <div class="max-w-7xl mx-auto flex justify-between items-end mb-14">
-        <div>
-            <h1 class="brand-header text-5xl font-black italic tracking-tighter">NAMI PORTFOLIO</h1>
-            <p class="text-slate-400 font-bold text-[10px] mt-2 uppercase tracking-[0.4em]">Asset Strategy & Control</p>
-        </div>
-        <div class="flex gap-4">
-            <button onclick="render('india')" id="btn-india" class="px-10 py-3 rounded-2xl font-black border-2 transition-all">INDIA</button>
-            <button onclick="render('wife')" id="btn-wife" class="px-10 py-3 rounded-2xl font-black border-2 transition-all">WIFE</button>
-            <button onclick="render('singapore')" id="btn-singapore" class="px-10 py-3 rounded-2xl font-black border-2 transition-all">SINGAPORE</button>
+    <div class="max-w-[1400px] mx-auto flex justify-between items-center mb-12">
+        <h1 class="brand-header text-4xl font-black italic tracking-tighter">NAMI.OS <span class="text-slate-300">/ PORTFOLIO</span></h1>
+        <div class="flex bg-white p-1.5 rounded-2xl shadow-sm border border-slate-200">
+            <button onclick="render('india')" id="btn-india" class="px-8 py-2.5 rounded-xl font-black text-sm transition-all">INDIA</button>
+            <button onclick="render('wife')" id="btn-wife" class="px-8 py-2.5 rounded-xl font-black text-sm transition-all">WIFE</button>
+            <button onclick="render('singapore')" id="btn-singapore" class="px-8 py-2.5 rounded-xl font-black text-sm transition-all">SINGAPORE</button>
         </div>
     </div>
 
-    <div id="summary" class="max-w-7xl mx-auto grid grid-cols-2 gap-8 mb-14"></div>
-    <div id="container" class="max-w-7xl mx-auto"></div>
+    <div id="container" class="max-w-[1400px] mx-auto"></div>
 
     <script type="module">
         import { POLICY_DATA } from './data.js';
@@ -81,119 +77,78 @@
             const list = POLICY_DATA[cat];
             const sym = cat === 'singapore' ? '$' : '₹';
             
-            document.querySelectorAll('button').forEach(b => b.className = "px-10 py-3 rounded-2xl font-black border-2 bg-white text-slate-400 border-slate-200 shadow-sm");
-            document.getElementById(`btn-${cat}`).className = "px-10 py-3 rounded-2xl font-black border-2 bg-slate-900 text-white border-slate-900 shadow-lg";
-
-            document.getElementById('summary').innerHTML = `
-                <div class="bg-white p-10 rounded-3xl border-b-[12px] border-indigo-600 shadow-sm"><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Annual Premium</p><p class="text-5xl font-black text-slate-900">${sym}${list.reduce((s,p)=>s+p.premium,0).toLocaleString()}</p></div>
-                <div class="bg-white p-10 rounded-3xl border-b-[12px] border-pink-600 shadow-sm"><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Sum Assured</p><p class="text-5xl font-black text-slate-900">${sym}${list.reduce((s,p)=>s+p.sumAssured,0).toLocaleString()}</p></div>
-            `;
+            document.querySelectorAll('button').forEach(b => b.className = "px-8 py-2.5 rounded-xl font-black text-sm text-slate-400 hover:text-slate-600");
+            document.getElementById(`btn-${cat}`).className = "px-8 py-2.5 rounded-xl font-black text-sm bg-slate-900 text-white shadow-lg";
 
             document.getElementById('container').innerHTML = list.map(p => {
                 const startY = parseInt(p.commenced.split(' ')[2]);
                 const matY = parseInt(p.maturity.split(' ')[2]);
                 const premEndYear = parseInt(p.premiumEnds.split(' ')[2]);
-                const premEndObj = new Date(p.premiumEnds);
-                
-                const isPaid = TODAY > premEndObj || p.dueDate === "PAID UP";
-                const isULIP = p.type.toLowerCase().includes('ulip');
-                const pRem = Math.max(0, premEndYear - CURRENT_YEAR + (TODAY < premEndObj ? 1 : 0));
-                const mRem = Math.max(0, matY - CURRENT_YEAR);
+                const isPaid = (TODAY > new Date(p.premiumEnds)) || p.dueDate === "PAID UP";
 
                 let timeline = '';
                 for(let yr = startY; yr < matY; yr++) {
                     const polYear = yr - startY + 1;
                     const isPast = yr < CURRENT_YEAR;
-                    let hoverData = "";
-                    let phaseLabel = "";
-                    let color = "bg-future";
+                    let color = "";
+                    let phase = "";
 
-                    if (yr <= premEndYear) {
-                        if (isPast || isPaid) {
-                            color = "bg-past";
-                            phaseLabel = "Premium Paid";
-                            hoverData = `<span class="text-slate-500 italic">Record of installment</span>`;
-                        } else {
-                            color = yr === CURRENT_YEAR ? "bg-premium" : "bg-future";
-                            phaseLabel = "Premium Active";
-                            hoverData = `<span class="text-emerald-400 font-black">Due: ${sym}${p.premium.toLocaleString()}</span>`;
-                        }
+                    // COLOR LOGIC
+                    if (yr <= premEndYear && !isPaid) {
+                        if (isPast) { color = "bg-passed"; phase = "Premium Paid"; }
+                        else if (yr === CURRENT_YEAR) { color = "bg-current"; phase = "Current Due"; }
+                        else { color = "bg-parrot"; phase = "Future Premium"; }
                     } else {
-                        color = isULIP ? "bg-growth" : "bg-income";
-                        phaseLabel = isULIP ? "Unit Growth" : "Income Phase";
-                        
-                        let amt = "Waiting";
-                        if (p.name.includes("Nishchit Ace")) {
-                            if (polYear >= 11 && polYear <= 15) amt = "₹ 1,33,974";
-                            else if (polYear >= 16 && polYear <= 20) amt = "₹ 1,60,769";
-                            else if (polYear >= 21 && polYear <= 25) amt = "₹ 1,87,564";
-                            else if (polYear >= 26 && polYear <= 30) amt = "₹ 214,359";
-                        } else if (p.name.includes("Pension SL")) {
-                            if (yr > premEndYear + 1) amt = "₹ 89,830";
-                            else { phaseLabel = "Accumulation Phase"; color = "bg-waiting"; }
-                        } else if (p.name.includes("Moneyback")) {
-                            if (polYear >= 11 && polYear <= 14) amt = "₹ 18,591";
-                            else if (polYear === 15) amt = "₹ 49,576";
-                        } else if (p.name.includes("Samrudhi") && polYear >= 8) amt = "₹ 1,00,000";
-
-                        hoverData = amt === "Waiting" ? `<span class="text-slate-400 italic">Waiting for Payout...</span>` : `<span class="text-orange-400 font-black">Annual Payout: ${amt}</span>`;
+                        // WAITING / INCOME PHASE
+                        if (isPast) { color = "bg-wait-past"; phase = "History"; }
+                        else { color = "bg-wait-future"; phase = "Wealth Accrual"; }
                     }
 
-                    timeline += `
-                    <div class="segment ${color}" style="flex:1">
-                        <div class="tooltip">
-                            <b class="text-white text-xs uppercase tracking-widest">${phaseLabel}</b><br>
-                            ${hoverData}<br>
-                            <span class="text-slate-500 text-[9px] font-bold">YEAR ${polYear} (${yr})</span>
-                        </div>
-                    </div>`;
+                    timeline += `<div class="segment ${color}" style="flex:1"><div class="tooltip"><b>${phase}</b><br>Year ${polYear} (${yr})</div></div>`;
                 }
 
-                // FUNKY SYMBOLS
-                let icon = "🛡️";
-                if(p.type.toLowerCase().includes('retirement')) icon = "⛱️";
-                if(p.type.toLowerCase().includes('ulip')) icon = "📈";
+                let badgeStyle = p.type.toLowerCase().includes('retirement') ? "background:#fff7ed; color:#c2410c" : (p.type.toLowerCase().includes('ulip') ? "background:#f5f3ff; color:#6d28d9" : "background:#f0fdf4; color:#166534");
+                let icon = p.type.toLowerCase().includes('retirement') ? "⛱️" : (p.type.toLowerCase().includes('ulip') ? "📈" : "🛡️");
 
                 return `
-                <div class="policy-card" id="card-${p.id}" style="border-color: ${p.color}">
+                <div class="policy-card" id="card-${p.id}">
                     <div class="card-header" onclick="toggleCard('${p.id}')">
-                        <div style="flex:1.8">
-                            <img src="${p.logo}" class="h-10 object-contain mb-3">
-                            <h3 class="font-black text-slate-900 text-xl leading-tight">${p.name}</h3>
-                            <div class="flex gap-2 mt-2">
-                                <span class="type-badge ${p.type.toLowerCase()}">${icon} ${p.type}</span>
+                        <div style="flex:1" class="flex items-center gap-8">
+                            <div class="logo-container w-28 h-16 flex items-center justify-center bg-slate-50 rounded-2xl border border-slate-100 p-4">
+                                <img src="${p.logo}" class="max-h-full max-w-full object-contain">
+                            </div>
+                            <div>
+                                <div class="type-badge-funky mb-2" style="${badgeStyle}">${icon} ${p.type}</div>
+                                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest">${p.name}</h3>
                             </div>
                         </div>
-                        <div style="flex:1" class="text-right">
-                            <p class="text-[9px] font-bold text-slate-400 uppercase">Premium</p>
-                            <p class="text-2xl font-black text-emerald-600">${sym}${p.premium.toLocaleString()}</p>
-                            ${!isPaid ? `<span class="countdown-pill text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full font-bold">⏳ ${pRem}Y LEFT</span>` : ''}
+
+                        <div style="flex:0.6" class="text-center">
+                            <p class="data-label">Premium</p>
+                            <p class="text-xl font-black text-slate-900">${sym}${p.premium.toLocaleString()}</p>
                         </div>
-                        <div style="flex:1.1" class="text-right">
-                            <p class="text-[9px] font-bold text-slate-400 uppercase">Sum Assured</p>
-                            <p class="text-2xl font-black text-indigo-600">${sym}${p.sumAssured.toLocaleString()}</p>
-                            <span class="countdown-pill text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-full font-bold">🏁 ${mRem}Y TO MAT</span>
-                        </div>
-                        <div style="flex:1.4" class="text-right flex justify-end">
-                            ${isPaid ? `<div class="stamp-box"><img src="paid.jpg" class="paid-stamp"></div>` : `
-                                <div class="flex flex-col items-end">
-                                    <p class="text-[9px] font-black text-slate-400 uppercase mb-1">Next Due</p>
-                                    <div class="bg-white px-4 py-2 rounded-xl border-2 border-slate-200 shadow-sm font-black text-slate-900">${p.dueDate}</div>
-                                </div>`}
+
+                        <div style="flex:1.2" class="flex justify-end gap-12 border-l border-slate-100 pl-12">
+                            <div class="text-right">
+                                <p class="data-label">Policy No.</p>
+                                <p class="data-value">${p.id}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="data-label">Client ID</p>
+                                <p class="data-value">${p.clientId || 'NAMI-882'}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="data-label">UIN</p>
+                                <p class="data-value">${p.uin || '101N134V'}</p>
+                            </div>
                         </div>
                     </div>
-                    <div class="content-area">
-                        <div class="grid grid-cols-3 gap-6 mb-8 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-                            <div><p class="text-[10px] text-slate-400 font-bold uppercase">Client ID</p><p class="font-mono font-bold text-slate-700">${p.clientId || 'NAMI-PRO-772'}</p></div>
-                            <div><p class="text-[10px] text-slate-400 font-bold uppercase">Policy UIN</p><p class="font-mono font-bold text-slate-700">${p.uin || '101N134V01'}</p></div>
-                            <div><p class="text-[10px] text-slate-400 font-bold uppercase">Policy Number</p><p class="font-mono font-bold text-slate-700">${p.id}</p></div>
-                        </div>
+
+                    <div id="content-${p.id}" class="px-10 pb-12 pt-4 bg-slate-50/50">
                         <div class="timeline-track">
-                            <div class="node bg-slate-900" style="left:-40px;"><span class="mt-1 leading-none uppercase">Start</span><span class="text-[7px] opacity-60">${startY}</span></div>
-                            <div class="flex h-full w-full mx-4">${timeline}</div>
-                            <div class="node bg-pink-600" style="right:-40px;"><span class="mt-1 leading-none uppercase">Mat</span><span class="text-[7px] opacity-80">${matY}</span>
-                                <div class="tooltip"><b class="text-white text-xs uppercase">Settlement</b><br><span class="text-pink-400 font-black text-lg">${p.maturityAmt}</span></div>
-                            </div>
+                            <span class="node-label" style="left:0">${startY} (START)</span>
+                            <div class="flex h-full w-full mx-1">${timeline}</div>
+                            <span class="node-label" style="right:0">${matY} (MATURITY: ${p.maturityAmt})</span>
                         </div>
                     </div>
                 </div>`;
