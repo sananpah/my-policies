@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nami Portfolio v3.2.3</title>
+    <title>Nami Portfolio v3.2.5</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Orbitron:wght@800&display=swap');
@@ -39,14 +39,20 @@
         .retirement { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
         .ulip { background: #f5f3ff; color: #5b21b6; border-color: #ddd6fe; }
 
-        .paid-stamp { width: 140px; transform: rotate(-10deg); filter: drop-shadow(0 10px 15px rgba(0,0,0,0.2)); opacity: 0.95; }
+        .paid-stamp { 
+            width: 140px; transform: rotate(-10deg); 
+            filter: drop-shadow(0 10px 15px rgba(0,0,0,0.2)) contrast(1.1); 
+            image-rendering: -webkit-optimize-contrast;
+            opacity: 1; margin-left: auto;
+        }
+
         .timeline-track { position: relative; height: 42px; background: #e2e8f0; border-radius: 24px; width: 100%; display: flex; margin: 30px 0; padding: 0 6px; align-items: center; }
         .node { position: absolute; width: 70px; height: 70px; border-radius: 50%; border: 6px solid #fff; z-index: 200; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; color: white; top: -14px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
     </style>
 </head>
 <body>
 
-    <div class="version-stamp">BUILD: v3.2.3 | 08-MAR-2026</div>
+    <div class="version-stamp">BUILD: v3.2.5 | 08-MAR-2026</div>
 
     <div class="max-w-7xl mx-auto flex justify-between items-end mb-14">
         <div>
@@ -91,7 +97,6 @@
                 const isULIP = p.type.toLowerCase().includes('ulip');
                 const premiumsLeft = Math.max(0, premEndY - CURRENT_YEAR + 1);
 
-                // Due Date Logic
                 const [d, m, y] = p.dueDate.split(' ');
                 const dueObj = new Date(`${m} ${d}, ${y}`);
                 const diffDays = Math.ceil((dueObj - TODAY) / (1000 * 60 * 60 * 24));
@@ -108,7 +113,6 @@
                     const isPremActive = yr <= premEndY;
                     const isBonusActive = p.name.includes("Fortune Maximiser") && polYear >= 2;
 
-                    // Calculate Payout String
                     if (p.name.includes("Moneyback")) {
                         if (polYear >= 11 && polYear <= 14) payout = "₹18,591";
                         else if (polYear === 15) payout = "₹49,576";
@@ -116,31 +120,21 @@
                     else if (p.name.includes("Nishchit Ace")) {
                         if (polYear >= 11 && polYear <= 15) payout = "₹1,33,974";
                         else if (polYear >= 16 && polYear <= 20) payout = "₹160,769";
-                        else if (polYear >= 21 && polYear <= 25) payout = "₹187,564";
-                        else if (polYear >= 26 && polYear <= 30) payout = "₹214,359";
                     } else if (p.name.includes("Pension SL")) payout = "₹89,830";
                     else if (isBonusActive) payout = "Variable Bonus";
 
-                    // Determine Segment Style
                     if (isPremActive && isBonusActive) {
                         color = isPast ? "bg-past" : "bg-dual-phase";
                         type = "Premium + Bonus Phase";
                     } else if (isPremActive) {
                         color = isPast ? "bg-past" : (yr === CURRENT_YEAR && !isPaid ? "bg-premium" : "bg-future");
-                        type = "Premium Payment Phase";
+                        type = "Premium Phase";
                     } else {
                         color = isULIP ? "bg-growth" : (isPast ? "bg-past" : "bg-income");
                         type = isULIP ? "Unit Growth Phase" : "Annual Payout Phase";
                     }
 
-                    timeline += `
-                        <div class="segment ${color}" style="flex:1">
-                            <div class="tooltip">
-                                <b class="text-white text-xs uppercase tracking-tighter">${type}</b><br>
-                                <span class="text-orange-400 font-black">Annual: ${payout}</span><br>
-                                <span class="text-slate-400 text-[10px]">Year ${polYear} (${yr})</span>
-                            </div>
-                        </div>`;
+                    timeline += `<div class="segment ${color}" style="flex:1"><div class="tooltip"><b class="text-white text-xs uppercase tracking-tight">${type}</b><br><span class="text-orange-400 font-black">Annual: ${payout}</span><br><span class="text-slate-400 text-[10px]">Year ${polYear} (${yr})</span></div></div>`;
                 }
 
                 const typeIcon = isULIP ? 
@@ -174,7 +168,7 @@
                         </div>
                         <div style="flex:1.1" class="text-right"><p class="text-[9px] font-bold text-slate-400 uppercase">Sum Assured</p><p class="text-xl font-black text-indigo-600">${sym}${p.sumAssured.toLocaleString()}</p></div>
                         <div style="flex:1.1" class="text-right">
-                            ${isPaid ? `<img src="paid.jpg" class="paid-stamp ml-auto">` : `
+                            ${isPaid ? `<img src="paid.jpg" class="paid-stamp">` : `
                                 <div class="flex flex-col items-end">
                                     <p class="text-[9px] font-black text-slate-400 uppercase mb-1">Next Due</p>
                                     <div class="inline-flex items-center bg-white px-3 py-1.5 rounded-xl border-2 border-slate-200 shadow-sm">
@@ -193,14 +187,7 @@
                         <div class="timeline-track">
                             <div class="node bg-slate-900" style="left:-35px;"><span class="mt-1 leading-none">START</span><span class="text-[7px] opacity-60">${startY}</span></div>
                             <div class="flex h-full w-full mx-4">${timeline}</div>
-                            <div class="node bg-pink-600" style="right:-35px;">
-                                <div class="tooltip">
-                                    <b class="text-white text-xs">FINAL MATURITY</b><br>
-                                    <span class="text-pink-300 font-black">${sym}${p.sumAssured.toLocaleString()}</span><br>
-                                    <span class="text-[9px] text-slate-400">+ Accrued Bonuses</span>
-                                </div>
-                                <span class="mt-1 leading-none">MAT</span><span class="text-[7px] opacity-80">${matY}</span>
-                            </div>
+                            <div class="node bg-pink-600" style="right:-35px;"><span class="mt-1 leading-none">MAT</span><span class="text-[7px] opacity-80">${matY}</span></div>
                         </div>
                     </div>
                 </div>`;
