@@ -18,7 +18,7 @@
         .maturity-dot { background: #ef4444 !important; width: 18px !important; height: 18px !important; }
         
         .segment-container { position: relative; cursor: pointer; }
-        .tooltip-text { visibility: hidden; opacity: 0; position: absolute; bottom: 45px; left: 50%; transform: translateX(-50%); background: #0f172a; color: white; padding: 8px 14px; border-radius: 6px; font-size: 11px; font-weight: 700; white-space: nowrap; transition: all 0.2s; z-index: 200; pointer-events: none; }
+        .tooltip-text { visibility: hidden; opacity: 0; position: absolute; bottom: 45px; left: 50%; transform: translateX(-50%); background: #0f172a; color: white; padding: 8px 14px; border-radius: 6px; font-size: 11px; font-weight: 700; white-space: nowrap; transition: all 0.2s; z-index: 200; pointer-events: none; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); }
         .segment-container:hover > .tooltip-text, .dot-wrapper:hover > .tooltip-text { opacity: 1; visibility: visible; transform: translate(-50% , -5px); }
 
         .policy-card { background: white; border-left: 8px solid; border-radius: 16px; position: relative; margin-bottom: 1.5rem; transition: all 0.3s; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); overflow: hidden; }
@@ -32,16 +32,34 @@
     </style>
 </head>
 <body class="p-6 md:p-12 lg:px-24">
-    <div id="policy-container" class="max-w-7xl mx-auto mt-20"></div>
+    <div class="max-w-7xl mx-auto mb-12 text-center">
+        <h1 class="text-4xl font-bold maroon-text uppercase tracking-widest" style="font-family: 'Playfair Display', serif;">Nami Insurance Portfolio</h1>
+    </div>
+
+    <div class="flex justify-center gap-4 mb-12">
+        <button id="btn-india" class="tab-btn active">My India</button>
+        <button id="btn-sg" class="tab-btn">My Singapore</button>
+        <button id="btn-wife" class="tab-btn">Wife's Portfolio</button>
+    </div>
+
+    <div id="summary-bar" class="max-w-7xl mx-auto mb-10 grid grid-cols-1 md:grid-cols-2 gap-8"></div>
+
+    <div id="policy-container" class="max-w-7xl mx-auto"></div>
 
     <script type="module">
-        import { POLICY_DATA } from './data.js?v=1.0.5';
+        import { POLICY_DATA } from './data.js?v=1.0.6';
         const TODAY = new Date();
 
         window.render = function(mode) {
             const container = document.getElementById('policy-container');
+            const summary = document.getElementById('summary-bar');
             const list = POLICY_DATA[mode];
             const curr = mode === 'singapore' ? '$' : '₹';
+
+            // Reset tab styles
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            const targetBtn = mode === 'singapore' ? 'btn-sg' : `btn-${mode}`;
+            document.getElementById(targetBtn).classList.add('active');
 
             container.innerHTML = list.map(p => {
                 const isPaidUp = p.dueDate === "PAID UP";
@@ -50,11 +68,12 @@
                 const totalDuration = maturityYear - startYear;
                 const premPct = (p.premiumYears / totalDuration) * 100;
 
-                // 1. Premium segments (The yearly blocks)
+                // 1. Yearly Premium Blocks
                 let premiumSegments = "";
                 for(let i=0; i<p.premiumYears; i++) {
                     const yr = startYear + i;
-                    const isPd = new Date(`Jan 1 ${yr + 1}`) < TODAY;
+                    const anniversaryDate = new Date(`${p.commenced.split(' ')[1]} ${p.commenced.split(' ')[0]}, ${yr}`);
+                    const isPd = anniversaryDate < TODAY;
                     premiumSegments += `<div class="segment-container flex-1 h-4 ${isPd ? 'bg-green-500' : 'bg-gray-200'} border-r border-white relative">
                         <span class="tooltip-text">Year ${i+1} (${yr}): ${isPd ? 'PAID' : 'DUE'}</span>
                         ${i===0 ? '<div class="vertical-marker left-0"></div>' : ''}
@@ -62,30 +81,29 @@
                     </div>`;
                 }
 
-                // 2. Growth Phase logic
+                // 2. Growth Phase Logic (Restored ULIP vs Savings Styles)
                 const growthYears = totalDuration - p.premiumYears;
-                const elapsedGrowth = Math.max(0, TODAY.getFullYear() - (startYear + p.premiumYears));
+                const elapsedGrowth = Math.max(0, (TODAY.getFullYear() - (startYear + p.premiumYears)));
                 const growthProgressPct = Math.min(100, (elapsedGrowth / growthYears) * 100);
 
                 let phaseContent = "";
                 if(p.type === 'ULIP' || p.type === 'ILP' || p.growthPhase) {
-                    // CONSOLIDATED BAR for ULIP
+                    // CONSOLIDATED ULIP BAR
                     phaseContent = `
                         <div class="flex-1 bg-gray-100 relative rounded-r-sm overflow-hidden segment-container">
                             <span class="tooltip-text">Growth Phase</span>
-                            <div class="absolute top-0 left-0 h-full bg-orange-600 transition-all duration-500" style="width: ${growthProgressPct}%"></div>
-                            
+                            <div class="absolute top-0 left-0 h-full bg-orange-600" style="width: ${growthProgressPct}%"></div>
                             ${[1, 2, 3, 4].map(i => `<div class="dot-wrapper absolute h-full" style="left:${i*20}%; z-index:60;"><div class="payout-dot growth-dot"></div></div>`).join('')}
-                            
                             <div class="dot-wrapper absolute h-full right-0" style="right: -8px; z-index:70;"><span class="tooltip-text" style="left:auto; right:0; transform:none;">MATURITY: ${p.maturityAmt}</span><div class="payout-dot maturity-dot"></div></div>
                             <div class="vertical-marker right-0"></div>
                         </div>`;
                 } else {
-                    // SEGMENTED BARS for Savings/Moneyback
+                    // SEGMENTED SAVINGS BLOCKS
                     let subSegments = "";
                     for(let j=1; j<=growthYears; j++) {
                         const yr = startYear + p.premiumYears + j - 1;
-                        const isPd = new Date(`Jan 1 ${yr + 1}`) < TODAY;
+                        const anniversaryDate = new Date(`${p.commenced.split(' ')[1]} ${p.commenced.split(' ')[0]}, ${yr}`);
+                        const isPassed = anniversaryDate < TODAY;
                         
                         let label = "Growth Phase";
                         if(p.payoutSteps) {
@@ -97,8 +115,8 @@
                             if(step) label = `Income: ${step.val}`;
                         }
 
-                        subSegments += `<div class="segment-container flex-1 h-4 ${isPd ? 'bg-orange-600' : 'bg-gray-100'} border-r border-white relative">
-                            <span class="tooltip-text">${label} (${yr}) ${isPd ? '(Passed)' : ''}</span>
+                        subSegments += `<div class="segment-container flex-1 h-4 ${isPassed ? 'bg-orange-600' : 'bg-gray-100'} border-r border-white relative">
+                            <span class="tooltip-text">${label} (${yr})</span>
                             ${j === growthYears ? '<div class="dot-wrapper absolute right-0" style="right:-8px;"><span class="tooltip-text" style="left:auto; right:0; transform:none;">MATURITY: ${p.maturityAmt}</span><div class="payout-dot maturity-dot"></div></div>' : ''}
                         </div>`;
                     }
@@ -130,7 +148,26 @@
                     </div>
                 </div>`;
             }).join('');
+
+            // Restored Summary logic
+            let tP = 0, tS = 0;
+            list.forEach(p => { if(p.dueDate !== "PAID UP") tP += p.premium; tS += p.sumAssured; });
+            summary.innerHTML = `
+                <div class="bg-white p-8 rounded-2xl border-l-8 border-l-emerald-500 shadow-sm">
+                    <p class="val-label text-emerald-600">Active Annual Premium</p>
+                    <p class="text-4xl font-black text-gray-900">${curr} ${tP.toLocaleString()}</p>
+                </div>
+                <div class="bg-white p-8 rounded-2xl border-l-8 border-l-blue-600 shadow-sm">
+                    <p class="val-label text-blue-600">Consolidated Sum Assured</p>
+                    <p class="text-4xl font-black text-gray-900">${curr} ${tS.toLocaleString()}</p>
+                </div>`;
         };
+
+        // Tab Event Listeners
+        document.getElementById('btn-india').addEventListener('click', () => render('india'));
+        document.getElementById('btn-sg').addEventListener('click', () => render('singapore'));
+        document.getElementById('btn-wife').addEventListener('click', () => render('wife'));
+        
         render('india');
     </script>
 </body>
