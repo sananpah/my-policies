@@ -20,33 +20,33 @@
 
         .policy-card { background: white; border-radius: 12px; border-left: 6px solid; margin-bottom: 1rem; box-shadow: 0 2px 4px rgba(0,0,0,0.05); overflow: hidden; }
         .card-header { cursor: pointer; display: grid; grid-template-columns: 2.5fr 1fr 1.5fr 1.5fr 1.5fr 0.3fr; align-items: center; padding: 16px 24px; gap: 10px; }
-        .content-area { display: none; padding: 30px 40px 90px 40px; border-top: 1px solid #f1f5f9; background: #fafafa; }
+        .content-area { display: none; padding: 30px 40px 100px 40px; border-top: 1px solid #f1f5f9; background: #fafafa; }
         .open .content-area { display: block; }
 
-        .timeline-track { position: relative; height: 16px; background: #e2e8f0; border-radius: 4px; margin: 60px 0 60px 0; width: 100%; display: flex; }
+        /* Timeline Elements */
+        .timeline-track { position: relative; height: 18px; background: #e2e8f0; border-radius: 9px; margin: 60px 0 60px 0; width: 100%; display: flex; }
         .segment { height: 100%; border-right: 1px solid rgba(255,255,255,0.4); position: relative; cursor: help; }
         
         .tooltip {
-            visibility: hidden; opacity: 0; position: absolute; bottom: 200%; left: 50%; 
-            transform: translateX(-50%); background: #0f172a; color: #fff; padding: 12px;
-            border-radius: 6px; font-size: 11px; width: 240px; z-index: 100; text-align: center;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3); pointer-events: none; line-height: 1.4; font-weight: 600;
+            visibility: hidden; opacity: 0; position: absolute; bottom: 220%; left: 50%; 
+            transform: translateX(-50%); background: #0f172a; color: #fff; padding: 10px;
+            border-radius: 6px; font-size: 11px; width: 220px; z-index: 100; text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3); pointer-events: none; line-height: 1.4;
         }
-        .segment:hover .tooltip, .node-box:hover .tooltip { visibility: visible; opacity: 1; transform: translateX(-50%) translateY(-5px); transition: 0.2s; }
+        .segment:hover .tooltip, .node-circle:hover .tooltip { visibility: visible; opacity: 1; transform: translateX(-50%) translateY(-5px); transition: 0.2s; }
 
         @keyframes alert-glow { 0%, 100% { background: #fee2e2; } 50% { background: #fecaca; box-shadow: 0 0 12px #ef4444; } }
         .due-reminder { animation: alert-glow 2s infinite; border-radius: 4px; padding: 4px 8px; }
 
-        .paid-stamp { border: 2px solid #059669; color: #059669; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 900; transform: rotate(-8deg); background: #ecfdf5; }
-        
-        .node-box { position: absolute; top: -12px; padding: 4px 10px; border-radius: 4px; border: 2px solid #fff; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 60; cursor: help; font-size: 10px; font-weight: 900; color: white; text-align: center; min-width: 50px; }
-        
-        .marker-label { position: absolute; top: 38px; font-size: 11px; font-weight: 800; color: #64748b; white-space: nowrap; transform: translateX(-50%); }
+        /* Circular Node Style */
+        .node-circle { position: absolute; top: -11px; width: 40px; height: 40px; border-radius: 50%; border: 4px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.2); z-index: 60; cursor: help; display: flex; items-center; justify-center; font-size: 8px; font-weight: 900; color: white; letter-spacing: -0.5px; }
+
+        .marker-label { position: absolute; top: 42px; font-size: 11px; font-weight: 800; color: #64748b; white-space: nowrap; transform: translateX(-50%); }
     </style>
 </head>
 <body class="p-4 md:p-10">
 
-    <div class="version-stamp">v2.2.0 | 07-Mar-2026 21:36</div>
+    <div class="version-stamp">v2.3.0 | 07-Mar-2026 21:41</div>
 
     <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center mb-10">
         <h1 class="brand-header text-3xl font-black italic tracking-tight">NAMI INSURANCE PORTFOLIO</h1>
@@ -82,47 +82,47 @@
 
             document.getElementById('container').innerHTML = list.map(p => {
                 const isPaid = p.dueDate === "PAID UP";
-                const start = parseInt(p.commenced.split(' ')[2]);
-                const maturity = parseInt(p.maturity.split(' ')[2]);
-                const totalYrs = maturity - start;
-                const premWidth = (p.premiumYears / totalYrs) * 100;
+                const startYear = parseInt(p.commenced.split(' ')[2]);
+                const maturityYear = parseInt(p.maturity.split(' ')[2]);
+                const totalDuration = maturityYear - startYear;
+                const premWidth = (p.premiumYears / totalDuration) * 100;
                 
                 let dateClass = "font-black text-slate-800";
                 if (!isPaid) {
                     const due = new Date(p.dueDate);
-                    const diff = (due - TODAY) / (1000 * 60 * 60 * 24);
-                    if (diff <= 45) dateClass = "due-reminder text-red-700";
+                    if ((due - TODAY) / (1000 * 60 * 60 * 24) <= 45) dateClass = "due-reminder text-red-700";
                 }
 
+                // 1. Premium Phase Segments
                 const premSegments = Array.from({length: p.premiumYears}).map((_, i) => {
-                    const yr = start + i;
+                    const yr = startYear + i;
                     return `<div class="segment flex-1 ${yr < CURRENT_YEAR ? 'bg-emerald-600' : 'bg-emerald-200'}">
-                        <div class="tooltip">YEAR ${i+1} (${yr})<br>PREMIUM: ${sym}${p.premium.toLocaleString()}</div>
+                        <div class="tooltip">YEAR ${i+1} (${yr})<br>PREMIUM PHASE</div>
                     </div>`;
                 }).join('');
 
-                const incomeYrs = totalYrs - p.premiumYears;
-                const incomeSegments = Array.from({length: incomeYrs}).map((_, i) => {
-                    const yrOfPayout = i + 1;
-                    const absoluteYear = start + p.premiumYears + i;
-                    let stepInfo = p.income || "Growth Phase";
-                    let label = "INCOME PERIOD";
-                    
-                    if (p.payoutSteps) {
-                        const step = p.payoutSteps.find(s => {
-                            const range = s.years.split('-').map(Number);
-                            return range.length === 2 ? (yrOfPayout >= range[0] && yrOfPayout <= range[1]) : (yrOfPayout === range[0]);
-                        });
-                        if (step) {
-                            stepInfo = `ANNUAL PAYOUT: ${step.val}`;
-                            label = `PERIOD: Years ${step.years}`;
-                        }
-                    }
+                // 2. Income/Growth Phase Segments (Fixed for Nishchit Ace)
+                const incomeYearsTotal = totalDuration - p.premiumYears;
+                let incomeSegments = '';
+                
+                if (p.payoutSteps) {
+                    // Logic to breakout specific payout dots/segments
+                    p.payoutSteps.forEach(step => {
+                        const range = step.years.split('-').map(Number);
+                        const startStep = range[0];
+                        const endStep = range[1] || range[0];
+                        const stepSpan = (endStep - startStep) + 1;
+                        const stepWidth = (stepSpan / incomeYearsTotal) * 100;
 
-                    return `<div class="segment flex-1 ${absoluteYear < CURRENT_YEAR ? 'bg-orange-500' : 'bg-orange-100'}">
-                        <div class="tooltip">YEAR ${p.premiumYears + yrOfPayout} (${absoluteYear})<br><b>${label}</b><br>${stepInfo}</div>
+                        incomeSegments += `<div class="segment flex h-full ${startYear + p.premiumYears + startStep - 1 < CURRENT_YEAR ? 'bg-orange-500' : 'bg-orange-200'}" style="width: ${stepWidth}%">
+                            <div class="tooltip">PAYOUT PERIOD: Years ${step.years}<br><b>AMOUNT: ${step.val}</b></div>
+                        </div>`;
+                    });
+                } else {
+                    incomeSegments = `<div class="segment flex-1 ${startYear + p.premiumYears < CURRENT_YEAR ? 'bg-orange-500' : 'bg-orange-100'}">
+                        <div class="tooltip">INCOME/GROWTH PHASE<br>${p.income || 'Accruing Value'}</div>
                     </div>`;
-                }).join('');
+                }
 
                 return `
                 <div class="policy-card" id="card-${p.id}" style="border-color: ${p.color}">
@@ -161,7 +161,7 @@
                         </div>
 
                         <div class="timeline-track">
-                            <div class="node-box bg-slate-800" style="left: -25px;">
+                            <div class="node-circle bg-slate-800 flex items-center justify-center" style="left: -20px;">
                                 <div class="tooltip">COMMENCED: ${p.commenced}</div>START
                             </div>
 
@@ -170,7 +170,7 @@
                                 <div class="flex h-full" style="width: ${100 - premWidth}%">${incomeSegments}</div>
                             </div>
                             
-                            <div class="node-box bg-emerald-600" style="left: calc(${premWidth}% - 25px);">
+                            <div class="node-circle bg-emerald-600 flex items-center justify-center" style="left: calc(${premWidth}% - 20px);">
                                 <div class="tooltip">PREMIUM PAYMENTS COMPLETED: ${p.premiumEnds}</div>END
                             </div>
 
@@ -178,7 +178,7 @@
                             <div class="marker-label" style="left: ${premWidth}%; color: #059669;">${p.premiumEnds}</div>
                             <div class="marker-label" style="left: 100%; color: #ef4444;">${p.maturity}</div>
                             
-                            <div class="node-box bg-red-600" style="right: -25px;">
+                            <div class="node-circle bg-red-600 flex items-center justify-center" style="right: -20px;">
                                 <div class="tooltip" style="left: -100px; width: 260px;"><b>FINAL MATURITY VALUE</b><br>${p.maturityAmt}<br>DATE: ${p.maturity}</div>MAT
                             </div>
                         </div>
