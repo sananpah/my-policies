@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nami Portfolio v3.1.2</title>
+    <title>Nami Portfolio v3.1.3</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Orbitron:wght@800&display=swap');
@@ -12,9 +12,9 @@
         .version-stamp { position: fixed; top: 15px; right: 20px; font-size: 10px; font-weight: 800; color: #64748b; background: #fff; padding: 4px 10px; border-radius: 6px; border: 1px solid #e2e8f0; z-index: 9999; }
         .brand-header { font-family: 'Orbitron', sans-serif; background: linear-gradient(90deg, #4f46e5, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 
-        /* --- VIBRANT TIMELINE --- */
+        /* --- TIMELINE STYLING --- */
         .segment { height: 100%; position: relative; cursor: pointer; transition: 0.3s; border-radius: 4px; margin: 0 2px; }
-        .segment:hover { filter: brightness(1.2); transform: scaleY(1.1); z-index: 100; }
+        .segment:hover { filter: brightness(1.2); transform: scaleY(1.15); z-index: 100; }
         
         .bg-past { background: #475569; opacity: 0.85; }
         .bg-premium { background: linear-gradient(180deg, #10b981 0%, #059669 100%); }
@@ -29,7 +29,7 @@
         }
         .segment:hover .tooltip, .node:hover .tooltip { visibility: visible; opacity: 1; transform: translateX(-50%) translateY(0); }
 
-        /* --- CARDS --- */
+        /* --- CARD UI --- */
         .policy-card { background: white; border-radius: 28px; border-left: 14px solid; margin-bottom: 35px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); }
         .card-header { cursor: pointer; display: flex; align-items: center; padding: 35px; gap: 24px; }
         .content-area { display: none; padding: 100px 50px; border-top: 1px solid #f1f5f9; background: #fafbfc; border-radius: 0 0 28px 28px; overflow: visible !important; }
@@ -44,12 +44,12 @@
 </head>
 <body>
 
-    <div class="version-stamp">v3.1.2 | 07-Mar-2026 23:50</div>
+    <div class="version-stamp">v3.1.3 | 07-Mar-2026 23:55</div>
 
     <div class="max-w-7xl mx-auto flex justify-between items-end mb-14">
         <div>
             <h1 class="brand-header text-5xl font-black italic tracking-tighter">NAMI PORTFOLIO</h1>
-            <p class="text-slate-400 font-bold text-[10px] mt-2 uppercase tracking-[0.4em]">Asset Management Suite</p>
+            <p class="text-slate-400 font-bold text-[10px] mt-2 uppercase tracking-[0.4em]">Personal Policy Dashboard</p>
         </div>
         <div class="flex gap-4">
             <button onclick="render('india')" id="btn-india" class="px-10 py-3 rounded-2xl font-black border-2 transition-all">INDIA</button>
@@ -72,13 +72,11 @@
             const list = POLICY_DATA[cat];
             const sym = cat === 'singapore' ? '$' : '₹';
             
-            // UI Switcher
             document.querySelectorAll('button').forEach(b => b.className = "px-10 py-3 rounded-2xl font-black border-2 bg-white text-slate-400 border-slate-200 shadow-sm");
             document.getElementById(`btn-${cat}`).className = "px-10 py-3 rounded-2xl font-black border-2 bg-slate-900 text-white border-slate-900 shadow-lg";
 
-            // Dashboard Summary
             document.getElementById('summary').innerHTML = `
-                <div class="bg-white p-10 rounded-3xl border-b-[12px] border-indigo-600 shadow-sm"><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Total Premium</p><p class="text-5xl font-black text-slate-900">${sym}${list.reduce((s,p)=>s+p.premium,0).toLocaleString()}</p></div>
+                <div class="bg-white p-10 rounded-3xl border-b-[12px] border-indigo-600 shadow-sm"><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Annual Premium</p><p class="text-5xl font-black text-slate-900">${sym}${list.reduce((s,p)=>s+p.premium,0).toLocaleString()}</p></div>
                 <div class="bg-white p-10 rounded-3xl border-b-[12px] border-pink-600 shadow-sm"><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Sum Assured</p><p class="text-5xl font-black text-slate-900">${sym}${list.reduce((s,p)=>s+p.sumAssured,0).toLocaleString()}</p></div>
             `;
 
@@ -90,19 +88,18 @@
                 const isPaid = premEndY < CURRENT_YEAR || (premEndY === CURRENT_YEAR && 1 < CURRENT_MONTH);
                 const dur = matY - startY;
 
-                // --- TIMELINE BUILDER ---
                 let timelineSegments = '';
                 
-                // 1. Premium Phase
-                const pastPremCount = CURRENT_YEAR - startY;
-                if(pastPremCount > 0) timelineSegments += `<div class="segment bg-past" style="flex:${pastPremCount}"><div class="tooltip"><b>Past Premiums</b><br>Paid ${startY}-${CURRENT_YEAR-1}</div></div>`;
+                // Premium Segments
+                const pastCount = CURRENT_YEAR - startY;
+                if(pastCount > 0) timelineSegments += `<div class="segment bg-past" style="flex:${pastCount}"><div class="tooltip"><b>Past Premiums</b><br>Years ${startY}-${CURRENT_YEAR-1}</div></div>`;
                 
                 for(let y=CURRENT_YEAR; y <= premEndY; y++){
                     const color = (y === CURRENT_YEAR && !isPaid) ? 'bg-premium' : 'bg-future';
                     timelineSegments += `<div class="segment ${color}" style="flex:1"><div class="tooltip"><b>Premium Year</b><br>${y === CURRENT_YEAR && !isPaid ? 'DUE NOW' : 'Future'}<br>${y}</div></div>`;
                 }
 
-                // 2. Income/Growth Phase
+                // Income Segments
                 const incStart = startY + p.premiumYears;
                 for(let y=incStart; y < matY; y++) {
                     const polYear = y - startY + 1;
@@ -112,7 +109,7 @@
                     if (p.name.includes("Fortune Maximiser") && polYear >= 2) { label = "Annual Bonus"; amt = "Variable"; }
                     else if (p.name.includes("Pension SL")) { amt = "₹89,830"; }
                     else if (p.name.includes("Samrudhi")) { amt = "₹1,00,000"; }
-                    else if (p.name.includes("Ace")) { amt = polYear <= 10 ? "₹0 (Accumulation)" : "₹1,01,154"; }
+                    else if (p.name.includes("Nishchit Ace")) { amt = polYear <= 10 ? "₹0 (Accumulation)" : "₹1,01,154"; }
                     else if (p.name.includes("Moneyback")) {
                         if (polYear >= 11 && polYear <= 14) amt = "₹18,591";
                         else if (polYear === 15) amt = "₹49,576";
@@ -125,7 +122,7 @@
                     if(isFarFuture) break;
                 }
 
-                const matBenefit = p.name.includes("Moneyback") ? "₹55,761 (Loyalty+Mat)" : (p.name.includes("Samrudhi") || p.name.includes("Ace") ? sym + p.sumAssured.toLocaleString() : p.maturityAmt);
+                const matBenefit = p.name.includes("Moneyback") ? "₹55,761 (Loyalty+Mat)" : (p.name.includes("Samrudhi") || p.name.includes("Nishchit Ace") ? sym + p.sumAssured.toLocaleString() : p.maturityAmt);
 
                 return `
                 <div class="policy-card" id="card-${p.id}" style="border-color: ${p.color}">
@@ -133,10 +130,10 @@
                         <div style="flex:2.3">
                             <img src="${p.logo}" class="h-14 object-contain mb-3">
                             <h3 class="font-black text-slate-900 text-lg">${p.name}</h3>
-                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Policy No. ${p.id}</p>
+                            <p class="text-[10px] font-black text-slate-400 uppercase">Policy Number: ${p.id}</p>
                         </div>
-                        <div style="flex:1" class="text-right"><p class="text-[10px] font-bold text-slate-400 uppercase">Premium</p><p class="text-xl font-black text-emerald-600">${sym}${p.premium.toLocaleString()}</p></div>
-                        <div style="flex:1.2" class="text-right"><p class="text-[10px] font-bold text-slate-400 uppercase">Sum Assured</p><p class="text-xl font-black text-indigo-600">${sym}${p.sumAssured.toLocaleString()}</p></div>
+                        <div style="flex:1" class="text-right"><p class="text-[10px] font-bold text-slate-400">PREMIUM</p><p class="text-xl font-black text-emerald-600">${sym}${p.premium.toLocaleString()}</p></div>
+                        <div style="flex:1.2" class="text-right"><p class="text-[10px] font-bold text-slate-400">SUM ASSURED</p><p class="text-xl font-black text-indigo-600">${sym}${p.sumAssured.toLocaleString()}</p></div>
                         <div style="flex:1" class="flex justify-center">
                             ${!isPaid ? `<div class="mini-badge" style="border-color:#10b981"><span class="badge-num text-lg font-black">${premEndY-CURRENT_YEAR}</span><span class="badge-txt text-[7px]">Years Left</span></div>` : ''}
                         </div>
