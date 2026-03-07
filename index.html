@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nami Portfolio v3.1.5</title>
+    <title>Nami Portfolio v3.1.6</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Orbitron:wght@800&display=swap');
@@ -28,16 +28,17 @@
 
         .policy-card { background: white; border-radius: 28px; border-left: 14px solid; margin-bottom: 35px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); }
         .card-header { cursor: pointer; display: flex; align-items: center; padding: 35px; gap: 24px; }
-        .content-area { display: none; padding: 80px 50px; border-top: 1px solid #f1f5f9; background: #fafbfc; border-radius: 0 0 28px 28px; overflow: visible !important; }
+        .content-area { display: none; padding: 60px 50px; border-top: 1px solid #f1f5f9; background: #fafbfc; border-radius: 0 0 28px 28px; overflow: visible !important; }
         .open .content-area { display: block; }
 
-        .type-badge { font-size: 9px; font-weight: 900; text-transform: uppercase; padding: 5px 12px; border-radius: 8px; border: 1px solid; }
+        .type-badge { font-size: 9px; font-weight: 900; text-transform: uppercase; padding: 4px 10px; border-radius: 8px; border: 1px solid; }
         .savings { background: #f0f9ff; color: #0369a1; border-color: #bae6fd; }
         .retirement { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
         .ulip { background: #f5f3ff; color: #5b21b6; border-color: #ddd6fe; }
 
         .timeline-track { position: relative; height: 42px; background: #e2e8f0; border-radius: 24px; width: 100%; display: flex; margin: 30px 0; padding: 0 6px; align-items: center; }
         .node { position: absolute; width: 60px; height: 60px; border-radius: 50%; border: 6px solid #fff; z-index: 200; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; color: white; top: -9px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .due-icon { width: 14px; height: 14px; margin-right: 6px; display: inline-block; vertical-align: middle; }
     </style>
 </head>
 <body>
@@ -45,7 +46,7 @@
     <div class="max-w-7xl mx-auto flex justify-between items-end mb-14">
         <div>
             <h1 class="brand-header text-5xl font-black italic tracking-tighter">NAMI PORTFOLIO</h1>
-            <p class="text-slate-400 font-bold text-[10px] mt-2 uppercase tracking-[0.4em]">Asset Strategy & Performance</p>
+            <p class="text-slate-400 font-bold text-[10px] mt-2 uppercase tracking-[0.4em]">Integrated Asset Dashboard</p>
         </div>
         <div class="flex gap-4">
             <button onclick="render('india')" id="btn-india" class="px-10 py-3 rounded-2xl font-black border-2 transition-all">INDIA</button>
@@ -60,7 +61,7 @@
     <script type="module">
         import { POLICY_DATA } from './data.js';
         const CURRENT_YEAR = 2026;
-        const CURRENT_MONTH = 2;
+        const CURRENT_MONTH = 2; // March
 
         window.toggleCard = (id) => document.getElementById(`card-${id}`).classList.toggle('open');
 
@@ -88,6 +89,7 @@
                 const isULIP = p.type.toLowerCase().includes('ulip');
 
                 let timeline = '';
+                // 1. Premium Phase
                 const pastPrems = CURRENT_YEAR - startY;
                 if(pastPrems > 0) timeline += `<div class="segment bg-past" style="flex:${pastPrems}"><div class="tooltip"><b>Past Premiums</b><br>Paid ${startY}-${CURRENT_YEAR-1}</div></div>`;
                 
@@ -96,7 +98,7 @@
                     timeline += `<div class="segment ${color}" style="flex:1"><div class="tooltip"><b>Premium Year</b><br>${y === CURRENT_YEAR && !isPaid ? 'DUE NOW' : 'Future'}<br>${y}</div></div>`;
                 }
 
-                // Income/Growth Phase
+                // 2. Income/Growth Phase
                 const incStart = startY + (p.name.includes("Fortune Maximiser") ? 1 : p.premiumYears);
                 for(let y=incStart; y < matY; y++) {
                     const polYear = y - startY + 1;
@@ -130,24 +132,28 @@
                 return `
                 <div class="policy-card" id="card-${p.id}" style="border-color: ${p.color}">
                     <div class="card-header" onclick="toggleCard('${p.id}')">
-                        <div style="flex:2.5">
-                            <img src="${p.logo}" class="h-14 object-contain mb-3">
-                            <h3 class="font-black text-slate-900 text-lg leading-tight">${p.name}</h3>
+                        <div style="flex:2.3">
+                            <img src="${p.logo}" class="h-12 object-contain mb-3">
+                            <div class="flex items-center gap-3 mb-1">
+                                <h3 class="font-black text-slate-900 text-lg leading-tight">${p.name}</h3>
+                                <span class="type-badge ${typeColor}">${p.type}</span>
+                            </div>
                             <p class="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Policy No: ${p.id}</p>
                         </div>
                         <div style="flex:1" class="text-right"><p class="text-[9px] font-bold text-slate-400 uppercase">Premium</p><p class="text-xl font-black text-emerald-600">${sym}${p.premium.toLocaleString()}</p></div>
                         <div style="flex:1.2" class="text-right"><p class="text-[9px] font-bold text-slate-400 uppercase">Sum Assured</p><p class="text-xl font-black text-indigo-600">${sym}${p.sumAssured.toLocaleString()}</p></div>
                         <div style="flex:1" class="text-right">
-                            ${isPaid ? `<img src="paid.jpg" class="h-10 ml-auto">` : `<span class="text-xs font-black bg-slate-100 px-3 py-1 rounded-lg border border-slate-200">${p.dueDate}</span>`}
+                            ${isPaid ? `<img src="paid.jpg" class="h-10 ml-auto">` : `
+                                <div class="inline-flex items-center bg-slate-100 px-3 py-1 rounded-lg border border-slate-200">
+                                    <svg class="due-icon text-slate-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path></svg>
+                                    <span class="text-xs font-black">${p.dueDate}</span>
+                                </div>`}
                         </div>
                     </div>
                     <div class="content-area">
-                        <div class="flex justify-between items-center mb-10 px-4">
-                            <span class="type-badge ${typeColor}">${p.type}</span>
-                            <div class="flex gap-10">
-                                <div><p class="text-[9px] font-bold text-slate-400">CLIENT ID</p><p class="text-xs font-black">${p.clientId || 'N/A'}</p></div>
-                                <div><p class="text-[9px] font-bold text-slate-400">UIN</p><p class="text-xs font-black">${p.uin || 'N/A'}</p></div>
-                            </div>
+                        <div class="flex gap-10 mb-8 px-4 border-b border-slate-100 pb-4">
+                            <div><p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Client ID</p><p class="text-sm font-black text-slate-700">${p.clientId || 'N/A'}</p></div>
+                            <div><p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">UIN Number</p><p class="text-sm font-black text-slate-700">${p.uin || 'N/A'}</p></div>
                         </div>
                         <div class="timeline-track">
                             <div class="node bg-slate-900" style="left:-30px;">START</div>
