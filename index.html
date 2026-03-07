@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nami Portfolio v3.3.6</title>
+    <title>Nami Portfolio v3.3.7</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Orbitron:wght@800&display=swap');
@@ -35,7 +35,7 @@
         }
         .segment:hover .tooltip, .node:hover .tooltip { visibility: visible; opacity: 1; transform: translateX(-50%) translateY(0); }
 
-        .policy-card { background: white; border-radius: 28px; border-left: 14px solid; margin-bottom: 35px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); transition: 0.3s; }
+        .policy-card { background: white; border-radius: 28px; border-left: 14px solid; margin-bottom: 35px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); }
         .card-header { cursor: pointer; display: flex; align-items: center; padding: 35px; gap: 24px; }
         .content-area { display: none; padding: 60px 50px; border-top: 1px solid #f1f5f9; background: #fafbfc; border-radius: 0 0 28px 28px; overflow: visible !important; }
         .open .content-area { display: block; }
@@ -51,7 +51,7 @@
 </head>
 <body>
 
-    <div class="version-stamp">BUILD: v3.3.6 | 08-MAR-2026</div>
+    <div class="version-stamp">BUILD: v3.3.7 | 08-MAR-2026</div>
 
     <div class="max-w-7xl mx-auto flex justify-between items-end mb-14">
         <div>
@@ -105,19 +105,7 @@
                     let phaseLabel = "";
                     let color = "bg-future";
 
-                    // DETECT PAYOUTS
-                    if (p.name.includes("Nishchit Ace")) {
-                        if (polYear >= 11 && polYear <= 15) payoutLabel = "₹ 1,33,974";
-                        else if (polYear >= 16 && polYear <= 20) payoutLabel = "₹ 1,60,769";
-                        else if (polYear >= 21 && polYear <= 25) payoutLabel = "₹ 1,87,564";
-                        else if (polYear >= 26 && polYear <= 30) payoutLabel = "₹ 214,359";
-                    } else if (p.name.includes("Moneyback")) {
-                        if (polYear >= 11 && polYear <= 14) payoutLabel = "₹ 18,591";
-                        else if (polYear === 15) payoutLabel = "₹ 49,576";
-                    } else if (p.name.includes("Samrudhi") && polYear >= 8) payoutLabel = "₹ 1,00,000";
-                    else if (p.name.includes("Pension SL")) payoutLabel = "₹ 89,830";
-
-                    // LOGIC FOR HOVER TEXT & COLORS
+                    // LOGIC FOR PREMIUM VS INCOME PHASE
                     if (yr <= premEndYear) {
                         if (isPast || isPaid) {
                             color = "bg-past";
@@ -127,15 +115,36 @@
                             phaseLabel = "Premium Active";
                         }
                     } else {
+                        // INCOME PHASE DETECTION
                         color = isULIP ? "bg-growth" : "bg-income";
                         phaseLabel = isULIP ? "Unit Growth" : "Income Phase";
+
+                        if (p.name.includes("Nishchit Ace")) {
+                            if (polYear >= 11 && polYear <= 15) payoutLabel = "₹ 1,33,974";
+                            else if (polYear >= 16 && polYear <= 20) payoutLabel = "₹ 1,60,769";
+                            else if (polYear >= 21 && polYear <= 25) payoutLabel = "₹ 1,87,564";
+                            else if (polYear >= 26 && polYear <= 30) payoutLabel = "₹ 214,359";
+                        } else if (p.name.includes("Moneyback")) {
+                            if (polYear >= 11 && polYear <= 14) payoutLabel = "₹ 18,591";
+                            else if (polYear === 15) payoutLabel = "₹ 49,576";
+                        } else if (p.name.includes("Samrudhi") && polYear >= 8) {
+                            payoutLabel = "₹ 1,00,000";
+                        } else if (p.name.includes("Pension SL")) {
+                            // PENSION LOGIC: Starts from the year after the year following premium end
+                            if (yr > premEndYear + 1) {
+                                payoutLabel = "₹ 89,830";
+                            } else {
+                                phaseLabel = "Accumulation Phase";
+                                payoutLabel = "Waiting";
+                            }
+                        }
                     }
 
                     timeline += `
                     <div class="segment ${color}" style="flex:1">
                         <div class="tooltip">
                             <b class="text-white text-xs uppercase">${phaseLabel}</b><br>
-                            <span class="text-orange-400 font-black">Payout: ${payoutLabel}</span><br>
+                            <span class="text-orange-400 font-black">Annual: ${payoutLabel}</span><br>
                             <span class="text-slate-400 text-[10px]">Year ${polYear} (${yr})</span>
                         </div>
                     </div>`;
