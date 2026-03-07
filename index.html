@@ -1,417 +1,160 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Nami Portfolio v3.1</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nami Portfolio v3.0.5</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Orbitron:wght@800&display=swap');
+        
+        body { background-color: #f8fafc; font-family: 'Inter', sans-serif; color: #1e293b; padding: 40px; }
+        
+        .version-stamp { position: fixed; top: 15px; right: 20px; font-size: 10px; font-weight: 800; color: #64748b; background: #fff; padding: 4px 10px; border-radius: 6px; border: 1px solid #e2e8f0; z-index: 9999; }
+        .brand-header { font-family: 'Orbitron', sans-serif; background: linear-gradient(90deg, #4f46e5, #db2777); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 
-<script src="https://cdn.tailwindcss.com"></script>
+        /* --- PRECISION HOVER ENGINE --- */
+        .segment { height: 100%; position: relative; cursor: pointer; transition: 0.2s; z-index: 10; border-radius: 2px; }
+        .segment:hover { filter: brightness(1.2); transform: scaleY(1.1); z-index: 100; }
+        
+        .tooltip { 
+            visibility: hidden; opacity: 0; position: absolute; bottom: 140%; left: 50%; transform: translateX(-50%) translateY(5px); 
+            background: #0f172a; color: #fff; padding: 10px 14px; border-radius: 8px; font-size: 11px; 
+            width: 160px; text-align: center; z-index: 1000; pointer-events: none; transition: 0.2s;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3); line-height: 1.4; border: 1px solid rgba(255,255,255,0.1);
+        }
+        .segment:hover .tooltip, .node:hover .tooltip { visibility: visible; opacity: 1; transform: translateX(-50%) translateY(0); }
 
-<style>
+        /* --- LAYOUT --- */
+        .policy-card { background: white; border-radius: 24px; border-left: 12px solid; margin-bottom: 30px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); transition: transform 0.2s; }
+        .card-header { cursor: pointer; display: flex; align-items: center; padding: 35px; gap: 20px; }
+        .content-area { display: none; padding: 80px 45px; border-top: 1px solid #f1f5f9; background: #fafafa; border-radius: 0 0 24px 24px; overflow: visible !important; }
+        .open .content-area { display: block; }
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Orbitron:wght@800&display=swap');
+        /* --- TIMELINE TRACK --- */
+        .timeline-track { position: relative; height: 38px; background: #e2e8f0; border-radius: 20px; width: 100%; display: flex; margin: 30px 0; padding: 0 4px; align-items: center; }
+        .node { position: absolute; width: 56px; height: 56px; border-radius: 50%; border: 6px solid #fff; z-index: 200; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; color: white; top: -9px; box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
 
-body{
-background:#f8fafc;
-font-family:'Inter',sans-serif;
-color:#1e293b;
-padding:40px;
-}
+        /* --- SEGMENT GAPS --- */
+        .segment-container { display: flex; gap: 3px; height: 28px; width: 100%; }
 
-.brand-header{
-font-family:'Orbitron',sans-serif;
-background:linear-gradient(90deg,#4f46e5,#db2777);
--webkit-background-clip:text;
--webkit-text-fill-color:transparent;
-}
+        /* --- BADGES --- */
+        .type-badge { font-size: 9px; font-weight: 900; text-transform: uppercase; padding: 6px 12px; border-radius: 10px; border: 1px solid; }
+        .savings { background: #e0f2fe; color: #0369a1; border-color: #bae6fd; }
+        .retirement { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
+        .ulip { background: #fae8ff; color: #a21caf; border-color: #f5d0fe; }
 
-.version-stamp{
-position:fixed;
-top:15px;
-right:20px;
-font-size:10px;
-font-weight:800;
-color:#64748b;
-background:white;
-padding:4px 10px;
-border-radius:6px;
-border:1px solid #e2e8f0;
-}
+        .mini-badge { width: 95px; padding: 6px; border-radius: 14px; background: white; border: 2px solid; display: flex; flex-direction: column; align-items: center; }
+        .badge-num { font-family: 'Orbitron', sans-serif; font-size: 15px; font-weight: 900; }
+        .badge-txt { font-size: 7px; font-weight: 900; text-transform: uppercase; color: #64748b; margin-top: 2px; }
 
-.policy-card{
-background:white;
-border-radius:24px;
-border-left:12px solid;
-margin-bottom:28px;
-box-shadow:0 10px 15px -3px rgba(0,0,0,0.05);
-}
-
-.card-header{
-display:flex;
-align-items:center;
-padding:30px;
-gap:20px;
-cursor:pointer;
-}
-
-.content-area{
-display:none;
-padding:70px 40px;
-border-top:1px solid #f1f5f9;
-background:#fafafa;
-border-radius:0 0 24px 24px;
-}
-
-.open .content-area{
-display:block;
-}
-
-.type-badge{
-font-size:10px;
-font-weight:900;
-padding:6px 12px;
-border-radius:10px;
-border:1px solid;
-}
-
-.savings{background:#e0f2fe;color:#0369a1;border-color:#bae6fd;}
-.retirement{background:#fee2e2;color:#b91c1c;border-color:#fecaca;}
-.ulip{background:#fae8ff;color:#a21caf;border-color:#f5d0fe;}
-
-.mini-badge{
-width:95px;
-padding:6px;
-border-radius:14px;
-background:white;
-border:2px solid;
-display:flex;
-flex-direction:column;
-align-items:center;
-}
-
-.badge-num{
-font-family:'Orbitron',sans-serif;
-font-size:15px;
-font-weight:900;
-}
-
-.badge-txt{
-font-size:8px;
-font-weight:900;
-text-transform:uppercase;
-color:#64748b;
-margin-top:2px;
-}
-
-.timeline-wrapper{
-margin-top:40px;
-}
-
-.timeline-bar{
-position:relative;
-height:26px;
-border-radius:14px;
-background:#e2e8f0;
-overflow:hidden;
-}
-
-.phase{
-height:100%;
-}
-
-.phase-premium{
-background:linear-gradient(90deg,#16a34a,#4ade80);
-}
-
-.phase-income{
-background:linear-gradient(90deg,#fb923c,#f59e0b);
-}
-
-.timeline-node{
-position:absolute;
-top:-8px;
-width:20px;
-height:20px;
-border-radius:50%;
-background:white;
-border:4px solid;
-transform:translateX(-50%);
-box-shadow:0 3px 6px rgba(0,0,0,0.2);
-}
-
-.timeline-node.current{
-width:6px;
-height:34px;
-border-radius:4px;
-background:#2563eb;
-border:none;
-top:-4px;
-}
-
-.timeline-labels{
-display:flex;
-justify-content:space-between;
-font-size:10px;
-font-weight:800;
-color:#64748b;
-margin-top:10px;
-}
-
-</style>
+        .paid-stamp { width: 110px; transform: rotate(-12deg); filter: drop-shadow(0 5px 8px rgba(0,0,0,0.15)); transition: transform 0.3s; }
+        .policy-card:hover .paid-stamp { transform: rotate(-8deg) scale(1.05); }
+    </style>
 </head>
-
 <body>
 
-<div class="version-stamp">v3.1 | 07-Mar-2026</div>
-
-<div class="max-w-7xl mx-auto flex justify-between items-end mb-14">
-
-<div>
-<h1 class="brand-header text-5xl font-black italic tracking-tighter">
-NAMI PORTFOLIO
-</h1>
-
-<p class="text-slate-400 font-bold text-[11px] mt-2 uppercase tracking-[0.4em]">
-Strategic Asset Overview
-</p>
-</div>
-
-<div class="flex gap-4">
-
-<button onclick="render('india')" id="btn-india"
-class="px-10 py-3 rounded-2xl font-black border-2">
-INDIA
-</button>
-
-<button onclick="render('wife')" id="btn-wife"
-class="px-10 py-3 rounded-2xl font-black border-2">
-WIFE
-</button>
-
-<button onclick="render('singapore')" id="btn-singapore"
-class="px-10 py-3 rounded-2xl font-black border-2">
-SINGAPORE
-</button>
-
-</div>
-</div>
-
-<div id="summary"
-class="max-w-7xl mx-auto grid grid-cols-2 gap-8 mb-14">
-</div>
-
-<div id="container"
-class="max-w-7xl mx-auto">
-</div>
-
-<script type="module">
-
-import { POLICY_DATA } from './data.js';
-
-const CURRENT_YEAR=new Date().getFullYear();
-
-window.toggleCard=function(id){
-document.getElementById(`card-${id}`).classList.toggle('open');
-}
-
-window.render=function(cat){
-
-const list=POLICY_DATA[cat];
-
-const sym=cat==='singapore'?'$':'₹';
-
-document.querySelectorAll('button').forEach(b=>{
-b.className="px-10 py-3 rounded-2xl font-black border-2 bg-white text-slate-500 border-slate-200"
-});
-
-document.getElementById(`btn-${cat}`).className=
-"px-10 py-3 rounded-2xl font-black border-2 bg-slate-900 text-white border-slate-900 shadow-lg";
-
-document.getElementById('summary').innerHTML=`
-
-<div class="bg-white p-10 rounded-3xl border-b-[12px] border-indigo-600 shadow-sm">
-<p class="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2">
-Annual Premium
-</p>
-
-<p class="text-5xl font-black text-slate-900">
-${sym}${list.reduce((s,p)=>s+p.premium,0).toLocaleString()}
-</p>
-</div>
-
-<div class="bg-white p-10 rounded-3xl border-b-[12px] border-pink-600 shadow-sm">
-<p class="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2">
-Sum Assured
-</p>
-
-<p class="text-5xl font-black text-slate-900">
-${sym}${list.reduce((s,p)=>s+p.sumAssured,0).toLocaleString()}
-</p>
-</div>
-`;
-
-document.getElementById('container').innerHTML=list.map(p=>{
-
-const startY=parseInt(p.commenced.split(' ')[2]);
-const matY=parseInt(p.maturity.split(' ')[2]);
-const premEndY=parseInt(p.premiumEnds.split(' ')[2]);
-
-const dur=matY-startY;
-
-const pW=(p.premiumYears/dur)*100;
-
-const currentPos=((CURRENT_YEAR-startY)/dur)*100;
-
-const premLeft=Math.max(0,premEndY-CURRENT_YEAR);
-
-let typeColor=p.type.toLowerCase().includes('savings')
-?'savings'
-:(p.type.toLowerCase().includes('retirement')
-?'retirement'
-:'ulip');
-
-return`
-
-<div class="policy-card"
-id="card-${p.id}"
-style="border-color:${p.color}">
-
-<div class="card-header"
-onclick="toggleCard('${p.id}')">
-
-<div style="flex:2.3">
-
-<img src="${p.logo}"
-class="h-16 object-contain mb-3">
-
-<h3 class="font-black text-slate-900 text-lg leading-tight">
-${p.name}
-</h3>
-
-<p class="text-[10px] font-black text-slate-400 uppercase">
-Policy No. ${p.id}
-</p>
-
-</div>
-
-<div style="flex:1"
-class="flex justify-center">
-
-<span class="type-badge ${typeColor}">
-${p.type}
-</span>
-
-</div>
-
-<div style="flex:1"
-class="text-right">
-
-<p class="text-[9px] font-black text-slate-400 uppercase">
-Premium
-</p>
-
-<p class="text-xl font-black text-emerald-600">
-${sym}${p.premium.toLocaleString()}
-</p>
-
-</div>
-
-<div style="flex:1"
-class="text-right">
-
-<p class="text-[9px] font-black text-slate-400 uppercase">
-Sum Assured
-</p>
-
-<p class="text-xl font-black text-indigo-600">
-${sym}${p.sumAssured.toLocaleString()}
-</p>
-
-</div>
-
-<div style="flex:1"
-class="flex flex-col gap-2 items-center">
-
-<div class="mini-badge"
-style="border-color:#10b981">
-
-<span class="badge-num">
-${premLeft>0?premLeft:"✅"}
-</span>
-
-<span class="badge-txt">
-${premLeft>0?"Years Left":"Paid"}
-</span>
-
-</div>
-
-</div>
-
-<div style="flex:1"
-class="text-right">
-
-<p class="text-[9px] font-black text-slate-400 uppercase mb-1">
-Next Due
-</p>
-
-<span class="text-xs font-black bg-slate-100 px-3 py-1 rounded-lg">
-${p.dueDate}
-</span>
-
-</div>
-
-</div>
-
-<div class="content-area">
-
-<div class="timeline-wrapper">
-
-<div class="timeline-bar">
-
-<div class="phase phase-premium"
-style="width:${pW}%"></div>
-
-<div class="phase phase-income"
-style="width:${100-pW}%"></div>
-
-<div class="timeline-node"
-style="left:0%;border-color:#0f172a"></div>
-
-<div class="timeline-node"
-style="left:${pW}%;border-color:#16a34a"></div>
-
-<div class="timeline-node"
-style="left:100%;border-color:#dc2626"></div>
-
-<div class="timeline-node current"
-style="left:${currentPos}%"></div>
-
-</div>
-
-<div class="timeline-labels">
-
-<span>${startY}</span>
-
-<span>Premium End ${premEndY}</span>
-
-<span>Maturity ${matY}</span>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-`;
-
-}).join('');
-
-}
-
-render('india');
-
-</script>
-
+    <div class="version-stamp">v3.0.5 | 07-Mar-2026 23:05</div>
+
+    <div class="max-w-7xl mx-auto flex justify-between items-end mb-14">
+        <div>
+            <h1 class="brand-header text-5xl font-black italic tracking-tighter">NAMI PORTFOLIO</h1>
+            <p class="text-slate-400 font-bold text-[11px] mt-2 uppercase tracking-[0.4em]">Strategic Asset Overview</p>
+        </div>
+        <div class="flex gap-4">
+            <button onclick="render('india')" id="btn-india" class="px-10 py-3 rounded-2xl font-black border-2 transition-all">INDIA</button>
+            <button onclick="render('wife')" id="btn-wife" class="px-10 py-3 rounded-2xl font-black border-2 transition-all">WIFE</button>
+            <button onclick="render('singapore')" id="btn-singapore" class="px-10 py-3 rounded-2xl font-black border-2 transition-all">SINGAPORE</button>
+        </div>
+    </div>
+
+    <div id="summary" class="max-w-7xl mx-auto grid grid-cols-2 gap-8 mb-14"></div>
+    <div id="container" class="max-w-7xl mx-auto"></div>
+
+    <script type="module">
+        import { POLICY_DATA } from './data.js';
+
+        const CURRENT_YEAR = 2026;
+        window.toggleCard = (id) => document.getElementById(`card-${id}`).classList.toggle('open');
+
+        window.render = function(cat) {
+            const list = POLICY_DATA[cat];
+            const sym = cat === 'singapore' ? '$' : '₹';
+            
+            document.querySelectorAll('button').forEach(b => b.className = "px-10 py-3 rounded-2xl font-black border-2 bg-white text-slate-500 border-slate-200 hover:border-slate-400");
+            document.getElementById(`btn-${cat}`).className = "px-10 py-3 rounded-2xl font-black border-2 bg-slate-900 text-white border-slate-900 shadow-lg";
+
+            document.getElementById('summary').innerHTML = `
+                <div class="bg-white p-10 rounded-3xl border-b-[12px] border-indigo-600 shadow-sm"><p class="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2">Annual Premium</p><p class="text-5xl font-black text-slate-900">${sym}${list.reduce((s,p)=>s+p.premium,0).toLocaleString()}</p></div>
+                <div class="bg-white p-10 rounded-3xl border-b-[12px] border-pink-600 shadow-sm"><p class="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2">Sum Assured</p><p class="text-5xl font-black text-slate-900">${sym}${list.reduce((s,p)=>s+p.sumAssured,0).toLocaleString()}</p></div>
+            `;
+
+            document.getElementById('container').innerHTML = list.map(p => {
+                const startY = parseInt(p.commenced.split(' ')[2]);
+                const matY = parseInt(p.maturity.split(' ')[2]);
+                const premEndY = parseInt(p.premiumEnds.split(' ')[2]);
+                
+                // AXIS LOGIC: If premium ends before current year, it's paid.
+                const isPaid = premEndY < CURRENT_YEAR;
+                const isFinalYear = premEndY === CURRENT_YEAR;
+                const premLeft = premEndY - CURRENT_YEAR;
+                const matLeft = matY - CURRENT_YEAR;
+                const dur = matY - startY;
+                const pW = (p.premiumYears / dur) * 100;
+
+                const premS = Array.from({length: p.premiumYears}).map((_, i) => {
+                    const y = startY + i;
+                    const status = y < CURRENT_YEAR ? "PAID" : (y === CURRENT_YEAR ? "DUE NOW" : "FUTURE");
+                    const color = y < CURRENT_YEAR ? 'bg-emerald-600' : (y === CURRENT_YEAR ? 'bg-emerald-400' : 'bg-emerald-100');
+                    return `<div class="segment flex-1 ${color}"><div class="tooltip">Year ${i+1} (${y})<br><b>${status}</b></div></div>`;
+                }).join('');
+
+                const incS = p.payoutSteps ? p.payoutSteps.map(s => {
+                    const r = s.years.split('-').map(Number);
+                    const span = ((r[1] || r[0]) - r[0]) + 1;
+                    const w = (span / (dur - p.premiumYears)) * 100;
+                    const color = startY + p.premiumYears + r[0] - 1 < CURRENT_YEAR ? 'bg-orange-500' : 'bg-orange-200';
+                    return `<div class="segment ${color}" style="width:${w}%"><div class="tooltip"><b>PAYOUT: ${s.val}</b><br>Policy Years ${s.years}</div></div>`;
+                }).join('') : `<div class="segment flex-1 bg-orange-50"><div class="tooltip">Growth Phase</div></div>`;
+
+                let typeColor = p.type.toLowerCase().includes('savings') ? 'savings' : (p.type.toLowerCase().includes('retirement') ? 'retirement' : 'ulip');
+
+                return `
+                <div class="policy-card" id="card-${p.id}" style="border-color: ${p.color}">
+                    <div class="card-header" onclick="toggleCard('${p.id}')">
+                        <div style="flex:2.3">
+                            <img src="${p.logo}" class="h-16 object-contain mb-3">
+                            <h3 class="font-black text-slate-900 text-lg leading-tight">${p.name}</h3>
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Policy No. ${p.id}</p>
+                        </div>
+                        <div style="flex:1" class="flex justify-center"><span class="type-badge ${typeColor}">${p.type}</span></div>
+                        <div style="flex:1" class="text-right"><p class="text-[9px] font-black text-slate-400 uppercase">Premium</p><p class="text-xl font-black text-emerald-600">${sym}${p.premium.toLocaleString()}</p></div>
+                        <div style="flex:1" class="text-right"><p class="text-[9px] font-black text-slate-400 uppercase">Sum Assured</p><p class="text-xl font-black text-indigo-600">${sym}${p.sumAssured.toLocaleString()}</p></div>
+                        <div style="flex:1" class="flex flex-col gap-2 items-center">
+                            <div class="mini-badge" style="border-color:#10b981">
+                                <span class="badge-num">${premLeft > 0 ? premLeft : (isFinalYear ? '1' : '✅')}</span>
+                                <span class="badge-txt">${premLeft > 0 ? 'Years Left' : (isFinalYear ? 'Final Year' : 'Paid')}</span>
+                            </div>
+                        </div>
+                        <div style="flex:1" class="text-right">
+                            ${isPaid ? `<img src="paid.jpg" class="paid-stamp">` : `<div><p class="text-[9px] font-black text-slate-400 uppercase mb-1">Next Due</p><span class="text-xs font-black bg-slate-100 px-3 py-1 rounded-lg">${p.dueDate} ${isFinalYear ? '(FINAL)' : ''}</span></div>`}
+                        </div>
+                    </div>
+                    <div class="content-area">
+                        <div class="timeline-track">
+                            <div class="node bg-slate-900" style="left:-28px;"><div class="tooltip">Commenced: ${p.commenced}</div>START</div>
+                            <div class="segment-container">
+                                <div class="flex h-full gap-[3px]" style="width:${pW}%">${premS}</div>
+                                <div class="flex h-full gap-[3px]" style="width:${100-pW}%">${incS}</div>
+                            </div>
+                            <div class="node bg-emerald-500" style="left:calc(${pW}% - 28px);"><div class="tooltip">Premium Ends: ${p.premiumEnds}</div>END</div>
+                            <div class="node bg-red-600" style="right:-28px;"><div class="tooltip"><b>Maturity: ${p.maturityAmt}</b><br>Date: ${p.maturity}</div>MAT</div>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+        render('india');
+    </script>
 </body>
 </html>
