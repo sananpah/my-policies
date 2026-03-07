@@ -13,13 +13,22 @@
         .tab-btn.active { background: #8b1d1d; color: white; border-color: #8b1d1d; box-shadow: 0 4px 12px rgba(139, 29, 29, 0.2); }
         .vertical-marker { width: 2px; height: 28px; background-color: #cbd5e1; position: absolute; top: -12px; z-index: 40; }
         .end-premium-marker { width: 3px; height: 36px; background-color: #22c55e; position: absolute; top: -16px; z-index: 45; border-radius: 2px; }
+        
         .payout-dot { width: 12px; height: 12px; background: #f59e0b; border-radius: 50%; position: absolute; top: 50%; transform: translate(-50%, -50%); border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 55; }
         .growth-dot { background: #3b82f6; }
-        .maturity-dot { background: #ef4444 !important; width: 18px !important; height: 18px !important; }
+        .maturity-dot { background: #ef4444 !important; width: 18px !important; height: 18px !important; margin-left: 9px; }
         
         .segment-container { position: relative; cursor: pointer; }
-        .tooltip-text { visibility: hidden; opacity: 0; position: absolute; bottom: 45px; left: 50%; transform: translateX(-50%); background: #0f172a; color: white; padding: 8px 14px; border-radius: 6px; font-size: 11px; font-weight: 700; white-space: nowrap; transition: all 0.2s; z-index: 200; pointer-events: none; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); }
-        .segment-container:hover > .tooltip-text:not(.tooltip-bottom), .dot-wrapper:hover > .tooltip-text:not(.tooltip-bottom) { opacity: 1; visibility: visible; transform: translate(-50% , -5px); }
+        .dot-wrapper { position: absolute; cursor: pointer; height: 100%; z-index: 70; }
+        
+        /* Updated Tooltip CSS to support longer strings and prevent mixing */
+        .tooltip-text { visibility: hidden; opacity: 0; position: absolute; bottom: 45px; left: 50%; transform: translateX(-50%); background: #0f172a; color: white; padding: 10px 14px; border-radius: 6px; font-size: 11px; font-weight: 700; white-space: pre-wrap; width: max-content; max-width: 320px; text-align: center; line-height: 1.5; transition: all 0.2s; z-index: 200; pointer-events: none; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); }
+        
+        .segment-container:hover > .tooltip-text:not(.tooltip-bottom) { opacity: 1; visibility: visible; transform: translate(-50% , -5px); }
+        
+        /* Maturity specific hover */
+        .tooltip-maturity { right: 0; left: auto; transform: translateY(0); }
+        .dot-wrapper:hover > .tooltip-maturity { opacity: 1; visibility: visible; transform: translateY(-5px); }
         
         /* Kotak Annual Bonus Tooltip CSS */
         .bonus-payout-dot { width: 10px; height: 10px; background: #eab308; border-radius: 50%; position: absolute; bottom: -4px; left: 50%; transform: translateX(-50%); border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 55; }
@@ -55,7 +64,7 @@
     <div id="policy-container" class="max-w-7xl mx-auto"></div>
 
     <script type="module">
-        import { POLICY_DATA } from './data.js?v=1.1.1';
+        import { POLICY_DATA } from './data.js?v=1.1.2';
         const TODAY = new Date();
 
         window.render = function(mode) {
@@ -83,7 +92,7 @@
                 const totalDuration = maturityYear - startYear;
                 const premPct = (p.premiumYears / totalDuration) * 100;
 
-                // 1. Premium Segments with exact dates and Kotak Bonus Logic
+                // 1. Premium Segments
                 let premiumSegments = "";
                 for(let i=0; i<p.premiumYears; i++) {
                     const yr = startYear + i;
@@ -107,25 +116,32 @@
                     </div>`;
                 }
 
-                // 2. CONSOLIDATED Growth/Income Phase (Fixed clipping issue)
+                // 2. CONSOLIDATED Growth/Income Phase (Decoupled tooltips)
                 const growthYears = totalDuration - p.premiumYears;
                 const elapsedGrowth = Math.max(0, TODAY.getFullYear() - (startYear + p.premiumYears));
                 const growthProgressPct = Math.min(100, (elapsedGrowth / growthYears) * 100);
 
+                // Dynamically load exact text strings if present in data.js, fallback to map if older structure
                 let incomeTooltip = "Growth Phase";
-                if(p.payoutSteps) {
-                    incomeTooltip = p.payoutSteps.map(s => `${s.val} (Yrs ${s.years})`).join(' | ');
+                if (p.annualIncome) {
+                    incomeTooltip = p.annualIncome;
+                } else if (p.payoutSteps) {
+                    incomeTooltip = p.payoutSteps.map(s => `${curr} ${s.val} (Yrs ${s.years})`).join(' | ');
                 }
 
+                let maturityTooltipText = p.maturityBenefit || p.maturityAmt || "Sum Assured Value";
+
                 const phaseContent = `
-                    <div class="flex-1 bg-gray-100 relative rounded-r-sm segment-container">
-                        <span class="tooltip-text">${incomeTooltip}</span>
-                        <div class="absolute top-0 left-0 h-full bg-orange-600 rounded-r-sm" style="width: ${growthProgressPct}%"></div>
+                    <div class="flex-1 relative flex">
+                        <div class="flex-1 bg-gray-100 relative rounded-r-sm segment-container">
+                            <span class="tooltip-text">Annual Income: ${incomeTooltip}</span>
+                            <div class="absolute top-0 left-0 h-full bg-orange-600 rounded-r-sm" style="width: ${growthProgressPct}%"></div>
+                            
+                            ${(p.type === 'ULIP' || p.type === 'ILP') ? [1, 2, 3, 4].map(i => `<div class="dot-wrapper absolute h-full" style="left:${i*20}%; z-index:60;"><div class="payout-dot growth-dot"></div></div>`).join('') : ''}
+                        </div>
                         
-                        ${(p.type === 'ULIP' || p.type === 'ILP') ? [1, 2, 3, 4].map(i => `<div class="dot-wrapper absolute h-full" style="left:${i*20}%; z-index:60;"><div class="payout-dot growth-dot"></div></div>`).join('') : ''}
-                        
-                        <div class="dot-wrapper absolute h-full right-0" style="right: -8px; z-index:70;">
-                            <span class="tooltip-text" style="left:auto; right:0; transform:none;">MATURITY: ${p.maturityAmt}</span>
+                        <div class="dot-wrapper right-0" style="width: 18px; z-index: 75;">
+                            <span class="tooltip-text tooltip-maturity">Maturity Benefit: ${maturityTooltipText}</span>
                             <div class="payout-dot maturity-dot"></div>
                         </div>
                     </div>`;
@@ -139,7 +155,7 @@
                             <div>
                                 <h2 class="text-lg font-black text-gray-800">${p.name}</h2>
                                 <p class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
-                                    ID: ${p.id} | UIN: ${p.uin || 'N/A'} | Client: ${p.clientId || 'N/A'}
+                                    ID: ${p.id} | UIN: ${p.uin || 'N/A'}
                                 </p>
                                 <div class="type-badge">${p.type || 'Standard'}</div>
                             </div>
