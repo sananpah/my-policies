@@ -3,72 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nami Portfolio v3.0.2</title>
+    <title>Nami Portfolio v3.0.3</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Orbitron:wght@800&display=swap');
         
-        body { background-color: #f1f5f9; font-family: 'Inter', sans-serif; color: #1e293b; }
+        body { background-color: #f1f5f9; font-family: 'Inter', sans-serif; color: #1e293b; padding: 40px; }
         .brand-header { font-family: 'Orbitron', sans-serif; background: linear-gradient(90deg, #4f46e5, #db2777); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .version-stamp { position: fixed; top: 10px; right: 15px; font-size: 9px; font-weight: 800; color: #94a3b8; background: #fff; padding: 2px 8px; border-radius: 4px; border: 1px solid #e2e8f0; z-index: 1000; }
 
-        .policy-card { background: white; border-radius: 24px; border-left: 12px solid; margin-bottom: 2rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); position: relative; }
-        .card-header { cursor: pointer; display: grid; grid-template-columns: 2.2fr 1fr 1fr 1fr 1.2fr 1fr 0.3fr; align-items: center; padding: 30px; gap: 20px; }
-        .content-area { display: none; padding: 80px 40px; border-top: 1px solid #f1f5f9; background: #fafafa; border-radius: 0 0 24px 24px; }
+        /* --- THE CORE FIX: HOVER TRIGGERS --- */
+        .hover-target { position: relative; cursor: help !important; pointer-events: auto !important; z-index: 100; }
+        .hover-target:hover { filter: brightness(1.2); }
+        
+        /* High-Priority Tooltip */
+        .tooltip-box {
+            visibility: hidden; opacity: 0; position: absolute; 
+            bottom: 140%; left: 50%; transform: translateX(-50%) translateY(10px);
+            background: #0f172a; color: #fff; padding: 12px; border-radius: 8px;
+            font-size: 11px; width: 180px; text-align: center; font-weight: 500;
+            z-index: 999999 !important; pointer-events: none; transition: 0.2s;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1);
+        }
+        .hover-target:hover .tooltip-box { visibility: visible; opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        /* --- LAYOUT --- */
+        .policy-card { background: white; border-radius: 20px; border-left: 12px solid; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); overflow: visible !important; }
+        .card-header { cursor: pointer; display: flex; align-items: center; padding: 30px; gap: 25px; }
+        .content-area { display: none; padding: 60px 40px; border-top: 1px solid #f1f5f9; background: #fafafa; overflow: visible !important; }
         .open .content-area { display: block; }
 
-        /* --- BULLETPROOF HOVER ENGINE --- */
-        [data-hover] { position: relative; cursor: pointer; pointer-events: auto !important; }
-        [data-hover]:hover { filter: brightness(1.1); z-index: 100; }
-        
-        [data-hover]::after {
-            content: attr(data-hover);
-            position: absolute; bottom: 130%; left: 50%; transform: translateX(-50%) translateY(10px);
-            background: #0f172a; color: white; padding: 10px 15px; border-radius: 8px;
-            font-size: 11px; width: 180px; text-align: center; opacity: 0; visibility: hidden;
-            transition: all 0.2s ease; z-index: 9999; pointer-events: none; box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-            white-space: pre-wrap; line-height: 1.4;
-        }
-        [data-hover]:hover::after { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
-
         /* --- TIMELINE --- */
-        .timeline-track { position: relative; height: 35px; background: #e2e8f0; border-radius: 20px; margin: 40px 0; width: 100%; display: flex; align-items: center; }
-        .node-circle { position: absolute; width: 56px; height: 56px; border-radius: 50%; border: 6px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.1); z-index: 50; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; color: white; }
+        .timeline-track { position: relative; height: 35px; background: #e2e8f0; border-radius: 20px; width: 100%; display: flex; margin: 30px 0; }
+        .node { position: absolute; width: 50px; height: 50px; border-radius: 50%; border: 5px solid #fff; z-index: 200; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 900; color: white; top: -8px; }
 
-        /* --- BADGES & TYPES --- */
-        .type-badge { font-size: 9px; font-weight: 900; text-transform: uppercase; padding: 6px 12px; border-radius: 10px; border: 1px solid; }
-        .badge-savings { background: #e0f2fe; color: #0369a1; border-color: #bae6fd; }
-        .badge-retirement { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
-        .badge-ulip { background: #fae8ff; color: #a21caf; border-color: #f5d0fe; }
-        .badge-ilp { background: #d1fae5; color: #047857; border-color: #a7f3d0; }
-        .badge-income { background: #fef3c7; color: #b45309; border-color: #fde68a; }
+        /* --- BADGE COLORS --- */
+        .type-pill { font-size: 9px; font-weight: 900; text-transform: uppercase; padding: 6px 12px; border-radius: 8px; border: 1px solid; }
+        .savings { background: #e0f2fe; color: #0369a1; border-color: #bae6fd; }
+        .retirement { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
+        .ulip { background: #fae8ff; color: #a21caf; border-color: #f5d0fe; }
+        .ilp { background: #dcfce7; color: #15803d; border-color: #bbf7d0; }
 
-        .mini-badge { width: 90px; padding: 6px; border-radius: 12px; background: #fff; border: 2px solid; display: flex; flex-direction: column; align-items: center; }
-        .badge-num { font-family: 'Orbitron', sans-serif; font-size: 14px; font-weight: 900; color: #1e293b; }
-        .badge-txt { font-size: 7px; font-weight: 900; text-transform: uppercase; color: #64748b; }
-
-        @keyframes alert-glow { 0%, 100% { background: #fee2e2; } 50% { background: #fecaca; } }
-        .due-reminder { animation: alert-glow 2s infinite; border-radius: 8px; padding: 6px 12px; }
-        .paid-stamp { width: 90px; transform: rotate(-8deg); filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1)); }
+        .mini-stat { width: 95px; padding: 5px; border-radius: 12px; background: white; border: 2px solid; display: flex; flex-direction: column; align-items: center; }
+        @keyframes pulse-red { 0%, 100% { background: #fee2e2; } 50% { background: #fca5a5; } }
+        .urgent { animation: pulse-red 2s infinite; padding: 4px 10px; border-radius: 6px; }
+        .paid-img { width: 90px; transform: rotate(-5deg); filter: grayscale(0.2) drop-shadow(0 4px 6px rgba(0,0,0,0.1)); }
     </style>
 </head>
-<body class="p-6 md:p-12">
+<body>
 
-    <div class="version-stamp">v3.0.2 | 07-Mar-2026 22:55</div>
-
-    <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-end mb-12">
-        <div>
-            <h1 class="brand-header text-5xl font-black italic tracking-tighter">NAMI PORTFOLIO</h1>
-            <p class="text-slate-400 font-bold text-[11px] mt-1 uppercase tracking-[0.4em]">Baseline Restoration</p>
-        </div>
-        <div class="flex gap-4 mt-6 md:mt-0">
-            <button id="btn-india" class="p-4 px-10 font-black rounded-2xl border-2 transition-all bg-white" onclick="render('india')">INDIA</button>
-            <button id="btn-wife" class="p-4 px-10 font-black rounded-2xl border-2 transition-all bg-white" onclick="render('wife')">WIFE</button>
-            <button id="btn-singapore" class="p-4 px-10 font-black rounded-2xl border-2 transition-all bg-white" onclick="render('singapore')">SINGAPORE</button>
+    <div class="max-w-7xl mx-auto flex justify-between items-center mb-10">
+        <h1 class="brand-header text-5xl font-black italic">NAMI PORTFOLIO</h1>
+        <div class="flex gap-4">
+            <button onclick="render('india')" id="btn-india" class="px-8 py-3 rounded-xl font-bold border-2">INDIA</button>
+            <button onclick="render('wife')" id="btn-wife" class="px-8 py-3 rounded-xl font-bold border-2">WIFE</button>
+            <button onclick="render('singapore')" id="btn-singapore" class="px-8 py-3 rounded-xl font-bold border-2">SINGAPORE</button>
         </div>
     </div>
 
-    <div id="summary-bar" class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 mb-12"></div>
+    <div id="summary" class="max-w-7xl mx-auto grid grid-cols-2 gap-6 mb-10"></div>
     <div id="container" class="max-w-7xl mx-auto"></div>
 
     <script type="module">
@@ -79,101 +71,73 @@
 
         window.toggleCard = (id) => document.getElementById(`card-${id}`).classList.toggle('open');
 
-        function getTypeClass(type) {
-            const t = type.toUpperCase();
-            if (t.includes('SAVINGS')) return 'badge-savings';
-            if (t.includes('RETIREMENT')) return 'badge-retirement';
-            if (t.includes('ULIP')) return 'badge-ulip';
-            if (t.includes('ILP')) return 'badge-ilp';
-            if (t.includes('INCOME')) return 'badge-income';
-            return 'bg-slate-100 text-slate-500 border-slate-200';
-        }
-
         window.render = function(cat) {
             const list = POLICY_DATA[cat];
             const sym = cat === 'singapore' ? '$' : '₹';
             
-            document.querySelectorAll('button').forEach(b => {
-                b.className = "p-4 px-10 font-black rounded-2xl border-2 bg-white text-slate-600 border-slate-200 hover:border-slate-400 transition-all";
-            });
-            document.getElementById(`btn-${cat}`).className = "p-4 px-10 font-black rounded-2xl border-2 bg-slate-900 text-white border-slate-900";
+            // UI Button Reset
+            document.querySelectorAll('button').forEach(b => b.className = "px-8 py-3 rounded-xl font-bold border-2 bg-white text-slate-500 border-slate-200");
+            document.getElementById(`btn-${cat}`).className = "px-8 py-3 rounded-xl font-bold border-2 bg-slate-900 text-white border-slate-900";
 
-            document.getElementById('summary-bar').innerHTML = `
-                <div class="bg-white p-10 rounded-3xl border-b-[12px] border-indigo-600 shadow-sm"><p class="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2">Annual Commitment</p><p class="text-5xl font-black text-slate-900">${sym}${list.reduce((s,p)=>s+p.premium,0).toLocaleString()}</p></div>
-                <div class="bg-white p-10 rounded-3xl border-b-[12px] border-pink-600 shadow-sm"><p class="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2">Estate Sum Assured</p><p class="text-5xl font-black text-slate-900">${sym}${list.reduce((s,p)=>s+p.sumAssured,0).toLocaleString()}</p></div>
+            document.getElementById('summary').innerHTML = `
+                <div class="bg-white p-8 rounded-2xl border-b-8 border-indigo-600 shadow-sm"><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Annual Premium</p><p class="text-4xl font-black">${sym}${list.reduce((s,p)=>s+p.premium,0).toLocaleString()}</p></div>
+                <div class="bg-white p-8 rounded-2xl border-b-8 border-pink-600 shadow-sm"><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Sum Assured</p><p class="text-4xl font-black">${sym}${list.reduce((s,p)=>s+p.sumAssured,0).toLocaleString()}</p></div>
             `;
 
             document.getElementById('container').innerHTML = list.map(p => {
                 const startY = parseInt(p.commenced.split(' ')[2]);
                 const matY = parseInt(p.maturity.split(' ')[2]);
                 const premEndY = parseInt(p.premiumEnds.split(' ')[2]);
-                
                 const isPaid = premEndY < CURRENT_YEAR;
                 const isFinalYear = premEndY === CURRENT_YEAR;
-                const premLeft = premEndY - CURRENT_YEAR;
-                const matLeft = matY - CURRENT_YEAR;
-                const dur = matY - startY;
-                const pW = (p.premiumYears / dur) * 100;
-
-                let dC = "font-black text-slate-900";
-                if (!isPaid && (new Date(p.dueDate) - TODAY) / 86400000 <= 45) dC = "due-reminder text-red-700";
+                const pW = ((p.premiumYears) / (matY - startY)) * 100;
 
                 const premS = Array.from({length: p.premiumYears}).map((_, i) => {
                     const y = startY + i;
-                    const status = y < CURRENT_YEAR ? "PAID" : (y === CURRENT_YEAR ? "DUE NOW" : "FUTURE");
                     const color = y < CURRENT_YEAR ? 'bg-emerald-600' : (y === CURRENT_YEAR ? 'bg-emerald-400' : 'bg-emerald-200');
-                    return `<div class="flex-1 h-full ${color}" data-hover="Year ${i+1} (${y})\nStatus: ${status}"></div>`;
+                    return `<div class="flex-1 hover-target ${color}"><div class="tooltip-box">Year ${i+1} (${y})<br><b>${y < CURRENT_YEAR ? 'PAID' : (y === CURRENT_YEAR ? 'DUE NOW' : 'FUTURE')}</b></div></div>`;
                 }).join('');
 
                 const incS = p.payoutSteps ? p.payoutSteps.map(s => {
                     const r = s.years.split('-').map(Number);
-                    const span = ((r[1] || r[0]) - r[0]) + 1;
-                    const w = (span / (dur - p.premiumYears)) * 100;
+                    const w = (((r[1] || r[0]) - r[0]) + 1) / (matY - startY - p.premiumYears) * 100;
                     const color = startY + p.premiumYears + r[0] - 1 < CURRENT_YEAR ? 'bg-orange-500' : 'bg-orange-200';
-                    return `<div class="h-full ${color}" style="width: ${w}%" data-hover="Annual Payout: ${s.val}\nPolicy Years: ${s.years}"></div>`;
-                }).join('') : `<div class="flex-1 h-full bg-orange-50" data-hover="Growth Phase\nNo Active Payouts"></div>`;
+                    return `<div class="hover-target ${color}" style="width:${w}%"><div class="tooltip-box"><b>PAYOUT: ${s.val}</b><br>Years: ${s.years}</div></div>`;
+                }).join('') : `<div class="flex-1 hover-target bg-orange-50"><div class="tooltip-box">No Payouts in this phase</div></div>`;
+
+                let typeColor = p.type.toLowerCase().includes('savings') ? 'savings' : (p.type.toLowerCase().includes('retirement') ? 'retirement' : (p.type.toLowerCase().includes('ulip') ? 'ulip' : 'ilp'));
 
                 return `
                 <div class="policy-card" id="card-${p.id}" style="border-color: ${p.color}">
                     <div class="card-header" onclick="toggleCard('${p.id}')">
-                        <div class="flex flex-col">
-                            <img src="${p.logo}" class="w-[140px] h-[60px] object-contain object-left mb-2">
-                            <h3 class="font-black text-slate-900 text-base leading-tight">${p.name}</h3>
-                            <p class="text-[9px] font-black text-slate-400 uppercase tracking-tighter">ID: ${p.id}</p>
+                        <div style="flex:2">
+                            <img src="${p.logo}" class="h-12 object-contain mb-2">
+                            <h3 class="font-black text-slate-800">${p.name}</h3>
+                            <span class="text-[9px] font-bold text-slate-400">ID: ${p.id}</span>
                         </div>
-                        <div class="flex justify-center">
-                             <div class="type-badge ${getTypeClass(p.type)}">${p.type}</div>
-                        </div>
-                        <div class="text-right"><p class="text-[9px] font-black text-slate-400 uppercase">Premium</p><p class="text-lg font-black text-emerald-600">${sym}${p.premium.toLocaleString()}</p></div>
-                        <div class="text-right"><p class="text-[9px] font-black text-slate-400 uppercase">Sum Assured</p><p class="text-lg font-black text-indigo-600">${sym}${p.sumAssured.toLocaleString()}</p></div>
-                        
-                        <div class="flex flex-col gap-2 items-center">
-                            <div class="mini-badge" style="border-color:#10b981" data-hover="Premium Schedule Ends: ${p.premiumEnds}">
-                                <span class="badge-num">${premLeft > 0 ? premLeft : (isFinalYear ? '1' : '✅')}</span>
-                                <span class="badge-txt">${premLeft > 0 ? 'Years' : (isFinalYear ? 'Final' : 'Paid')}</span>
-                            </div>
-                            <div class="mini-badge" style="border-color:#6366f1" data-hover="Maturity Date: ${p.maturity}">
-                                <span class="badge-num">${matLeft > 0 ? matLeft : '🏆'}</span>
-                                <span class="badge-txt">Maturity</span>
+                        <div style="flex:1" class="text-center"><span class="type-pill ${typeColor}">${p.type}</span></div>
+                        <div style="flex:1" class="text-right"><p class="text-[9px] font-bold text-slate-400 uppercase">Premium</p><p class="font-black text-emerald-600">${sym}${p.premium.toLocaleString()}</p></div>
+                        <div style="flex:1" class="text-right"><p class="text-[9px] font-bold text-slate-400 uppercase">Sum Assured</p><p class="font-black text-indigo-600">${sym}${p.sumAssured.toLocaleString()}</p></div>
+                        <div style="flex:1" class="flex flex-col gap-2 items-center">
+                            <div class="mini-stat hover-target" style="border-color:#10b981">
+                                <div class="tooltip-box">Premium Ends: ${p.premiumEnds}</div>
+                                <span class="badge-num">${(premEndY-CURRENT_YEAR) > 0 ? (premEndY-CURRENT_YEAR) : (isFinalYear ? '1' : '✅')}</span>
+                                <span class="badge-txt">${(premEndY-CURRENT_YEAR) > 0 ? 'Years Left' : (isFinalYear ? 'Final' : 'Paid')}</span>
                             </div>
                         </div>
-
-                        <div class="text-right flex items-center justify-end">
-                            ${(isPaid) ? `<img src="paid.jpg" class="paid-stamp">` : `
-                                <div><p class="text-[9px] font-black text-slate-400 uppercase mb-1">Next Due</p><span class="${dC} text-xs font-black">${isFinalYear ? p.dueDate + ' (LAST)' : p.dueDate}</span></div>
-                            `}
+                        <div style="flex:1" class="text-right">
+                            ${isPaid ? `<img src="paid.jpg" class="paid-img">` : `<div><p class="text-[9px] font-bold text-slate-400 uppercase">Next Due</p><span class="text-xs font-black ${isFinalYear ? 'urgent' : ''}">${p.dueDate} ${isFinalYear ? '(LAST)' : ''}</span></div>`}
                         </div>
-                        <svg class="w-8 h-8 ml-auto text-slate-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="3" d="M19 9l-7 7-7-7"></path></svg>
                     </div>
                     <div class="content-area">
                         <div class="timeline-track">
-                            <div class="node-circle bg-slate-900" style="left: -28px;" data-hover="Commencement:\n${p.commenced}">START</div>
-                            <div class="flex w-full overflow-hidden rounded-full h-full">
-                                <div class="flex h-full" style="width: ${pW}%">${premS}</div>
-                                <div class="flex h-full" style="width: ${100 - pW}%">${incS}</div>
+                            <div class="node bg-slate-900 hover-target" style="left:-25px;"><div class="tooltip-box">Commenced: ${p.commenced}</div>START</div>
+                            <div class="flex h-full w-full rounded-full overflow-hidden">
+                                <div class="flex h-full" style="width:${pW}%">${premS}</div>
+                                <div class="flex h-full" style="width:${100-pW}%">${incS}</div>
                             </div>
-                            <div class="node-circle bg-emerald-600" style="left: calc(${pW}% - 28px);" data-hover="Premium Ends:\n${p.premiumEnds}">END</div>
-                            <div class="node-circle bg-red-600" style="right: -28px;" data-hover="Maturity Value:\n${p.maturityAmt}">MAT</div>
+                            <div class="node bg-emerald-500 hover-target" style="left:calc(${pW}% - 25px);"><div class="tooltip-box">Premium Ends: ${p.premiumEnds}</div>END</div>
+                            <div class="node bg-red-600 hover-target" style="right:-25px;"><div class="tooltip-box">Maturity: ${p.maturity}<br>Value: ${p.maturityAmt}</div>MAT</div>
                         </div>
                     </div>
                 </div>`;
