@@ -3,139 +3,143 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Insurance Portfolio Dashboard</title>
+    <title>Policy Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
-        body { background-color: #f8fafc; font-family: 'Inter', sans-serif; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        body { background-color: #f1f5f9; font-family: 'Inter', sans-serif; }
         
-        /* Tooltip Logic */
-        .segment-container { position: relative; cursor: pointer; }
-        .tooltip-text { 
-            visibility: hidden; opacity: 0; position: absolute; 
-            bottom: 40px; left: 50%; transform: translateX(-50%); 
-            background: #1e293b; color: white; padding: 10px 14px; 
-            border-radius: 8px; font-size: 11px; font-weight: 700; 
-            white-space: pre-wrap; width: max-content; max-width: 280px; 
-            text-align: center; line-height: 1.6; transition: all 0.2s ease-in-out; 
-            z-index: 100; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3);
-            pointer-events: none;
+        .policy-card { 
+            position: relative; background: white; border-radius: 12px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05); overflow: hidden; 
+            border-top: 5px solid; margin-bottom: 2rem;
         }
-        .segment-container:hover > .tooltip-text { visibility: visible; opacity: 1; transform: translate(-50%, -5px); }
-        
-        /* Specific Maturity Tooltip Positioning */
-        .maturity-wrapper:hover > .tooltip-maturity { visibility: visible; opacity: 1; transform: translate(-20%, -5px); }
-        .tooltip-maturity { left: auto; right: 0; transform: none; }
 
-        .policy-card { background: white; border-left: 8px solid; border-radius: 16px; margin-bottom: 1.5rem; transition: all 0.3s; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
-        .content-area { display: none; }
-        .open .content-area { display: block; }
-        
-        .payout-dot { width: 12px; height: 12px; background: #3b82f6; border-radius: 50%; position: absolute; top: 50%; transform: translate(-50%, -50%); border: 2px solid white; z-index: 50; }
-        .maturity-dot { background: #ef4444 !important; width: 18px !important; height: 18px !important; }
-        
-        .tab-btn { padding: 10px 24px; font-weight: 700; text-transform: uppercase; font-size: 11px; border-radius: 8px; transition: all 0.3s; border: 1px solid #e2e8f0; background: white; color: #64748b; cursor: pointer; }
-        .tab-btn.active { background: #8b1d1d; color: white; border-color: #8b1d1d; }
-        
-        .paid-watermark { position: absolute; right: 200px; top: 25px; font-weight: 900; font-size: 28px; color: #059669; opacity: 0.15; border: 4px solid #059669; padding: 2px 12px; transform: rotate(-12deg); border-radius: 8px; pointer-events: none; }
+        /* Paid Up Badge */
+        .paid-badge {
+            position: absolute; top: 15px; right: 15px;
+            border: 2px solid #10b981; color: #10b981;
+            padding: 2px 8px; border-radius: 4px; font-weight: 900;
+            font-size: 12px; transform: rotate(5deg); background: rgba(16, 185, 129, 0.05);
+        }
+
+        /* Improved Tooltip */
+        .segment { position: relative; cursor: pointer; height: 100%; }
+        .tooltip {
+            visibility: hidden; opacity: 0; position: absolute;
+            bottom: 125%; left: 50%; transform: translateX(-50%);
+            background: #1e293b; color: white; padding: 12px;
+            border-radius: 6px; font-size: 11px; z-index: 100;
+            width: 220px; text-align: center; transition: 0.2s;
+            pointer-events: none; white-space: pre-line;
+            box-shadow: 0 10px 15px rgba(0,0,0,0.2);
+        }
+        .segment:hover .tooltip { visibility: visible; opacity: 1; transform: translate(-50%, -5px); }
+
+        /* Timeline Markers */
+        .marker-line { position: absolute; top: 0; bottom: -25px; width: 2px; background: #e2e8f0; }
+        .marker-label { position: absolute; top: 30px; font-size: 10px; font-weight: 700; color: #64748b; white-space: nowrap; transform: translateX(-50%); }
+
+        .tab-btn { padding: 8px 20px; font-weight: 700; font-size: 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; transition: 0.2s; }
+        .tab-btn.active { background: #1e293b; color: white; border-color: #1e293b; }
     </style>
 </head>
-<body class="p-6 md:p-12">
-    <div class="max-w-7xl mx-auto mb-10 flex justify-center gap-4">
-        <button id="btn-india" class="tab-btn active">India Portfolio</button>
-        <button id="btn-wife" class="tab-btn">Wife's Portfolio</button>
-        <button id="btn-singapore" class="tab-btn">Singapore</button>
+<body class="p-8">
+
+    <div class="max-w-6xl mx-auto flex justify-center gap-3 mb-12">
+        <button id="btn-india" class="tab-btn active" onclick="render('india')">INDIA</button>
+        <button id="btn-wife" class="tab-btn" onclick="render('wife')">WIFE</button>
+        <button id="btn-singapore" class="tab-btn" onclick="render('singapore')">SINGAPORE</button>
     </div>
 
-    <div id="policy-container" class="max-w-7xl mx-auto"></div>
+    <div id="container" class="max-w-6xl mx-auto"></div>
 
     <script type="module">
         import { POLICY_DATA } from './data.js';
-        const TODAY = new Date();
 
-        function render(mode) {
-            const container = document.getElementById('policy-container');
-            const list = POLICY_DATA[mode];
-            const currency = mode === 'singapore' ? '$' : '₹';
-
+        window.render = function(category) {
+            const container = document.getElementById('container');
+            const policies = POLICY_DATA[category];
+            
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(`btn-${mode}`).classList.add('active');
+            document.getElementById(`btn-${category}`).classList.add('active');
 
-            container.innerHTML = list.map(p => {
-                const isPaidUp = p.dueDate === "PAID UP";
-                const startYear = parseInt(p.commenced.split(' ')[2]);
-                const maturityYear = parseInt(p.maturity.split(' ')[2]);
-                const totalDuration = maturityYear - startYear;
-                const premPct = (p.premiumYears / totalDuration) * 100;
-
-                // Format Annual Income Payout Steps
-                let incomeDetails = "Growth Phase";
+            container.innerHTML = policies.map(p => {
+                const start = parseInt(p.commenced.split(' ')[2]);
+                const maturity = parseInt(p.maturity.split(' ')[2]);
+                const totalYrs = maturity - start;
+                const premPct = (p.premiumYears / totalYrs) * 100;
+                
+                // Format the Income Tooltip
+                let incomeText = "Growth Period";
                 if (p.payoutSteps) {
-                    incomeDetails = "Annual Income Period:\n" + p.payoutSteps.map(s => `Yrs ${s.years}: ${s.val}`).join('\n');
+                    incomeText = "ANNUAL INCOME SCHEDULE:\n" + p.payoutSteps.map(s => `${s.years} Yrs: ${s.val}`).join('\n');
                 } else if (p.income) {
-                    incomeDetails = p.income;
+                    incomeText = p.income;
                 }
 
-                // Growth calculation
-                const endPremYear = startYear + p.premiumYears;
-                const elapsedGrowth = Math.max(0, TODAY.getFullYear() - endPremYear);
-                const totalGrowthYears = maturityYear - endPremYear;
-                const growthProgress = Math.min(100, (elapsedGrowth / totalGrowthYears) * 100);
-
                 return `
-                <div class="policy-card open" style="border-color:${p.color}" id="card-${p.id}">
-                    ${isPaidUp ? '<div class="paid-watermark">PAID UP</div>' : ''}
-                    <div class="p-6 grid grid-cols-1 md:grid-cols-4 items-center gap-6">
+                <div class="policy-card" style="border-color: ${p.color}">
+                    ${p.dueDate === "PAID UP" ? '<div class="paid-badge">PAID UP</div>' : ''}
+                    
+                    <div class="p-6 grid grid-cols-4 gap-4 items-center">
                         <div class="flex items-center gap-4">
-                            <img src="${p.logo}" class="w-12 h-12 object-contain">
+                            <img src="${p.logo}" class="w-10 h-10 object-contain">
                             <div>
-                                <h2 class="font-black text-gray-800 leading-tight">${p.name}</h2>
-                                <p class="text-[10px] text-gray-400 font-bold uppercase mt-1">ID: ${p.id}</p>
+                                <h3 class="font-black text-slate-800 text-sm">${p.name}</h3>
+                                <p class="text-[10px] text-slate-400 font-bold uppercase">ID: ${p.id}</p>
                             </div>
                         </div>
-                        <div><p class="text-[10px] font-bold text-gray-400 uppercase">Sum Assured</p><p class="text-xl font-black text-blue-700">${currency} ${p.sumAssured.toLocaleString()}</p></div>
-                        <div><p class="text-[10px] font-bold text-gray-400 uppercase">Premium</p><p class="text-xl font-black text-emerald-600">${currency} ${p.premium.toLocaleString()}</p></div>
+                        <div>
+                            <p class="text-[9px] font-black text-slate-400 uppercase tracking-wider">Sum Assured</p>
+                            <p class="text-lg font-black text-indigo-700">₹ ${p.sumAssured.toLocaleString()}</p>
+                        </div>
+                        <div>
+                            <p class="text-[9px] font-black text-slate-400 uppercase tracking-wider">Premium</p>
+                            <p class="text-lg font-black text-emerald-600">₹ ${p.premium.toLocaleString()}</p>
+                        </div>
                         <div class="text-right">
-                            <p class="text-[10px] font-bold text-gray-400 uppercase">Next Due</p>
-                            <p class="font-black ${isPaidUp ? 'text-emerald-600' : 'text-gray-900'}">${p.dueDate}</p>
+                            <p class="text-[9px] font-black text-slate-400 uppercase tracking-wider">Next Due</p>
+                            <p class="font-black text-slate-800">${p.dueDate}</p>
                         </div>
                     </div>
 
-                    <div class="content-area bg-gray-50 p-8 border-t">
-                        <div class="flex h-5 mb-8 w-full items-center">
-                            <div class="h-full flex" style="width: ${premPct}%">
+                    <div class="bg-slate-50 p-10 pb-16">
+                        <div class="relative h-4 w-full bg-slate-200 rounded-full flex">
+                            
+                            <div class="h-full bg-emerald-500 rounded-l-full flex" style="width: ${premPct}%">
                                 ${Array.from({length: p.premiumYears}).map((_, i) => `
-                                    <div class="flex-1 h-full bg-emerald-500 border-r border-white relative segment-container">
-                                        <span class="tooltip-text text-xs">Year ${i+1} Premium</span>
+                                    <div class="segment flex-1 border-r border-white/20">
+                                        <div class="tooltip font-bold text-[10px]">Premium Year ${i+1}</div>
                                     </div>
                                 `).join('')}
                             </div>
-                            
-                            <div class="flex-1 h-full bg-gray-200 relative segment-container">
-                                <span class="tooltip-text">${incomeDetails}</span>
-                                <div class="absolute top-0 left-0 h-full bg-orange-400" style="width: ${growthProgress}%"></div>
+
+                            <div class="segment flex-1 bg-orange-400 rounded-r-full">
+                                <div class="tooltip font-bold text-[10px]">${incomeText}</div>
                             </div>
 
-                            <div class="relative ml-[-9px] maturity-wrapper segment-container" style="z-index: 60;">
-                                <span class="tooltip-text tooltip-maturity">Maturity Benefit:\n${p.maturityAmt}</span>
-                                <div class="payout-dot maturity-dot"></div>
-                            </div>
-                        </div>
+                            <div class="marker-line" style="left: 0;"></div>
+                            <div class="marker-label" style="left: 0;">${p.commenced}</div>
 
-                        <div class="flex justify-between text-[10px] font-black uppercase text-gray-500">
-                            <div>Commenced: ${p.commenced}</div>
-                            <div class="text-center">Premium End: ${p.premiumEnds}</div>
-                            <div class="text-right">Maturity: ${p.maturity}</div>
+                            <div class="marker-line" style="left: ${premPct}%; background: #10b981;"></div>
+                            <div class="marker-label" style="left: ${premPct}%; color: #10b981;">${p.premiumEnds}</div>
+
+                            <div class="marker-line" style="left: 100%; background: #ef4444;"></div>
+                            <div class="marker-label" style="left: 100%; color: #ef4444;">${p.maturity}</div>
+
+                            <div class="segment" style="position: absolute; right: -8px; top: -4px; z-index: 50;">
+                                <div class="tooltip font-bold text-[10px]">MATURITY BENEFIT:\n${p.maturityAmt}</div>
+                                <div class="w-6 h-6 bg-red-600 border-4 border-white rounded-full shadow-lg"></div>
+                            </div>
+
                         </div>
                     </div>
                 </div>`;
             }).join('');
         }
 
-        ['india', 'wife', 'singapore'].forEach(mode => {
-            document.getElementById(`btn-${mode}`).addEventListener('click', () => render(mode));
-        });
-
+        // Initial Load
         render('india');
     </script>
 </body>
