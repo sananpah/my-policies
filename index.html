@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nami Portfolio v3.3.7</title>
+    <title>Nami Portfolio v3.3.8</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Orbitron:wght@800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Orbitron:wght@800&family=JetBrains+Mono:wght@500&display=swap');
         body { background-color: #f1f5f9; font-family: 'Inter', sans-serif; color: #1e293b; padding: 40px; }
         
         .version-stamp { position: fixed; top: 15px; right: 20px; font-size: 11px; font-weight: 900; color: #1e293b; background: #fff; padding: 6px 12px; border-radius: 8px; border: 1px solid #cbd5e1; z-index: 9999; }
@@ -20,15 +20,16 @@
         }
 
         .segment { height: 100%; position: relative; cursor: pointer; transition: 0.2s; border-radius: 4px; margin: 0 1px; }
-        .segment:hover { filter: brightness(1.2); transform: scaleY(1.3); z-index: 40; }
+        .segment:hover { filter: brightness(1.2); transform: scaleY(1.35); z-index: 40; }
         .bg-past { background: #475569; opacity: 0.8; }
         .bg-premium { background: linear-gradient(180deg, #10b981 0%, #059669 100%); }
         .bg-income { background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%); }
         .bg-growth { background: linear-gradient(180deg, #8b5cf6 0%, #6d28d9 100%); }
-        .bg-future { background: #cbd5e1; }
+        .bg-waiting { background: repeating-linear-gradient(45deg, #cbd5e1, #cbd5e1 10px, #94a3b8 10px, #94a3b8 20px); }
+        .bg-future { background: #e2e8f0; }
 
         .tooltip { 
-            visibility: hidden; opacity: 0; position: absolute; bottom: 180%; left: 50%; transform: translateX(-50%) translateY(10px); 
+            visibility: hidden; opacity: 0; position: absolute; bottom: 190%; left: 50%; transform: translateX(-50%) translateY(10px); 
             background: #0f172a; color: #fff; padding: 14px 18px; border-radius: 12px; font-size: 11px; 
             width: 240px; text-align: center; z-index: 3000; transition: 0.3s;
             box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); line-height: 1.6; pointer-events: none;
@@ -37,21 +38,22 @@
 
         .policy-card { background: white; border-radius: 28px; border-left: 14px solid; margin-bottom: 35px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); }
         .card-header { cursor: pointer; display: flex; align-items: center; padding: 35px; gap: 24px; }
-        .content-area { display: none; padding: 60px 50px; border-top: 1px solid #f1f5f9; background: #fafbfc; border-radius: 0 0 28px 28px; overflow: visible !important; }
+        .content-area { display: none; padding: 40px 50px; border-top: 1px solid #f1f5f9; background: #fafbfc; border-radius: 0 0 28px 28px; }
         .open .content-area { display: block; }
 
-        .type-badge { font-size: 10px; font-weight: 900; text-transform: uppercase; padding: 4px 10px; border-radius: 6px; border: 1.5px solid; display: inline-block; }
-        .savings { background: #f0f9ff; color: #0369a1; border-color: #bae6fd; }
-        .retirement { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
-        .ulip { background: #f5f3ff; color: #5b21b6; border-color: #ddd6fe; }
+        .type-badge { font-size: 10px; font-weight: 900; text-transform: uppercase; padding: 6px 12px; border-radius: 12px; border: 2px solid; display: inline-flex; align-items: center; gap: 6px; }
+        .savings { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
+        .retirement { background: #fff7ed; color: #c2410c; border-color: #ffedd5; }
+        .ulip { background: #f5f3ff; color: #6d28d9; border-color: #ddd6fe; }
 
         .timeline-track { position: relative; height: 42px; background: #e2e8f0; border-radius: 24px; width: 100%; display: flex; margin: 40px 0; padding: 0 6px; align-items: center; z-index: 10; overflow: visible; }
         .node { position: absolute; width: 80px; height: 80px; border-radius: 50%; border: 6px solid #fff; z-index: 500; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; color: white; top: -19px; box-shadow: 0 6px 15px rgba(0,0,0,0.25); cursor: help; }
+        .countdown-pill { font-family: 'JetBrains+Mono', monospace; font-size: 9px; letter-spacing: -0.02em; }
     </style>
 </head>
 <body>
 
-    <div class="version-stamp">BUILD: v3.3.7 | 08-MAR-2026</div>
+    <div class="version-stamp">BUILD: v3.3.8 | 08-MAR-2026</div>
 
     <div class="max-w-7xl mx-auto flex justify-between items-end mb-14">
         <div>
@@ -95,105 +97,102 @@
                 
                 const isPaid = TODAY > premEndObj || p.dueDate === "PAID UP";
                 const isULIP = p.type.toLowerCase().includes('ulip');
-                const premiumsLeft = Math.max(0, premEndYear - CURRENT_YEAR + (TODAY < premEndObj ? 1 : 0));
+                const pRem = Math.max(0, premEndYear - CURRENT_YEAR + (TODAY < premEndObj ? 1 : 0));
+                const mRem = Math.max(0, matY - CURRENT_YEAR);
 
                 let timeline = '';
                 for(let yr = startY; yr < matY; yr++) {
                     const polYear = yr - startY + 1;
                     const isPast = yr < CURRENT_YEAR;
-                    let payoutLabel = "N/A";
+                    let hoverData = "";
                     let phaseLabel = "";
                     let color = "bg-future";
 
-                    // LOGIC FOR PREMIUM VS INCOME PHASE
                     if (yr <= premEndYear) {
                         if (isPast || isPaid) {
                             color = "bg-past";
                             phaseLabel = "Premium Paid";
+                            hoverData = `<span class="text-slate-500 italic">Record of installment</span>`;
                         } else {
                             color = yr === CURRENT_YEAR ? "bg-premium" : "bg-future";
                             phaseLabel = "Premium Active";
+                            hoverData = `<span class="text-emerald-400 font-black">Due: ${sym}${p.premium.toLocaleString()}</span>`;
                         }
                     } else {
-                        // INCOME PHASE DETECTION
                         color = isULIP ? "bg-growth" : "bg-income";
                         phaseLabel = isULIP ? "Unit Growth" : "Income Phase";
-
+                        
+                        let amt = "Waiting";
                         if (p.name.includes("Nishchit Ace")) {
-                            if (polYear >= 11 && polYear <= 15) payoutLabel = "₹ 1,33,974";
-                            else if (polYear >= 16 && polYear <= 20) payoutLabel = "₹ 1,60,769";
-                            else if (polYear >= 21 && polYear <= 25) payoutLabel = "₹ 1,87,564";
-                            else if (polYear >= 26 && polYear <= 30) payoutLabel = "₹ 214,359";
-                        } else if (p.name.includes("Moneyback")) {
-                            if (polYear >= 11 && polYear <= 14) payoutLabel = "₹ 18,591";
-                            else if (polYear === 15) payoutLabel = "₹ 49,576";
-                        } else if (p.name.includes("Samrudhi") && polYear >= 8) {
-                            payoutLabel = "₹ 1,00,000";
+                            if (polYear >= 11 && polYear <= 15) amt = "₹ 1,33,974";
+                            else if (polYear >= 16 && polYear <= 20) amt = "₹ 1,60,769";
+                            else if (polYear >= 21 && polYear <= 25) amt = "₹ 1,87,564";
+                            else if (polYear >= 26 && polYear <= 30) amt = "₹ 214,359";
                         } else if (p.name.includes("Pension SL")) {
-                            // PENSION LOGIC: Starts from the year after the year following premium end
-                            if (yr > premEndYear + 1) {
-                                payoutLabel = "₹ 89,830";
-                            } else {
-                                phaseLabel = "Accumulation Phase";
-                                payoutLabel = "Waiting";
-                            }
-                        }
+                            if (yr > premEndYear + 1) amt = "₹ 89,830";
+                            else { phaseLabel = "Accumulation Phase"; color = "bg-waiting"; }
+                        } else if (p.name.includes("Moneyback")) {
+                            if (polYear >= 11 && polYear <= 14) amt = "₹ 18,591";
+                            else if (polYear === 15) amt = "₹ 49,576";
+                        } else if (p.name.includes("Samrudhi") && polYear >= 8) amt = "₹ 1,00,000";
+
+                        hoverData = amt === "Waiting" ? `<span class="text-slate-400 italic">Waiting for Payout...</span>` : `<span class="text-orange-400 font-black">Annual Payout: ${amt}</span>`;
                     }
 
                     timeline += `
                     <div class="segment ${color}" style="flex:1">
                         <div class="tooltip">
-                            <b class="text-white text-xs uppercase">${phaseLabel}</b><br>
-                            <span class="text-orange-400 font-black">Annual: ${payoutLabel}</span><br>
-                            <span class="text-slate-400 text-[10px]">Year ${polYear} (${yr})</span>
+                            <b class="text-white text-xs uppercase tracking-widest">${phaseLabel}</b><br>
+                            ${hoverData}<br>
+                            <span class="text-slate-500 text-[9px] font-bold">YEAR ${polYear} (${yr})</span>
                         </div>
                     </div>`;
                 }
+
+                // FUNKY SYMBOLS
+                let icon = "🛡️";
+                if(p.type.toLowerCase().includes('retirement')) icon = "⛱️";
+                if(p.type.toLowerCase().includes('ulip')) icon = "📈";
 
                 return `
                 <div class="policy-card" id="card-${p.id}" style="border-color: ${p.color}">
                     <div class="card-header" onclick="toggleCard('${p.id}')">
                         <div style="flex:1.8">
                             <img src="${p.logo}" class="h-10 object-contain mb-3">
-                            <h3 class="font-black text-slate-900 text-lg leading-tight mb-1">${p.name}</h3>
-                            <p class="text-[9px] font-black text-slate-400 uppercase tracking-tighter">ID: ${p.id}</p>
-                        </div>
-                        <div style="flex:0.7" class="text-center">
-                            <span class="type-badge ${p.type.toLowerCase()}">${p.type}</span>
+                            <h3 class="font-black text-slate-900 text-xl leading-tight">${p.name}</h3>
+                            <div class="flex gap-2 mt-2">
+                                <span class="type-badge ${p.type.toLowerCase()}">${icon} ${p.type}</span>
+                            </div>
                         </div>
                         <div style="flex:1" class="text-right">
                             <p class="text-[9px] font-bold text-slate-400 uppercase">Premium</p>
-                            <p class="text-xl font-black text-emerald-600">${sym}${p.premium.toLocaleString()}</p>
-                            ${!isPaid ? `<p class="text-[9px] font-bold text-slate-400 uppercase mt-1">${premiumsLeft} YRS LEFT</p>` : ''}
+                            <p class="text-2xl font-black text-emerald-600">${sym}${p.premium.toLocaleString()}</p>
+                            ${!isPaid ? `<span class="countdown-pill text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full font-bold">⏳ ${pRem}Y LEFT</span>` : ''}
                         </div>
                         <div style="flex:1.1" class="text-right">
                             <p class="text-[9px] font-bold text-slate-400 uppercase">Sum Assured</p>
-                            <p class="text-xl font-black text-indigo-600">${sym}${p.sumAssured.toLocaleString()}</p>
+                            <p class="text-2xl font-black text-indigo-600">${sym}${p.sumAssured.toLocaleString()}</p>
+                            <span class="countdown-pill text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-full font-bold">🏁 ${mRem}Y TO MAT</span>
                         </div>
                         <div style="flex:1.4" class="text-right flex justify-end">
-                            ${isPaid ? `
-                                <div class="stamp-box"><img src="paid.jpg" class="paid-stamp"></div>
-                            ` : `
+                            ${isPaid ? `<div class="stamp-box"><img src="paid.jpg" class="paid-stamp"></div>` : `
                                 <div class="flex flex-col items-end">
                                     <p class="text-[9px] font-black text-slate-400 uppercase mb-1">Next Due</p>
-                                    <div class="inline-flex items-center bg-white px-3 py-1.5 rounded-xl border-2 border-slate-200 shadow-sm">
-                                        <span class="text-sm font-black text-slate-900">${p.dueDate}</span>
-                                    </div>
+                                    <div class="bg-white px-4 py-2 rounded-xl border-2 border-slate-200 shadow-sm font-black text-slate-900">${p.dueDate}</div>
                                 </div>`}
                         </div>
                     </div>
                     <div class="content-area">
+                        <div class="grid grid-cols-3 gap-6 mb-8 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+                            <div><p class="text-[10px] text-slate-400 font-bold uppercase">Client ID</p><p class="font-mono font-bold text-slate-700">${p.clientId || 'NAMI-PRO-772'}</p></div>
+                            <div><p class="text-[10px] text-slate-400 font-bold uppercase">Policy UIN</p><p class="font-mono font-bold text-slate-700">${p.uin || '101N134V01'}</p></div>
+                            <div><p class="text-[10px] text-slate-400 font-bold uppercase">Policy Number</p><p class="font-mono font-bold text-slate-700">${p.id}</p></div>
+                        </div>
                         <div class="timeline-track">
-                            <div class="node bg-slate-900" style="left:-40px;">
-                                <span class="mt-1 leading-none uppercase">Start</span><span class="text-[7px] opacity-60">${startY}</span>
-                            </div>
+                            <div class="node bg-slate-900" style="left:-40px;"><span class="mt-1 leading-none uppercase">Start</span><span class="text-[7px] opacity-60">${startY}</span></div>
                             <div class="flex h-full w-full mx-4">${timeline}</div>
-                            <div class="node bg-pink-600" style="right:-40px;">
-                                <span class="mt-1 leading-none uppercase">Mat</span><span class="text-[7px] opacity-80">${matY}</span>
-                                <div class="tooltip">
-                                    <b class="text-white text-xs uppercase">Maturity</b><br>
-                                    <span class="text-pink-400 font-black text-lg">${p.maturityAmt}</span>
-                                </div>
+                            <div class="node bg-pink-600" style="right:-40px;"><span class="mt-1 leading-none uppercase">Mat</span><span class="text-[7px] opacity-80">${matY}</span>
+                                <div class="tooltip"><b class="text-white text-xs uppercase">Settlement</b><br><span class="text-pink-400 font-black text-lg">${p.maturityAmt}</span></div>
                             </div>
                         </div>
                     </div>
