@@ -16,9 +16,17 @@
         .payout-dot { width: 12px; height: 12px; background: #f59e0b; border-radius: 50%; position: absolute; top: 50%; transform: translate(-50%, -50%); border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 55; }
         .growth-dot { background: #3b82f6; }
         .maturity-dot { background: #ef4444 !important; width: 18px !important; height: 18px !important; }
+        
         .segment-container { position: relative; cursor: pointer; }
         .tooltip-text { visibility: hidden; opacity: 0; position: absolute; bottom: 45px; left: 50%; transform: translateX(-50%); background: #0f172a; color: white; padding: 8px 14px; border-radius: 6px; font-size: 11px; font-weight: 700; white-space: nowrap; transition: all 0.2s; z-index: 200; pointer-events: none; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); }
-        .segment-container:hover > .tooltip-text, .dot-wrapper:hover > .tooltip-text { opacity: 1; visibility: visible; transform: translate(-50% , -5px); }
+        .segment-container:hover > .tooltip-text:not(.tooltip-bottom), .dot-wrapper:hover > .tooltip-text:not(.tooltip-bottom) { opacity: 1; visibility: visible; transform: translate(-50% , -5px); }
+        
+        /* Kotak Annual Bonus Tooltip CSS */
+        .bonus-payout-dot { width: 10px; height: 10px; background: #eab308; border-radius: 50%; position: absolute; bottom: -4px; left: 50%; transform: translateX(-50%); border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 55; }
+        .bonus-container { position: absolute; width: 100%; height: 100%; top: 0; left: 0; z-index: 50; }
+        .tooltip-bottom { bottom: -35px !important; top: auto !important; }
+        .bonus-container:hover > .tooltip-bottom { opacity: 1; visibility: visible; transform: translate(-50%, 5px) !important; }
+
         .policy-card { background: white; border-left: 8px solid; border-radius: 16px; position: relative; margin-bottom: 1.5rem; transition: all 0.3s; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); overflow: hidden; }
         .content-area { display: none; }
         .open .content-area { display: block; }
@@ -47,7 +55,7 @@
     <div id="policy-container" class="max-w-7xl mx-auto"></div>
 
     <script type="module">
-        import { POLICY_DATA } from './data.js?v=1.1.0';
+        import { POLICY_DATA } from './data.js?v=1.1.1';
         const TODAY = new Date();
 
         window.render = function(mode) {
@@ -55,6 +63,10 @@
             const summary = document.getElementById('summary-bar');
             const list = POLICY_DATA[mode];
             const curr = mode === 'singapore' ? '$' : '₹';
+
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            const targetBtn = mode === 'singapore' ? 'btn-sg' : `btn-${mode}`;
+            document.getElementById(targetBtn).classList.add('active');
 
             container.innerHTML = list.map(p => {
                 const isPaidUp = p.dueDate === "PAID UP";
@@ -71,34 +83,44 @@
                 const totalDuration = maturityYear - startYear;
                 const premPct = (p.premiumYears / totalDuration) * 100;
 
-                // 1. Premium Segments
+                // 1. Premium Segments with exact dates and Kotak Bonus Logic
                 let premiumSegments = "";
                 for(let i=0; i<p.premiumYears; i++) {
                     const yr = startYear + i;
                     const anniversaryDate = new Date(`${commMonth} ${commDay}, ${yr}`);
                     const isPd = anniversaryDate <= TODAY;
+                    
+                    let bonusHtml = "";
+                    if (p.cashBonus === "Immediate" && i > 0) {
+                        bonusHtml = `
+                        <div class="bonus-container">
+                            <div class="bonus-payout-dot"></div>
+                            <span class="tooltip-text tooltip-bottom">Annual Bonus Payout</span>
+                        </div>`;
+                    }
+
                     premiumSegments += `<div class="segment-container flex-1 h-4 ${isPd ? 'bg-green-500' : 'bg-gray-200'} border-r border-white relative">
                         <span class="tooltip-text">Year ${i+1} (${yr})</span>
+                        ${bonusHtml}
                         ${i===0 ? '<div class="vertical-marker left-0"></div>' : ''}
                         ${i===p.premiumYears-1 ? `<div class="end-premium-marker right-0"></div>` : ''}
                     </div>`;
                 }
 
-                // 2. CONSOLIDATED Growth/Income Phase
+                // 2. CONSOLIDATED Growth/Income Phase (Fixed clipping issue)
                 const growthYears = totalDuration - p.premiumYears;
                 const elapsedGrowth = Math.max(0, TODAY.getFullYear() - (startYear + p.premiumYears));
                 const growthProgressPct = Math.min(100, (elapsedGrowth / growthYears) * 100);
 
-                // Build consolidated tooltip for Income policies
                 let incomeTooltip = "Growth Phase";
                 if(p.payoutSteps) {
                     incomeTooltip = p.payoutSteps.map(s => `${s.val} (Yrs ${s.years})`).join(' | ');
                 }
 
                 const phaseContent = `
-                    <div class="flex-1 bg-gray-100 relative rounded-r-sm overflow-hidden segment-container">
+                    <div class="flex-1 bg-gray-100 relative rounded-r-sm segment-container">
                         <span class="tooltip-text">${incomeTooltip}</span>
-                        <div class="absolute top-0 left-0 h-full bg-orange-600" style="width: ${growthProgressPct}%"></div>
+                        <div class="absolute top-0 left-0 h-full bg-orange-600 rounded-r-sm" style="width: ${growthProgressPct}%"></div>
                         
                         ${(p.type === 'ULIP' || p.type === 'ILP') ? [1, 2, 3, 4].map(i => `<div class="dot-wrapper absolute h-full" style="left:${i*20}%; z-index:60;"><div class="payout-dot growth-dot"></div></div>`).join('') : ''}
                         
@@ -117,9 +139,9 @@
                             <div>
                                 <h2 class="text-lg font-black text-gray-800">${p.name}</h2>
                                 <p class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
-                                    ID: ${p.id} | UIN: ${p.uin || 'N/A'}
+                                    ID: ${p.id} | UIN: ${p.uin || 'N/A'} | Client: ${p.clientId || 'N/A'}
                                 </p>
-                                <div class="type-badge">${p.type}</div>
+                                <div class="type-badge">${p.type || 'Standard'}</div>
                             </div>
                         </div>
                         <div><p class="val-label">Sum Assured</p><p class="val-amount text-2xl text-blue-700">${curr} ${p.sumAssured.toLocaleString()}</p></div>
