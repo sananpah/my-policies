@@ -22,7 +22,6 @@
         .growth-dot { background: #3b82f6; } 
         .maturity-dot { background: #ef4444 !important; width: 18px !important; height: 18px !important; }
         
-        /* Tooltip & Bonus Styles */
         .bonus-container { position: absolute; bottom: -22px; left: 50%; transform: translateX(-50%); z-index: 150; padding: 10px; cursor: pointer; }
         .bonus-payout-dot { width: 8px; height: 8px; background: #f59e0b; border-radius: 50%; border: 1.5px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
         .segment-container { position: relative; cursor: pointer; }
@@ -59,8 +58,18 @@
 
     <script type="module">
         import { POLICY_DATA } from './data.js';
+        
+        // Use a fixed "today" or real time
         const TODAY = new Date();
         const SG_CHARGES = [100, 100, 80, 70, 60, 50, 45, 35, 20, 5];
+
+        // Helper to parse "31 Jan 2008" style dates
+        function parseDate(dateStr) {
+            if (!dateStr || dateStr === "PAID UP") return null;
+            const parts = dateStr.split(' ');
+            if (parts.length !== 3) return null;
+            return new Date(`${parts[1]} ${parts[0]}, ${parts[2]}`);
+        }
 
         window.render = function(mode) {
             const container = document.getElementById('policy-container');
@@ -73,20 +82,35 @@
 
             container.innerHTML = list.map(p => {
                 const isPaidUp = p.dueDate === "PAID UP";
+                
+                // RESTORED NOTIFICATION LOGIC
+                let isDueSoon = false;
+                const dueDateObj = parseDate(p.dueDate);
+                if (dueDateObj) {
+                    const diffTime = dueDateObj - TODAY;
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    // Trigger if due within 45 days and not in the past
+                    if (diffDays >= 0 && diffDays <= 45) isDueSoon = true;
+                }
+
                 const splitPct = (p.premiumYears / 25) * 100;
                 let premiumSegments = "";
 
                 for(let i=0; i<p.premiumYears; i++) {
-                    const yr = parseInt(p.commenced.split(' ')[2]) + i;
-                    const isPd = new Date(`${p.commenced.split(' ')[1]} ${p.commenced.split(' ')[0]} ${yr}`) < TODAY;
-                    let paymentStatusTip = `Year ${i+1} (${yr}): ${isPd ? 'PAID' : 'DUE'}`;
+                    const commParts = p.commenced.split(' ');
+                    const startYear = parseInt(commParts[2]);
+                    const currentSegYear = startYear + i;
+                    
+                    // Logic to check if this segment's anniversary has passed
+                    const anniversaryDate = new Date(`${commParts[1]} ${commParts[0]}, ${currentSegYear}`);
+                    const isPd = anniversaryDate < TODAY;
+                    
+                    let paymentStatusTip = `Year ${i+1} (${currentSegYear}): ${isPd ? 'PAID' : 'DUE'}`;
                     
                     let indicator = "";
-                    // Handle Kotak Cash Bonus
                     if(p.cashBonus === "Immediate" && i > 0) {
                         indicator = `<div class="bonus-container"><div class="bonus-payout-dot"></div><span class="tooltip-text bonus-tooltip">Annual Bonus Payout</span></div>`;
                     }
-                    // Handle AIA Surrender Charges (Bottom dots for first 10 years)
                     if(mode === 'singapore' && i < 10) {
                         indicator = `<div class="bonus-container"><div class="bonus-payout-dot" style="background:#f97316"></div><span class="tooltip-text bonus-tooltip">Year ${i+1}: Surrender Charge ${SG_CHARGES[i]}%</span></div>`;
                     }
@@ -118,7 +142,10 @@
                         <div class="flex items-center gap-8">
                             <img src="${p.logo}" class="logo-img">
                             <div>
-                                <h2 class="text-lg font-black text-gray-800">${p.name}</h2>
+                                <h2 class="text-lg font-black text-gray-800">
+                                    ${p.name}
+                                    ${isDueSoon ? `<span class="ml-3 bg-red-600 text-white text-[9px] px-2 py-1 rounded animate-pulse font-black inline-block align-middle">DUE SOON</span>` : ''}
+                                </h2>
                                 <p class="text-[10px] font-bold text-gray-400 uppercase">Policy No: ${p.id} • UIN: ${p.uin || 'N/A'} • CLIENT: ${p.clientId || 'N/A'}</p>
                             </div>
                         </div>
