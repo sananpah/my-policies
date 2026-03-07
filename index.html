@@ -3,174 +3,158 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Policy Portfolio Executive Dashboard</title>
+    <title>Nami Insurance Portfolio</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
-        body { background-color: #f3f4f6; font-family: 'Inter', sans-serif; color: #1e293b; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Orbitron:wght@900&display=swap');
         
-        .policy-card { 
-            background: white; border-radius: 12px; border-left: 6px solid;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); transition: all 0.2s;
-            margin-bottom: 1rem; overflow: hidden;
+        body { background-color: #0f172a; font-family: 'Inter', sans-serif; color: #f1f5f9; }
+        
+        /* Funky Header */
+        .brand-header { 
+            font-family: 'Orbitron', sans-serif; 
+            background: linear-gradient(90deg, #6366f1, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 2px;
         }
-        .policy-card:hover { box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+
+        .policy-card { 
+            background: #1e293b; border-radius: 8px; border-left: 5px solid;
+            margin-bottom: 0.75rem; overflow: hidden; transition: 0.2s;
+        }
         
-        /* Header & Toggle */
-        .card-header { cursor: pointer; user-select: none; }
-        .content-area { display: none; }
+        .card-header { cursor: pointer; display: grid; grid-template-columns: 3fr 1.5fr 1.5fr 1.5fr 0.5fr; align-items: center; padding: 12px 20px; }
+        .content-area { display: none; background: #0f172a; padding: 25px 40px 60px 40px; border-top: 1px solid #334155; }
         .open .content-area { display: block; }
-        .chevron { transition: transform 0.3s; }
         .open .chevron { transform: rotate(180deg); }
 
-        /* Paid Up Stamp */
-        .paid-stamp {
-            border: 3px solid #059669; color: #059669; font-weight: 900;
-            padding: 2px 10px; border-radius: 6px; font-size: 14px;
-            text-transform: uppercase; transform: rotate(-12deg);
-            opacity: 0.8; display: inline-block;
-        }
-
-        /* Timeline & Tooltips */
-        .timeline-container { position: relative; height: 16px; background: #e2e8f0; border-radius: 99px; margin: 40px 0 60px 0; display: flex; }
-        .segment { position: relative; height: 100%; cursor: help; }
+        /* Timeline Logic */
+        .timeline-track { position: relative; height: 10px; background: #334155; border-radius: 20px; margin: 30px 0 45px 0; width: 100%; display: flex; }
+        .bar-segment { height: 100%; position: relative; cursor: help; }
         
         .tooltip {
-            visibility: hidden; opacity: 0; position: absolute;
-            bottom: 150%; left: 50%; transform: translateX(-50%);
-            background: #0f172a; color: white; padding: 12px;
-            border-radius: 8px; font-size: 11px; z-index: 100;
-            width: 240px; text-align: center; transition: 0.2s;
-            pointer-events: none; white-space: pre-wrap; line-height: 1.5;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            visibility: hidden; opacity: 0; position: absolute; bottom: 180%; left: 50%; 
+            transform: translateX(-50%); background: #ffffff; color: #000; padding: 10px;
+            border-radius: 4px; font-size: 11px; font-weight: 700; width: 220px; 
+            z-index: 100; text-align: center; white-space: pre-wrap; box-shadow: 0 10px 15px rgba(0,0,0,0.5);
         }
-        .segment:hover .tooltip { visibility: visible; opacity: 1; transform: translate(-50%, -10px); }
+        .bar-segment:hover .tooltip { visibility: visible; opacity: 1; }
 
-        /* Vertical Markers */
-        .marker { position: absolute; top: -5px; bottom: -35px; width: 2px; background: #cbd5e1; }
-        .marker-label { position: absolute; top: 25px; font-size: 10px; font-weight: 800; white-space: nowrap; transform: translateX(-50%); color: #64748b; }
+        .marker-v { position: absolute; top: -5px; bottom: -25px; width: 1px; background: #64748b; }
+        .marker-t { position: absolute; top: 20px; font-size: 10px; font-weight: 700; white-space: nowrap; transform: translateX(-50%); }
 
-        .tab-btn { padding: 10px 24px; font-weight: 800; font-size: 12px; border-radius: 8px; transition: 0.2s; }
-        .tab-btn.active { background: #1e293b; color: white; }
+        .paid-stamp { border: 2px solid #22c55e; color: #22c55e; padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 900; text-transform: uppercase; transform: rotate(-10deg); display: inline-block; }
+        
+        .tab-btn { padding: 8px 20px; font-weight: 900; font-size: 11px; border-radius: 4px; background: #334155; transition: 0.2s; }
+        .tab-btn.active { background: #6366f1; color: white; box-shadow: 0 0 15px rgba(99, 102, 241, 0.4); }
     </style>
 </head>
-<body class="p-6">
+<body class="p-4 md:p-8">
 
-    <div class="max-w-6xl mx-auto flex justify-center gap-4 mb-10">
-        <button id="btn-india" class="tab-btn active bg-white shadow-sm" onclick="render('india')">INDIA PORTFOLIO</button>
-        <button id="btn-wife" class="tab-btn bg-white shadow-sm" onclick="render('wife')">WIFE'S PORTFOLIO</button>
-        <button id="btn-singapore" class="tab-btn bg-white shadow-sm" onclick="render('singapore')">SINGAPORE</button>
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center mb-8 gap-6">
+        <h1 class="brand-header text-3xl font-black">NAMI INSURANCE PORTFOLIO</h1>
+        <div class="flex gap-2">
+            <button id="btn-india" class="tab-btn active" onclick="render('india')">INDIA</button>
+            <button id="btn-wife" class="tab-btn" onclick="render('wife')">WIFE</button>
+            <button id="btn-singapore" class="tab-btn" onclick="render('singapore')">SINGAPORE</button>
+        </div>
     </div>
 
-    <div id="container" class="max-w-6xl mx-auto"></div>
+    <div id="summary-bar" class="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4 mb-8"></div>
+
+    <div id="container" class="max-w-7xl mx-auto"></div>
 
     <script type="module">
         import { POLICY_DATA } from './data.js';
 
-        window.toggleCard = function(id) {
-            const card = document.getElementById(`card-${id}`);
-            card.classList.toggle('open');
-        }
+        window.toggleCard = (id) => document.getElementById(`card-${id}`).classList.toggle('open');
 
-        window.render = function(category) {
-            const container = document.getElementById('container');
-            const policies = POLICY_DATA[category];
-            const sym = category === 'singapore' ? '$' : '₹';
+        window.render = function(cat) {
+            const list = POLICY_DATA[cat];
+            const sym = cat === 'singapore' ? '$' : '₹';
             
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active', 'bg-slate-800', 'text-white'));
-            document.getElementById(`btn-${category}`).classList.add('active', 'bg-slate-800', 'text-white');
+            // Calculate Totals
+            const totalPrem = list.reduce((sum, p) => sum + (typeof p.premium === 'number' ? p.premium : 0), 0);
+            const totalSA = list.reduce((sum, p) => sum + (p.sumAssured || 0), 0);
 
-            container.innerHTML = policies.map(p => {
-                const isPaid = p.dueDate === "PAID UP";
-                const startYear = parseInt(p.commenced.split(' ')[2]);
-                const maturityYear = parseInt(p.maturity.split(' ')[2]);
-                const totalYrs = maturityYear - startYear;
-                const premPct = (p.premiumYears / totalYrs) * 100;
-                
-                // Income Tooltip Logic
-                let incomeContent = "Growth Phase";
-                if (p.payoutSteps) {
-                    incomeContent = "ANNUAL INCOME PERIODS:\n" + p.payoutSteps.map(s => `• ${s.years} Years: ${s.val}`).join('\n');
-                } else if (p.income) {
-                    incomeContent = p.income;
-                }
+            document.getElementById('summary-bar').innerHTML = `
+                <div class="bg-indigo-900/40 p-4 border border-indigo-500/30 rounded-lg text-center">
+                    <p class="text-[10px] font-black text-indigo-300 uppercase">Total Annual Premium</p>
+                    <p class="text-xl font-black text-white">${sym} ${totalPrem.toLocaleString()}</p>
+                </div>
+                <div class="bg-pink-900/40 p-4 border border-pink-500/30 rounded-lg text-center">
+                    <p class="text-[10px] font-black text-pink-300 uppercase">Total Sum Assured</p>
+                    <p class="text-xl font-black text-white">${sym} ${totalSA.toLocaleString()}</p>
+                </div>
+            `;
+
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`btn-${cat}`).classList.add('active');
+
+            document.getElementById('container').innerHTML = list.map(p => {
+                const start = parseInt(p.commenced.split(' ')[2]);
+                const maturity = parseInt(p.maturity.split(' ')[2]);
+                const totalYrs = maturity - start;
+                const premWidth = (p.premiumYears / totalYrs) * 100;
+                const incomeWidth = 100 - premWidth;
+
+                let incomeTip = p.payoutSteps ? p.payoutSteps.map(s => `${s.years}y: ${s.val}`).join('\n') : (p.income || "Growth Phase");
 
                 return `
-                <div class="policy-card open" id="card-${p.id}" style="border-color: ${p.color}">
-                    <div class="card-header p-5 flex items-center justify-between" onclick="toggleCard('${p.id}')">
-                        <div class="flex items-center gap-5">
-                            <img src="${p.logo}" class="w-12 h-12 object-contain">
+                <div class="policy-card" id="card-${p.id}" style="border-color: ${p.color}">
+                    <div class="card-header" onclick="toggleCard('${p.id}')">
+                        <div class="flex items-center gap-4">
+                            <img src="${p.logo}" class="w-8 h-8 object-contain bg-white rounded p-1">
                             <div>
-                                <h3 class="font-black text-lg text-slate-800">${p.name}</h3>
-                                <div class="flex gap-4 mt-1">
-                                    <span class="text-[10px] font-bold text-slate-400">ID: ${p.id}</span>
-                                    <span class="text-[10px] font-bold text-slate-400">UIN: ${p.uin || 'N/A'}</span>
-                                    <span class="text-[10px] font-bold text-slate-400">CLIENT: ${p.clientId || 'N/A'}</span>
+                                <h3 class="font-black text-sm text-white uppercase">${p.name}</h3>
+                                <div class="flex gap-3 text-[9px] font-bold text-slate-500">
+                                    <span>ID: ${p.id}</span><span>UIN: ${p.uin}</span>
                                 </div>
                             </div>
                         </div>
-                        
-                        <div class="flex items-center gap-8">
-                            <div class="text-right">
-                                <p class="text-[10px] font-extrabold text-slate-400 uppercase tracking-tighter">Premium</p>
-                                <p class="font-black text-emerald-600">${sym} ${p.premium.toLocaleString()}</p>
-                            </div>
-                            <div class="text-right w-32">
-                                <p class="text-[10px] font-extrabold text-slate-400 uppercase tracking-tighter">Next Due</p>
-                                ${isPaid ? '<div class="paid-stamp">Paid Up</div>' : `<p class="font-black text-red-600">${p.dueDate}</p>`}
-                            </div>
-                            <svg class="chevron w-6 h-6 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"></path></svg>
+                        <div class="text-center font-bold text-xs text-slate-400">${p.type}</div>
+                        <div class="text-center font-black text-emerald-400">${sym} ${p.premium.toLocaleString()}</div>
+                        <div class="text-right">
+                            ${p.dueDate === "PAID UP" ? '<span class="paid-stamp">PAID UP</span>' : `<span class="text-xs font-black text-pink-500">${p.dueDate}</span>`}
                         </div>
+                        <div class="text-right"><svg class="chevron w-4 h-4 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="4" d="M19 9l-7 7-7-7"></path></svg></div>
                     </div>
 
-                    <div class="content-area bg-slate-50 border-t border-slate-100 p-8">
-                        <div class="grid grid-cols-3 gap-10 mb-8">
-                            <div class="bg-white p-4 rounded-lg shadow-sm">
-                                <p class="text-[10px] font-black text-slate-400 uppercase">Sum Assured</p>
-                                <p class="text-2xl font-black text-slate-800">${sym} ${p.sumAssured.toLocaleString()}</p>
-                            </div>
-                            <div class="bg-white p-4 rounded-lg shadow-sm">
-                                <p class="text-[10px] font-black text-slate-400 uppercase">Premium Term</p>
-                                <p class="text-2xl font-black text-slate-800">${p.premiumYears} Years</p>
-                            </div>
-                            <div class="bg-white p-4 rounded-lg shadow-sm">
-                                <p class="text-[10px] font-black text-slate-400 uppercase">Policy Type</p>
-                                <p class="text-2xl font-black text-slate-800">${p.type}</p>
-                            </div>
+                    <div class="content-area">
+                        <div class="grid grid-cols-4 gap-4 mb-8">
+                            <div><p class="text-[10px] font-bold text-slate-500">CLIENT ID</p><p class="font-black text-white">${p.clientId || 'N/A'}</p></div>
+                            <div><p class="text-[10px] font-bold text-slate-500">SUM ASSURED</p><p class="font-black text-indigo-400">${sym} ${p.sumAssured.toLocaleString()}</p></div>
+                            <div><p class="text-[10px] font-bold text-slate-500">PREMIUM TERM</p><p class="font-black text-white">${p.premiumYears} Years</p></div>
+                            <div><p class="text-[10px] font-bold text-slate-500">POLICY TYPE</p><p class="font-black text-white">${p.type}</p></div>
                         </div>
 
-                        <div class="timeline-container">
-                            <div class="h-full bg-emerald-500 rounded-l-full flex" style="width: ${premPct}%">
-                                ${Array.from({length: p.premiumYears}).map((_, i) => `
-                                    <div class="segment flex-1 border-r border-white/20">
-                                        <div class="tooltip font-bold">Premium Payment Year ${i+1}</div>
-                                    </div>
-                                `).join('')}
+                        <div class="timeline-track">
+                            <div class="bar-segment bg-emerald-500 rounded-l-full" style="width: ${premWidth}%">
+                                <div class="tooltip">PREMIUM PHASE (${p.premiumYears} Yrs)\nAnnual: ${sym}${p.premium.toLocaleString()}</div>
+                            </div>
+                            <div class="bar-segment bg-orange-500 rounded-r-full" style="width: ${incomeWidth}%">
+                                <div class="tooltip">INCOME/GROWTH PHASE\n${incomeTip}</div>
                             </div>
 
-                            <div class="segment flex-1 bg-orange-400 rounded-r-full">
-                                <div class="tooltip font-bold">${incomeContent}</div>
-                            </div>
+                            <div class="marker-v" style="left: 0;"></div>
+                            <div class="marker-t" style="left: 0;">${p.commenced}</div>
 
-                            <div class="marker" style="left: 0;"></div>
-                            <div class="marker-label" style="left: 0;">${p.commenced}</div>
+                            <div class="marker-v" style="left: ${premWidth}%; background:#22c55e"></div>
+                            <div class="marker-t" style="left: ${premWidth}%; color:#22c55e">${p.premiumEnds}</div>
 
-                            <div class="marker" style="left: ${premPct}%; background: #10b981;"></div>
-                            <div class="marker-label" style="left: ${premPct}%; color: #10b981;">${p.premiumEnds}</div>
-
-                            <div class="marker" style="left: 100%; background: #ef4444;"></div>
-                            <div class="marker-label" style="left: 100%; color: #ef4444;">${p.maturity}</div>
-
-                            <div class="segment" style="position: absolute; right: -10px; top: -7px; z-index: 50;">
-                                <div class="tooltip font-bold" style="transform: translateX(-80%)">MATURITY BENEFIT:\n${p.maturityAmt}</div>
-                                <div class="w-8 h-8 bg-red-600 border-4 border-white rounded-full shadow-lg"></div>
+                            <div class="marker-v" style="left: 100%; background:#ef4444"></div>
+                            <div class="marker-t" style="left: 100%; color:#ef4444">${p.maturity}</div>
+                            
+                            <div class="bar-segment" style="position: absolute; right: -8px; top: -10px;">
+                                <div class="tooltip" style="left:-100px">MATURITY BENEFIT:\n${p.maturityAmt}</div>
+                                <div class="w-7 h-7 bg-red-600 rounded-full border-4 border-white"></div>
                             </div>
                         </div>
                     </div>
                 </div>`;
             }).join('');
         }
-
         render('india');
     </script>
 </body>
