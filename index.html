@@ -7,7 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Orbitron:wght@800&display=swap');
-        
         body { background-color: #f8fafc; font-family: 'Inter', sans-serif; color: #1e293b; }
         
         .brand-header { 
@@ -17,50 +16,36 @@
             -webkit-text-fill-color: transparent;
         }
 
-        .policy-card { 
-            background: white; border-radius: 12px; border-left: 6px solid;
-            margin-bottom: 1rem; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            transition: all 0.3s ease;
-        }
-        .policy-card.open { box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
-        
+        .policy-card { background: white; border-radius: 12px; border-left: 6px solid; margin-bottom: 1rem; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .card-header { cursor: pointer; display: grid; grid-template-columns: 3fr 1.5fr 1.5fr 1.5fr 0.5fr; align-items: center; padding: 16px 24px; }
         .content-area { display: none; padding: 30px 40px 70px 40px; border-top: 1px solid #f1f5f9; background: #fafafa; }
         .open .content-area { display: block; }
 
-        /* Timeline Logic */
-        .timeline-track { position: relative; height: 12px; background: #e2e8f0; border-radius: 6px; margin: 40px 0 60px 0; width: 100%; display: flex; }
+        .timeline-track { position: relative; height: 14px; background: #e2e8f0; border-radius: 7px; margin: 40px 0 60px 0; width: 100%; display: flex; }
+        .segment { height: 100%; border-right: 1px solid rgba(255,255,255,0.4); position: relative; cursor: help; }
         
-        .segment { height: 100%; border-right: 1px solid rgba(255,255,255,0.3); position: relative; cursor: help; }
         .tooltip {
             visibility: hidden; opacity: 0; position: absolute; bottom: 180%; left: 50%; 
-            transform: translateX(-50%); background: #1e293b; color: #fff; padding: 8px 12px;
-            border-radius: 6px; font-size: 11px; width: 200px; z-index: 100; text-align: center;
-            box-shadow: 0 10px 15px rgba(0,0,0,0.2); pointer-events: none;
+            transform: translateX(-50%); background: #1e293b; color: #fff; padding: 10px 14px;
+            border-radius: 8px; font-size: 11px; width: 220px; z-index: 100; text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2); pointer-events: none; line-height: 1.4;
         }
-        .segment:hover .tooltip { visibility: visible; opacity: 1; }
+        .segment:hover .tooltip { visibility: visible; opacity: 1; transform: translateX(-50%) translateY(-5px); transition: 0.2s; }
 
-        /* Status Glow */
-        @keyframes glow { 0% { opacity: 0.6; } 50% { opacity: 1; box-shadow: 0 0 10px #ef4444; } 100% { opacity: 0.6; } }
-        .due-glow { animation: glow 2s infinite; background: #fee2e2; border-radius: 4px; padding: 2px 6px; }
+        @keyframes alert-glow { 0%, 100% { background: #fee2e2; box-shadow: 0 0 5px #fca5a5; } 50% { background: #fecaca; box-shadow: 0 0 15px #ef4444; } }
+        .due-reminder { animation: alert-glow 2s infinite; border-radius: 4px; padding: 2px 8px; }
 
-        .paid-stamp { 
-            border: 2px solid #059669; color: #059669; padding: 2px 8px; border-radius: 4px; 
-            font-size: 12px; font-weight: 900; text-transform: uppercase; 
-            transform: rotate(-12deg); display: inline-block; background: #ecfdf5;
-        }
-        
+        .paid-stamp { border: 2px solid #059669; color: #059669; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 900; text-transform: uppercase; transform: rotate(-10deg); background: #ecfdf5; }
         .tab-btn { padding: 10px 24px; font-weight: 800; font-size: 12px; border-radius: 8px; background: #fff; color: #64748b; border: 1px solid #e2e8f0; }
-        .tab-btn.active { background: #4f46e5; color: white; border-color: #4f46e5; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2); }
-
-        .marker-label { position: absolute; top: 25px; font-size: 11px; font-weight: 700; color: #64748b; white-space: nowrap; transform: translateX(-50%); }
+        .tab-btn.active { background: #4f46e5; color: white; border-color: #4f46e5; }
+        .marker-label { position: absolute; top: 28px; font-size: 11px; font-weight: 700; color: #64748b; white-space: nowrap; transform: translateX(-50%); }
     </style>
 </head>
 <body class="p-4 md:p-10">
 
     <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center mb-10">
         <h1 class="brand-header text-3xl font-black">NAMI INSURANCE PORTFOLIO</h1>
-        <div class="flex gap-3 mt-4 md:mt-0">
+        <div class="flex gap-3">
             <button id="btn-india" class="tab-btn active" onclick="render('india')">INDIA</button>
             <button id="btn-wife" class="tab-btn" onclick="render('wife')">WIFE</button>
             <button id="btn-singapore" class="tab-btn" onclick="render('singapore')">SINGAPORE</button>
@@ -68,34 +53,23 @@
     </div>
 
     <div id="summary-bar" class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4 mb-8"></div>
-
     <div id="container" class="max-w-7xl mx-auto"></div>
 
     <script type="module">
         import { POLICY_DATA } from './data.js';
 
-        const CURRENT_YEAR = new Date().getFullYear();
+        const TODAY = new Date();
+        const CURRENT_YEAR = TODAY.getFullYear();
 
-        window.toggleCard = (id) => {
-            document.getElementById(`card-${id}`).classList.toggle('open');
-        };
+        window.toggleCard = (id) => document.getElementById(`card-${id}`).classList.toggle('open');
 
         window.render = function(cat) {
             const list = POLICY_DATA[cat];
             const sym = cat === 'singapore' ? '$' : '₹';
             
-            const totalPrem = list.reduce((sum, p) => sum + p.premium, 0);
-            const totalSA = list.reduce((sum, p) => sum + p.sumAssured, 0);
-
             document.getElementById('summary-bar').innerHTML = `
-                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                    <p class="text-xs font-bold text-slate-400 uppercase">Total Annual Premium</p>
-                    <p class="text-3xl font-black text-indigo-600">${sym} ${totalPrem.toLocaleString()}</p>
-                </div>
-                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                    <p class="text-xs font-bold text-slate-400 uppercase">Total Sum Assured</p>
-                    <p class="text-3xl font-black text-pink-600">${sym} ${totalSA.toLocaleString()}</p>
-                </div>
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm"><p class="text-xs font-bold text-slate-400 uppercase">Annual Premium</p><p class="text-3xl font-black text-indigo-600">${sym} ${list.reduce((s,p)=>s+p.premium,0).toLocaleString()}</p></div>
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm"><p class="text-xs font-bold text-slate-400 uppercase">Sum Assured</p><p class="text-3xl font-black text-pink-600">${sym} ${list.reduce((s,p)=>s+p.sumAssured,0).toLocaleString()}</p></div>
             `;
 
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -107,23 +81,37 @@
                 const maturity = parseInt(p.maturity.split(' ')[2]);
                 const totalYrs = maturity - start;
                 const premWidth = (p.premiumYears / totalYrs) * 100;
-                const incomeWidth = 100 - premWidth;
+                
+                // Due Date Logic (Glow if within 45 days)
+                let dateClass = "font-black text-slate-800";
+                if (!isPaid) {
+                    const due = new Date(p.dueDate);
+                    const diff = (due - TODAY) / (1000 * 60 * 60 * 24);
+                    if (diff <= 45) dateClass = "due-reminder font-black text-red-700";
+                }
 
-                // Timeline Segments Logic
+                // Segments Logic
                 const premSegments = Array.from({length: p.premiumYears}).map((_, i) => {
                     const yr = start + i;
-                    const isPassed = yr < CURRENT_YEAR;
-                    return `<div class="segment flex-1 ${isPassed ? 'bg-emerald-600' : 'bg-emerald-200'}">
-                        <div class="tooltip">Year ${i+1} (${yr}): ${isPassed ? 'Premium Paid' : 'Future Premium'}</div>
-                    </div>`;
+                    return `<div class="segment flex-1 ${yr < CURRENT_YEAR ? 'bg-emerald-600' : 'bg-emerald-200'}"><div class="tooltip">Year ${i+1} (${yr})<br><b>Premium Phase</b></div></div>`;
                 }).join('');
 
                 const incomeYrs = totalYrs - p.premiumYears;
                 const incomeSegments = Array.from({length: incomeYrs}).map((_, i) => {
                     const yr = start + p.premiumYears + i;
-                    const isPassed = yr < CURRENT_YEAR;
-                    return `<div class="segment flex-1 ${isPassed ? 'bg-orange-500' : 'bg-orange-200'}">
-                        <div class="tooltip">Year ${p.premiumYears + i + 1} (${yr}): ${isPassed ? 'Income Received' : 'Future Income'}</div>
+                    const yrOfPayout = i + 1;
+                    let stepInfo = p.income || "Growth Period";
+                    
+                    if (p.payoutSteps) {
+                        const step = p.payoutSteps.find(s => {
+                            const [s1, s2] = s.years.split('-').map(Number);
+                            return s2 ? (yrOfPayout >= s1 && yrOfPayout <= s2) : (yrOfPayout === s1);
+                        });
+                        if (step) stepInfo = `Payout: ${step.val}`;
+                    }
+
+                    return `<div class="segment flex-1 ${yr < CURRENT_YEAR ? 'bg-orange-500' : 'bg-orange-200'}">
+                        <div class="tooltip">Year ${p.premiumYears + yrOfPayout} (${yr})<br><b>${stepInfo}</b></div>
                     </div>`;
                 }).join('');
 
@@ -131,47 +119,42 @@
                 <div class="policy-card" id="card-${p.id}" style="border-color: ${p.color}">
                     <div class="card-header" onclick="toggleCard('${p.id}')">
                         <div class="flex items-center gap-4">
-                            <img src="${p.logo}" class="w-10 h-10 object-contain border rounded p-1">
+                            <img src="${p.logo}" class="w-10 h-10 object-contain border rounded p-1 bg-white">
                             <div>
                                 <h3 class="font-black text-slate-800 text-sm">${p.name}</h3>
-                                <p class="text-[10px] font-bold text-slate-400">ID: ${p.id} | UIN: ${p.uin}</p>
+                                <p class="text-[10px] font-bold text-slate-400">Policy Number: ${p.id}</p>
                             </div>
                         </div>
-                        <div class="text-center font-bold text-xs text-slate-500">${p.type}</div>
+                        <div class="text-center font-bold text-xs text-slate-500 uppercase">${p.type}</div>
                         <div class="text-center font-black text-emerald-600">${sym} ${p.premium.toLocaleString()}</div>
                         <div class="text-right">
-                            ${isPaid ? '<span class="paid-stamp">PAID UP</span>' : `<span class="due-glow text-xs font-black text-red-600">${p.dueDate}</span>`}
+                            ${isPaid ? '<span class="paid-stamp">PAID UP</span>' : `<span class="${dateClass} text-xs uppercase">${p.dueDate}</span>`}
                         </div>
                         <svg class="w-5 h-5 ml-auto text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="3" d="M19 9l-7 7-7-7"></path></svg>
                     </div>
 
                     <div class="content-area">
                         <div class="grid grid-cols-4 gap-6 mb-10">
-                            <div><p class="text-[10px] font-bold text-slate-400">CLIENT ID</p><p class="font-black">${p.clientId || 'N/A'}</p></div>
-                            <div><p class="text-[10px] font-bold text-slate-400">SUM ASSURED</p><p class="font-black text-indigo-600">${sym} ${p.sumAssured.toLocaleString()}</p></div>
-                            <div><p class="text-[10px] font-bold text-slate-400">PREMIUM TERM</p><p class="font-black">${p.premiumYears} Years</p></div>
-                            <div><p class="text-[10px] font-bold text-slate-400">MATURITY AMT</p><p class="font-black text-pink-600">${p.maturityAmt}</p></div>
+                            <div><p class="text-[10px] font-bold text-slate-400 uppercase">Annual Premium</p><p class="font-black text-emerald-600">${sym} ${p.premium.toLocaleString()}</p></div>
+                            <div><p class="text-[10px] font-bold text-slate-400 uppercase">Sum Assured</p><p class="font-black text-indigo-600">${sym} ${p.sumAssured.toLocaleString()}</p></div>
+                            ${cat !== 'singapore' ? `
+                                <div><p class="text-[10px] font-bold text-slate-400 uppercase">UIN Number</p><p class="font-black text-slate-700">${p.uin || 'N/A'}</p></div>
+                                <div><p class="text-[10px] font-bold text-slate-400 uppercase">Client ID</p><p class="font-black text-slate-700">${p.clientId || 'N/A'}</p></div>
+                            ` : `<div></div><div></div>`}
                         </div>
 
                         <div class="timeline-track">
                             <div class="flex w-full h-full">
                                 <div class="flex h-full" style="width: ${premWidth}%">${premSegments}</div>
-                                <div class="flex h-full" style="width: ${incomeWidth}%">${incomeSegments}</div>
+                                <div class="flex h-full" style="width: ${100 - premWidth}%">${incomeSegments}</div>
                             </div>
-
-                            <div class="absolute -top-1 left-0 w-px h-4 bg-slate-400"></div>
                             <div class="marker-label" style="left: 0;">${p.commenced}</div>
-
-                            <div class="absolute -top-1 w-px h-4 bg-emerald-500" style="left: ${premWidth}%"></div>
                             <div class="marker-label" style="left: ${premWidth}%; color: #059669;">${p.premiumEnds}</div>
-
-                            <div class="absolute -top-1 w-px h-4 bg-red-500" style="left: 100%"></div>
                             <div class="marker-label" style="left: 100%; color: #ef4444;">${p.maturity}</div>
                             
-                            <div style="position: absolute; right: -10px; top: -10px; z-index: 50;">
-                                <div class="w-8 h-8 bg-red-600 rounded-full border-4 border-white shadow-lg flex items-center justify-center">
-                                    <div class="tooltip" style="left:-100px">Final Maturity</div>
-                                </div>
+                            <div class="segment" style="position: absolute; right: -12px; top: -10px; z-index: 50;">
+                                <div class="tooltip" style="left:-110px; width: 250px;"><b>ABSOLUTE MATURITY VALUE</b><br>${p.maturityAmt}</div>
+                                <div class="w-9 h-9 bg-red-600 rounded-full border-4 border-white shadow-xl flex items-center justify-center text-white text-[10px] font-black">MAT</div>
                             </div>
                         </div>
                     </div>
