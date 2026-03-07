@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nami Portfolio v3.3.9</title>
+    <title>Nami Portfolio v3.4.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Orbitron:wght@800&family=JetBrains+Mono:wght@700&display=swap');
@@ -12,16 +12,12 @@
         .version-stamp { position: fixed; top: 15px; right: 20px; font-size: 10px; font-weight: 900; color: #64748b; background: #fff; padding: 4px 12px; border-radius: 20px; border: 1px solid #e2e8f0; z-index: 9999; }
         .brand-header { font-family: 'Orbitron', sans-serif; background: linear-gradient(90deg, #1e293b, #475569); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 
-        /* LOGO & BRANDING */
-        .logo-container { filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1)) brightness(1.1); transition: 0.3s; }
-        .policy-card:hover .logo-container { transform: scale(1.05); filter: brightness(1.2); }
-
         /* COLOR ENGINE */
         .bg-passed { background: #14532d; } /* Dark Green */
-        .bg-current { background: #22c55e; box-shadow: 0 0 15px #22c55e; z-index: 10; } /* Light Green */
+        .bg-current { background: #22c55e; box-shadow: 0 0 12px rgba(34, 197, 94, 0.4); z-index: 10; } /* Light Green */
         .bg-parrot { background: #a3e635; } /* Parrot Green */
-        .bg-wait-past { background: #451a03; } /* Dark Brown/Amber for passed waiting */
-        .bg-wait-future { background: #f59e0b; } /* Bright Gold for future waiting */
+        .bg-wait-past { background: #451a03; } /* History of waiting */
+        .bg-wait-future { background: #f59e0b; } /* Future wealth phase */
 
         .segment { height: 100%; position: relative; cursor: pointer; transition: 0.2s; border-radius: 2px; margin: 0 1px; }
         .segment:hover { filter: contrast(1.2) brightness(1.2); transform: scaleY(1.4); z-index: 50; }
@@ -30,32 +26,36 @@
         .tooltip { 
             visibility: hidden; opacity: 0; position: absolute; bottom: 200%; left: 50%; transform: translateX(-50%) translateY(10px); 
             background: #0f172a; color: #fff; padding: 12px 16px; border-radius: 8px; font-size: 11px; 
-            width: 220px; text-align: center; z-index: 3000; transition: 0.3s; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.4);
+            width: 200px; text-align: center; z-index: 3000; transition: 0.3s; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.4);
         }
         .segment:hover .tooltip { visibility: visible; opacity: 1; transform: translateX(-50%) translateY(0); }
 
-        /* CARDS */
-        .policy-card { background: white; border-radius: 32px; margin-bottom: 30px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); }
-        .card-header { display: flex; align-items: center; padding: 30px 40px; gap: 30px; cursor: pointer; }
+        /* CARDS & COLLAPSE */
+        .policy-card { background: white; border-radius: 32px; margin-bottom: 25px; border: 1px solid #e2e8f0; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .card-header { display: flex; align-items: center; padding: 28px 40px; gap: 30px; cursor: pointer; user-select: none; }
+        .card-header:hover { background: #fafafa; }
         
+        .content-area { max-height: 0; overflow: hidden; transition: max-height 0.5s ease-out, padding 0.5s ease; background: #fcfdfe; }
+        .open .content-area { max-height: 500px; padding: 20px 50px 60px 50px; border-top: 1px solid #f1f5f9; }
+        .open { box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05); border-color: #cbd5e1; }
+
         .type-badge-funky { 
             font-size: 10px; font-weight: 900; padding: 6px 14px; border-radius: 30px; 
-            display: inline-flex; align-items: center; gap: 6px;
-            box-shadow: inset 0 0 10px rgba(255,255,255,0.5); border: 1px solid rgba(0,0,0,0.05);
+            display: inline-flex; align-items: center; gap: 6px; border: 1px solid rgba(0,0,0,0.05);
         }
 
-        .data-label { font-family: 'JetBrains+Mono', monospace; font-size: 11px; color: #64748b; text-transform: uppercase; }
-        .data-value { font-family: 'JetBrains+Mono', monospace; font-size: 13px; font-weight: 700; color: #1e293b; }
+        .data-label { font-family: 'JetBrains+Mono', monospace; font-size: 10px; color: #94a3b8; text-transform: uppercase; margin-bottom: 2px; }
+        .data-value { font-family: 'JetBrains+Mono', monospace; font-size: 13px; font-weight: 700; color: #1e293b; white-space: nowrap; }
 
-        .timeline-track { position: relative; height: 32px; background: #f1f5f9; border-radius: 10px; width: 100%; display: flex; margin: 40px 0; padding: 0 4px; align-items: center; }
-        .node-label { font-size: 9px; font-weight: 900; color: #94a3b8; position: absolute; top: 40px; white-space: nowrap; }
+        .timeline-track { position: relative; height: 32px; background: #f1f5f9; border-radius: 10px; width: 100%; display: flex; margin-top: 40px; padding: 0 4px; align-items: center; }
+        .node-label { font-size: 9px; font-weight: 900; color: #94a3b8; position: absolute; top: 42px; text-transform: uppercase; }
     </style>
 </head>
 <body>
 
-    <div class="version-stamp">BUILD: v3.3.9 | MARCH 2026</div>
+    <div class="version-stamp">BUILD: v3.4.0 | MARCH 2026</div>
 
-    <div class="max-w-[1400px] mx-auto flex justify-between items-center mb-12">
+    <div class="max-w-[1400px] mx-auto flex justify-between items-center mb-10">
         <h1 class="brand-header text-4xl font-black italic tracking-tighter">NAMI.OS <span class="text-slate-300">/ PORTFOLIO</span></h1>
         <div class="flex bg-white p-1.5 rounded-2xl shadow-sm border border-slate-200">
             <button onclick="render('india')" id="btn-india" class="px-8 py-2.5 rounded-xl font-black text-sm transition-all">INDIA</button>
@@ -71,13 +71,16 @@
         const TODAY = new Date('2026-03-08'); 
         const CURRENT_YEAR = 2026;
 
-        window.toggleCard = (id) => document.getElementById(`card-${id}`).classList.toggle('open');
+        window.toggleCard = (id) => {
+            const el = document.getElementById(`card-${id}`);
+            el.classList.toggle('open');
+        };
 
         window.render = function(cat) {
             const list = POLICY_DATA[cat];
             const sym = cat === 'singapore' ? '$' : '₹';
             
-            document.querySelectorAll('button').forEach(b => b.className = "px-8 py-2.5 rounded-xl font-black text-sm text-slate-400 hover:text-slate-600");
+            document.querySelectorAll('button').forEach(b => b.className = "px-8 py-2.5 rounded-xl font-black text-sm text-slate-400 hover:text-slate-600 transition-all");
             document.getElementById(`btn-${cat}`).className = "px-8 py-2.5 rounded-xl font-black text-sm bg-slate-900 text-white shadow-lg";
 
             document.getElementById('container').innerHTML = list.map(p => {
@@ -93,14 +96,12 @@
                     let color = "";
                     let phase = "";
 
-                    // COLOR LOGIC
                     if (yr <= premEndYear && !isPaid) {
                         if (isPast) { color = "bg-passed"; phase = "Premium Paid"; }
-                        else if (yr === CURRENT_YEAR) { color = "bg-current"; phase = "Current Due"; }
+                        else if (yr === CURRENT_YEAR) { color = "bg-current"; phase = "Current Installment"; }
                         else { color = "bg-parrot"; phase = "Future Premium"; }
                     } else {
-                        // WAITING / INCOME PHASE
-                        if (isPast) { color = "bg-wait-past"; phase = "History"; }
+                        if (isPast) { color = "bg-wait-past"; phase = "Matured Phase"; }
                         else { color = "bg-wait-future"; phase = "Wealth Accrual"; }
                     }
 
@@ -113,13 +114,13 @@
                 return `
                 <div class="policy-card" id="card-${p.id}">
                     <div class="card-header" onclick="toggleCard('${p.id}')">
-                        <div style="flex:1" class="flex items-center gap-8">
-                            <div class="logo-container w-28 h-16 flex items-center justify-center bg-slate-50 rounded-2xl border border-slate-100 p-4">
-                                <img src="${p.logo}" class="max-h-full max-w-full object-contain">
+                        <div style="flex:1.5" class="flex items-center gap-8">
+                            <div class="w-32 h-16 flex items-center justify-center bg-slate-50 rounded-2xl border border-slate-100 p-4">
+                                <img src="${p.logo}" class="max-h-full max-w-full object-contain brightness-110">
                             </div>
                             <div>
                                 <div class="type-badge-funky mb-2" style="${badgeStyle}">${icon} ${p.type}</div>
-                                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest">${p.name}</h3>
+                                <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] leading-none">${p.name}</h3>
                             </div>
                         </div>
 
@@ -128,14 +129,14 @@
                             <p class="text-xl font-black text-slate-900">${sym}${p.premium.toLocaleString()}</p>
                         </div>
 
-                        <div style="flex:1.2" class="flex justify-end gap-12 border-l border-slate-100 pl-12">
+                        <div style="flex:1.2" class="flex justify-end gap-10 border-l border-slate-100 pl-10">
                             <div class="text-right">
                                 <p class="data-label">Policy No.</p>
                                 <p class="data-value">${p.id}</p>
                             </div>
                             <div class="text-right">
                                 <p class="data-label">Client ID</p>
-                                <p class="data-value">${p.clientId || 'NAMI-882'}</p>
+                                <p class="data-value">${p.clientId || 'NAMI-PRO'}</p>
                             </div>
                             <div class="text-right">
                                 <p class="data-label">UIN</p>
@@ -144,11 +145,11 @@
                         </div>
                     </div>
 
-                    <div id="content-${p.id}" class="px-10 pb-12 pt-4 bg-slate-50/50">
+                    <div class="content-area">
                         <div class="timeline-track">
-                            <span class="node-label" style="left:0">${startY} (START)</span>
+                            <span class="node-label" style="left:0">${startY} Start</span>
                             <div class="flex h-full w-full mx-1">${timeline}</div>
-                            <span class="node-label" style="right:0">${matY} (MATURITY: ${p.maturityAmt})</span>
+                            <span class="node-label" style="right:0">${matY} Maturity (${p.maturityAmt})</span>
                         </div>
                     </div>
                 </div>`;
