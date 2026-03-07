@@ -3,101 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nami Insurance Portfolio</title>
+    <title>Nami Portfolio v3.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Orbitron:wght@800&display=swap');
         
         body { background-color: #f1f5f9; font-family: 'Inter', sans-serif; color: #1e293b; }
-        
-        .brand-header { 
-            font-family: 'Orbitron', sans-serif; 
-            background: linear-gradient(90deg, #4f46e5, #db2777);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
+        .brand-header { font-family: 'Orbitron', sans-serif; background: linear-gradient(90deg, #4f46e5, #db2777); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .version-stamp { position: fixed; top: 10px; right: 15px; font-size: 9px; font-weight: 800; color: #94a3b8; background: #fff; padding: 2px 8px; border-radius: 4px; border: 1px solid #e2e8f0; z-index: 1000; }
 
-        /* --- THE CARD --- */
-        .policy-card { 
-            background: white; border-radius: 24px; border-left: 12px solid; 
-            margin-bottom: 2rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); 
-            position: relative; overflow: visible !important;
-        }
-
-        .card-header { 
-            cursor: pointer; display: grid; 
-            grid-template-columns: 2.5fr 1fr 1fr 1fr 1.2fr 1fr 0.4fr; 
-            align-items: center; padding: 30px; gap: 20px;
-        }
-
-        .content-area { display: none; padding: 80px 40px; border-top: 1px solid #f1f5f9; background: #fafafa; border-radius: 0 0 24px 24px; overflow: visible !important; }
+        .policy-card { background: white; border-radius: 20px; border-left: 10px solid; margin-bottom: 2rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); position: relative; }
+        
+        /* The Hover Trigger area */
+        .card-header { cursor: pointer; display: grid; grid-template-columns: 2.2fr 1fr 1fr 1fr 1.2fr 1fr 0.3fr; align-items: center; padding: 25px 30px; gap: 15px; }
+        .content-area { display: none; padding: 60px 40px; border-top: 1px solid #f1f5f9; background: #fafafa; border-radius: 0 0 20px 20px; }
         .open .content-area { display: block; }
 
-        /* --- THE TOOLTIP FIX (The "Different Angle") --- */
-        [data-tooltip] { position: relative; cursor: help; pointer-events: auto !important; }
-
-        [data-tooltip]::before {
-            content: attr(data-tooltip);
-            position: absolute; bottom: 120%; left: 50%; transform: translateX(-50%) translateY(10px);
-            width: 180px; padding: 10px; background: #0f172a; color: white;
-            font-size: 11px; text-align: center; border-radius: 8px;
-            opacity: 0; visibility: hidden; transition: all 0.2s ease;
-            z-index: 99999; pointer-events: none; box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-            line-height: 1.4; font-family: 'Inter', sans-serif; font-weight: 500;
+        /* --- TOOLTIP ENGINE (Legacy Version - The one that worked) --- */
+        .segment { height: 100%; position: relative; cursor: pointer; transition: all 0.2s; z-index: 50; pointer-events: auto; }
+        .tooltip { 
+            visibility: hidden; opacity: 0; position: absolute; bottom: 130%; left: 50%; transform: translateX(-50%); 
+            background: #1e293b; color: #fff; padding: 8px 12px; border-radius: 6px; font-size: 11px; 
+            width: 160px; text-align: center; z-index: 200; pointer-events: none; transition: 0.2s;
         }
+        .segment:hover { filter: brightness(1.2); z-index: 100; }
+        .segment:hover .tooltip { visibility: visible; opacity: 1; transform: translateX(-50%) translateY(-5px); }
 
-        [data-tooltip]:hover::before { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
-
-        /* --- TIMELINE ELEMENTS --- */
-        .timeline-track { position: relative; height: 40px; background: #e2e8f0; border-radius: 20px; margin: 40px 0; width: 100%; display: flex; align-items: center; z-index: 10; }
+        /* --- TIMELINE TRACK --- */
+        .timeline-track { position: relative; height: 30px; background: #e2e8f0; border-radius: 15px; margin: 40px 0; width: 100%; display: flex; overflow: visible; }
         
-        /* Removed overflow-hidden from here to prevent tooltip clipping */
-        .segment-bar { display: flex; width: 100%; height: 100%; border-radius: 20px; overflow: hidden; } 
-        
-        .segment { height: 100%; transition: filter 0.2s; }
-        .segment:hover { filter: brightness(1.2); }
+        .node-circle { position: absolute; top: -12px; width: 54px; height: 54px; border-radius: 50%; border: 5px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.1); z-index: 60; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 900; color: white; }
+        .node-circle:hover .tooltip { visibility: visible; opacity: 1; transform: translateX(-50%) translateY(-5px); }
 
-        .node-circle { 
-            position: absolute; width: 56px; height: 56px; 
-            border-radius: 50%; border: 6px solid #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
-            z-index: 100; display: flex; align-items: center; justify-content: center; 
-            font-size: 10px; font-weight: 900; color: white;
-        }
+        /* --- DUAL BADGES --- */
+        .dual-badge-container { display: flex; flex-direction: column; gap: 6px; align-items: center; }
+        .mini-badge { width: 85px; padding: 4px; border-radius: 10px; background: #fff; border: 2px solid; display: flex; flex-direction: column; align-items: center; }
+        .badge-num { font-family: 'Orbitron', sans-serif; font-size: 13px; font-weight: 900; color: #1e293b; line-height: 1; }
+        .badge-txt { font-size: 7px; font-weight: 900; text-transform: uppercase; color: #64748b; margin-top: 2px; }
 
-        /* --- BADGES --- */
-        .dual-badge-container { display: flex; flex-direction: column; gap: 8px; align-items: center; }
-        .glow-mini-badge {
-            width: 90px; padding: 6px; border-radius: 12px;
-            background: white; border: 2px solid; display: flex; flex-direction: column; 
-            align-items: center; transition: transform 0.2s;
-        }
-        .glow-mini-badge:hover { transform: scale(1.05); }
-        .prem-badge { border-color: #10b981; }
-        .mat-badge { border-color: #6366f1; }
-        
-        .badge-num { font-family: 'Orbitron', sans-serif; font-size: 14px; font-weight: 900; color: #1e293b; }
-        .badge-txt { font-size: 7px; font-weight: 900; text-transform: uppercase; color: #64748b; }
-
-        @keyframes alert-glow { 0%, 100% { background: #fee2e2; } 50% { background: #fecaca; box-shadow: 0 0 15px #ef4444; } }
-        .due-reminder { animation: alert-glow 2s infinite; border-radius: 8px; padding: 6px 12px; }
-        .vibrant-paid-logo { width: 100px; filter: drop-shadow(0 0 10px rgba(34, 197, 94, 0.3)); transform: rotate(-8deg); }
+        @keyframes alert-glow { 0%, 100% { background: #fee2e2; } 50% { background: #fecaca; } }
+        .due-reminder { animation: alert-glow 2s infinite; border-radius: 6px; padding: 4px 8px; }
+        .paid-stamp { width: 100px; transform: rotate(-10deg); filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1)); }
     </style>
 </head>
 <body class="p-6 md:p-12">
 
-    <div class="version-stamp">v2.9.9 | 07-Mar-2026 22:30</div>
+    <div class="version-stamp">v3.0.0 | 07-Mar-2026 22:45</div>
 
     <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-end mb-12">
         <div>
             <h1 class="brand-header text-5xl font-black italic tracking-tighter">NAMI PORTFOLIO</h1>
-            <p class="text-slate-400 font-bold text-[11px] mt-1 uppercase tracking-[0.4em]">Strategic Insurance Overview</p>
+            <p class="text-slate-400 font-bold text-[11px] mt-1 uppercase tracking-[0.4em]">Integrated Asset Dashboard</p>
         </div>
         <div class="flex gap-4 mt-6 md:mt-0">
-            <button id="btn-india" class="p-4 px-10 font-black rounded-2xl border-2 transition-all shadow-sm hover:shadow-md" onclick="render('india')">INDIA</button>
-            <button id="btn-wife" class="p-4 px-10 font-black rounded-2xl border-2 transition-all shadow-sm hover:shadow-md" onclick="render('wife')">WIFE</button>
-            <button id="btn-singapore" class="p-4 px-10 font-black rounded-2xl border-2 transition-all shadow-sm hover:shadow-md" onclick="render('singapore')">SINGAPORE</button>
+            <button id="btn-india" class="p-4 px-10 font-black rounded-2xl border-2 transition-all shadow-sm" onclick="render('india')">INDIA</button>
+            <button id="btn-wife" class="p-4 px-10 font-black rounded-2xl border-2 transition-all shadow-sm" onclick="render('wife')">WIFE</button>
+            <button id="btn-singapore" class="p-4 px-10 font-black rounded-2xl border-2 transition-all shadow-sm" onclick="render('singapore')">SINGAPORE</button>
         </div>
     </div>
 
@@ -117,8 +78,7 @@
             const sym = cat === 'singapore' ? '$' : '₹';
             
             document.querySelectorAll('button').forEach(b => {
-                b.classList.remove('bg-slate-900', 'text-white', 'border-slate-900');
-                b.classList.add('bg-white', 'text-slate-600', 'border-slate-200');
+                b.className = "p-4 px-10 font-black rounded-2xl border-2 transition-all shadow-sm bg-white text-slate-600 border-slate-200";
             });
             document.getElementById(`btn-${cat}`).className = "p-4 px-10 font-black rounded-2xl border-2 transition-all shadow-sm bg-slate-900 text-white border-slate-900";
 
@@ -132,7 +92,6 @@
                 const matY = parseInt(p.maturity.split(' ')[2]);
                 const premEndY = parseInt(p.premiumEnds.split(' ')[2]);
                 
-                // Logic fix for current year completions
                 const isPaid = premEndY < CURRENT_YEAR;
                 const isFinalYear = premEndY === CURRENT_YEAR;
 
@@ -148,7 +107,7 @@
                     const y = startY + i;
                     const status = y < CURRENT_YEAR ? "PAID" : (y === CURRENT_YEAR ? "DUE NOW" : "FUTURE");
                     const color = y < CURRENT_YEAR ? 'bg-emerald-600' : (y === CURRENT_YEAR ? 'bg-emerald-400' : 'bg-emerald-200');
-                    return `<div class="segment flex-1 ${color}" data-tooltip="Year ${i+1} (${y}): ${status}"></div>`;
+                    return `<div class="segment flex-1 ${color}"><div class="tooltip">Year ${i+1} (${y})<br><b>${status}</b></div></div>`;
                 }).join('');
 
                 const incS = p.payoutSteps ? p.payoutSteps.map(s => {
@@ -156,49 +115,49 @@
                     const span = ((r[1] || r[0]) - r[0]) + 1;
                     const w = (span / (dur - p.premiumYears)) * 100;
                     const color = startY + p.premiumYears + r[0] - 1 < CURRENT_YEAR ? 'bg-orange-500' : 'bg-orange-200';
-                    return `<div class="segment ${color}" style="width: ${w}%" data-tooltip="PAYOUT: ${s.val} (Years ${s.years})"></div>`;
-                }).join('') : `<div class="segment flex-1 bg-orange-50" data-tooltip="Growth Phase (No Payouts Yet)"></div>`;
+                    return `<div class="segment ${color}" style="width: ${w}%"><div class="tooltip"><b>PAYOUT: ${s.val}</b><br>Years ${s.years}</div></div>`;
+                }).join('') : `<div class="segment flex-1 bg-orange-50"><div class="tooltip">Growth Phase</div></div>`;
 
                 return `
-                <div class="policy-card" id="card-${p.id}" style="border-color: ${p.color}; --glow-color: ${p.color}44">
+                <div class="policy-card" id="card-${p.id}" style="border-color: ${p.color}">
                     <div class="card-header" onclick="toggleCard('${p.id}')">
-                        <div class="logo-container">
-                            <img src="${p.logo}" class="w-[140px] h-[60px] object-contain object-left">
-                            <div><h3 class="font-black text-slate-900 text-base leading-tight">${p.name}</h3><p class="text-[9px] font-black text-slate-400 tracking-wider uppercase">ID: ${p.id}</p></div>
+                        <div class="flex flex-col">
+                            <img src="${p.logo}" class="w-[130px] h-[55px] object-contain object-left mb-2">
+                            <h3 class="font-black text-slate-900 text-sm leading-tight">${p.name}</h3>
                         </div>
                         <div class="flex justify-center">
-                             <div class="text-[9px] font-black uppercase px-3 py-1.5 rounded-lg border bg-slate-50">${p.type}</div>
+                             <div class="text-[9px] font-black uppercase px-2 py-1 bg-slate-100 rounded">${p.type}</div>
                         </div>
-                        <div class="text-right"><p class="text-[9px] font-black text-slate-400 uppercase mb-1">Premium</p><p class="text-lg font-black text-emerald-600">${sym}${p.premium.toLocaleString()}</p></div>
-                        <div class="text-right"><p class="text-[9px] font-black text-slate-400 uppercase mb-1">Sum Assured</p><p class="text-lg font-black text-indigo-600">${sym}${p.sumAssured.toLocaleString()}</p></div>
+                        <div class="text-right"><p class="text-[9px] font-black text-slate-400 uppercase">Premium</p><p class="text-base font-black text-emerald-600">${sym}${p.premium.toLocaleString()}</p></div>
+                        <div class="text-right"><p class="text-[9px] font-black text-slate-400 uppercase">Sum Assured</p><p class="text-base font-black text-indigo-600">${sym}${p.sumAssured.toLocaleString()}</p></div>
                         
                         <div class="dual-badge-container">
-                            <div class="glow-mini-badge prem-badge" data-tooltip="Last Premium: ${p.premiumEnds}">
+                            <div class="mini-badge" style="border-color:#10b981">
                                 <span class="badge-num">${premLeft > 0 ? premLeft : (isFinalYear ? '1' : '✅')}</span>
-                                <span class="badge-txt">${premLeft > 0 ? 'Yrs Left' : (isFinalYear ? 'Final' : 'Paid')}</span>
+                                <span class="badge-txt">${premLeft > 0 ? 'Years' : (isFinalYear ? 'Final' : 'Paid')}</span>
                             </div>
-                            <div class="glow-mini-badge mat-badge" data-tooltip="Maturity: ${p.maturity}">
+                            <div class="mini-badge" style="border-color:#6366f1">
                                 <span class="badge-num">${matLeft > 0 ? matLeft : '🏆'}</span>
-                                <span class="badge-txt">${matLeft > 0 ? 'To Mat' : 'Done'}</span>
+                                <span class="badge-txt">Maturity</span>
                             </div>
                         </div>
 
                         <div class="text-right flex items-center justify-end">
-                            ${(isPaid) ? `<img src="paid.jpg" class="vibrant-paid-logo">` : `
+                            ${(isPaid) ? `<img src="paid.jpg" class="paid-stamp">` : `
                                 <div><p class="text-[9px] font-black text-slate-400 uppercase mb-1">Next Due</p><span class="${dC} text-xs">${isFinalYear ? p.dueDate + ' (LAST)' : p.dueDate}</span></div>
                             `}
                         </div>
-                        <svg class="w-6 h-6 ml-auto text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="3" d="M19 9l-7 7-7-7"></path></svg>
+                        <svg class="w-6 h-6 ml-auto text-slate-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="3" d="M19 9l-7 7-7-7"></path></svg>
                     </div>
                     <div class="content-area">
                         <div class="timeline-track">
-                            <div class="node-circle bg-slate-900" style="left: -28px;" data-tooltip="Commenced: ${p.commenced}">START</div>
-                            <div class="segment-bar">
+                            <div class="node-circle bg-slate-900" style="left: -27px;"><div class="tooltip">Commenced: ${p.commenced}</div>START</div>
+                            <div class="flex w-full overflow-hidden rounded-full">
                                 <div class="flex h-full" style="width: ${pW}%">${premS}</div>
                                 <div class="flex h-full" style="width: ${100 - pW}%">${incS}</div>
                             </div>
-                            <div class="node-circle bg-emerald-600" style="left: calc(${pW}% - 28px);" data-tooltip="Premium Ends: ${p.premiumEnds}">END</div>
-                            <div class="node-circle bg-red-600" style="right: -28px;" data-tooltip="Maturity: ${p.maturity} - Value: ${p.maturityAmt}">MAT</div>
+                            <div class="node-circle bg-emerald-600" style="left: calc(${pW}% - 27px);"><div class="tooltip">Ends: ${p.premiumEnds}</div>END</div>
+                            <div class="node-circle bg-red-600" style="right: -27px;"><div class="tooltip"><b>Value: ${p.maturityAmt}</b><br>Date: ${p.maturity}</div>MAT</div>
                         </div>
                     </div>
                 </div>`;
