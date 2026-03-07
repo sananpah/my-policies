@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nami Portfolio v3.2.2</title>
+    <title>Nami Portfolio v3.2.3</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Orbitron:wght@800&display=swap');
@@ -12,22 +12,20 @@
         .version-stamp { position: fixed; top: 15px; right: 20px; font-size: 11px; font-weight: 900; color: #1e293b; background: #fff; padding: 6px 12px; border-radius: 8px; border: 1px solid #cbd5e1; z-index: 9999; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
         .brand-header { font-family: 'Orbitron', sans-serif; background: linear-gradient(90deg, #4f46e5, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 
-        /* SEGMENT COLORS */
         .segment { height: 100%; position: relative; cursor: pointer; transition: 0.2s; border-radius: 4px; margin: 0 1px; }
         .segment:hover { filter: brightness(1.2); transform: scaleY(1.15); z-index: 100; }
         .bg-past { background: #475569; opacity: 0.8; }
         .bg-premium { background: linear-gradient(180deg, #10b981 0%, #059669 100%); }
         .bg-income { background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%); }
-        /* NEW DUAL PHASE COLOR */
         .bg-dual-phase { background: linear-gradient(180deg, #10b981 0%, #f59e0b 100%); border: 1px solid #10b981; }
         .bg-growth { background: linear-gradient(180deg, #8b5cf6 0%, #6d28d9 100%); }
         .bg-future { background: #cbd5e1; }
 
         .tooltip { 
             visibility: hidden; opacity: 0; position: absolute; bottom: 155%; left: 50%; transform: translateX(-50%) translateY(10px); 
-            background: #0f172a; color: #fff; padding: 12px 16px; border-radius: 10px; font-size: 11px; 
-            width: 220px; text-align: center; z-index: 1000; transition: 0.3s;
-            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); line-height: 1.5;
+            background: #0f172a; color: #fff; padding: 14px 18px; border-radius: 12px; font-size: 11px; 
+            width: 240px; text-align: center; z-index: 1000; transition: 0.3s;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); line-height: 1.6;
         }
         .segment:hover .tooltip, .node:hover .tooltip { visibility: visible; opacity: 1; transform: translateX(-50%) translateY(0); }
 
@@ -41,14 +39,14 @@
         .retirement { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
         .ulip { background: #f5f3ff; color: #5b21b6; border-color: #ddd6fe; }
 
-        .paid-stamp { width: 140px; transform: rotate(-10deg); filter: drop-shadow(0 10px 15px rgba(0,0,0,0.2)) contrast(1.2); opacity: 0.95; }
+        .paid-stamp { width: 140px; transform: rotate(-10deg); filter: drop-shadow(0 10px 15px rgba(0,0,0,0.2)); opacity: 0.95; }
         .timeline-track { position: relative; height: 42px; background: #e2e8f0; border-radius: 24px; width: 100%; display: flex; margin: 30px 0; padding: 0 6px; align-items: center; }
-        .node { position: absolute; width: 60px; height: 60px; border-radius: 50%; border: 6px solid #fff; z-index: 200; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; color: white; top: -9px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .node { position: absolute; width: 70px; height: 70px; border-radius: 50%; border: 6px solid #fff; z-index: 200; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; color: white; top: -14px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
     </style>
 </head>
 <body>
 
-    <div class="version-stamp">BUILD: v3.2.2 | 08-MAR-2026</div>
+    <div class="version-stamp">BUILD: v3.2.3 | 08-MAR-2026</div>
 
     <div class="max-w-7xl mx-auto flex justify-between items-end mb-14">
         <div>
@@ -91,8 +89,9 @@
                 
                 const isPaid = (p.name.includes("Axis Max Life")) || (premEndY < CURRENT_YEAR);
                 const isULIP = p.type.toLowerCase().includes('ulip');
+                const premiumsLeft = Math.max(0, premEndY - CURRENT_YEAR + 1);
 
-                // Reminder Logic
+                // Due Date Logic
                 const [d, m, y] = p.dueDate.split(' ');
                 const dueObj = new Date(`${m} ${d}, ${y}`);
                 const diffDays = Math.ceil((dueObj - TODAY) / (1000 * 60 * 60 * 24));
@@ -102,32 +101,46 @@
                 for(let yr = startY; yr < matY; yr++) {
                     const polYear = yr - startY + 1;
                     const isPast = yr < CURRENT_YEAR;
-                    const isCurrent = yr === CURRENT_YEAR;
-                    
-                    let type = "Future";
+                    let type = "Future Phase";
                     let color = "bg-future";
-                    let detail = "";
+                    let payout = "N/A";
 
-                    const hasBonus = p.name.includes("Fortune Maximiser") && polYear >= 2;
-                    const isPremiumActive = yr <= premEndY;
+                    const isPremActive = yr <= premEndY;
+                    const isBonusActive = p.name.includes("Fortune Maximiser") && polYear >= 2;
 
-                    if (isPremiumActive && hasBonus) {
-                        // HYBRID PHASE
+                    // Calculate Payout String
+                    if (p.name.includes("Moneyback")) {
+                        if (polYear >= 11 && polYear <= 14) payout = "₹18,591";
+                        else if (polYear === 15) payout = "₹49,576";
+                    } else if (p.name.includes("Samrudhi") && polYear >= 8) payout = "₹1,00,000";
+                    else if (p.name.includes("Nishchit Ace")) {
+                        if (polYear >= 11 && polYear <= 15) payout = "₹1,33,974";
+                        else if (polYear >= 16 && polYear <= 20) payout = "₹160,769";
+                        else if (polYear >= 21 && polYear <= 25) payout = "₹187,564";
+                        else if (polYear >= 26 && polYear <= 30) payout = "₹214,359";
+                    } else if (p.name.includes("Pension SL")) payout = "₹89,830";
+                    else if (isBonusActive) payout = "Variable Bonus";
+
+                    // Determine Segment Style
+                    if (isPremActive && isBonusActive) {
                         color = isPast ? "bg-past" : "bg-dual-phase";
-                        type = "Premium + Bonus";
-                        detail = "Active Pay + Annual Accrual";
-                    } else if (isPremiumActive) {
-                        // PURE PREMIUM
-                        color = isPast ? "bg-past" : (isCurrent && !isPaid ? "bg-premium" : "bg-future");
-                        type = "Premium Phase";
-                    } else if (hasBonus || yr > premEndY) {
-                        // PURE INCOME/GROWTH
+                        type = "Premium + Bonus Phase";
+                    } else if (isPremActive) {
+                        color = isPast ? "bg-past" : (yr === CURRENT_YEAR && !isPaid ? "bg-premium" : "bg-future");
+                        type = "Premium Payment Phase";
+                    } else {
                         color = isULIP ? "bg-growth" : (isPast ? "bg-past" : "bg-income");
-                        type = isULIP ? "Unit Growth" : "Annual Bonus/Income";
-                        if(p.name.includes("Fortune Maximiser")) detail = "Variable Bonus Payout";
+                        type = isULIP ? "Unit Growth Phase" : "Annual Payout Phase";
                     }
 
-                    timeline += `<div class="segment ${color}" style="flex:1"><div class="tooltip"><b>${type}</b><br>${detail}<br>Year ${polYear} (${yr})</div></div>`;
+                    timeline += `
+                        <div class="segment ${color}" style="flex:1">
+                            <div class="tooltip">
+                                <b class="text-white text-xs uppercase tracking-tighter">${type}</b><br>
+                                <span class="text-orange-400 font-black">Annual: ${payout}</span><br>
+                                <span class="text-slate-400 text-[10px]">Year ${polYear} (${yr})</span>
+                            </div>
+                        </div>`;
                 }
 
                 const typeIcon = isULIP ? 
@@ -141,7 +154,7 @@
                 return `
                 <div class="policy-card" id="card-${p.id}" style="border-color: ${p.color}">
                     <div class="card-header" onclick="toggleCard('${p.id}')">
-                        <div style="flex:2">
+                        <div style="flex:1.8">
                             <img src="${p.logo}" class="h-10 object-contain mb-3">
                             <h3 class="font-black text-slate-900 text-lg leading-tight mb-1">${p.name}</h3>
                             <p class="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Policy Number: ${p.id}</p>
@@ -150,9 +163,17 @@
                             ${typeIcon}
                             <span class="type-badge ${typeClass}">${p.type}</span>
                         </div>
-                        <div style="flex:1" class="text-right"><p class="text-[9px] font-bold text-slate-400 uppercase">Premium</p><p class="text-xl font-black text-emerald-600">${sym}${p.premium.toLocaleString()}</p></div>
-                        <div style="flex:1.2" class="text-right"><p class="text-[9px] font-bold text-slate-400 uppercase">Sum Assured</p><p class="text-xl font-black text-indigo-600">${sym}${p.sumAssured.toLocaleString()}</p></div>
-                        <div style="flex:1.2" class="text-right">
+                        <div style="flex:1" class="text-right">
+                            <p class="text-[9px] font-bold text-slate-400 uppercase">Premium</p>
+                            <p class="text-xl font-black text-emerald-600">${sym}${p.premium.toLocaleString()}</p>
+                            ${!isPaid ? `
+                            <div class="flex items-center justify-end gap-1 mt-1">
+                                <svg class="w-3 h-3 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <span class="text-[9px] font-bold text-slate-400">${premiumsLeft} YRS LEFT</span>
+                            </div>` : ''}
+                        </div>
+                        <div style="flex:1.1" class="text-right"><p class="text-[9px] font-bold text-slate-400 uppercase">Sum Assured</p><p class="text-xl font-black text-indigo-600">${sym}${p.sumAssured.toLocaleString()}</p></div>
+                        <div style="flex:1.1" class="text-right">
                             ${isPaid ? `<img src="paid.jpg" class="paid-stamp ml-auto">` : `
                                 <div class="flex flex-col items-end">
                                     <p class="text-[9px] font-black text-slate-400 uppercase mb-1">Next Due</p>
@@ -160,19 +181,26 @@
                                         <svg class="w-3.5 h-3.5 ${showReminder ? 'text-red-500' : 'text-emerald-500'} mr-2" fill="currentColor" viewBox="0 0 20 20"><path d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"></path></svg>
                                         <span class="text-sm font-black text-slate-900">${p.dueDate}</span>
                                     </div>
-                                    ${showReminder ? `<div class="mt-1 flex items-center bg-red-100 px-2 py-0.5 rounded border border-red-200"><span class="w-1 h-1 bg-red-600 rounded-full animate-pulse mr-1"></span><span class="text-[8px] font-black text-red-700 uppercase">Pay Soon</span></div>` : ''}
+                                    ${showReminder ? `<div class="mt-1 flex items-center bg-red-100 px-2 py-0.5 rounded border border-red-200"><span class="w-1 h-1 bg-red-600 rounded-full animate-pulse mr-1"></span><span class="text-[8px] font-black text-red-700 uppercase tracking-tighter">Action Needed</span></div>` : ''}
                                 </div>`}
                         </div>
                     </div>
                     <div class="content-area">
-                        <div class="flex gap-10 mb-8 border-b border-slate-100 pb-4">
-                            <div><p class="text-[9px] font-bold text-slate-400 uppercase">Policy Owner ID</p><p class="text-sm font-black text-slate-700">${p.clientId || 'N/A'}</p></div>
+                        <div class="flex gap-10 mb-10 border-b border-slate-100 pb-5">
+                            <div><p class="text-[9px] font-bold text-slate-400 uppercase">Owner ID</p><p class="text-sm font-black text-slate-700">${p.clientId || 'N/A'}</p></div>
                             <div><p class="text-[9px] font-bold text-slate-400 uppercase">UIN Number</p><p class="text-sm font-black text-slate-700">${p.uin || 'N/A'}</p></div>
                         </div>
                         <div class="timeline-track">
-                            <div class="node bg-slate-900" style="left:-30px;">START</div>
-                            <div class="flex h-full w-full mx-2">${timeline}</div>
-                            <div class="node bg-pink-600" style="right:-30px;"><div class="tooltip"><b>Maturity</b><br>${p.maturity}</div>MAT</div>
+                            <div class="node bg-slate-900" style="left:-35px;"><span class="mt-1 leading-none">START</span><span class="text-[7px] opacity-60">${startY}</span></div>
+                            <div class="flex h-full w-full mx-4">${timeline}</div>
+                            <div class="node bg-pink-600" style="right:-35px;">
+                                <div class="tooltip">
+                                    <b class="text-white text-xs">FINAL MATURITY</b><br>
+                                    <span class="text-pink-300 font-black">${sym}${p.sumAssured.toLocaleString()}</span><br>
+                                    <span class="text-[9px] text-slate-400">+ Accrued Bonuses</span>
+                                </div>
+                                <span class="mt-1 leading-none">MAT</span><span class="text-[7px] opacity-80">${matY}</span>
+                            </div>
                         </div>
                     </div>
                 </div>`;
