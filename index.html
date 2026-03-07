@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nami Portfolio v3.2.0</title>
+    <title>Nami Portfolio v3.2.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Orbitron:wght@800&display=swap');
@@ -33,7 +33,7 @@
         .content-area { display: none; padding: 60px 50px; border-top: 1px solid #f1f5f9; background: #fafbfc; border-radius: 0 0 28px 28px; overflow: visible !important; }
         .open .content-area { display: block; }
 
-        .type-badge { font-size: 10px; font-weight: 900; text-transform: uppercase; padding: 6px 12px; border-radius: 8px; border: 2px solid; display: inline-block; }
+        .type-badge { font-size: 10px; font-weight: 900; text-transform: uppercase; padding: 4px 10px; border-radius: 6px; border: 1.5px solid; display: inline-block; }
         .savings { background: #f0f9ff; color: #0369a1; border-color: #bae6fd; }
         .retirement { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
         .ulip { background: #f5f3ff; color: #5b21b6; border-color: #ddd6fe; }
@@ -45,7 +45,7 @@
 </head>
 <body>
 
-    <div class="version-stamp">BUILD: v3.2.0 | 08-MAR-2026</div>
+    <div class="version-stamp">BUILD: v3.2.1 | 08-MAR-2026</div>
 
     <div class="max-w-7xl mx-auto flex justify-between items-end mb-14">
         <div>
@@ -89,31 +89,26 @@
                 const isPaid = (p.name.includes("Axis Max Life")) || (premEndY < CURRENT_YEAR);
                 const isULIP = p.type.toLowerCase().includes('ulip');
 
-                // Reminder Logic
+                // Date logic for 30-day window
                 const [d, m, y] = p.dueDate.split(' ');
                 const dueObj = new Date(`${m} ${d}, ${y}`);
                 const diffDays = Math.ceil((dueObj - TODAY) / (1000 * 60 * 60 * 24));
                 const showReminder = !isPaid && diffDays >= 0 && diffDays <= 30;
 
                 let timeline = '';
-                
-                // 1. Core Lifecycle Loop (From Start to Maturity)
                 for(let yr = startY; yr < matY; yr++) {
                     const polYear = yr - startY + 1;
                     const isPast = yr < CURRENT_YEAR;
                     const isCurrent = yr === CURRENT_YEAR;
-                    
                     let type = "Future";
                     let color = "bg-future";
                     let detail = "";
 
-                    // Premium Phase Logic
                     if (yr <= premEndY) {
                         color = isPast ? "bg-past" : (isCurrent && !isPaid ? "bg-premium" : "bg-future");
                         type = "Premium Phase";
                     }
 
-                    // Bonus/Income Overlays
                     if (p.name.includes("Fortune Maximiser") && polYear >= 2) {
                         color = isPast ? "bg-past" : "bg-income";
                         type = (yr <= premEndY) ? "Premium + Bonus" : "Annual Bonus";
@@ -123,15 +118,15 @@
                         type = isULIP ? "Unit Growth" : "Income Phase";
                     }
 
-                    // Special Tiers (Nishchit Ace, etc.)
-                    if (p.name.includes("Nishchit Ace") && yr > premEndY) {
-                         if (polYear >= 11 && polYear <= 15) detail = "₹1,33,974";
-                         else if (polYear >= 16 && polYear <= 20) detail = "₹160,769";
-                    }
-
                     timeline += `<div class="segment ${color}" style="flex:1"><div class="tooltip"><b>${type}</b><br>${detail}<br>Year ${polYear} (${yr})</div></div>`;
                 }
 
+                const typeIcon = isULIP ? 
+                    `<svg class="w-5 h-5 text-indigo-500 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>` : 
+                    (p.type.toLowerCase().includes('retirement') ? 
+                    `<svg class="w-5 h-5 text-red-500 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>` : 
+                    `<svg class="w-5 h-5 text-blue-500 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>`);
+                
                 const typeClass = isULIP ? 'ulip' : (p.type.toLowerCase().includes('retirement') ? 'retirement' : 'savings');
 
                 return `
@@ -140,10 +135,10 @@
                         <div style="flex:2">
                             <img src="${p.logo}" class="h-10 object-contain mb-3">
                             <h3 class="font-black text-slate-900 text-lg leading-tight mb-1">${p.name}</h3>
-                            <p class="text-[9px] font-black text-slate-400 uppercase tracking-tighter">ID: ${p.id}</p>
+                            <p class="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Policy Number: ${p.id}</p>
                         </div>
-                        <div style="flex:0.8" class="text-center">
-                            <p class="text-[9px] font-bold text-slate-400 uppercase mb-2">Type</p>
+                        <div style="flex:0.7" class="text-center">
+                            ${typeIcon}
                             <span class="type-badge ${typeClass}">${p.type}</span>
                         </div>
                         <div style="flex:1" class="text-right"><p class="text-[9px] font-bold text-slate-400 uppercase">Premium</p><p class="text-xl font-black text-emerald-600">${sym}${p.premium.toLocaleString()}</p></div>
@@ -162,7 +157,7 @@
                     </div>
                     <div class="content-area">
                         <div class="flex gap-10 mb-8 border-b border-slate-100 pb-4">
-                            <div><p class="text-[9px] font-bold text-slate-400 uppercase">Client ID</p><p class="text-sm font-black text-slate-700">${p.clientId || 'N/A'}</p></div>
+                            <div><p class="text-[9px] font-bold text-slate-400 uppercase">Policy Owner ID</p><p class="text-sm font-black text-slate-700">${p.clientId || 'N/A'}</p></div>
                             <div><p class="text-[9px] font-bold text-slate-400 uppercase">UIN Number</p><p class="text-sm font-black text-slate-700">${p.uin || 'N/A'}</p></div>
                         </div>
                         <div class="timeline-track">
