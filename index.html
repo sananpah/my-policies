@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Orbitron:wght@800&display=swap');
-        body { background-color: #f8fafc; font-family: 'Inter', sans-serif; color: #1e293b; }
+        body { background-color: #f1f5f9; font-family: 'Inter', sans-serif; color: #1e293b; }
         
         .brand-header { 
             font-family: 'Orbitron', sans-serif; 
@@ -18,91 +18,97 @@
 
         .version-stamp { position: fixed; top: 10px; right: 15px; font-size: 9px; font-weight: 800; color: #94a3b8; background: #fff; padding: 2px 8px; border-radius: 4px; border: 1px solid #e2e8f0; z-index: 1000; }
 
-        .policy-card { background: white; border-radius: 12px; border-left: 6px solid; margin-bottom: 1rem; box-shadow: 0 2px 4px rgba(0,0,0,0.05); overflow: hidden; }
-        /* Grid layout, with massive logo column (3fr) */
-        .card-header { cursor: pointer; display: grid; grid-template-columns: 3fr 1.5fr 1.3fr 1.3fr 1.3fr 0.3fr; align-items: center; padding: 10px 24px; gap: 10px; }
-        .content-area { display: none; padding: 30px 40px 100px 40px; border-top: 1px solid #f1f5f9; background: #fafafa; }
+        /* --- DYNAMIC GLOW CARD (v2.8.0) --- */
+        .policy-card { 
+            background: white; 
+            border-radius: 20px; 
+            border-left: 10px solid; 
+            margin-bottom: 2rem; 
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); 
+            overflow: hidden; 
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+        }
+
+        /* Hover: Lift + Dynamic Glow based on Brand Color */
+        .policy-card:hover { 
+            transform: translateY(-8px) scale(1.01);
+            box-shadow: 0 20px 25px -5px var(--glow-color), 0 10px 10px -5px rgba(0,0,0,0.04);
+            z-index: 50;
+        }
+        
+        .card-header { cursor: pointer; display: grid; grid-template-columns: 2.5fr 1fr 1.2fr 1.2fr 1.2fr 0.3fr; align-items: center; padding: 25px 30px; gap: 15px; }
+        .content-area { display: none; padding: 40px; border-top: 1px solid #f1f5f9; background: #fafafa; }
         .open .content-area { display: block; }
 
-        /* --- BIGGER & VIBRANT BRAND LOGO CSS (v2.6.0) --- */
-        .vibrant-logo { 
-            width: 100px; /* Increased size to massive 100px */
-            height: 100px; /* Increased size to massive 100px */
+        /* --- HERO LOGO DISPLAY --- */
+        .logo-container { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
+        .vibrant-hero-logo { 
+            width: 160px; 
+            height: 70px; 
             object-fit: contain; 
-            background: #fff; 
-            border: 4px solid #fff; /* Thicker white border */
-            border-radius: 12px; 
-            padding: 6px; 
-            filter: drop-shadow(0 0 12px rgba(255, 255, 255, 1)) drop-shadow(0 4px 6px rgba(0,0,0,0.15)); /* Stronger vibrancy glow */
+            object-position: left;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
+            transition: transform 0.4s ease;
         }
+        .policy-card:hover .vibrant-hero-logo { transform: scale(1.1) rotate(-1deg); }
 
-        /* --- FUNKY POLICY TYPE BADGES (v2.6.0) --- */
+        /* --- FUNKY POLICY TYPE BADGES --- */
         .type-badge {
-            font-size: 9px;
-            font-weight: 900;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            padding: 3px 8px;
-            border-radius: 99px;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            box-shadow: inset 0 1px 1px rgba(255,255,255,0.4);
+            font-size: 10px; font-weight: 900; text-transform: uppercase;
+            padding: 6px 14px; border-radius: 12px; display: inline-flex; align-items: center; gap: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
         }
+        .policy-card:hover .type-badge { transform: rotate(2deg); }
         
-        /* Specific Payout/Funky Palette for Policy Types */
-        .badge-savings { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; } /* Blue */
-        .badge-ulip { background: #fae8ff; color: #a21caf; border: 1px solid #f5d0fe; } /* Purple */
-        .badge-retirement { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; } /* Red */
-        .badge-ilp { background: #d1fae5; color: #047857; border: 1px solid #a7f3d0; } /* Green */
-        .badge-income { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; } /* Amber */
+        .badge-savings { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+        .badge-ulip { background: #fae8ff; color: #a21caf; border: 1px solid #f5d0fe; }
+        .badge-retirement { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+        .badge-ilp { background: #d1fae5; color: #047857; border: 1px solid #a7f3d0; }
+        .badge-income { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
 
-        /* Paid up vibrant green logo CSS (from v2.5.1) */
+        /* Vibrant Paid.jpg logo */
         .vibrant-paid-logo {
-            width: 90px;
-            height: 90px;
-            object-fit: contain;
-            filter: drop-shadow(0 0 12px rgba(34, 197, 94, 0.9)) drop-shadow(0 0 20px rgba(34, 197, 94, 0.5)); 
-            transform: rotate(-5deg); 
+            width: 110px; height: auto;
+            filter: drop-shadow(0 0 15px rgba(34, 197, 94, 0.7));
+            transform: rotate(-10deg);
+            transition: transform 0.4s ease;
         }
+        .policy-card:hover .vibrant-paid-logo { transform: rotate(0deg) scale(1.1); }
 
-        /* Timeline Elements */
-        .timeline-track { position: relative; height: 18px; background: #e2e8f0; border-radius: 9px; margin: 60px 0 60px 0; width: 100%; display: flex; }
+        /* Timeline Nodes (Circular) */
+        .node-circle { position: absolute; top: -11px; width: 44px; height: 44px; border-radius: 50%; border: 5px solid #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 60; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 900; color: white; }
+        .timeline-track { position: relative; height: 20px; background: #e2e8f0; border-radius: 10px; margin: 70px 0; width: 100%; display: flex; }
         .segment { height: 100%; border-right: 1px solid rgba(255,255,255,0.4); position: relative; cursor: help; }
         
-        .tooltip {
-            visibility: hidden; opacity: 0; position: absolute; bottom: 220%; left: 50%; 
-            transform: translateX(-50%); background: #0f172a; color: #fff; padding: 10px;
-            border-radius: 6px; font-size: 11px; width: 220px; z-index: 100; text-align: center;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3); pointer-events: none; line-height: 1.4;
-        }
-        .start-node .tooltip { transform: translateX(0); left: 0; text-align: left; }
+        .tooltip { visibility: hidden; opacity: 0; position: absolute; bottom: 250%; left: 50%; transform: translateX(-50%); background: #0f172a; color: #fff; padding: 12px; border-radius: 8px; font-size: 11px; width: 240px; z-index: 100; text-align: center; box-shadow: 0 15px 30px rgba(0,0,0,0.4); line-height: 1.5; transition: 0.3s; }
+        .segment:hover .tooltip, .node-circle:hover .tooltip { visibility: visible; opacity: 1; transform: translateX(-50%) translateY(-10px); }
         
-        .segment:hover .tooltip, .node-circle:hover .tooltip { visibility: visible; opacity: 1; transform: translateY(-5px); transition: 0.2s; }
-        .start-node:hover .tooltip { transform: translateX(0) translateY(-5px); }
+        .start-node .tooltip { transform: translateX(0); left: 0; text-align: left; }
+        .start-node:hover .tooltip { transform: translateX(0) translateY(-10px); }
 
-        @keyframes alert-glow { 0%, 100% { background: #fee2e2; } 50% { background: #fecaca; box-shadow: 0 0 12px #ef4444; } }
-        .due-reminder { animation: alert-glow 2s infinite; border-radius: 4px; padding: 4px 8px; }
-
-        .node-circle { position: absolute; top: -11px; width: 40px; height: 40px; border-radius: 50%; border: 4px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.2); z-index: 60; cursor: help; display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 900; color: white; }
-
-        .marker-label { position: absolute; top: 42px; font-size: 11px; font-weight: 800; color: #64748b; white-space: nowrap; transform: translateX(-50%); }
+        @keyframes alert-glow { 0%, 100% { background: #fee2e2; } 50% { background: #fecaca; box-shadow: 0 0 15px #ef4444; } }
+        .due-reminder { animation: alert-glow 2s infinite; border-radius: 6px; padding: 5px 10px; }
     </style>
 </head>
-<body class="p-4 md:p-10">
+<body class="p-6 md:p-12">
 
-    <div class="version-stamp">v2.6.0 | 07-Mar-2026 21:55</div>
+    <div class="version-stamp">v2.8.0 | 07-Mar-2026 22:20</div>
 
-    <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center mb-10">
-        <h1 class="brand-header text-3xl font-black italic tracking-tight">NAMI INSURANCE PORTFOLIO</h1>
-        <div class="flex gap-3">
-            <button id="btn-india" class="tab-btn p-3 px-6 font-bold rounded-lg border bg-white active" onclick="render('india')">INDIA</button>
-            <button id="btn-wife" class="tab-btn p-3 px-6 font-bold rounded-lg border bg-white" onclick="render('wife')">WIFE</button>
-            <button id="btn-singapore" class="tab-btn p-3 px-6 font-bold rounded-lg border bg-white" onclick="render('singapore')">SINGAPORE</button>
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-end mb-12">
+        <div>
+            <h1 class="brand-header text-4xl font-black italic tracking-tighter">NAMI PORTFOLIO</h1>
+            <p class="text-slate-400 font-bold text-[10px] mt-1 uppercase tracking-[0.3em]">Institutional Grade Insurance Dashboard</p>
+        </div>
+        <div class="flex gap-4 mt-6 md:mt-0">
+            <button id="btn-india" class="p-4 px-10 font-black rounded-2xl border-2 transition-all shadow-sm hover:shadow-md" onclick="render('india')">INDIA</button>
+            <button id="btn-wife" class="p-4 px-10 font-black rounded-2xl border-2 transition-all shadow-sm hover:shadow-md" onclick="render('wife')">WIFE</button>
+            <button id="btn-singapore" class="p-4 px-10 font-black rounded-2xl border-2 transition-all shadow-sm hover:shadow-md" onclick="render('singapore')">SINGAPORE</button>
         </div>
     </div>
 
-    <div id="summary-bar" class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4 mb-8"></div>
+    <div id="summary-bar" class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 mb-12"></div>
     <div id="container" class="max-w-7xl mx-auto"></div>
 
     <script type="module">
@@ -113,150 +119,123 @@
 
         window.toggleCard = (id) => document.getElementById(`card-${id}`).classList.toggle('open');
 
-        // Dynamic Badge Helper
         function getFunkyBadge(type) {
-            const cleanType = type.trim().toUpperCase();
-            let style = "";
-            let icon = "";
+            const t = type.trim().toUpperCase();
+            let s = "badge-savings", i = "💰";
+            if (t.includes('ULIP')) { s = "badge-ulip"; i = "📈"; }
+            else if (t.includes('RETIREMENT')) { s = "badge-retirement"; i = "🏖️"; }
+            else if (t.includes('ILP')) { s = "badge-ilp"; i = "🛡️"; }
+            else if (t.includes('INCOME')) { s = "badge-income"; i = "💸"; }
+            return `<div class="type-badge ${s}"><span>${i}</span> ${type}</div>`;
+        }
 
-            if (cleanType.includes('SAVINGS')) { style = "badge-savings"; icon = "💰"; }
-            else if (cleanType.includes('ULIP')) { style = "badge-ulip"; icon = "📈"; }
-            else if (cleanType.includes('RETIREMENT')) { style = "badge-retirement"; icon = "🏖️"; }
-            else if (cleanType.includes('ILP')) { style = "badge-ilp"; icon = "🛡️"; }
-            else if (cleanType.includes('INCOME')) { style = "badge-income"; icon = "💸"; }
-            
-            return `<div class="type-badge ${style}"><span>${icon}</span> ${type}</div>`;
+        // Convert hex to RGBA for the glow effect
+        function hexToGlow(hex, opacity) {
+            hex = hex.replace('#', '');
+            const r = parseInt(hex.substring(0, 2), 16);
+            const g = parseInt(hex.substring(2, 4), 16);
+            const b = parseInt(hex.substring(4, 6), 16);
+            return `rgba(${r}, ${g}, ${b}, ${opacity})`;
         }
 
         window.render = function(cat) {
             const list = POLICY_DATA[cat];
             const sym = cat === 'singapore' ? '$' : '₹';
             
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('bg-indigo-600', 'text-white'));
-            document.getElementById(`btn-${cat}`).classList.add('bg-indigo-600', 'text-white');
+            document.querySelectorAll('button').forEach(b => {
+                b.classList.remove('bg-slate-900', 'text-white', 'border-slate-900');
+                b.classList.add('bg-white', 'text-slate-600', 'border-slate-200');
+            });
+            const activeBtn = document.getElementById(`btn-${cat}`);
+            activeBtn.classList.replace('bg-white', 'bg-slate-900');
+            activeBtn.classList.replace('text-slate-600', 'text-white');
+            activeBtn.classList.replace('border-slate-200', 'border-slate-900');
 
             document.getElementById('summary-bar').innerHTML = `
-                <div class="bg-white p-6 rounded-xl border-b-4 border-indigo-500 shadow-sm"><p class="text-xs font-bold text-slate-400 uppercase">Portfolio Premium</p><p class="text-3xl font-black text-slate-800">${sym} ${list.reduce((s,p)=>s+p.premium,0).toLocaleString()}</p></div>
-                <div class="bg-white p-6 rounded-xl border-b-4 border-pink-500 shadow-sm"><p class="text-xs font-bold text-slate-400 uppercase">Portfolio Sum Assured</p><p class="text-3xl font-black text-slate-800">${sym} ${list.reduce((s,p)=>s+p.sumAssured,0).toLocaleString()}</p></div>
+                <div class="bg-white p-10 rounded-3xl border-b-[12px] border-indigo-600 shadow-sm transition-transform hover:scale-[1.02]">
+                    <p class="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2">Annual Commitment</p>
+                    <p class="text-5xl font-black text-slate-900">${sym}${list.reduce((s,p)=>s+p.premium,0).toLocaleString()}</p>
+                </div>
+                <div class="bg-white p-10 rounded-3xl border-b-[12px] border-pink-600 shadow-sm transition-transform hover:scale-[1.02]">
+                    <p class="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2">Estate Sum Assured</p>
+                    <p class="text-5xl font-black text-slate-900">${sym}${list.reduce((s,p)=>s+p.sumAssured,0).toLocaleString()}</p>
+                </div>
             `;
 
             document.getElementById('container').innerHTML = list.map(p => {
                 const isPaid = p.dueDate === "PAID UP";
-                const startYear = parseInt(p.commenced.split(' ')[2]);
-                const maturityYear = parseInt(p.maturity.split(' ')[2]);
-                const totalDuration = maturityYear - startYear;
-                const premWidth = (p.premiumYears / totalDuration) * 100;
+                const startY = parseInt(p.commenced.split(' ')[2]);
+                const matY = parseInt(p.maturity.split(' ')[2]);
+                const dur = matY - startY;
+                const pW = (p.premiumYears / dur) * 100;
                 
-                let dateClass = "font-black text-slate-800";
-                if (!isPaid) {
-                    const due = new Date(p.dueDate);
-                    if ((due - TODAY) / (1000 * 60 * 60 * 24) <= 45) dateClass = "due-reminder text-red-700";
-                }
+                // Set the dynamic glow color as a CSS variable
+                const glowColor = hexToGlow(p.color || '#cbd5e1', 0.25);
 
-                // 1. Premium Phase
-                const premSegments = Array.from({length: p.premiumYears}).map((_, i) => {
-                    const yr = startYear + i;
-                    const policyYr = i + 1;
-                    let extraTip = "";
-                    
-                    if (p.name.includes("Fortune Maximiser") && policyYr >= 2) {
-                        extraTip = `<br><b class="text-orange-400">Cashback Payout Active</b>`;
-                    }
+                let dC = "font-black text-slate-900";
+                if (!isPaid && (new Date(p.dueDate) - TODAY) / 86400000 <= 45) dC = "due-reminder text-red-700";
 
-                    return `<div class="segment flex-1 ${yr < CURRENT_YEAR ? 'bg-emerald-600' : 'bg-emerald-200'}">
-                        <div class="tooltip">YEAR ${policyYr} (${yr})<br>PREMIUM PHASE${extraTip}</div>
-                        ${extraTip ? '<div class="absolute bottom-0 left-0 w-full h-1 bg-orange-400"></div>' : ''}
+                const premS = Array.from({length: p.premiumYears}).map((_, i) => {
+                    const y = startY + i;
+                    let extra = (p.name.includes("Fortune Maximiser") && i >= 1) ? '<div class="absolute bottom-0 left-0 w-full h-1.5 bg-orange-500 shadow-sm"></div>' : '';
+                    return `<div class="segment flex-1 ${y < CURRENT_YEAR ? 'bg-emerald-600' : 'bg-emerald-200'}">
+                        <div class="tooltip">YEAR ${i+1} (${y})<br><b>PREMIUM PHASE</b></div>${extra}
                     </div>`;
                 }).join('');
 
-                // 2. Income/Growth Phase
-                const incomeYearsTotal = totalDuration - p.premiumYears;
-                let incomeSegments = '';
-                
-                if (p.payoutSteps) {
-                    p.payoutSteps.forEach(step => {
-                        const range = step.years.split('-').map(Number);
-                        const stepSpan = ( (range[1] || range[0]) - range[0] ) + 1;
-                        const stepWidth = (stepSpan / incomeYearsTotal) * 100;
-                        const startAbs = startYear + p.premiumYears + range[0] - 1;
-
-                        incomeSegments += `<div class="segment flex h-full ${startAbs < CURRENT_YEAR ? 'bg-orange-500' : 'bg-orange-200'}" style="width: ${stepWidth}%">
-                            <div class="tooltip">PAYOUT PERIOD: Years ${step.years}<br><b>AMOUNT: ${step.val}</b></div>
-                        </div>`;
-                    });
-                } else {
-                    incomeSegments = `<div class="segment flex-1 ${startYear + p.premiumYears < CURRENT_YEAR ? 'bg-orange-500' : 'bg-orange-100'}">
-                        <div class="tooltip">INCOME/GROWTH PHASE<br>${p.income || 'Accruing Value'}</div>
+                const incS = p.payoutSteps ? p.payoutSteps.map(s => {
+                    const r = s.years.split('-').map(Number);
+                    const span = ((r[1] || r[0]) - r[0]) + 1;
+                    const w = (span / (dur - p.premiumYears)) * 100;
+                    return `<div class="segment ${startY + p.premiumYears + r[0] - 1 < CURRENT_YEAR ? 'bg-orange-500' : 'bg-orange-200'}" style="width: ${w}%">
+                        <div class="tooltip"><b>PAYOUT: ${s.val}</b><br>Policy Years ${s.years}</div>
                     </div>`;
-                }
+                }).join('') : `<div class="segment flex-1 bg-orange-100"><div class="tooltip">GROWTH PHASE</div></div>`;
 
                 return `
-                <div class="policy-card" id="card-${p.id}" style="border-color: ${p.color}">
+                <div class="policy-card" id="card-${p.id}" style="border-color: ${p.color}; --glow-color: ${glowColor}">
                     <div class="card-header" onclick="toggleCard('${p.id}')">
-                        <div class="flex items-center gap-6">
-                            <img src="${p.logo}" class="vibrant-logo" alt="${p.name} logo">
+                        <div class="logo-container">
+                            <img src="${p.logo}" class="vibrant-hero-logo" alt="Brand">
                             <div>
-                                <h3 class="font-black text-slate-800 text-sm uppercase">${p.name}</h3>
-                                <p class="text-[10px] font-bold text-slate-400">Policy Number: ${p.id}</p>
+                                <h3 class="font-black text-slate-900 text-base leading-tight">${p.name}</h3>
+                                <p class="text-[10px] font-bold text-slate-400 tracking-wider">REF: ${p.id}</p>
                             </div>
                         </div>
                         
-                        <div class="text-center">
-                            ${getFunkyBadge(p.type)}
+                        <div class="flex justify-center">${getFunkyBadge(p.type)}</div>
+                        
+                        <div class="text-right">
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-tighter mb-1">Premium</p>
+                            <p class="text-xl font-black text-emerald-600">${sym}${p.premium.toLocaleString()}</p>
                         </div>
                         
                         <div class="text-right">
-                            <p class="text-[9px] font-bold text-slate-400 uppercase">Premium</p>
-                            <p class="font-black text-emerald-600">${sym}${p.premium.toLocaleString()}</p>
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-tighter mb-1">Sum Assured</p>
+                            <p class="text-xl font-black text-indigo-600">${sym}${p.sumAssured.toLocaleString()}</p>
                         </div>
-                        <div class="text-right">
-                            <p class="text-[9px] font-bold text-slate-400 uppercase">Sum Assured</p>
-                            <p class="font-black text-indigo-600">${sym}${p.sumAssured.toLocaleString()}</p>
-                        </div>
+
                         <div class="text-right flex items-center justify-end">
-                            ${isPaid ? `
-                                <img src="paid.jpg" class="vibrant-paid-logo" alt="PAID UP">
-                            ` : `
-                                <div class="text-right">
-                                    <p class="text-[9px] font-bold text-slate-400 uppercase">Next Due</p>
-                                    <span class="${dateClass} text-xs uppercase">${p.dueDate}</span>
+                            ${isPaid ? `<img src="paid.jpg" class="vibrant-paid-logo">` : `
+                                <div>
+                                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-tighter mb-1">Next Due</p>
+                                    <span class="${dC} text-sm">${p.dueDate}</span>
                                 </div>
                             `}
                         </div>
-                        <svg class="w-5 h-5 ml-auto text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="4" d="M19 9l-7 7-7-7"></path></svg>
+                        
+                        <svg class="w-8 h-8 ml-auto text-slate-200 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="3" d="M19 9l-7 7-7-7"></path></svg>
                     </div>
 
                     <div class="content-area">
-                        <div class="grid grid-cols-4 gap-6 mb-12">
-                            <div><p class="text-[10px] font-bold text-slate-400 uppercase">Policy Type</p><p class="font-black text-slate-800">${p.type}</p></div>
-                            <div><p class="text-[10px] font-bold text-slate-400 uppercase">Maturity Amount</p><p class="font-black text-pink-600">${p.maturityAmt}</p></div>
-                            ${cat !== 'singapore' ? `
-                                <div><p class="text-[10px] font-bold text-slate-400 uppercase">UIN Number</p><p class="font-black text-slate-700">${p.uin || 'N/A'}</p></div>
-                                <div><p class="text-[10px] font-bold text-slate-400 uppercase">Client ID</p><p class="font-black text-slate-700">${p.clientId || 'N/A'}</p></div>
-                            ` : `<div></div><div></div>`}
-                        </div>
-
                         <div class="timeline-track">
-                            <div class="node-circle start-node bg-slate-800" style="left: -20px;">
-                                <div class="tooltip">COMMENCED: ${p.commenced}</div>START
+                            <div class="node-circle start-node bg-slate-900" style="left: -22px;"><div class="tooltip">COMMENCED: ${p.commenced}</div>START</div>
+                            <div class="flex w-full h-full overflow-hidden rounded-full">
+                                <div class="flex h-full" style="width: ${pW}%">${premS}</div>
+                                <div class="flex h-full" style="width: ${100 - pW}%">${incS}</div>
                             </div>
-
-                            <div class="flex w-full h-full">
-                                <div class="flex h-full" style="width: ${premWidth}%">${premSegments}</div>
-                                <div class="flex h-full" style="width: ${100 - premWidth}%">${incomeSegments}</div>
-                            </div>
-                            
-                            <div class="node-circle bg-emerald-600" style="left: calc(${premWidth}% - 20px);">
-                                <div class="tooltip">PREMIUM PAYMENTS COMPLETED: ${p.premiumEnds}</div>END
-                            </div>
-
-                            <div class="marker-label" style="left: 0;">${p.commenced}</div>
-                            <div class="marker-label" style="left: ${premWidth}%; color: #059669;">${p.premiumEnds}</div>
-                            <div class="marker-label" style="left: 100%; color: #ef4444;">${p.maturity}</div>
-                            
-                            <div class="node-circle bg-red-600" style="right: -20px;">
-                                <div class="tooltip" style="left: -180px; width: 220px;"><b>FINAL MATURITY VALUE</b><br>${p.maturityAmt}</div>MAT
-                            </div>
+                            <div class="node-circle bg-emerald-600" style="left: calc(${pW}% - 22px);"><div class="tooltip">PREMIUM COMPLETED: ${p.premiumEnds}</div>END</div>
+                            <div class="node-circle bg-red-600" style="right: -22px;"><div class="tooltip"><b>MATURITY VALUE</b><br>${p.maturityAmt}</div>MAT</div>
                         </div>
                     </div>
                 </div>`;
