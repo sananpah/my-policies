@@ -19,92 +19,94 @@
 
         .version-stamp { position: fixed; top: 10px; right: 15px; font-size: 9px; font-weight: 800; color: #94a3b8; background: #fff; padding: 2px 8px; border-radius: 4px; border: 1px solid #e2e8f0; z-index: 1000; }
 
-        /* --- CARD ARCHITECTURE --- */
         .policy-card { 
             background: white; border-radius: 24px; border-left: 12px solid; 
             margin-bottom: 2rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); 
             transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            position: relative; z-index: 10;
+            position: relative; 
+            overflow: visible !important; /* Critical: Allows tooltips to pop out of the card */
         }
 
-        /* Re-enabling the Global Card Glow */
         .policy-card:hover { 
-            transform: translateY(-5px) scale(1.005);
+            transform: translateY(-5px);
             box-shadow: 0 20px 25px -5px var(--glow-color), 0 10px 10px -5px rgba(0,0,0,0.04);
-            z-index: 50;
+            z-index: 50; 
         }
         
         .card-header { 
             cursor: pointer; display: grid; 
             grid-template-columns: 2.5fr 1fr 1fr 1fr 1.2fr 1fr 0.4fr; 
             align-items: center; padding: 30px; gap: 20px; 
+            position: relative; z-index: 10;
         }
 
-        .content-area { display: none; padding: 50px 40px; border-top: 1px solid #f1f5f9; background: #fafafa; border-radius: 0 0 24px 24px; }
+        .content-area { display: none; padding: 60px 40px; border-top: 1px solid #f1f5f9; background: #fafafa; border-radius: 0 0 24px 24px; overflow: visible; }
         .open .content-area { display: block; }
 
-        /* --- ASSETS --- */
-        .vibrant-hero-logo { width: 150px; height: 65px; object-fit: contain; object-position: left; transition: transform 0.3s ease; }
-        .policy-card:hover .vibrant-hero-logo { transform: scale(1.05); }
+        /* --- TOOLTIP ENGINE (RE-BUILT) --- */
+        .tooltip { 
+            visibility: hidden; opacity: 0; position: absolute; 
+            bottom: 140%; left: 50%; transform: translateX(-50%) translateY(10px); 
+            background: #0f172a; color: #fff; padding: 10px 15px; border-radius: 8px; 
+            font-size: 11px; width: 180px; text-align: center; 
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3); 
+            pointer-events: none; z-index: 9999 !important; /* Force to top */
+            transition: all 0.2s ease;
+            line-height: 1.4;
+        }
 
-        .type-badge { font-size: 9px; font-weight: 900; text-transform: uppercase; padding: 6px 12px; border-radius: 10px; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+        /* Hover Triggers */
+        .segment:hover .tooltip, .node-circle:hover .tooltip, .glow-mini-badge:hover .tooltip { 
+            visibility: visible; opacity: 1; transform: translateX(-50%) translateY(0); 
+        }
+
+        /* --- TIMELINE COMPONENTS --- */
+        .timeline-track { position: relative; height: 30px; background: #e2e8f0; border-radius: 15px; margin: 40px 0; width: 100%; display: flex; z-index: 20; }
+        
+        .segment { height: 100%; position: relative; cursor: help; z-index: 30; }
+        .segment:hover { filter: brightness(1.1); }
+
+        .node-circle { 
+            position: absolute; top: -10px; width: 50px; height: 50px; 
+            border-radius: 50%; border: 6px solid #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
+            z-index: 40; display: flex; align-items: center; justify-content: center; 
+            font-size: 10px; font-weight: 900; color: white; cursor: help;
+        }
+
+        /* --- BADGES --- */
+        .dual-badge-container { display: flex; flex-direction: column; gap: 8px; align-items: center; }
+        .glow-mini-badge {
+            width: 85px; padding: 5px; border-radius: 12px;
+            background: white; border: 2px solid; display: flex; flex-direction: column; 
+            align-items: center; position: relative; cursor: help;
+        }
+        .prem-badge { border-color: #10b981; }
+        .mat-badge { border-color: #6366f1; }
+        
+        .badge-num { font-family: 'Orbitron', sans-serif; font-size: 14px; font-weight: 900; color: #1e293b; }
+        .badge-txt { font-size: 7px; font-weight: 900; text-transform: uppercase; color: #64748b; }
+
+        .vibrant-hero-logo { width: 150px; height: 65px; object-fit: contain; object-position: left; }
+        .type-badge { font-size: 9px; font-weight: 900; text-transform: uppercase; padding: 6px 12px; border-radius: 10px; display: inline-flex; align-items: center; gap: 6px; }
         .badge-savings { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
         .badge-ulip { background: #fae8ff; color: #a21caf; border: 1px solid #f5d0fe; }
         .badge-retirement { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
         .badge-ilp { background: #d1fae5; color: #047857; border: 1px solid #a7f3d0; }
         .badge-income { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
 
-        /* --- DUAL BADGES --- */
-        .dual-badge-container { display: flex; flex-direction: column; gap: 10px; align-items: center; }
-        .glow-mini-badge {
-            width: 90px; padding: 6px; border-radius: 14px;
-            background: rgba(255, 255, 255, 0.9);
-            border: 2px solid; display: flex; flex-direction: column; align-items: center;
-            transition: all 0.3s ease;
-        }
-        .prem-badge { border-color: #10b981; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.1); }
-        .mat-badge { border-color: #6366f1; box-shadow: 0 4px 10px rgba(99, 102, 241, 0.1); }
-        
-        .badge-num { font-family: 'Orbitron', sans-serif; font-size: 14px; font-weight: 900; color: #1e293b; }
-        .badge-txt { font-size: 7px; font-weight: 900; text-transform: uppercase; color: #64748b; }
-
-        /* --- TIMELINE FIXES --- */
-        .timeline-track { position: relative; height: 28px; background: #e2e8f0; border-radius: 14px; margin: 60px 0; width: 100%; display: flex; z-index: 5; }
-        
-        .segment { height: 100%; position: relative; cursor: crosshair; z-index: 10; }
-        .segment:hover { filter: brightness(1.1); z-index: 30; }
-
-        .tooltip { 
-            visibility: hidden; opacity: 0; position: absolute; bottom: 150%; left: 50%; 
-            transform: translateX(-50%) translateY(10px); background: #1e293b; color: #fff; 
-            padding: 12px 18px; border-radius: 10px; font-size: 11px; width: 200px; 
-            text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.3); 
-            line-height: 1.5; transition: all 0.2s ease-out; pointer-events: none; z-index: 100;
-        }
-        
-        /* The trigger for the hover */
-        .segment:hover .tooltip, .node-circle:hover .tooltip { visibility: visible; opacity: 1; transform: translateX(-50%) translateY(0); }
-
-        .node-circle { 
-            position: absolute; top: -10px; width: 48px; height: 48px; 
-            border-radius: 50%; border: 6px solid #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
-            z-index: 40; display: flex; align-items: center; justify-content: center; 
-            font-size: 10px; font-weight: 900; color: white; cursor: help;
-        }
-
         @keyframes alert-glow { 0%, 100% { background: #fee2e2; } 50% { background: #fecaca; box-shadow: 0 0 15px #ef4444; } }
         .due-reminder { animation: alert-glow 2s infinite; border-radius: 8px; padding: 6px 12px; }
-        .vibrant-paid-logo { width: 110px; filter: drop-shadow(0 0 12px rgba(34, 197, 94, 0.5)); transform: rotate(-8deg); }
+        .vibrant-paid-logo { width: 100px; filter: drop-shadow(0 0 12px rgba(34, 197, 94, 0.4)); transform: rotate(-8deg); }
     </style>
 </head>
 <body class="p-6 md:p-12">
 
-    <div class="version-stamp">v2.9.6 | 07-Mar-2026 22:15</div>
+    <div class="version-stamp">v2.9.7 | 07-Mar-2026 22:20</div>
 
     <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-end mb-12">
         <div>
             <h1 class="brand-header text-5xl font-black italic tracking-tighter">NAMI PORTFOLIO</h1>
-            <p class="text-slate-400 font-bold text-[11px] mt-1 uppercase tracking-[0.4em]">Integrated Portfolio Management</p>
+            <p class="text-slate-400 font-bold text-[11px] mt-1 uppercase tracking-[0.4em]">Dynamic Asset Intelligence</p>
         </div>
         <div class="flex gap-4 mt-6 md:mt-0">
             <button id="btn-india" class="p-4 px-10 font-black rounded-2xl border-2 transition-all shadow-sm hover:shadow-md" onclick="render('india')">INDIA</button>
@@ -179,7 +181,7 @@
                 const premS = Array.from({length: p.premiumYears}).map((_, i) => {
                     const y = startY + i;
                     return `<div class="segment flex-1 ${y < CURRENT_YEAR ? 'bg-emerald-600' : 'bg-emerald-200'}">
-                        <div class="tooltip">YEAR ${i+1} (${y})<br><b>PREMIUM PHASE</b></div>
+                        <div class="tooltip">YEAR ${i+1} (${y})<br><b>PREMIUM PAID</b></div>
                         ${(p.name.includes("Fortune Maximiser") && i >= 1) ? '<div class="absolute bottom-0 left-0 w-full h-1.5 bg-orange-500"></div>' : ''}
                     </div>`;
                 }).join('');
@@ -206,10 +208,12 @@
                         
                         <div class="dual-badge-container">
                             <div class="glow-mini-badge prem-badge">
+                                <div class="tooltip">Premium Ends: ${p.premiumEnds}</div>
                                 <span class="badge-num">${premLeft > 0 ? premLeft : '✅'}</span>
                                 <span class="badge-txt">${premLeft > 0 ? 'Yrs Left' : 'Paid'}</span>
                             </div>
                             <div class="glow-mini-badge mat-badge">
+                                <div class="tooltip">Maturity: ${p.maturity}</div>
                                 <span class="badge-num">${matLeft > 0 ? matLeft : '🏆'}</span>
                                 <span class="badge-txt">${matLeft > 0 ? 'To Mat' : 'Done'}</span>
                             </div>
@@ -224,13 +228,13 @@
                     </div>
                     <div class="content-area">
                         <div class="timeline-track">
-                            <div class="node-circle start-node bg-slate-900" style="left: -24px;"><div class="tooltip">COMMENCED: ${p.commenced}</div>START</div>
+                            <div class="node-circle start-node bg-slate-900" style="left: -25px;"><div class="tooltip">COMMENCED: ${p.commenced}</div>START</div>
                             <div class="flex w-full h-full overflow-hidden rounded-full">
                                 <div class="flex h-full" style="width: ${pW}%">${premS}</div>
                                 <div class="flex h-full" style="width: ${100 - pW}%">${incS}</div>
                             </div>
-                            <div class="node-circle bg-emerald-600" style="left: calc(${pW}% - 24px);"><div class="tooltip">PREMIUM COMPLETED: ${p.premiumEnds}</div>END</div>
-                            <div class="node-circle bg-red-600" style="right: -24px;"><div class="tooltip"><b>MATURITY VALUE</b><br>${p.maturityAmt}</div>MAT</div>
+                            <div class="node-circle bg-emerald-600" style="left: calc(${pW}% - 25px);"><div class="tooltip">PREMIUM COMPLETED: ${p.premiumEnds}</div>END</div>
+                            <div class="node-circle bg-red-600" style="right: -25px;"><div class="tooltip"><b>MATURITY VALUE</b><br>${p.maturityAmt}</div>MAT</div>
                         </div>
                     </div>
                 </div>`;
