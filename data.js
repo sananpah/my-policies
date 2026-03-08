@@ -6,7 +6,7 @@ export const POLICY_DATA = {
             logo: "image_4e0b3d.png", id: "54751949", uin: "128N171V01", clientId: "60938507", type: "SAVINGS", 
             premium: 209000, sumAssured: 2626948, dueDate: "17 Nov 2026", 
             commenced: "17 Nov 2025", premiumEnds: "17 Nov 2034", maturity: "17 Nov 2055", 
-            color: "#8b1d1d", maturityAmt: "₹ 26,26,948",
+            color: "#8b1d1d", maturityAmt: "₹ 2,626,948",
             payoutSchedule: { 11: 133974, 12: 133974, 13: 133974, 14: 133974, 15: 133974, 16: 160769, 17: 160769, 18: 160769, 19: 160769, 20: 160769, 21: 187564, 22: 187564, 23: 187564, 24: 187564, 25: 187564, 26: 214359, 27: 214359, 28: 214359, 29: 214359, 30: 214359 }
         },
         { 
@@ -21,7 +21,7 @@ export const POLICY_DATA = {
             logo: "image_4e0b3d.png", id: "54040166", uin: "128N154V02", clientId: "60938507", type: "SAVINGS", 
             premium: 200000, sumAssured: 1750854, dueDate: "10 Jan 2027", 
             commenced: "10 Jan 2022", premiumEnds: "10 Jan 2028", maturity: "10 Jan 2050", 
-            color: "#8b1d1d", maturityAmt: "₹ 17,50,854",
+            color: "#8b1d1d", maturityAmt: "₹ 1,750,854",
             payoutSchedule: { 8: 100000, 9: 100000, 10: 100000, 11: 100000, 12: 100000, 13: 100000, 14: 100000, 15: 100000, 16: 100000, 17: 100000, 18: 100000, 19: 100000, 20: 100000, 21: 100000, 22: 100000, 23: 100000, 24: 100000, 25: 100000, 26: 100000, 27: 100000, 28: 100000 }
         },
         { 
@@ -49,14 +49,14 @@ export const POLICY_DATA = {
         { 
             name: "Wealth Pro", company: "BHARTI AXA",
             logo: "image_86c684.png", id: "503-9562771", uin: "130A012V02", type: "ULIP", 
-            premium: 50000, sumAssured: 500000, dueDate: "28 Sep 2026", 
+            premium: 50000, sumAssured: 0, dueDate: "28 Sep 2026", 
             commenced: "28 Sep 2023", premiumEnds: "28 Sep 2029", maturity: "28 Sep 2038", 
             color: "#005a9c", maturityAmt: "Fund Value at Maturity", isULIP: true
         },
         { 
             name: "Fast Track Super", company: "Axis Max Life",
             logo: "image_7a80d9.png", id: "608480927", uin: "104L082V02", type: "ULIP", 
-            premium: 50000, sumAssured: 500000, dueDate: "PAID UP", 
+            premium: 50000, sumAssured: 0, dueDate: "PAID UP", 
             commenced: "04 Feb 2022", premiumEnds: "04 Feb 2026", maturity: "04 Feb 2032", 
             color: "#ae125d", maturityAmt: "Fund Value at Maturity", isULIP: true
         },
