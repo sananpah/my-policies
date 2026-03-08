@@ -82,7 +82,7 @@ export const POLICY_DATA = {
             premium: 500000, sumAssured: 5000000, dueDate: "29 Nov 2026", 
             commenced: "29 Nov 2025", premiumEnds: "29 Nov 2032", maturity: "29 Nov 2052", 
             color: "#9b2226", maturityAmt: "Unit Value", isULIP: true 
-        }
+        },
         { 
             name: "Smart Privilege Plus LP Plan P", company: "SBI LIFE",
             logo: "image_cda45c.png", id: "3N307267702", uin: "N/A", clientId: "N/A", type: "ULIP", 
