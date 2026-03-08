@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nami Portfolio v3.5.9</title>
+    <title>Nami Portfolio v3.5.11</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@800;900&family=Inter:wght@400;700;900&display=swap');
@@ -22,7 +22,6 @@
         .bg-prem-past { background: #14532d; } .bg-prem-future { background: #a3e635; } 
         .bg-wait-past { background: #78350f; } .bg-wait-future { background: #f59e0b; }
         .bg-current { background: #22c55e; box-shadow: 0 0 15px rgba(34,229,94,0.6); border: 2px solid white; z-index: 10; }
-        /* Fortune Maximiser Mixed State (Premium + Bonus) */
         .bg-mixed-past { background: repeating-linear-gradient(45deg, #14532d, #14532d 10px, #78350f 10px, #78350f 20px); }
         .bg-mixed-future { background: repeating-linear-gradient(45deg, #a3e635, #a3e635 10px, #f59e0b 10px, #f59e0b 20px); }
         
@@ -45,23 +44,23 @@
 </head>
 <body>
 
-    <div class="build-tag">BUILD v3.5.9</div>
+    <div class="build-tag">BUILD v3.5.11</div>
 
     <div class="max-w-7xl mx-auto mb-10">
         <h1 class="brand-header">Nami Portfolio</h1>
         
         <div id="summary-bar" class="grid grid-cols-3 gap-6 mt-8 bg-slate-900 p-8 rounded-[32px] text-white shadow-2xl">
-            <div class="border-r border-slate-700">
-                <p class="text-[10px] uppercase font-black text-slate-400 mb-1 tracking-widest text-center">Total Sum Assured</p>
-                <p id="total-sa" class="text-4xl font-black text-emerald-400 text-center">₹0</p>
+            <div class="border-r border-slate-700 text-center">
+                <p class="text-[10px] uppercase font-black text-slate-400 mb-1 tracking-widest">Total Sum Assured</p>
+                <p id="total-sa" class="text-4xl font-black text-emerald-400">₹0</p>
             </div>
-            <div class="border-r border-slate-700">
-                <p class="text-[10px] uppercase font-black text-slate-400 mb-1 tracking-widest text-center">Annual Premium Commitment</p>
-                <p id="total-premium" class="text-4xl font-black text-indigo-400 text-center">₹0</p>
+            <div class="border-r border-slate-700 text-center">
+                <p class="text-[10px] uppercase font-black text-slate-400 mb-1 tracking-widest">Annual Commitment</p>
+                <p id="total-premium" class="text-4xl font-black text-indigo-400">₹0</p>
             </div>
-            <div>
-                <p class="text-[10px] uppercase font-black text-slate-400 mb-1 tracking-widest text-center">Due Alerts</p>
-                <p id="due-count" class="text-4xl font-black text-orange-400 text-center">0</p>
+            <div class="text-center">
+                <p class="text-[10px] uppercase font-black text-slate-400 mb-1 tracking-widest">Due Alerts</p>
+                <p id="due-count" class="text-4xl font-black text-orange-400">0</p>
             </div>
         </div>
 
@@ -119,7 +118,7 @@
                 }
 
                 let timelineHtml = '';
-                for(let yr = startY; yr < matY; yr++) {
+                for(let yr = startY; yr <= matY; yr++) {
                     const polY = yr - startY + 1;
                     const isPast = yr < 2026 || (yr === 2026 && TODAY > new Date(p.premiumEnds));
                     let color = ""; let phase = ""; let detail = "";
@@ -130,15 +129,20 @@
                         const hasBonus = (p.name === "Fortune Maximiser" && polY >= (p.bonusStartYear || 2));
                         
                         if (isCurrent) color = "bg-current";
-                        else if (hasBonus) color = isPast ? "bg-mixed-past" : "bg-mixed-future"; // Green/Orange Mix
+                        else if (hasBonus) color = isPast ? "bg-mixed-past" : "bg-mixed-future";
                         else color = isPast ? "bg-prem-past" : "bg-prem-future";
                         
-                        phase = hasBonus ? "Premium + Cash Bonus" : "Premium Payment";
+                        phase = hasBonus ? "Premium + Bonus" : "Premium Payment";
                         detail = `Pay ${sym}${p.premium.toLocaleString()}`;
                     } 
-                    // Special Deferment Logic (Nishchit Pension SL)
-                    else if (p.name === "Nishchit Pension SL" && yr > premEndYear && yr <= premEndYear + 2) {
-                        color = "bg-wait-future"; phase = "Deferment Period"; detail = "Bonus Processing Gap";
+                    // Nishchit Pension SL Refined: 7 Year Deferment (Payout starts Year 8)
+                    else if (p.name === "Nishchit Pension SL" && polY < 8) {
+                        color = isPast ? "bg-wait-past" : "bg-wait-future";
+                        phase = "Deferment Period"; detail = "Bonus Processing";
+                    }
+                    // Final Year / Maturity Year
+                    else if (yr === matY) {
+                         continue; // Handled by mat-node
                     }
                     else {
                         color = isPast ? "bg-wait-past" : "bg-wait-future";
@@ -160,12 +164,12 @@
                         <div class="flex-1 ml-2">
                             <h3 class="text-lg font-black text-slate-900 leading-tight">${p.name}</h3>
                         </div>
-                        <div class="flex gap-8 items-center justify-center flex-1">
+                        <div class="flex gap-12 items-center justify-center flex-1">
                             <div class="text-center">
                                 <p class="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Sum Assured</p>
                                 <p class="text-base font-black text-slate-700 leading-none">${sym}${p.sumAssured.toLocaleString()}</p>
                             </div>
-                            <div class="text-center border-l border-r px-8">
+                            <div class="text-center border-l border-r px-12">
                                 <p class="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Annual Premium</p>
                                 <p class="text-base font-black text-emerald-600 leading-none">${sym}${p.premium.toLocaleString()}</p>
                             </div>
@@ -175,19 +179,19 @@
                         </div>
                     </div>
                     <div class="content-area">
-                        <div class="grid grid-cols-5 gap-4 mb-10">
+                        <div class="grid grid-cols-3 gap-4 mb-10">
                             <div class="bg-white border p-3 rounded-xl"><p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Policy Number</p><p class="font-black text-slate-700">${p.id}</p></div>
                             <div class="bg-white border p-3 rounded-xl"><p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Client ID</p><p class="font-black text-slate-700">${p.clientId || 'N/A'}</p></div>
                             <div class="bg-white border p-3 rounded-xl"><p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">UIN Number</p><p class="font-black text-indigo-600">${p.uin || 'N/A'}</p></div>
-                            <div class="bg-white border p-3 rounded-xl"><p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Maturity Date</p><p class="font-black text-slate-700">${p.maturity}</p></div>
-                            <div class="bg-white border p-3 rounded-xl"><p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Commenced</p><p class="font-black text-slate-700">${p.commenced}</p></div>
                         </div>
                         <div class="timeline-track">
+                             <div class="absolute -top-6 left-0 text-[10px] font-bold text-slate-400">${p.commenced}</div>
                             ${timelineHtml}
                             <div class="mat-node">
                                 <span class="text-white text-[10px]">★</span>
                                 <div class="tooltip"><b>Maturity Payout</b><br><span class="text-emerald-400 font-bold">${p.maturityAmt}</span><br>${p.maturity}</div>
                             </div>
+                             <div class="absolute -top-6 right-0 text-[10px] font-bold text-slate-400">${p.maturity}</div>
                         </div>
                     </div>
                 </div>`;
