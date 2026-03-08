@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nami Portfolio v3.6.4</title>
+    <title>Nami Portfolio v3.6.6</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@800;900&family=Inter:wght@400;700;900&display=swap');
@@ -11,7 +11,12 @@
         body { background-color: #f8fafc; font-family: 'Inter', sans-serif; padding: 40px; }
         .brand-header { font-family: 'Orbitron', sans-serif; background: linear-gradient(90deg, #6366f1, #ec4899, #f59e0b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 3.5rem; font-weight: 900; text-transform: uppercase; }
         
-        /* Category Badges */
+        .summary-card { background: #0f172a; border-radius: 24px; padding: 24px; color: white; margin-bottom: 30px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
+        .stat-item { border-right: 1px solid #334155; text-align: center; }
+        .stat-item:last-child { border-right: none; }
+        .stat-label { font-size: 9px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+        .stat-value { font-size: 1.8rem; font-weight: 900; font-family: 'Orbitron', sans-serif; margin-top: 4px; }
+
         .badge-base {
             font-family: 'Orbitron', sans-serif; font-size: 8px; font-weight: 900; letter-spacing: 1px;
             padding: 5px 10px; border-radius: 8px; text-transform: uppercase; color: white; min-width: 120px;
@@ -38,13 +43,30 @@
 </head>
 <body>
 
-    <div class="max-w-7xl mx-auto mb-8">
+    <div class="max-w-7xl mx-auto mb-8 relative">
+        <div id="clock" class="absolute top-0 right-0 font-bold text-slate-400 text-xs tracking-widest">08 MAR 2026 | 19:07</div>
         <h1 class="brand-header">Nami Portfolio</h1>
+        
+        <div class="summary-card mt-8">
+            <div class="stat-item">
+                <p class="stat-label">Total Sum Assured</p>
+                <p id="sum-assured-total" class="stat-value text-emerald-400">0</p>
+            </div>
+            <div class="stat-item">
+                <p class="stat-label">Annual Premium (Est)</p>
+                <p id="premium-total" class="stat-value text-indigo-400">0</p>
+            </div>
+            <div class="stat-item">
+                <p class="stat-label">Active Policies</p>
+                <p id="policy-count" class="stat-value text-amber-400">0</p>
+            </div>
+        </div>
+
         <div class="flex gap-2 mt-6">
-            <button onclick="render('india')" id="btn-india" class="px-6 py-2 rounded-xl font-bold border">INDIA</button>
-            <button onclick="render('wife')" id="btn-wife" class="px-6 py-2 rounded-xl font-bold border">WIFE</button>
-            <button onclick="render('singapore')" id="btn-singapore" class="px-6 py-2 rounded-xl font-bold border">SINGAPORE</button>
-            <button onclick="render('health')" id="btn-health" class="px-6 py-2 rounded-xl font-bold border">HEALTH</button>
+            <button onclick="render('india')" id="btn-india" class="px-6 py-2 rounded-xl font-bold border transition-all">INDIA</button>
+            <button onclick="render('wife')" id="btn-wife" class="px-6 py-2 rounded-xl font-bold border transition-all">WIFE</button>
+            <button onclick="render('singapore')" id="btn-singapore" class="px-6 py-2 rounded-xl font-bold border transition-all">SINGAPORE</button>
+            <button onclick="render('health')" id="btn-health" class="px-6 py-2 rounded-xl font-bold border transition-all">HEALTH</button>
         </div>
     </div>
 
@@ -53,13 +75,11 @@
     <script type="module">
         import { POLICY_DATA } from './data.js';
 
-        // Global toggle function
         window.toggleCard = (id) => {
             const el = document.getElementById(`card-${id}`);
             if (el) el.classList.toggle('open');
         };
 
-        // Badge Logic
         function getBadgeClass(type) {
             const s = (type || "").toLowerCase();
             if (s.includes('hospit')) return 'badge-hospitalisation';
@@ -70,32 +90,50 @@
             return 'badge-saving';
         }
 
-        // Safe Formatter (The Fix)
         function formatValue(val, sym) {
-            if (val === undefined || val === null) return 'N/A';
+            if (val === undefined || val === null || val === 0) return sym + '0';
             if (typeof val === 'number') return sym + val.toLocaleString();
-            return val; // Returns string as-is (e.g., "Not Applicable")
+            return val;
         }
 
         window.render = function(cat) {
             try {
                 const list = POLICY_DATA[cat] || [];
+                const sym = list[0]?.currency || "₹";
                 
                 // Update Button Styles
-                document.querySelectorAll('button').forEach(b => b.className = "px-6 py-2 rounded-xl font-bold bg-white text-slate-400 border");
+                document.querySelectorAll('button').forEach(b => b.className = "px-6 py-2 rounded-xl font-bold bg-white text-slate-400 border hover:bg-slate-50");
                 const activeBtn = document.getElementById(`btn-${cat}`);
-                if (activeBtn) activeBtn.className = "px-6 py-2 rounded-xl font-bold bg-slate-900 text-white shadow-lg";
+                if (activeBtn) activeBtn.className = "px-6 py-2 rounded-xl font-bold bg-slate-900 text-white shadow-lg scale-105";
+
+                // CALCULATE SUMMARY STATS
+                let totalSA = 0;
+                let totalPrem = 0;
+                list.forEach(p => {
+                    if (typeof p.sumAssured === 'number') totalSA += p.sumAssured;
+                    // Extract numeric premium if it's a string like "$1,268 [Annual]"
+                    if (typeof p.premium === 'number') {
+                        totalPrem += p.premium;
+                    } else if (typeof p.premium === 'string') {
+                        const num = parseFloat(p.premium.replace(/[^0-9.]/g, ''));
+                        if (!isNaN(num)) totalPrem += num;
+                    }
+                });
+
+                document.getElementById('sum-assured-total').innerText = sym + totalSA.toLocaleString();
+                document.getElementById('premium-total').innerText = sym + totalPrem.toLocaleString();
+                document.getElementById('policy-count').innerText = list.length;
 
                 const container = document.getElementById('container');
                 if (!list.length) {
-                    container.innerHTML = `<div class="p-20 text-center text-slate-400 font-bold">No policies found for: ${cat.toUpperCase()}</div>`;
+                    container.innerHTML = `<div class="p-20 text-center text-slate-400 font-bold">No policies found.</div>`;
                     return;
                 }
 
                 container.innerHTML = list.map(p => {
-                    const sym = p.currency || "₹";
-                    const displayType = p.category || p.type || "General";
-                    const cleanType = displayType.replace('Health: ', '');
+                    const dateLabel = p.dueDate ? "Next Due" : "Maturity";
+                    const dateValue = p.dueDate || p.maturityDate || p.maturity || 'N/A';
+                    const isPaidUp = dateValue === "PAID UP";
 
                     return `
                     <div class="policy-card" id="card-${p.id}" style="border-color: ${p.color || '#cbd5e1'}">
@@ -109,7 +147,7 @@
                             </div>
                             <div class="flex gap-8 items-center justify-end flex-1 pr-10">
                                 <div class="flex items-center gap-4">
-                                    <div class="badge-base ${getBadgeClass(displayType)}">${cleanType}</div>
+                                    <div class="badge-base ${getBadgeClass(p.category || p.type)}">${(p.category || p.type || "General").replace('Health: ', '')}</div>
                                     <div class="text-center min-w-[100px]">
                                         <p class="text-[8px] font-bold text-slate-400 uppercase">Sum Assured</p>
                                         <p class="text-sm font-black text-slate-700">${formatValue(p.sumAssured, sym)}</p>
@@ -121,34 +159,34 @@
                                 </div>
                             </div>
                             <div class="w-32">
-                                <div class="px-3 py-1.5 rounded-lg font-black text-[10px] text-center bg-slate-900 text-white">
-                                    ${p.maturityDate || p.maturity || 'N/A'}
+                                <div class="px-3 py-1.5 rounded-lg font-black text-[10px] text-center ${isPaidUp ? 'bg-emerald-500' : 'bg-slate-900'} text-white">
+                                    ${dateValue}
                                 </div>
-                                <p class="text-[7px] text-center font-bold text-slate-400 mt-1 uppercase">Maturity</p>
+                                <p class="text-[7px] text-center font-bold text-slate-400 mt-1 uppercase">${dateLabel}</p>
                             </div>
                         </div>
                         <div class="content-area">
                             <div class="creds-bar">
                                 <div class="cred-item"><p>Policy Number</p><p>${p.policyNo || p.id}</p></div>
-                                <div class="cred-item"><p>Client ID</p><p>${p.clientId || 'N/A'}</p></div>
-                                <div class="cred-item"><p>UIN / Reference</p><p>${p.uin || 'N/A'}</p></div>
-                                <div class="cred-item"><p>Nominee</p><p>${p.nominee || 'N/A'}</p></div>
+                                <div class="cred-item"><p>Commenced</p><p>${p.commenced || 'N/A'}</p></div>
+                                <div class="cred-item"><p>Premium Ends</p><p>${p.premiumEnds || 'N/A'}</p></div>
+                                <div class="cred-item"><p>Maturity Date</p><p>${p.maturity || p.maturityDate || 'N/A'}</p></div>
                             </div>
-                            ${p.benefits ? `
-                            <div class="mt-4 p-4 bg-white border border-slate-200 rounded-xl">
-                                <h4 class="text-[9px] font-black text-slate-400 uppercase mb-2">Benefit & Coverage Summary</h4>
-                                <p class="text-xs text-slate-600 leading-relaxed whitespace-pre-line">${p.benefits}</p>
+                            ${p.payoutSchedule ? `
+                            <div class="mt-4 p-4 bg-indigo-50 border border-indigo-100 rounded-xl">
+                                <h4 class="text-[9px] font-black text-indigo-400 uppercase mb-2">Payout Schedule</h4>
+                                <div class="text-[10px] grid grid-cols-5 gap-2 font-bold text-indigo-700">
+                                    ${Object.entries(p.payoutSchedule).map(([yr, amt]) => `<div>Yr ${yr}: ${sym}${amt.toLocaleString()}</div>`).join('')}
+                                </div>
                             </div>` : ''}
                         </div>
                     </div>`;
                 }).join('');
             } catch (err) {
                 console.error("Render Error:", err);
-                document.getElementById('container').innerHTML = `<div class="p-10 bg-red-50 text-red-600 rounded-xl">Error loading data. Check console for details.</div>`;
             }
         };
 
-        // Start with India
         render('india');
     </script>
 </body>
