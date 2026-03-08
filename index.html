@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nami Portfolio v3.5.36</title>
+    <title>Nami Portfolio v3.5.37</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@800;900&family=Inter:wght@400;700;900&display=swap');
@@ -15,6 +15,7 @@
         @keyframes alert-glow { 0% { box-shadow: 0 0 5px #dc2626; background: #dc2626; } 50% { box-shadow: 0 0 20px #ef4444; background: #b91c1c; } 100% { box-shadow: 0 0 5px #dc2626; background: #dc2626; } }
         .due-blink { animation: alert-glow 1.5s infinite ease-in-out !important; }
 
+        /* Left-Aligned Neon Badge System - Maintained */
         .badge-container { display: flex; align-items: center; width: 260px; margin-left: -55px; } 
         .badge-base {
             font-family: 'Orbitron', sans-serif; font-size: 8px; font-weight: 900; letter-spacing: 1px;
@@ -40,6 +41,15 @@
         .bg-bonus-glow { background: linear-gradient(135deg, #f59e0b, #fbbf24); border: 1px solid white; }
         .bg-current { background: #22c55e; box-shadow: 0 0 15px rgba(34,229,94,0.6); border: 2px solid white; z-index: 10; }
         
+        /* Company Logo Styling - Increased Size and Vibrancy */
+        .logo-container { display: flex; align-items: center; justify-content: center; width: 112px; } /* Increased from w-20 to ~w-28 (112px) for ~40% layout gain */
+        .company-logo { 
+            max-height: 44px; /* Slightly increased to fit the larger container */
+            opacity: 1; /* Guaranteed Full Opacity */
+            filter: saturate(1.2); /* Increased vibrancy and color saturation */
+            object-fit: contain; /* Prevents stretching while filling space */
+        }
+
         .policy-card { background: white; border-radius: 24px; border-left: 16px solid; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
         .card-header { cursor: pointer; display: flex; align-items: center; padding: 25px 35px; }
         .content-area { display: none; padding: 30px; border-top: 1px solid #f1f5f9; background: #fafbfc; border-radius: 0 0 24px 0; }
@@ -59,7 +69,7 @@
 </head>
 <body>
 
-    <div class="build-tag" id="dynamic-build-tag">BUILD v3.5.36</div>
+    <div class="build-tag" id="dynamic-build-tag">BUILD v3.5.37</div>
 
     <div class="max-w-7xl mx-auto mb-8">
         <h1 class="brand-header">Nami Portfolio</h1>
@@ -81,7 +91,7 @@
         import { POLICY_DATA } from './data.js';
 
         const TODAY = new Date();
-        document.getElementById('dynamic-build-tag').innerText = `BUILD v3.5.36 | ${TODAY.toLocaleDateString('en-GB')}`;
+        document.getElementById('dynamic-build-tag').innerText = `BUILD v3.5.37 | ${TODAY.toLocaleDateString('en-GB')}`;
 
         window.toggleCard = (id) => document.getElementById(`card-${id}`).classList.toggle('open');
 
@@ -129,29 +139,18 @@
                     // LOGIC: Fortune Maximiser Special Handling
                     if (isFortune && polY >= (p.bonusStartYear || 2)) {
                         if (yr <= premEndYear) {
-                            color = "bg-hybrid"; 
-                            phase = "Premium + Bonus Accrual";
+                            color = "bg-hybrid"; phase = "Premium + Bonus Accrual";
                             detail = `<span class="text-white font-bold">Premium: ${sym}${p.premium.toLocaleString()}</span><br><span class="text-emerald-300">Bonus: ${sym}${(p.bonusAmount || 0).toLocaleString()}</span>`;
                         } else {
-                            color = "bg-bonus-glow";
-                            phase = "Annual Bonus Phase";
+                            color = "bg-bonus-glow"; phase = "Annual Bonus Phase";
                             detail = `<span class="text-slate-900 font-black">Est. Bonus: ${sym}${(p.bonusAmount || 22050).toLocaleString()}</span>`;
                         }
-                    } 
-                    // LOGIC: General Pension Gap Handling
-                    else if (p.name.includes("Nishchit Pension SL") && polY === 7) {
-                        color = yr < currentYear ? "bg-wait-past" : "bg-wait-future";
-                        phase = "Deferment Period"; detail = "Pre-Income Gap";
-                    } 
-                    // LOGIC: Standard Premium Phase
-                    else if (yr <= premEndYear) {
+                    } else if (yr <= premEndYear) {
                         const isDone = yr < currentYear || (yr === currentYear && isAnniversaryPassed) || p.dueDate === "PAID UP";
                         color = isDone ? "bg-prem-past" : (yr === currentYear ? "bg-current" : "bg-prem-future");
                         phase = "Premium Phase";
                         detail = isDone ? "Payment Completed" : `Premium: ${sym}${p.premium.toLocaleString()}`;
-                    } 
-                    // LOGIC: Standard Growth/Income Phase
-                    else {
+                    } else {
                         color = yr < currentYear ? "bg-wait-past" : "bg-wait-future";
                         let payoutAmt = p.annualPayout || (p.payoutSchedule && p.payoutSchedule[polY]);
                         phase = payoutAmt ? "Income Phase" : "Growth Phase";
@@ -163,7 +162,7 @@
                 return `
                 <div class="policy-card" id="card-${p.id}" style="border-color: ${p.color}">
                     <div class="card-header" onclick="toggleCard('${p.id}')">
-                        <div class="w-20"><img src="${p.logo}" class="max-h-8"></div>
+                        <div class="logo-container"><img src="${p.logo}" class="company-logo"></div>
                         <div class="flex-1 ml-4"><h3 class="font-black text-slate-800 text-lg tracking-tight">${p.name}</h3></div>
                         <div class="flex gap-4 items-center justify-center flex-1">
                             <div class="badge-container">
