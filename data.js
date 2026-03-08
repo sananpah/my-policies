@@ -7,20 +7,14 @@ export const POLICY_DATA = {
             premium: 209000, sumAssured: 2626948, dueDate: "17 Nov 2026", 
             commenced: "17 Nov 2025", premiumEnds: "17 Nov 2034", maturity: "17 Nov 2055", 
             color: "#8b1d1d", maturityAmt: "₹ 26,26,948",
-            payoutSchedule: {
-                11: 133974, 12: 133974, 13: 133974, 14: 133974, 15: 133974,
-                16: 160769, 17: 160769, 18: 160769, 19: 160769, 20: 160769,
-                21: 187564, 22: 187564, 23: 187564, 24: 187564, 25: 187564,
-                26: 214359, 27: 214359, 28: 214359, 29: 214359, 30: 214359
-            }
+            payoutSchedule: { 11: 133974, 12: 133974, 13: 133974, 14: 133974, 15: 133974, 16: 160769, 17: 160769, 18: 160769, 19: 160769, 20: 160769, 21: 187564, 22: 187564, 23: 187564, 24: 187564, 25: 187564, 26: 214359, 27: 214359, 28: 214359, 29: 214359, 30: 214359 }
         },
         { 
             name: "Nishchit Pension SL", company: "IndusInd Nippon Life",
             logo: "image_4e0b3d.png", id: "54679062", uin: "128N161V04", clientId: "60938507", type: "RETIREMENT", 
-            premium: 200000, sumAssured: 89830, dueDate: "30 May 2026", 
+            premium: 200000, sumAssured: 2000000, dueDate: "30 May 2026", 
             commenced: "30 May 2025", premiumEnds: "30 May 2030", maturity: "30 May 2077", 
-            color: "#8b1d1d", annualPayout: 89830, maturityAmt: "Special Surrender Value",
-            defermentYear: 2031
+            color: "#8b1d1d", annualPayout: 89830, maturityAmt: "Special Surrender Value", defermentYear: 2031
         },
         { 
             name: "Nishchit Samrudhi Income Limited", company: "IndusInd Nippon Life",
