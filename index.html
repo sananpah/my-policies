@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nami Portfolio v3.5.19</title>
+    <title>Nami Portfolio v3.5.21</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@800;900&family=Inter:wght@400;700;900&display=swap');
@@ -24,16 +24,13 @@
         .type-shimmer { position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(120deg, transparent, rgba(255,255,255,0.6), transparent); transition: 0.6s; }
         .badge-base:hover .type-shimmer { left: 100%; }
 
-        .badge-saving { background: linear-gradient(135deg, #10b981, #059669); }
-        .badge-retirement { background: linear-gradient(135deg, #f59e0b, #d97706); }
-        .badge-ulip { background: linear-gradient(135deg, #6366f1, #4f46e5); }
-        .badge-ilp { background: linear-gradient(135deg, #ec4899, #db2777); }
-
-        .bg-prem-past { background: #14532d; } .bg-prem-future { background: #a3e635; } 
-        .bg-wait-past { background: #78350f; } .bg-wait-future { background: #f59e0b; }
+        /* Status Colors */
+        .bg-prem-past { background: #14532d; } 
+        .bg-prem-future { background: #a3e635; } 
+        .bg-wait-past { background: #78350f; } 
+        .bg-wait-future { background: #f59e0b; }
         .bg-current { background: #22c55e; box-shadow: 0 0 15px rgba(34,229,94,0.6); border: 2px solid white; z-index: 10; }
-        .bg-mixed-future { background: repeating-linear-gradient(45deg, #a3e635, #a3e635 10px, #f59e0b 10px, #f59e0b 20px); }
-
+        
         .paid-logo { width: 100px; filter: drop-shadow(0 0 8px rgba(34, 197, 94, 0.8)); transform: rotate(-5deg); }
         .policy-card { background: white; border-radius: 24px; border-left: 16px solid; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
         .card-header { cursor: pointer; display: flex; align-items: center; padding: 25px 35px; }
@@ -44,32 +41,23 @@
         .segment { height: 28px; flex: 1; margin: 0 1px; border-radius: 3px; position: relative; }
         .segment:hover { transform: scaleY(1.2); z-index: 40; cursor: help; }
 
-        /* Unified Tooltip Styling */
         .tooltip { visibility: hidden; opacity: 0; position: absolute; bottom: 140%; left: 50%; transform: translateX(-50%); background: #0f172a; color: white; padding: 8px; border-radius: 6px; width: 180px; text-align: center; z-index: 100; font-size: 10px; transition: 0.2s; pointer-events: none; }
         .segment:hover .tooltip, .mat-node:hover .tooltip { visibility: visible; opacity: 1; }
 
-        .mat-node { 
-            position: absolute; right: -12px; top: 50%; transform: translateY(-50%); 
-            width: 28px; height: 28px; background: #0f172a; border-radius: 50%; 
-            border: 3px solid white; z-index: 60; display: flex; align-items: center; 
-            justify-content: center; cursor: pointer; 
-        }
-        .mat-node:hover { transform: translateY(-50%) scale(1.1); }
+        .mat-node { position: absolute; right: -12px; top: 50%; transform: translateY(-50%); width: 28px; height: 28px; background: #0f172a; border-radius: 50%; border: 3px solid white; z-index: 60; display: flex; align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
 
-    <div class="build-tag">BUILD v3.5.19</div>
+    <div class="build-tag">BUILD v3.5.21</div>
 
     <div class="max-w-7xl mx-auto mb-8">
         <h1 class="brand-header">Nami Portfolio</h1>
-        
         <div id="summary-bar" class="grid grid-cols-3 gap-4 mt-6 bg-slate-900 p-6 rounded-[24px] text-white shadow-xl">
             <div class="border-r border-slate-700 text-center"><p class="text-[9px] uppercase font-bold text-slate-400">Total Sum Assured</p><p id="total-sa" class="text-3xl font-black text-emerald-400">₹0</p></div>
             <div class="border-r border-slate-700 text-center"><p class="text-[9px] uppercase font-bold text-slate-400">Annual Commitment</p><p id="total-premium" class="text-3xl font-black text-indigo-400">₹0</p></div>
             <div class="text-center"><p class="text-[9px] uppercase font-bold text-slate-400">Due Alerts</p><p id="due-count" class="text-3xl font-black text-orange-400">0</p></div>
         </div>
-
         <div class="flex gap-2 mt-6">
             <button onclick="render('india')" id="btn-india" class="px-6 py-2 rounded-xl font-bold bg-slate-900 text-white shadow-lg">INDIA</button>
             <button onclick="render('wife')" id="btn-wife" class="px-6 py-2 rounded-xl font-bold bg-white text-slate-400 border">WIFE</button>
@@ -93,24 +81,17 @@
             return diff >= 0 && diff <= 30;
         }
 
-        function getFunkyBadge(type) {
-            let colorClass = "badge-saving";
-            if (type.toLowerCase() === "retirement") colorClass = "badge-retirement";
-            if (type.toLowerCase() === "ulip") colorClass = "badge-ulip";
-            if (type.toLowerCase() === "ilp") colorClass = "badge-ilp";
-            return `<div class="badge-base ${colorClass}">${type}<div class="type-shimmer"></div></div>`;
-        }
-
         window.render = function(cat) {
             const list = POLICY_DATA[cat];
             const sym = list[0]?.currency || "₹";
             updateSummary(list, sym);
 
-            document.querySelectorAll('button').forEach(b => b.className = "px-6 py-2 rounded-xl font-bold bg-white text-slate-400 border border-slate-100");
-            document.getElementById(`btn-${cat}`).className = "px-6 py-2 rounded-xl font-bold bg-slate-900 text-white shadow-lg";
-
             document.getElementById('container').innerHTML = list.map(p => {
-                const startY = parseInt(p.commenced.split(' ')[2]);
+                const parts = p.commenced.split(' ');
+                const anniversary = new Date(`${parts[1]} ${parts[0]}, 2026`);
+                const isAnniversaryPassed = TODAY >= anniversary;
+
+                const startY = parseInt(parts[2]);
                 const matY = parseInt(p.maturity.split(' ')[2]);
                 const premEndYear = parseInt(p.premiumEnds.split(' ')[2]);
                 const isZeroSA = p.name.includes("Fast track") || p.name.includes("Wealth pro") || p.name.includes("Fast Track Super");
@@ -119,30 +100,27 @@
                 let timelineHtml = '';
                 for(let yr = startY; yr < matY; yr++) {
                     const polY = yr - startY + 1;
-                    const isPast = yr < 2026;
+                    const isPastYear = yr < 2026;
                     let color = ""; let phase = ""; let detail = "";
 
-                    if (yr <= premEndYear && p.dueDate !== "PAID UP") {
-                        if (yr === 2026) color = "bg-current";
-                        else if (p.name === "Fortune Maximiser" && polY >= 2) color = "bg-mixed-future";
-                        else color = isPast ? "bg-prem-past" : "bg-prem-future";
-                        phase = "Premium Phase"; detail = `Pay ${sym}${p.premium.toLocaleString()}`;
-                    } 
-                    else {
-                        color = isPast ? "bg-wait-past" : "bg-wait-future";
-                        let payoutAmt = p.annualPayout || (p.payoutSchedule && p.payoutSchedule[polY]);
+                    // Generic Payment Completion Logic
+                    if (yr <= premEndYear) {
+                        const isPaymentDone = yr < 2026 || (yr === 2026 && isAnniversaryPassed) || p.dueDate === "PAID UP";
                         
-                        if (payoutAmt) {
-                            phase = "Income Phase";
-                            detail = `Annual Payout: ${sym}${payoutAmt.toLocaleString()}`;
+                        if (isPaymentDone) {
+                            color = "bg-prem-past"; phase = "Premium Phase"; detail = "Payment Completed";
+                        } else if (yr === 2026) {
+                            color = "bg-current"; phase = "Premium Phase"; detail = `Premium Due: ${sym}${p.premium.toLocaleString()}`;
                         } else {
-                            phase = "Growth Phase";
-                            detail = "Wealth Accumulation";
+                            color = "bg-prem-future"; phase = "Premium Phase"; detail = `Upcoming: ${sym}${p.premium.toLocaleString()}`;
                         }
-
-                        if (p.name === "Nishchit Pension SL" && polY < 8) {
-                            phase = "Deferment Period";
-                            detail = polY === 7 ? "Deferred" : "Bonus Processing";
+                    } else {
+                        color = isPastYear ? "bg-wait-past" : "bg-wait-future";
+                        let payoutAmt = p.annualPayout || (p.payoutSchedule && p.payoutSchedule[polY]);
+                        if (payoutAmt) {
+                            phase = "Income Phase"; detail = `Annual Payout: ${sym}${payoutAmt.toLocaleString()}`;
+                        } else {
+                            phase = "Growth Phase"; detail = "Wealth Accumulation";
                         }
                     }
                     timelineHtml += `<div class="segment ${color}"><div class="tooltip"><b>${phase}</b><br><span class="text-orange-400">${detail}</span><br>Year ${polY} (${yr})</div></div>`;
@@ -155,7 +133,7 @@
                         <div class="flex-1 ml-4"><h3 class="font-black text-slate-800 text-lg tracking-tight">${p.name}</h3></div>
                         <div class="flex gap-12 items-center justify-center flex-1">
                             <div class="flex items-center -ml-6">
-                                ${getFunkyBadge(p.type)}
+                                <div class="badge-base badge-${p.type.toLowerCase()}">${p.type}<div class="type-shimmer"></div></div>
                                 <div class="text-center">
                                     <p class="text-[8px] font-bold text-slate-400 uppercase tracking-widest mb-1">Sum Assured</p>
                                     <p class="text-base font-black text-slate-700">${sym}${(isZeroSA ? 0 : p.sumAssured).toLocaleString()}</p>
@@ -167,7 +145,7 @@
                             </div>
                         </div>
                         <div class="w-40 flex flex-col items-center">
-                            ${p.dueDate === "PAID UP" ? `<img src="paid.jpg" class="paid-logo">` : 
+                            ${(p.dueDate === "PAID UP" || (isAnniversaryPassed && premEndYear <= 2026)) ? `<img src="paid.jpg" class="paid-logo">` : 
                             `<p class="text-[8px] font-black text-slate-400 uppercase mb-1">Due Date</p>
                              <div class="px-4 py-1.5 rounded-lg font-black text-[10px] text-center w-full ${isDueSoon ? 'bg-red-600 text-white due-blink' : 'bg-slate-900 text-white'}">${p.dueDate}</div>`}
                         </div>
@@ -181,8 +159,7 @@
                         <div class="timeline-track">
                             <div class="absolute -top-7 left-0 text-[10px] font-black text-slate-400 uppercase">${p.commenced}</div>
                             ${timelineHtml}
-                            <div class="mat-node">
-                                <span class="text-white text-[12px]">★</span>
+                            <div class="mat-node"><span class="text-white text-[12px]">★</span>
                                 <div class="tooltip"><b>Maturity Payout</b><br><span class="text-emerald-400 font-bold">${p.maturityAmt}</span><br>${p.maturity}</div>
                             </div>
                             <div class="absolute -top-7 right-0 text-[10px] font-black text-slate-400 uppercase">${p.maturity}</div>
