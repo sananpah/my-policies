@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nami Portfolio v3.5.55</title>
+    <title>Nami Portfolio v3.5.56</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@800;900&family=Inter:wght@400;700;900&display=swap');
@@ -11,7 +11,7 @@
         body { background-color: #f8fafc; font-family: 'Inter', sans-serif; padding: 40px; }
         .brand-header { font-family: 'Orbitron', sans-serif; background: linear-gradient(90deg, #6366f1, #ec4899, #f59e0b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 3.5rem; font-weight: 900; text-transform: uppercase; }
         
-        /* Alert Blinking */
+        /* Animation & UI */
         @keyframes alert-glow { 0% { box-shadow: 0 0 5px #dc2626; background: #dc2626; } 50% { box-shadow: 0 0 20px #ef4444; background: #b91c1c; } 100% { box-shadow: 0 0 5px #dc2626; background: #dc2626; } }
         .due-blink { animation: alert-glow 1.5s infinite ease-in-out !important; color: white !important; border: none !important; }
 
@@ -38,15 +38,15 @@
         }
         .segment:hover .tooltip, .mat-star:hover .tooltip { visibility: visible; opacity: 1; bottom: 50px; }
 
-        /* REFINED COLORS */
+        /* Color States */
         .bg-hybrid { background: linear-gradient(to bottom, #10b981 50%, #f59e0b 50%); } 
-        .bg-prem-past { background: #064e3b; } /* Deep Green (History) */
-        .bg-prem-future { background: #10b981; } /* Bright Green (Upcoming) */
+        .bg-prem-past { background: #064e3b; }
+        .bg-prem-future { background: #10b981; }
         .bg-current { background: #22c55e; box-shadow: 0 0 20px rgba(34,197,94,0.6); border: 3px solid white; }
         
-        .bg-history-gray { background: #94a3b8; } /* Passed years after premium (Slate) */
+        .bg-history-gray { background: #cbd5e1; } /* Passed years post-premium */
         .bg-defer-future { background: #78350f; } /* Future years waiting (Brown) */
-        .bg-payout { background: #f59e0b; } /* Active Income Phase (Orange) */
+        .bg-payout { background: #f59e0b; } /* Orange Payout */
 
         .badge-base { font-family: 'Orbitron', sans-serif; font-size: 8px; font-weight: 900; padding: 6px 12px; border-radius: 10px; text-transform: uppercase; color: white; min-width: 110px; text-align: center; }
         .badge-retirement { background: linear-gradient(135deg, #ffcc00, #ff8800); }
@@ -59,9 +59,9 @@
     <div class="max-w-7xl mx-auto mb-10">
         <h1 class="brand-header">Nami Portfolio</h1>
         <div id="nav-tabs" class="flex gap-4 mb-8">
-            <button onclick="render('india')" class="px-8 py-3 bg-slate-800 text-white rounded-full font-bold hover:bg-slate-700 transition">India</button>
-            <button onclick="render('wife')" class="px-8 py-3 bg-slate-800 text-white rounded-full font-bold hover:bg-slate-700 transition">Wife</button>
-            <button onclick="render('singapore')" class="px-8 py-3 bg-slate-800 text-white rounded-full font-bold hover:bg-slate-700 transition">Singapore</button>
+            <button onclick="render('india')" class="px-8 py-3 bg-slate-800 text-white rounded-full font-bold">India</button>
+            <button onclick="render('wife')" class="px-8 py-3 bg-slate-800 text-white rounded-full font-bold">Wife</button>
+            <button onclick="render('singapore')" class="px-8 py-3 bg-slate-800 text-white rounded-full font-bold">Singapore</button>
         </div>
         <div id="summary-bar" class="grid grid-cols-3 gap-6 bg-slate-900 p-8 rounded-[32px] text-white shadow-2xl">
             <div class="border-r border-slate-700 text-center"><p class="text-[10px] font-bold text-slate-400 uppercase">Sum Assured</p><p id="total-sa" class="text-4xl font-black text-emerald-400">₹0</p></div>
@@ -106,13 +106,12 @@
                 let timelineHtml = '';
                 for(let yr = startY; yr < matY; yr++) {
                     const polY = yr - startY + 1;
-                    let color = "", phase = "", detail = "";
                     const isPast = yr < CURRENT_YEAR;
+                    let color = "", phase = "", detail = "";
 
-                    // 1. PREMIUM PHASE
+                    // RULE 1: PREMIUM PHASE
                     if (yr <= premEndYear) {
                         const isDone = isPast || p.dueDate === "PAID UP";
-                        
                         if (p.name.includes("Fortune Maximiser") && polY >= (p.bonusStartYear || 2)) {
                             color = "bg-hybrid"; phase = "Premium + Bonus";
                             detail = `Premium: ${sym}${p.premium.toLocaleString()}<br>Bonus: ${sym}${(p.bonusAmount || 0).toLocaleString()}`;
@@ -122,24 +121,27 @@
                             detail = `Amt: ${sym}${p.premium.toLocaleString()}`;
                         }
                     } 
-                    // 2. POST-PREMIUM PHASE (Growth or Payout)
+                    // RULE 2: THE DEFERRED YEAR FIX (YEAR 7 LOCK)
+                    else if (p.name.includes("Nishchit Pension") && polY === 7) {
+                        color = isPast ? "bg-history-gray" : "bg-defer-future";
+                        phase = "Deferment Year";
+                        detail = "Waiting Period (No Payout)";
+                    }
+                    // RULE 3: INCOME / GROWTH PHASE
                     else {
                         const payout = (p.payoutSchedule && p.payoutSchedule[polY]) || p.annualPayout;
-                        const isNishchitDefer = p.name.includes("Nishchit Pension") && polY === 7;
-                        
                         if (payout) {
                             color = "bg-payout"; 
                             phase = isPast ? "Payout Received" : "Income Phase"; 
                             detail = `Payout: ${sym}${payout.toLocaleString()}`;
                         } else {
-                            // DIFFERENCE HERE: Slate for past growth, Brown for future growth
                             color = isPast ? "bg-history-gray" : "bg-defer-future";
-                            phase = isNishchitDefer ? "Deferment Year" : (isPast ? "Growth (Passed)" : "Growth Phase");
+                            phase = isPast ? "Growth (Past)" : "Growth Phase";
                             detail = "Wealth Accumulation";
                         }
                     }
 
-                    timelineHtml += `<div class="segment ${color}"><div class="tooltip"><b class="text-emerald-400 uppercase tracking-tighter">${phase}</b><br>${detail}<br><span class="opacity-40 text-[9px]">Year ${polY} (${yr})</span></div></div>`;
+                    timelineHtml += `<div class="segment ${color}"><div class="tooltip"><b class="text-emerald-400 uppercase">${phase}</b><br>${detail}<br><span class="opacity-40 text-[9px]">Year ${polY} (${yr})</span></div></div>`;
                 }
 
                 timelineHtml += `<div class="mat-star">★<div class="tooltip"><b class="text-orange-400 uppercase">Final Maturity</b><br>Value: ${p.maturityAmt || p.sumAssured}<br><span class="opacity-40 text-[9px]">Year ${matY - startY + 1} (${matY})</span></div></div>`;
