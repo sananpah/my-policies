@@ -33,7 +33,7 @@ export const POLICY_DATA = {
             payoutSchedule: { 11: 18591, 12: 18591, 13: 18591, 14: 18591, 15: 49576 } 
         },
         { 
-            name: "Retirement Savings", company: "KOTAK",
+            name: "Confident Retirement Savings", company: "KOTAK",
             logo: "image_5d7f80.png", id: "79079094", uin: "107N105V02", clientId: "61491746", type: "RETIREMENT", 
             premium: 50000, sumAssured: 323695, dueDate: "13 Mar 2026", 
             commenced: "13 Mar 2025", premiumEnds: "13 Mar 2031", maturity: "13 Mar 2040", 
