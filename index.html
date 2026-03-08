@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nami Portfolio v3.5.32</title>
+    <title>Nami Portfolio v3.5.35</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@800;900&family=Inter:wght@400;700;900&display=swap');
@@ -58,7 +58,7 @@
 </head>
 <body>
 
-    <div class="build-tag">BUILD v3.5.32</div>
+    <div class="build-tag" id="dynamic-build-tag">BUILD v3.5.35</div>
 
     <div class="max-w-7xl mx-auto mb-8">
         <h1 class="brand-header">Nami Portfolio</h1>
@@ -77,28 +77,12 @@
     <div id="container" class="max-w-7xl mx-auto"></div>
 
     <script type="module">
-        // Adding the SBI Policy directly into the data object
         import { POLICY_DATA } from './data.js';
-        
-        // Ensure SBI Life is in the Wife list if not already there
-        if (!POLICY_DATA.wife.find(p => p.name.includes("SBI Life"))) {
-            POLICY_DATA.wife.push({
-                id: 'w3',
-                name: 'SBI Life Smart Privilege ULIP',
-                logo: 'https://www.sbilife.co.in/images/logo.png',
-                type: 'ULIP',
-                sumAssured: 1250000,
-                premium: 250000,
-                commenced: '15 Oct 2021',
-                premiumEnds: '15 Oct 2026',
-                maturity: '15 Oct 2031',
-                dueDate: '15 Oct 2026',
-                color: '#2563eb',
-                currency: '₹'
-            });
-        }
 
-        const TODAY = new Date('2026-03-08');
+        // LIVE DATE LOGIC
+        const TODAY = new Date();
+        document.getElementById('dynamic-build-tag').innerText = `BUILD v3.5.35 | ${TODAY.toLocaleDateString('en-GB')}`;
+
         window.toggleCard = (id) => document.getElementById(`card-${id}`).classList.toggle('open');
 
         function getBadgeClass(type) {
@@ -114,20 +98,23 @@
         function checkIsDueSoon(dueDateStr) {
             if (!dueDateStr || dueDateStr === "PAID UP") return false;
             const parts = dueDateStr.split(' ');
-            const due = new Date(`${parts[1]} ${parts[0]}, 2026`);
+            const currentYear = TODAY.getFullYear();
+            const due = new Date(`${parts[1]} ${parts[0]}, ${currentYear}`);
             const diff = (due - TODAY) / 86400000;
             return diff >= 0 && diff <= 30;
         }
 
         window.render = function(cat) {
-            const list = POLICY_DATA[cat];
+            const list = POLICY_DATA[cat] || [];
             const sym = list[0]?.currency || "₹";
             updateSummary(list, sym);
 
             document.getElementById('container').innerHTML = list.map(p => {
                 const parts = p.commenced.split(' ');
-                const anniversary = new Date(`${parts[1]} ${parts[0]}, 2026`);
+                const currentYear = TODAY.getFullYear();
+                const anniversary = new Date(`${parts[1]} ${parts[0]}, ${currentYear}`);
                 const isAnniversaryPassed = TODAY >= anniversary;
+                
                 const startY = parseInt(parts[2]);
                 const matY = parseInt(p.maturity.split(' ')[2]);
                 const premEndYear = parseInt(p.premiumEnds.split(' ')[2]);
@@ -138,19 +125,24 @@
                     const polY = yr - startY + 1;
                     let color = "", phase = "", detail = "";
                     const isFortune = p.name.includes("Fortune Maximiser");
+                    const isPension = p.name.includes("Nishchit Pension SL");
 
                     if (isFortune && polY >= 2 && yr <= premEndYear) {
-                        color = "bg-hybrid"; phase = "Hybrid: Prem+Bonus"; 
-                        detail = `Bonus Accruing + Prem: ${sym}${p.premium.toLocaleString()}`;
+                        color = "bg-hybrid"; phase = "Hybrid Phase"; 
+                        detail = `Bonus + Prem: ${sym}${p.premium.toLocaleString()}`;
+                    } else if (isPension && polY === 7) {
+                        color = yr < currentYear ? "bg-wait-past" : "bg-wait-future";
+                        phase = "Deferment Period"; detail = "Pre-Income Gap";
                     } else if (yr <= premEndYear) {
-                        const isDone = yr < 2026 || (yr === 2026 && isAnniversaryPassed) || p.dueDate === "PAID UP";
-                        color = isDone ? "bg-prem-past" : (yr === 2026 ? "bg-current" : "bg-prem-future");
+                        const isDone = yr < currentYear || (yr === currentYear && isAnniversaryPassed) || p.dueDate === "PAID UP";
+                        color = isDone ? "bg-prem-past" : (yr === currentYear ? "bg-current" : "bg-prem-future");
                         phase = "Premium Phase";
                         detail = isDone ? "Payment Completed" : `Premium: ${sym}${p.premium.toLocaleString()}`;
                     } else {
-                        color = yr < 2026 ? "bg-wait-past" : "bg-wait-future";
-                        phase = "Growth/Income Phase";
-                        detail = "Wealth Accumulation";
+                        color = yr < currentYear ? "bg-wait-past" : "bg-wait-future";
+                        let payoutAmt = p.annualPayout || (p.payoutSchedule && p.payoutSchedule[polY]);
+                        phase = payoutAmt ? "Income Phase" : "Growth Phase";
+                        detail = payoutAmt ? `Annual Payout: ${sym}${payoutAmt.toLocaleString()}` : "Wealth Accumulation";
                     }
                     timelineHtml += `<div class="segment ${color}"><div class="tooltip"><b>${phase}</b><br><span class="text-orange-400">${detail}</span><br>Year ${polY} (${yr})</div></div>`;
                 }
@@ -177,7 +169,7 @@
                             </div>
                         </div>
                         <div class="w-40 flex flex-col items-center">
-                            ${(p.dueDate === "PAID UP" || (isAnniversaryPassed && premEndYear <= 2026)) ? `<img src="paid.jpg" class="paid-logo">` : 
+                            ${(p.dueDate === "PAID UP" || (isAnniversaryPassed && premEndYear <= currentYear)) ? `<img src="paid.jpg" class="paid-logo">` : 
                             `<p class="text-[8px] font-black text-slate-400 uppercase mb-1">Due Date</p>
                              <div class="px-4 py-1.5 rounded-lg font-black text-[10px] text-center w-full ${isDueSoon ? 'due-blink text-white' : 'bg-slate-900 text-white'}">${p.dueDate}</div>`}
                         </div>
@@ -188,7 +180,11 @@
                             ${timelineHtml}
                             <div class="mat-node">
                                 <span class="text-white text-[12px]">★</span>
-                                <div class="tooltip"><b class="text-emerald-400 uppercase">Maturity</b><br>${p.maturity}</div>
+                                <div class="tooltip">
+                                    <b class="text-emerald-400 uppercase">Maturity Event</b><br>
+                                    ${p.maturity}<br>
+                                    <span class="text-sm font-black text-orange-400">${p.maturityAmt || 'End of Term'}</span>
+                                </div>
                             </div>
                             <div class="absolute -top-7 right-0 text-[10px] font-black text-slate-400 uppercase">${p.maturity}</div>
                         </div>
