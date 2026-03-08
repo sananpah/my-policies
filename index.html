@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nami Portfolio v3.5.45</title>
+    <title>Nami Portfolio v3.5.46</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@800;900&family=Inter:wght@400;700;900&display=swap');
@@ -16,50 +16,59 @@
         @keyframes alert-glow { 0% { box-shadow: 0 0 5px #dc2626; background: #dc2626; } 50% { box-shadow: 0 0 20px #ef4444; background: #b91c1c; } 100% { box-shadow: 0 0 5px #dc2626; background: #dc2626; } }
         .due-blink { animation: alert-glow 1.5s infinite ease-in-out !important; color: white !important; }
 
-        /* Hover & Stacking Fix */
-        .policy-card { background: white; border-radius: 24px; border-left: 16px solid; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); position: relative; transition: 0.2s; }
-        .policy-card.open { z-index: 50; }
+        /* Card Structure - Restored */
+        .policy-card { background: white; border-radius: 24px; border-left: 16px solid; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); transition: 0.3s; position: relative; z-index: 1; }
+        .policy-card.open { z-index: 100; } /* Key for hover: Open card stays on top */
+        .card-header { cursor: pointer; display: flex; align-items: center; padding: 25px 35px; }
+        
         .content-area { display: none; padding: 30px; border-top: 1px solid #f1f5f9; background: #fafbfc; border-radius: 0 0 24px 0; overflow: visible !important; }
         .open .content-area { display: block; }
 
+        /* Badges & Logos - Restored */
+        .badge-container { display: flex; align-items: center; width: 260px; margin-left: -55px; } 
+        .badge-base { font-family: 'Orbitron', sans-serif; font-size: 8px; font-weight: 900; padding: 5px 10px; border-radius: 8px; text-transform: uppercase; color: white; min-width: 100px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .badge-saving { background: linear-gradient(135deg, #00ff88, #00ad5f); }
+        .badge-retirement { background: linear-gradient(135deg, #ffcc00, #ff8800); }
+        .badge-ulip { background: linear-gradient(135deg, #6366f1, #4f46e5); }
+        
+        .logo-container { display: flex; align-items: center; justify-content: center; width: 112px; }
+        .company-logo { max-height: 44px; object-fit: contain; }
+        .paid-logo { width: 100px; filter: drop-shadow(0 0 8px rgba(34, 197, 94, 0.8)); transform: rotate(-5deg); }
+
+        /* Timeline & Tooltip Fix */
         .timeline-track { position: relative; height: 36px; background: #e2e8f0; border-radius: 18px; display: flex; padding: 0 4px; align-items: center; margin-top: 50px; overflow: visible !important; }
         .segment { height: 28px; flex: 1; margin: 0 1px; border-radius: 3px; position: relative; cursor: help; transition: 0.2s; }
-        .segment:hover { transform: scaleY(1.4); z-index: 100; }
+        .segment:hover { transform: scaleY(1.4); z-index: 1000 !important; }
 
-        /* Tooltip Re-designed for high visibility */
         .tooltip { 
             visibility: hidden; opacity: 0; position: absolute; 
             bottom: 45px; left: 50%; transform: translateX(-50%); 
             background: #0f172a; color: white; padding: 12px; border-radius: 8px; 
-            width: 220px; text-align: center; z-index: 999; font-size: 11px; 
-            pointer-events: none; line-height: 1.4; 
+            width: 220px; text-align: center; font-size: 11px; z-index: 9999;
+            pointer-events: none; line-height: 1.4; transition: 0.2s;
             box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1);
-            transition: 0.2s ease-out;
         }
         .segment:hover .tooltip { visibility: visible; opacity: 1; bottom: 40px; }
         .tooltip::after { content: ""; position: absolute; top: 100%; left: 50%; margin-left: -5px; border-width: 5px; border-style: solid; border-color: #0f172a transparent transparent transparent; }
 
-        /* Badge Styling */
-        .badge-container { display: flex; align-items: center; width: 260px; margin-left: -55px; } 
-        .badge-base { font-family: 'Orbitron', sans-serif; font-size: 8px; font-weight: 900; padding: 5px 10px; border-radius: 8px; text-transform: uppercase; color: white; min-width: 100px; display: inline-flex; justify-content: center; }
-        .badge-saving { background: linear-gradient(135deg, #00ff88, #00ad5f); }
-        .badge-retirement { background: linear-gradient(135deg, #ffcc00, #ff8800); }
-        .badge-ulip { background: linear-gradient(135deg, #6366f1, #4f46e5); }
-        .badge-ilp { background: linear-gradient(135deg, #ff0077, #aa0055); }
+        /* Creds Bar - Restored */
+        .creds-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; background: #f1f5f9; padding: 15px 25px; border-radius: 12px; margin-bottom: 25px; border: 1px solid #e2e8f0; }
+        .cred-item p:first-child { font-size: 9px; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 2px; }
+        .cred-item p:last-child { font-size: 13px; font-weight: 700; color: #334155; font-family: 'Orbitron', sans-serif; }
 
+        /* Colors - Restored */
         .bg-prem-past { background: #064e3b; } .bg-prem-future { background: #10b981; } 
-        .bg-wait-future { background: #f59e0b; } .bg-income { background: #f59e0b; border: 1px solid white; }
-        .bg-current { background: #22c55e; box-shadow: 0 0 15px rgba(34,229,94,0.6); border: 2px solid white; z-index: 10; }
-        .paid-logo { width: 100px; filter: drop-shadow(0 0 8px rgba(34, 197, 94, 0.8)); transform: rotate(-5deg); }
+        .bg-wait-past { background: #451a03; } .bg-wait-future { background: #f59e0b; }
+        .bg-current { background: #22c55e; box-shadow: 0 0 15px rgba(34,229,94,0.6); border: 2px solid white; }
     </style>
 </head>
 <body>
 
-    <div class="build-tag" id="dynamic-build-tag">BUILD v3.5.45</div>
+    <div class="build-tag" id="dynamic-build-tag">BUILD v3.5.46</div>
 
     <div class="max-w-7xl mx-auto mb-8">
         <h1 class="brand-header">Nami Portfolio</h1>
-        <div id="summary-bar" class="grid grid-cols-3 gap-4 mt-6 bg-slate-900 p-6 rounded-[24px] text-white">
+        <div id="summary-bar" class="grid grid-cols-3 gap-4 mt-6 bg-slate-900 p-6 rounded-[24px] text-white shadow-xl">
             <div class="border-r border-slate-700 text-center"><p class="text-[9px] font-bold text-slate-400">TOTAL SUM ASSURED</p><p id="total-sa" class="text-3xl font-black text-emerald-400">₹0</p></div>
             <div class="border-r border-slate-700 text-center"><p class="text-[9px] font-bold text-slate-400">ANNUAL COMMIT</p><p id="total-premium" class="text-3xl font-black text-indigo-400">₹0</p></div>
             <div class="text-center"><p class="text-[9px] font-bold text-slate-400">DUE SOON</p><p id="due-count" class="text-3xl font-black text-orange-400">0</p></div>
@@ -72,15 +81,15 @@
         import { POLICY_DATA } from './data.js';
 
         const TODAY = new Date();
-        window.toggleCard = (id) => document.getElementById(`card-${id}`).classList.toggle('open');
+        window.toggleCard = (id) => {
+            document.querySelectorAll('.policy-card').forEach(c => { if(c.id !== `card-${id}`) c.classList.remove('open'); });
+            document.getElementById(`card-${id}`).classList.toggle('open');
+        };
 
         function checkIsDueSoon(dueDateStr) {
             if (!dueDateStr || dueDateStr === "PAID UP") return false;
-            const parts = dueDateStr.split(' '); // Expected format: "25 Oct 2026"
-            const day = parseInt(parts[0]);
-            const monthStr = parts[1];
-            const year = parseInt(parts[2]);
-            const due = new Date(`${monthStr} ${day}, ${year}`);
+            const parts = dueDateStr.split(' '); 
+            const due = new Date(`${parts[1]} ${parts[0]}, ${parts[2]}`);
             const diff = (due - TODAY) / 86400000;
             return diff >= 0 && diff <= 30;
         }
@@ -100,6 +109,7 @@
                     const polY = yr - startY + 1;
                     let color = "", phase = "", detail = "";
 
+                    // Nishchit Pension Year 7 Deferment Logic
                     const isPension = p.name.includes("Nishchit Pension");
                     const isWaitingYear = isPension && yr === (premEndYear + 1);
 
@@ -109,12 +119,12 @@
                         phase = "Premium Phase";
                         detail = `Premium: ${sym}${p.premium.toLocaleString()}`;
                     } else if (isWaitingYear) {
-                        color = "bg-wait-future"; phase = "Waiting Period"; detail = "Deferred Phase";
+                        color = "bg-wait-future"; phase = "Waiting Period"; detail = "Deferred (Year 7)";
                     } else {
                         let payoutAmt = p.annualPayout || (p.payoutSchedule && p.payoutSchedule[polY]);
-                        color = payoutAmt ? "bg-income" : "bg-slate-300";
-                        phase = payoutAmt ? "Income Phase" : "Maturity Phase";
-                        detail = payoutAmt ? `Payout: ${sym}${payoutAmt.toLocaleString()}` : "Wealth Growth";
+                        color = payoutAmt ? "bg-wait-future" : "bg-slate-300";
+                        phase = payoutAmt ? "Income Phase" : "Growth Phase";
+                        detail = payoutAmt ? `Payout: ${sym}${payoutAmt.toLocaleString()}` : "Wealth Accumulation";
                     }
 
                     timelineHtml += `<div class="segment ${color}"><div class="tooltip"><b>${phase}</b><br>${detail}<br><span class="opacity-50 text-[8px]">Year ${polY} (${yr})</span></div></div>`;
@@ -123,14 +133,14 @@
                 return `
                 <div class="policy-card" id="card-${p.id}" style="border-color: ${p.color}">
                     <div class="card-header" onclick="toggleCard('${p.id}')">
-                        <div class="w-28 flex justify-center"><img src="${p.logo}" class="max-h-11"></div>
-                        <div class="flex-1 ml-4"><h3 class="font-black text-slate-800 text-lg">${p.name}</h3></div>
+                        <div class="logo-container"><img src="${p.logo}" class="company-logo"></div>
+                        <div class="flex-1 ml-6"><h3 class="font-black text-slate-800 text-lg">${p.name}</h3></div>
                         <div class="flex gap-4 items-center flex-1 justify-end pr-10">
                             <div class="badge-container">
                                 <div class="badge-base ${p.type.toLowerCase().includes('retirement') ? 'badge-retirement' : 'badge-saving'}">${p.type}</div>
-                                <div class="text-center ml-4"><p class="text-[8px] font-bold text-slate-400">Sum Assured</p><p class="text-sm font-black text-slate-700">${sym}${p.sumAssured.toLocaleString()}</p></div>
+                                <div class="text-center ml-4"><p class="text-[8px] font-bold text-slate-400">SUM ASSURED</p><p class="text-sm font-black text-slate-700">${sym}${p.sumAssured.toLocaleString()}</p></div>
                             </div>
-                            <div class="text-center border-l pl-10"><p class="text-[8px] font-bold text-slate-400">Annual Prem</p><p class="text-sm font-black text-emerald-600">${sym}${p.premium.toLocaleString()}</p></div>
+                            <div class="text-center border-l pl-10"><p class="text-[8px] font-bold text-slate-400">ANNUAL PREM</p><p class="text-sm font-black text-emerald-600">${sym}${p.premium.toLocaleString()}</p></div>
                         </div>
                         <div class="w-40 text-center">
                             ${p.dueDate === "PAID UP" ? `<img src="paid.jpg" class="paid-logo mx-auto">` : 
@@ -138,10 +148,15 @@
                         </div>
                     </div>
                     <div class="content-area">
+                        <div class="creds-bar">
+                            <div class="cred-item"><p>Policy Number</p><p>${p.id}</p></div>
+                            <div class="cred-item"><p>Client ID</p><p>${p.clientId || 'N/A'}</p></div>
+                            <div class="cred-item"><p>UIN</p><p>${p.uin || 'N/A'}</p></div>
+                        </div>
                         <div class="timeline-track">
-                            <div class="absolute -top-7 left-0 text-[10px] font-bold text-slate-400">${p.commenced}</div>
+                            <div class="absolute -top-7 left-0 text-[10px] font-bold text-slate-400 uppercase">${p.commenced}</div>
                             ${timelineHtml}
-                            <div class="absolute -top-7 right-0 text-[10px] font-bold text-slate-400">${p.maturity}</div>
+                            <div class="absolute -top-7 right-0 text-[10px] font-bold text-slate-400 uppercase">${p.maturity}</div>
                         </div>
                     </div>
                 </div>`;
