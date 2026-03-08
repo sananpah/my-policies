@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nami Portfolio v3.5.23</title>
+    <title>Nami Portfolio v3.5.26</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@800;900&family=Inter:wght@400;700;900&display=swap');
@@ -14,29 +14,25 @@
 
         /* Neon Badge System */
         .badge-container { display: flex; align-items: center; width: 220px; margin-left: -20px; }
-        
         .badge-base {
             font-family: 'Orbitron', sans-serif; font-size: 9px; font-weight: 900; letter-spacing: 1px;
             padding: 5px 15px; border-radius: 10px; text-transform: uppercase; position: relative;
             overflow: hidden; display: inline-flex; align-items: center; justify-content: center;
             color: white; min-width: 100px; transition: 0.3s;
         }
-
         .badge-saving { background: linear-gradient(135deg, #00ff88, #00ad5f); box-shadow: 0 0 15px rgba(0, 255, 136, 0.3); }
         .badge-retirement { background: linear-gradient(135deg, #ffcc00, #ff8800); box-shadow: 0 0 15px rgba(255, 204, 0, 0.3); }
         .badge-ulip { background: linear-gradient(135deg, #6610f2, #007bff); box-shadow: 0 0 15px rgba(102, 16, 242, 0.3); }
         .badge-ilp { background: linear-gradient(135deg, #ff0077, #aa0055); box-shadow: 0 0 15px rgba(255, 0, 119, 0.3); }
-        .badge-none { background: #64748b; }
 
         .type-shimmer { position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(120deg, transparent, rgba(255,255,255,0.8), transparent); transition: 0.5s; }
         .badge-base:hover .type-shimmer { left: 100%; }
-        .badge-base:hover { transform: scale(1.05); }
 
-        /* Timeline Styles */
-        .bg-prem-past { background: #064e3b; } /* Deep Forest Green */
-        .bg-prem-future { background: #10b981; } /* Emerald */
-        .bg-wait-past { background: #451a03; } /* Deep Brown */
-        .bg-wait-future { background: #f59e0b; } /* Amber */
+        /* Timeline Colors */
+        .bg-prem-past { background: #064e3b; } 
+        .bg-prem-future { background: #10b981; } 
+        .bg-wait-past { background: #451a03; } 
+        .bg-wait-future { background: #f59e0b; }
         .bg-current { background: #22c55e; box-shadow: 0 0 15px rgba(34,229,94,0.6); border: 2px solid white; z-index: 10; }
         
         .paid-logo { width: 100px; filter: drop-shadow(0 0 8px rgba(34, 197, 94, 0.8)); transform: rotate(-5deg); }
@@ -57,7 +53,7 @@
 </head>
 <body>
 
-    <div class="build-tag">BUILD v3.5.23</div>
+    <div class="build-tag">BUILD v3.5.26</div>
 
     <div class="max-w-7xl mx-auto mb-8">
         <h1 class="brand-header">Nami Portfolio</h1>
@@ -109,7 +105,18 @@
                     const polY = yr - startY + 1;
                     let color = ""; let phase = ""; let detail = "";
 
-                    if (yr <= premEndYear) {
+                    const isPension = p.name.includes("Nishchit Pension SL");
+                    // Deferment for Pension strictly Year 7 only
+                    const isDefermentYear = isPension && polY === 7;
+                    // Payout starts strictly at Year 8 for Pension
+                    const isPayoutStart = isPension ? (polY >= 8) : false;
+
+                    if (isDefermentYear) {
+                        color = yr < 2026 ? "bg-wait-past" : "bg-wait-future";
+                        phase = "Deferment Period";
+                        detail = "Policy Gap (Preparing Payout)";
+                    } 
+                    else if (yr <= premEndYear && !isPayoutStart) {
                         const isDone = yr < 2026 || (yr === 2026 && isAnniversaryPassed) || p.dueDate === "PAID UP";
                         color = isDone ? "bg-prem-past" : (yr === 2026 ? "bg-current" : "bg-prem-future");
                         phase = "Premium Phase";
