@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nami Portfolio v3.5.53</title>
+    <title>Nami Portfolio v3.5.55</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@800;900&family=Inter:wght@400;700;900&display=swap');
@@ -15,14 +15,12 @@
         @keyframes alert-glow { 0% { box-shadow: 0 0 5px #dc2626; background: #dc2626; } 50% { box-shadow: 0 0 20px #ef4444; background: #b91c1c; } 100% { box-shadow: 0 0 5px #dc2626; background: #dc2626; } }
         .due-blink { animation: alert-glow 1.5s infinite ease-in-out !important; color: white !important; border: none !important; }
 
-        /* Card & UI Component */
         .policy-card { background: white; border-radius: 24px; border-left: 16px solid; margin-bottom: 24px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); position: relative; z-index: 1; transition: 0.3s; }
         .policy-card.open { z-index: 50; } 
         .card-header { cursor: pointer; display: flex; align-items: center; padding: 30px 40px; min-height: 120px; }
         .content-area { display: none; padding: 35px; border-top: 1px solid #f1f5f9; background: #fafbfc; border-radius: 0 0 24px 0; overflow: visible !important; }
         .open .content-area { display: block; }
 
-        /* Timeline & Maturity Star */
         .timeline-track { position: relative; height: 40px; background: #e2e8f0; border-radius: 20px; display: flex; padding: 0 6px; align-items: center; margin-top: 60px; overflow: visible !important; }
         .segment { height: 32px; flex: 1; margin: 0 1px; border-radius: 4px; position: relative; cursor: help; transition: 0.2s; }
         .segment:hover { transform: scaleY(1.3); z-index: 1000 !important; }
@@ -30,7 +28,6 @@
         .mat-star { flex: 0 0 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 24px; cursor: help; position: relative; color: #f59e0b; filter: drop-shadow(0 0 5px rgba(245, 158, 11, 0.5)); transition: 0.3s; }
         .mat-star:hover { transform: scale(1.5) rotate(15deg); z-index: 1000 !important; color: #fbbf24; }
 
-        /* Global Tooltip Fix */
         .tooltip { 
             visibility: hidden; opacity: 0; position: absolute; 
             bottom: 55px; left: 50%; transform: translateX(-50%); 
@@ -40,15 +37,16 @@
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5); border: 1px solid rgba(255,255,255,0.1);
         }
         .segment:hover .tooltip, .mat-star:hover .tooltip { visibility: visible; opacity: 1; bottom: 50px; }
-        .tooltip::after { content: ""; position: absolute; top: 100%; left: 50%; margin-left: -6px; border-width: 6px; border-style: solid; border-color: #0f172a transparent transparent transparent; }
 
-        /* Visual States */
+        /* REFINED COLORS */
         .bg-hybrid { background: linear-gradient(to bottom, #10b981 50%, #f59e0b 50%); } 
-        .bg-prem-past { background: #064e3b; }
-        .bg-prem-future { background: #10b981; }
+        .bg-prem-past { background: #064e3b; } /* Deep Green (History) */
+        .bg-prem-future { background: #10b981; } /* Bright Green (Upcoming) */
         .bg-current { background: #22c55e; box-shadow: 0 0 20px rgba(34,197,94,0.6); border: 3px solid white; }
-        .bg-defer { background: #78350f; } 
-        .bg-payout { background: #f59e0b; } 
+        
+        .bg-history-gray { background: #94a3b8; } /* Passed years after premium (Slate) */
+        .bg-defer-future { background: #78350f; } /* Future years waiting (Brown) */
+        .bg-payout { background: #f59e0b; } /* Active Income Phase (Orange) */
 
         .badge-base { font-family: 'Orbitron', sans-serif; font-size: 8px; font-weight: 900; padding: 6px 12px; border-radius: 10px; text-transform: uppercase; color: white; min-width: 110px; text-align: center; }
         .badge-retirement { background: linear-gradient(135deg, #ffcc00, #ff8800); }
@@ -78,6 +76,7 @@
         import { POLICY_DATA } from './data.js';
 
         const TODAY = new Date();
+        const CURRENT_YEAR = TODAY.getFullYear();
 
         window.toggleCard = (id) => {
             const card = document.getElementById(`card-${id}`);
@@ -103,63 +102,47 @@
                 const matY = parseInt(p.maturity.split(' ')[2]);
                 const premEndYear = parseInt(p.premiumEnds.split(' ')[2]);
                 const isDueSoon = checkIsDueSoon(p.dueDate);
-                const isNishchitPen = p.name.includes("Nishchit Pension");
-                const isFortuneMax = p.name.includes("Fortune Maximiser");
                 
                 let timelineHtml = '';
                 for(let yr = startY; yr < matY; yr++) {
                     const polY = yr - startY + 1;
                     let color = "", phase = "", detail = "";
+                    const isPast = yr < CURRENT_YEAR;
 
                     // 1. PREMIUM PHASE
                     if (yr <= premEndYear) {
-                        const isDone = yr < TODAY.getFullYear() || p.dueDate === "PAID UP";
+                        const isDone = isPast || p.dueDate === "PAID UP";
                         
-                        // Fortune Maximiser Hybrid Logic (Year 2+)
-                        if (isFortuneMax && polY >= (p.bonusStartYear || 2)) {
-                            color = "bg-hybrid"; 
-                            phase = "Premium + Bonus Phase";
+                        if (p.name.includes("Fortune Maximiser") && polY >= (p.bonusStartYear || 2)) {
+                            color = "bg-hybrid"; phase = "Premium + Bonus";
                             detail = `Premium: ${sym}${p.premium.toLocaleString()}<br>Bonus: ${sym}${(p.bonusAmount || 0).toLocaleString()}`;
                         } else {
-                            color = isDone ? "bg-prem-past" : (yr === TODAY.getFullYear() ? "bg-current" : "bg-prem-future");
-                            phase = "Premium Payment";
-                            detail = `Due: ${sym}${p.premium.toLocaleString()}`;
+                            color = isDone ? "bg-prem-past" : (yr === CURRENT_YEAR ? "bg-current" : "bg-prem-future");
+                            phase = isDone ? "Premium Completed" : "Premium Payment";
+                            detail = `Amt: ${sym}${p.premium.toLocaleString()}`;
                         }
                     } 
-                    // 2. DEFERMENT LOGIC (Nishchit Pension Year 7)
-                    else if (isNishchitPen && polY === 7) {
-                        color = "bg-defer";
-                        phase = "Deferment Year";
-                        detail = "No Premium / No Payout";
-                    } 
-                    // 3. INCOME/GROWTH PHASE
+                    // 2. POST-PREMIUM PHASE (Growth or Payout)
                     else {
                         const payout = (p.payoutSchedule && p.payoutSchedule[polY]) || p.annualPayout;
-                        color = payout ? "bg-payout" : "bg-defer";
-                        phase = payout ? "Income Phase" : "Growth Phase";
-                        detail = payout ? `Payout: ${sym}${payout.toLocaleString()}` : "Wealth Accumulation";
+                        const isNishchitDefer = p.name.includes("Nishchit Pension") && polY === 7;
+                        
+                        if (payout) {
+                            color = "bg-payout"; 
+                            phase = isPast ? "Payout Received" : "Income Phase"; 
+                            detail = `Payout: ${sym}${payout.toLocaleString()}`;
+                        } else {
+                            // DIFFERENCE HERE: Slate for past growth, Brown for future growth
+                            color = isPast ? "bg-history-gray" : "bg-defer-future";
+                            phase = isNishchitDefer ? "Deferment Year" : (isPast ? "Growth (Passed)" : "Growth Phase");
+                            detail = "Wealth Accumulation";
+                        }
                     }
 
-                    timelineHtml += `
-                        <div class="segment ${color}">
-                            <div class="tooltip">
-                                <b class="text-emerald-400 uppercase tracking-tighter">${phase}</b><br>
-                                ${detail}<br>
-                                <span class="opacity-40 text-[9px]">Year ${polY} (${yr})</span>
-                            </div>
-                        </div>`;
+                    timelineHtml += `<div class="segment ${color}"><div class="tooltip"><b class="text-emerald-400 uppercase tracking-tighter">${phase}</b><br>${detail}<br><span class="opacity-40 text-[9px]">Year ${polY} (${yr})</span></div></div>`;
                 }
 
-                // MATURITY STAR
-                timelineHtml += `
-                    <div class="mat-star">
-                        ★
-                        <div class="tooltip">
-                            <b class="text-orange-400 uppercase">Final Maturity</b><br>
-                            Value: ${p.maturityAmt || p.sumAssured}<br>
-                            <span class="opacity-40 text-[9px]">Year ${matY - startY + 1} (${matY})</span>
-                        </div>
-                    </div>`;
+                timelineHtml += `<div class="mat-star">★<div class="tooltip"><b class="text-orange-400 uppercase">Final Maturity</b><br>Value: ${p.maturityAmt || p.sumAssured}<br><span class="opacity-40 text-[9px]">Year ${matY - startY + 1} (${matY})</span></div></div>`;
 
                 return `
                 <div class="policy-card" id="card-${p.id}" style="border-color: ${p.color}">
@@ -183,19 +166,16 @@
                     </div>
                     <div class="content-area">
                         <div class="timeline-track">
-                            <div class="absolute -top-8 left-0 text-[11px] font-black text-slate-400">${p.commenced}</div>
+                            <div class="absolute -top-8 left-0 text-[11px] font-black text-slate-400 uppercase">${p.commenced}</div>
                             ${timelineHtml}
-                            <div class="absolute -top-8 right-0 text-[11px] font-black text-slate-400">${p.maturity}</div>
+                            <div class="absolute -top-8 right-0 text-[11px] font-black text-slate-400 uppercase">${p.maturity}</div>
                         </div>
                     </div>
                 </div>`;
             }).join('');
 
-            // Totals
-            const totalSA = list.reduce((acc, p) => acc + (p.sumAssured || 0), 0);
-            const totalAnnual = list.reduce((acc, p) => acc + (p.dueDate !== "PAID UP" ? p.premium : 0), 0);
-            document.getElementById('total-sa').innerText = `${sym}${totalSA.toLocaleString()}`;
-            document.getElementById('total-premium').innerText = `${sym}${totalAnnual.toLocaleString()}`;
+            document.getElementById('total-sa').innerText = `${sym}${list.reduce((acc, p) => acc + (p.sumAssured || 0), 0).toLocaleString()}`;
+            document.getElementById('total-premium').innerText = `${sym}${list.reduce((acc, p) => acc + (p.dueDate !== "PAID UP" ? p.premium : 0), 0).toLocaleString()}`;
             document.getElementById('due-count').innerText = list.filter(p => checkIsDueSoon(p.dueDate)).length;
         }
 
