@@ -51,7 +51,7 @@ export const POLICY_DATA = {
             logo: "image_86c684.png", id: "503-9562771", uin: "130A012V02", type: "ULIP", 
             premium: 50000, sumAssured: 0, dueDate: "28 Sep 2026", 
             commenced: "28 Sep 2023", premiumEnds: "28 Sep 2029", maturity: "28 Sep 2038", 
-            color: "#005a9c", maturityAmt: "Fund Value at Maturity", isULIP: true
+            color: "#005a9c", maturityAmt: "Unit Value", isULIP: true
         },
         { 
             name: "Fast Track Super", company: "Axis Max Life",
@@ -65,14 +65,14 @@ export const POLICY_DATA = {
             logo: "image_349b41.png", id: "425335400", uin: "116L153V02", type: "ULIP", 
             premium: 60000, sumAssured: 600000, dueDate: "PAID UP", 
             commenced: "06 Nov 2020", premiumEnds: "06 Oct 2025", maturity: "05 Nov 2030", 
-            color: "#005a9c", maturityAmt: "Fund Value at Maturity", isULIP: true
+            color: "#005a9c", maturityAmt: "Unit Value", isULIP: true
         },
         { 
             name: "Life Future Gain II", company: "BAJAJ LIFE",
             logo: "image_349b41.png", id: "378816898", uin: "116L181V01", type: "ULIP", 
             premium: 30000, sumAssured: 300000, dueDate: "PAID UP", 
             commenced: "28 Nov 2019", premiumEnds: "28 Oct 2024", maturity: "27 Nov 2029", 
-            color: "#005a9c", maturityAmt: "Fund Value at Maturity", isULIP: true
+            color: "#005a9c", maturityAmt: "Unit Value", isULIP: true
         }
     ],
     wife: [
@@ -82,6 +82,13 @@ export const POLICY_DATA = {
             premium: 500000, sumAssured: 5000000, dueDate: "29 Nov 2026", 
             commenced: "29 Nov 2025", premiumEnds: "29 Nov 2032", maturity: "29 Nov 2052", 
             color: "#9b2226", maturityAmt: "Unit Value", isULIP: true 
+        }
+        { 
+            name: "Smart Privilege Plus LP Plan P", company: "SBI LIFE",
+            logo: "image_cda45c.png", id: "3N307267702", uin: "N/A", clientId: "N/A", type: "ULIP", 
+            premium: 600000, sumAssured: 4200000, dueDate: "23 Apr 2026", 
+            commenced: "23 Apr 2025", premiumEnds: "23 Apr 2029", maturity: "23 Apr 2040", 
+            color: "#2563eb", maturityAmt: "Unit Value", isULIP: true 
         }
     ],
     singapore: [
