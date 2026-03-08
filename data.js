@@ -58,7 +58,7 @@ export const POLICY_DATA = {
             logo: "image_7a80d9.png", id: "608480927", uin: "104L082V02", type: "ULIP", 
             premium: 50000, sumAssured: 0, dueDate: "PAID UP", 
             commenced: "04 Feb 2022", premiumEnds: "04 Feb 2026", maturity: "04 Feb 2032", 
-            color: "#ae125d", maturityAmt: "Fund Value at Maturity", isULIP: true
+            color: "#ae125d", maturityAmt: "Unit Value", isULIP: true
         },
         { 
             name: "Life Assure Goal", company: "BAJAJ LIFE",
