@@ -3,64 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nami Portfolio v3.6.1</title>
+    <title>Nami Portfolio v3.6.4</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@800;900&family=Inter:wght@400;700;900&display=swap');
         
         body { background-color: #f8fafc; font-family: 'Inter', sans-serif; padding: 40px; }
         .brand-header { font-family: 'Orbitron', sans-serif; background: linear-gradient(90deg, #6366f1, #ec4899, #f59e0b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 3.5rem; font-weight: 900; text-transform: uppercase; }
-        .build-tag { position: absolute; top: 40px; right: 40px; font-family: 'Orbitron', sans-serif; background: #e2e8f0; padding: 4px 12px; border-radius: 6px; font-size: 10px; font-weight: 800; color: #64748b; }
-
-        @keyframes alert-glow { 0% { box-shadow: 0 0 5px #dc2626; background: #dc2626; } 50% { box-shadow: 0 0 20px #ef4444; background: #b91c1c; } 100% { box-shadow: 0 0 5px #dc2626; background: #dc2626; } }
-        .due-blink { animation: alert-glow 1.5s infinite ease-in-out !important; }
-
-        .badge-container { display: flex; align-items: center; width: 280px; margin-left: -55px; } 
+        
+        /* Category Badges */
         .badge-base {
             font-family: 'Orbitron', sans-serif; font-size: 8px; font-weight: 900; letter-spacing: 1px;
-            padding: 5px 10px; border-radius: 8px; text-transform: uppercase; position: relative;
-            overflow: hidden; display: inline-flex; align-items: center; justify-content: center;
-            color: white; min-width: 120px; transition: 0.3s;
+            padding: 5px 10px; border-radius: 8px; text-transform: uppercase; color: white; min-width: 120px;
+            display: inline-flex; justify-content: center;
         }
-
-        .badge-hospitalisation { background: linear-gradient(135deg, #f97316, #ea580c); box-shadow: 0 0 12px rgba(249, 115, 22, 0.3); }
-        .badge-criticalillness { background: linear-gradient(135deg, #06b6d4, #0891b2); box-shadow: 0 0 12px rgba(6, 182, 212, 0.3); }
-        .badge-accident { background: linear-gradient(135deg, #eab308, #ca8a04); box-shadow: 0 0 12px rgba(234, 179, 8, 0.3); }
+        .badge-hospitalisation { background: linear-gradient(135deg, #f97316, #ea580c); }
+        .badge-criticalillness { background: linear-gradient(135deg, #06b6d4, #0891b2); }
+        .badge-accident { background: linear-gradient(135deg, #eab308, #ca8a04); }
         .badge-saving, .badge-savings { background: linear-gradient(135deg, #00ff88, #00ad5f); }
         .badge-retirement { background: linear-gradient(135deg, #ffcc00, #ff8800); }
-
-        .logo-container { display: flex; align-items: center; justify-content: center; width: 112px; }
-        .company-logo { max-height: 44px; opacity: 1; filter: saturate(1.4); object-fit: contain; }
+        .badge-ulip, .badge-ilp { background: linear-gradient(135deg, #6366f1, #a855f7); }
 
         .policy-card { background: white; border-radius: 24px; border-left: 16px solid; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
         .card-header { cursor: pointer; display: flex; align-items: center; padding: 25px 35px; }
         .content-area { display: none; padding: 30px; border-top: 1px solid #f1f5f9; background: #fafbfc; border-radius: 0 0 24px 0; }
         .open .content-area { display: block; }
 
-        .creds-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; background: #f1f5f9; padding: 15px 25px; border-radius: 12px; margin-bottom: 25px; border: 1px solid #e2e8f0; }
+        .creds-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; background: #f1f5f9; padding: 15px 25px; border-radius: 12px; }
         .cred-item p:first-child { font-size: 9px; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 2px; }
         .cred-item p:last-child { font-size: 12px; font-weight: 700; color: #334155; }
-
-        .benefits-box { background: #fff; border: 1px solid #e2e8f0; padding: 15px; border-radius: 12px; margin-top: 15px; }
-        .benefits-box h4 { font-size: 10px; font-weight: 900; color: #64748b; text-transform: uppercase; margin-bottom: 8px; border-bottom: 1px solid #f1f5f9; padding-bottom: 4px; }
-        .benefits-text { font-size: 11px; line-height: 1.6; color: #475569; white-space: pre-line; }
-
-        .timeline-track { position: relative; height: 36px; background: #e2e8f0; border-radius: 18px; display: flex; padding: 0 4px; align-items: center; margin-top: 40px; }
-        .segment { height: 28px; flex: 1; margin: 0 1px; border-radius: 3px; position: relative; transition: 0.2s; }
-        .paid-logo { width: 100px; filter: drop-shadow(0 0 8px rgba(34, 197, 94, 0.8)); transform: rotate(-5deg); }
+        
+        .company-logo { max-height: 40px; width: auto; object-fit: contain; filter: saturate(1.2); }
     </style>
 </head>
 <body>
 
-    <div class="build-tag" id="dynamic-build-tag">BUILD v3.6.1</div>
-
     <div class="max-w-7xl mx-auto mb-8">
         <h1 class="brand-header">Nami Portfolio</h1>
-        <div id="summary-bar" class="grid grid-cols-3 gap-4 mt-6 bg-slate-900 p-6 rounded-[24px] text-white shadow-xl">
-            <div class="border-r border-slate-700 text-center"><p class="text-[9px] uppercase font-bold text-slate-400">Total Sum Assured</p><p id="total-sa" class="text-3xl font-black text-emerald-400">0</p></div>
-            <div class="border-r border-slate-700 text-center"><p class="text-[9px] uppercase font-bold text-slate-400">Annual Commitment</p><p id="total-premium" class="text-3xl font-black text-indigo-400">0</p></div>
-            <div class="text-center"><p class="text-[9px] uppercase font-bold text-slate-400">Due Soon</p><p id="due-count" class="text-3xl font-black text-orange-400">0</p></div>
-        </div>
         <div class="flex gap-2 mt-6">
             <button onclick="render('india')" id="btn-india" class="px-6 py-2 rounded-xl font-bold border">INDIA</button>
             <button onclick="render('wife')" id="btn-wife" class="px-6 py-2 rounded-xl font-bold border">WIFE</button>
@@ -74,59 +53,103 @@
     <script type="module">
         import { POLICY_DATA } from './data.js';
 
-        const TODAY = new Date();
-        document.getElementById('dynamic-build-tag').innerText = `BUILD v3.6.1 | ${TODAY.toLocaleDateString('en-GB')}`;
+        // Global toggle function
+        window.toggleCard = (id) => {
+            const el = document.getElementById(`card-${id}`);
+            if (el) el.classList.toggle('open');
+        };
 
-        window.toggleCard = (id) => document.getElementById(`card-${id}`).classList.toggle('open');
+        // Badge Logic
+        function getBadgeClass(type) {
+            const s = (type || "").toLowerCase();
+            if (s.includes('hospit')) return 'badge-hospitalisation';
+            if (s.includes('critic')) return 'badge-criticalillness';
+            if (s.includes('accid')) return 'badge-accident';
+            if (s.includes('retire')) return 'badge-retirement';
+            if (s.includes('ulip') || s.includes('ilp')) return 'badge-ulip';
+            return 'badge-saving';
+        }
 
-        function getBadgeClass(cat) {
-            if (!cat) return 'badge-fallback';
-            const slug = cat.toLowerCase().replace(/\s+/g, '').replace('health:', '');
-            if (slug.includes('hospital')) return 'badge-hospitalisation';
-            if (slug.includes('critical')) return 'badge-criticalillness';
-            if (slug.includes('accident')) return 'badge-accident';
-            if (slug.includes('saving')) return 'badge-saving';
-            if (slug.includes('retirement')) return 'badge-retirement';
-            return 'badge-fallback';
+        // Safe Formatter (The Fix)
+        function formatValue(val, sym) {
+            if (val === undefined || val === null) return 'N/A';
+            if (typeof val === 'number') return sym + val.toLocaleString();
+            return val; // Returns string as-is (e.g., "Not Applicable")
         }
 
         window.render = function(cat) {
-            document.querySelectorAll('button').forEach(b => b.className = "px-6 py-2 rounded-xl font-bold bg-white text-slate-400 border");
-            document.getElementById(`btn-${cat}`).className = "px-6 py-2 rounded-xl font-bold bg-slate-900 text-white shadow-lg";
+            try {
+                const list = POLICY_DATA[cat] || [];
+                
+                // Update Button Styles
+                document.querySelectorAll('button').forEach(b => b.className = "px-6 py-2 rounded-xl font-bold bg-white text-slate-400 border");
+                const activeBtn = document.getElementById(`btn-${cat}`);
+                if (activeBtn) activeBtn.className = "px-6 py-2 rounded-xl font-bold bg-slate-900 text-white shadow-lg";
 
-            const list = POLICY_DATA[cat] || [];
-            const sym = list[0]?.currency || "₹";
-            
-            // Fixed Summary Logic
-            const totalSA = list.reduce((acc, p) => acc + (typeof p.sumAssured === 'number' ? p.sumAssured : 0), 0);
-            document.getElementById('total-sa').innerText = `${sym}${totalSA.toLocaleString()}`;
-            document.getElementById('container').innerHTML = list.map(p => {
-                return `
-                <div class="policy-card" id="card-${p.id}" style="border-color: ${p.color || '#cbd5e1'}">
-                    <div class="card-header" onclick="toggleCard('${p.id}')">
-                        <div class="logo-container"><img src="${p.logo}" class="company-logo"></div>
-                        <div class="flex-1 ml-4"><h3 class="font-black text-slate-800 text-lg">${p.name}</h3><p class="text-[10px] text-slate-400 font-bold uppercase">${p.category || ''}</p></div>
-                        <div class="flex gap-4 items-center justify-end flex-1 pr-10">
-                            <div class="badge-container">
-                                <div class="badge-base ${getBadgeClass(p.category || p.type)}">${p.type || 'POLICY'}</div>
-                                <div class="text-center ml-4"><p class="text-[8px] font-bold text-slate-400 uppercase mb-1">Sum Assured</p><p class="text-sm font-black text-slate-700">${typeof p.sumAssured === 'number' ? sym + p.sumAssured.toLocaleString() : 'N/A'}</p></div>
+                const container = document.getElementById('container');
+                if (!list.length) {
+                    container.innerHTML = `<div class="p-20 text-center text-slate-400 font-bold">No policies found for: ${cat.toUpperCase()}</div>`;
+                    return;
+                }
+
+                container.innerHTML = list.map(p => {
+                    const sym = p.currency || "₹";
+                    const displayType = p.category || p.type || "General";
+                    const cleanType = displayType.replace('Health: ', '');
+
+                    return `
+                    <div class="policy-card" id="card-${p.id}" style="border-color: ${p.color || '#cbd5e1'}">
+                        <div class="card-header" onclick="toggleCard('${p.id}')">
+                            <div class="w-28 flex justify-center">
+                                <img src="${p.logo}" class="company-logo" onerror="this.src='https://via.placeholder.com/100x40?text=Logo'">
                             </div>
-                            <div class="text-center border-l border-slate-100 pl-10"><p class="text-[8px] font-bold text-slate-400 uppercase mb-1">Premium</p><p class="text-sm font-black text-emerald-600">${p.premium}</p></div>
+                            <div class="flex-1 ml-6">
+                                <h3 class="font-black text-slate-800 text-lg tracking-tight">${p.name}</h3>
+                                <p class="text-[10px] text-slate-400 font-bold uppercase">${p.company || 'Policy'}</p>
+                            </div>
+                            <div class="flex gap-8 items-center justify-end flex-1 pr-10">
+                                <div class="flex items-center gap-4">
+                                    <div class="badge-base ${getBadgeClass(displayType)}">${cleanType}</div>
+                                    <div class="text-center min-w-[100px]">
+                                        <p class="text-[8px] font-bold text-slate-400 uppercase">Sum Assured</p>
+                                        <p class="text-sm font-black text-slate-700">${formatValue(p.sumAssured, sym)}</p>
+                                    </div>
+                                </div>
+                                <div class="text-center border-l border-slate-100 pl-8 min-w-[100px]">
+                                    <p class="text-[8px] font-bold text-slate-400 uppercase">Premium</p>
+                                    <p class="text-sm font-black text-emerald-600">${formatValue(p.premium, sym)}</p>
+                                </div>
+                            </div>
+                            <div class="w-32">
+                                <div class="px-3 py-1.5 rounded-lg font-black text-[10px] text-center bg-slate-900 text-white">
+                                    ${p.maturityDate || p.maturity || 'N/A'}
+                                </div>
+                                <p class="text-[7px] text-center font-bold text-slate-400 mt-1 uppercase">Maturity</p>
+                            </div>
                         </div>
-                        <div class="w-40 flex flex-col items-center"><div class="px-4 py-1.5 rounded-lg font-black text-[10px] text-center w-full bg-slate-900 text-white">${p.maturityDate || p.maturity}</div></div>
-                    </div>
-                    <div class="content-area">
-                        <div class="creds-bar">
-                            <div class="cred-item"><p>Policy Number</p><p>${p.policyNo || p.id}</p></div>
-                            <div class="cred-item"><p>Client ID</p><p>${p.clientId || 'N/A'}</p></div>
-                            <div class="cred-item"><p>Nominee</p><p>${p.nominee || 'N/A'}</p></div>
+                        <div class="content-area">
+                            <div class="creds-bar">
+                                <div class="cred-item"><p>Policy Number</p><p>${p.policyNo || p.id}</p></div>
+                                <div class="cred-item"><p>Client ID</p><p>${p.clientId || 'N/A'}</p></div>
+                                <div class="cred-item"><p>UIN / Reference</p><p>${p.uin || 'N/A'}</p></div>
+                                <div class="cred-item"><p>Nominee</p><p>${p.nominee || 'N/A'}</p></div>
+                            </div>
+                            ${p.benefits ? `
+                            <div class="mt-4 p-4 bg-white border border-slate-200 rounded-xl">
+                                <h4 class="text-[9px] font-black text-slate-400 uppercase mb-2">Benefit & Coverage Summary</h4>
+                                <p class="text-xs text-slate-600 leading-relaxed whitespace-pre-line">${p.benefits}</p>
+                            </div>` : ''}
                         </div>
-                        ${p.benefits ? `<div class="benefits-box"><h4>Coverage Details</h4><div class="benefits-text">${p.benefits}</div></div>` : ''}
-                    </div>
-                </div>`;
-            }).join('');
-        }
-        render('india'); // Initialised with India
+                    </div>`;
+                }).join('');
+            } catch (err) {
+                console.error("Render Error:", err);
+                document.getElementById('container').innerHTML = `<div class="p-10 bg-red-50 text-red-600 rounded-xl">Error loading data. Check console for details.</div>`;
+            }
+        };
+
+        // Start with India
+        render('india');
     </script>
 </body>
 </html>
