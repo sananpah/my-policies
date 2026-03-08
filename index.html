@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nami Portfolio v3.5.29</title>
+    <title>Nami Portfolio v3.5.30</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@800;900&family=Inter:wght@400;700;900&display=swap');
@@ -27,14 +27,14 @@
         .badge-retirement { background: linear-gradient(135deg, #ffcc00, #ff8800); box-shadow: 0 0 12px rgba(255, 204, 0, 0.3); }
         .badge-ulip { background: linear-gradient(135deg, #6366f1, #4f46e5); box-shadow: 0 0 12px rgba(99, 102, 241, 0.3); }
         .badge-ilp, .badge-investmentlinked { background: linear-gradient(135deg, #ff0077, #aa0055); box-shadow: 0 0 12px rgba(255, 0, 119, 0.3); }
-        .badge-fallback { background: #64748b; }
 
         /* Timeline Styling */
         .bg-prem-past { background: #064e3b; } 
         .bg-prem-future { background: #10b981; } 
         .bg-wait-past { background: #451a03; } 
         .bg-wait-future { background: #f59e0b; }
-        .bg-bonus { background: linear-gradient(to bottom, #10b981, #f59e0b); border: 1px solid #ffffff44; }
+        /* Hybrid Logic: Green top (Premium) to Amber bottom (Bonus) */
+        .bg-hybrid { background: linear-gradient(to bottom, #10b981, #f59e0b); border: 1px solid rgba(255,255,255,0.3); }
         .bg-current { background: #22c55e; box-shadow: 0 0 15px rgba(34,229,94,0.6); border: 2px solid white; z-index: 10; }
         
         .policy-card { background: white; border-radius: 24px; border-left: 16px solid; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
@@ -42,7 +42,6 @@
         .content-area { display: none; padding: 30px; border-top: 1px solid #f1f5f9; background: #fafbfc; border-radius: 0 0 24px 0; }
         .open .content-area { display: block; }
 
-        /* Maturity Node & Hover */
         .timeline-track { position: relative; height: 36px; background: #e2e8f0; border-radius: 18px; display: flex; padding: 0 4px; align-items: center; margin-top: 30px; }
         .segment { height: 28px; flex: 1; margin: 0 1px; border-radius: 3px; position: relative; transition: 0.2s; }
         .segment:hover { transform: scaleY(1.3); z-index: 40; cursor: help; }
@@ -57,7 +56,7 @@
 </head>
 <body>
 
-    <div class="build-tag">BUILD v3.5.29</div>
+    <div class="build-tag">BUILD v3.5.30</div>
 
     <div class="max-w-7xl mx-auto mb-8">
         <h1 class="brand-header">Nami Portfolio</h1>
@@ -118,9 +117,18 @@
                     const isFortune = p.name.includes("Fortune Maximiser");
                     const isPension = p.name.includes("Nishchit Pension SL");
 
-                    if (isFortune && polY === 2) {
-                        color = "bg-bonus"; phase = "Premium + Bonus Phase"; detail = `Annual Bonus Applied`;
+                    // Fortune Maximiser Hybrid Logic (Year 2 to Premium End)
+                    if (isFortune && polY >= 2 && yr <= premEndYear) {
+                        color = "bg-hybrid"; 
+                        phase = "Hybrid: Premium + Bonus"; 
+                        detail = `Annual Bonus Applied + Premium: ${sym}${p.premium.toLocaleString()}`;
                     } 
+                    // Fortune Maximiser Post-Premium Bonus
+                    else if (isFortune && yr > premEndYear) {
+                        color = yr < 2026 ? "bg-wait-past" : "bg-wait-future";
+                        phase = "Annual Bonus Phase";
+                        detail = "Annual Cash Bonus Payout";
+                    }
                     else if (isPension && polY === 7) {
                         color = yr < 2026 ? "bg-wait-past" : "bg-wait-future";
                         phase = "Deferment Period"; detail = "Policy Gap Year";
