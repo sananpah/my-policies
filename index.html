@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nami Portfolio v3.5.13</title>
+    <title>Nami Portfolio v3.5.14</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@800;900&family=Inter:wght@400;700;900&display=swap');
@@ -18,13 +18,9 @@
         }
         .due-blink { animation: alert-blink 1.5s infinite ease-in-out; }
 
-        /* Glowing Paid Badge */
-        .paid-logo { 
-            width: 100px; 
-            filter: drop-shadow(0 0 8px rgba(34, 197, 94, 0.8));
-            transform: rotate(-5deg);
-        }
+        .paid-logo { width: 100px; filter: drop-shadow(0 0 8px rgba(34, 197, 94, 0.8)); transform: rotate(-5deg); }
 
+        /* Timeline States */
         .bg-prem-past { background: #14532d; } .bg-prem-future { background: #a3e635; } 
         .bg-wait-past { background: #78350f; } .bg-wait-future { background: #f59e0b; }
         .bg-current { background: #22c55e; box-shadow: 0 0 15px rgba(34,229,94,0.6); border: 2px solid white; z-index: 10; }
@@ -32,21 +28,23 @@
 
         .policy-card { background: white; border-radius: 24px; border-left: 16px solid; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
         .card-header { cursor: pointer; display: flex; align-items: center; padding: 20px 30px; }
-        .content-area { display: none; padding: 30px; border-top: 1px solid #f1f5f9; background: #fafbfc; border-radius: 0 0 24px 0; }
+        .content-area { display: none; padding: 30px 30px 50px 30px; border-top: 1px solid #f1f5f9; background: #fafbfc; border-radius: 0 0 24px 0; }
         .open .content-area { display: block; }
 
-        .timeline-track { position: relative; height: 36px; background: #e2e8f0; border-radius: 18px; display: flex; padding: 0 4px; align-items: center; margin-top: 30px; }
+        .timeline-track { position: relative; height: 36px; background: #e2e8f0; border-radius: 18px; display: flex; padding: 0 4px; align-items: center; margin-top: 40px; }
         .segment { height: 28px; flex: 1; margin: 0 1px; border-radius: 3px; position: relative; transition: 0.2s; }
-        .segment:hover { transform: scaleY(1.3); z-index: 50; cursor: help; }
+        .segment:hover { transform: scaleY(1.3); z-index: 40; cursor: help; }
         
-        .tooltip { visibility: hidden; opacity: 0; position: absolute; bottom: 140%; left: 50%; transform: translateX(-50%); background: #0f172a; color: white; padding: 8px; border-radius: 6px; width: 190px; text-align: center; z-index: 100; font-size: 10px; }
-        .segment:hover .tooltip { visibility: visible; opacity: 1; }
-        .mat-node { position: absolute; right: -8px; top: 50%; transform: translateY(-50%); width: 20px; height: 20px; background: #0f172a; border-radius: 50%; border: 2px solid white; z-index: 10; }
+        /* Tooltip System */
+        .tooltip { visibility: hidden; opacity: 0; position: absolute; bottom: 140%; left: 50%; transform: translateX(-50%); background: #0f172a; color: white; padding: 8px; border-radius: 6px; width: 190px; text-align: center; z-index: 100; font-size: 10px; transition: opacity 0.2s; pointer-events: none; }
+        .segment:hover .tooltip, .mat-node:hover .tooltip { visibility: visible; opacity: 1; }
+        
+        .mat-node { position: absolute; right: -8px; top: 50%; transform: translateY(-50%); width: 24px; height: 24px; background: #0f172a; border-radius: 50%; border: 3px solid white; z-index: 50; cursor: pointer; display: flex; align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
 
-    <div class="build-tag">BUILD v3.5.13</div>
+    <div class="build-tag">BUILD v3.5.14</div>
 
     <div class="max-w-7xl mx-auto mb-8">
         <h1 class="brand-header">Nami Portfolio</h1>
@@ -81,28 +79,26 @@
 
         window.toggleCard = (id) => document.getElementById(`card-${id}`).classList.toggle('open');
 
-        function updateSummary(list, sym) {
-            const totalSA = list.reduce((acc, p) => {
-                const isZeroSA = p.name.includes("Fast track") || p.name.includes("Wealth pro");
-                return acc + (isZeroSA ? 0 : (p.sumAssured || 0));
-            }, 0);
-            const totalAnnual = list.reduce((acc, p) => acc + (p.dueDate !== "PAID UP" ? p.premium : 0), 0);
-            const next30Days = list.filter(p => {
-                if (p.dueDate === "PAID UP") return false;
-                const [d, m, y] = p.dueDate.split(' ');
-                const due = new Date(`${m} ${d}, 2026`);
-                return ((due - TODAY) / 86400000) <= 30;
-            }).length;
-
-            document.getElementById('total-sa').innerText = `${sym}${totalSA.toLocaleString()}`;
-            document.getElementById('total-premium').innerText = `${sym}${totalAnnual.toLocaleString()}`;
-            document.getElementById('due-count').innerText = next30Days;
+        function checkDueSoon(p) {
+            if (p.dueDate === "PAID UP") return false;
+            const [d, m, y] = p.dueDate.split(' ');
+            const due = new Date(`${m} ${d}, 2026`); // Always current year context
+            const diffDays = (due - TODAY) / 86400000;
+            return diffDays >= 0 && diffDays <= 30;
         }
 
         window.render = function(cat) {
             const list = POLICY_DATA[cat];
             const sym = list[0]?.currency || "₹";
-            updateSummary(list, sym);
+            
+            // Summary Update
+            const totalSA = list.reduce((acc, p) => acc + ((p.name.includes("Fast track") || p.name.includes("Wealth pro")) ? 0 : (p.sumAssured || 0)), 0);
+            const totalAnnual = list.reduce((acc, p) => acc + (p.dueDate !== "PAID UP" ? p.premium : 0), 0);
+            const dueSoonCount = list.filter(p => checkDueSoon(p)).length;
+
+            document.getElementById('total-sa').innerText = `${sym}${totalSA.toLocaleString()}`;
+            document.getElementById('total-premium').innerText = `${sym}${totalAnnual.toLocaleString()}`;
+            document.getElementById('due-count').innerText = dueSoonCount;
 
             document.querySelectorAll('button').forEach(b => b.className = "px-6 py-2 rounded-xl font-bold bg-white text-slate-400 border border-slate-100");
             document.getElementById(`btn-${cat}`).className = "px-6 py-2 rounded-xl font-bold bg-slate-900 text-white shadow-lg";
@@ -112,14 +108,7 @@
                 const matY = parseInt(p.maturity.split(' ')[2]);
                 const premEndYear = parseInt(p.premiumEnds.split(' ')[2]);
                 const isZeroSA = p.name.includes("Fast track") || p.name.includes("Wealth pro");
-                const displaySA = isZeroSA ? 0 : p.sumAssured;
-
-                let isDueSoon = false;
-                if(p.dueDate !== "PAID UP") {
-                    const [d, m, y] = p.dueDate.split(' ');
-                    const due = new Date(`${m} ${d}, 2026`);
-                    isDueSoon = ((due - TODAY) / 86400000) <= 30;
-                }
+                const isDueSoon = checkDueSoon(p);
 
                 let timelineHtml = '';
                 for(let yr = startY; yr < matY; yr++) {
@@ -135,17 +124,16 @@
                     } 
                     else if (p.name === "Nishchit Pension SL" && polY < 8) {
                         color = isPast ? "bg-wait-past" : "bg-wait-future";
-                        phase = "Deferment Period"; detail = "Bonus Accruing";
+                        phase = "Deferment Period"; detail = polY === 7 ? "Deferred" : "Bonus Accruing";
                     }
                     else {
                         color = isPast ? "bg-wait-past" : "bg-wait-future";
                         phase = "Income Phase";
-                        // Logic for Annual Payouts in INLI
                         let amt = p.annualPayout ? `${sym}${p.annualPayout.toLocaleString()}` : "";
                         if (p.payoutSchedule && p.payoutSchedule[polY]) amt = `${sym}${p.payoutSchedule[polY].toLocaleString()}`;
-                        detail = amt ? `Annual Payout: ${amt}` : "Income Phase Active";
+                        detail = amt ? `Annual Payout: ${amt}` : "Income Active";
                     }
-                    timelineHtml += `<div class="segment ${color}"><div class="tooltip"><b>${phase}</b><br>${detail}<br>Year ${polY} (${yr})</div></div>`;
+                    timelineHtml += `<div class="segment ${color}"><div class="tooltip"><b>${phase}</b><br><span class="text-orange-400">${detail}</span><br>Year ${polY} (${yr})</div></div>`;
                 }
 
                 return `
@@ -156,7 +144,7 @@
                         <div class="flex gap-16 items-center justify-center flex-1">
                             <div class="text-center">
                                 <p class="text-[8px] font-bold text-slate-400 uppercase">Sum Assured</p>
-                                <p class="text-sm font-black text-slate-700">${sym}${displaySA.toLocaleString()}</p>
+                                <p class="text-sm font-black text-slate-700">${sym}${(isZeroSA ? 0 : p.sumAssured).toLocaleString()}</p>
                             </div>
                             <div class="text-center border-x px-12">
                                 <p class="text-[8px] font-bold text-slate-400 uppercase">Annual Premium</p>
@@ -169,16 +157,19 @@
                         </div>
                     </div>
                     <div class="content-area">
-                        <div class="grid grid-cols-3 gap-4 mb-8">
+                        <div class="grid grid-cols-3 gap-4 mb-10">
                             <div class="bg-white border p-3 rounded-xl"><p class="text-[8px] font-bold text-slate-400 uppercase">Policy No</p><p class="font-black text-slate-700">${p.id}</p></div>
                             <div class="bg-white border p-3 rounded-xl"><p class="text-[8px] font-bold text-slate-400 uppercase">Client ID</p><p class="font-black text-slate-700">${p.clientId || 'N/A'}</p></div>
                             <div class="bg-white border p-3 rounded-xl"><p class="text-[8px] font-bold text-slate-400 uppercase">UIN No</p><p class="font-black text-indigo-600">${p.uin || 'N/A'}</p></div>
                         </div>
                         <div class="timeline-track">
-                            <div class="absolute -top-6 left-0 text-[10px] font-bold text-slate-400">${p.commenced}</div>
+                            <div class="absolute -top-7 left-0 text-[10px] font-black text-slate-400 uppercase tracking-tighter">${p.commenced}</div>
                             ${timelineHtml}
-                            <div class="mat-node"></div>
-                            <div class="absolute -top-6 right-0 text-[10px] font-bold text-slate-400">${p.maturity}</div>
+                            <div class="mat-node">
+                                <span class="text-white text-[10px]">★</span>
+                                <div class="tooltip"><b>Maturity Payout</b><br><span class="text-emerald-400 font-bold">${p.maturityAmt}</span><br>${p.maturity}</div>
+                            </div>
+                            <div class="absolute -top-7 right-0 text-[10px] font-black text-slate-400 uppercase tracking-tighter">${p.maturity}</div>
                         </div>
                     </div>
                 </div>`;
