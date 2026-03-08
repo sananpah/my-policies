@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nami Portfolio v3.5.35</title>
+    <title>Nami Portfolio v3.5.36</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@800;900&family=Inter:wght@400;700;900&display=swap');
@@ -37,6 +37,7 @@
         .bg-wait-past { background: #451a03; } 
         .bg-wait-future { background: #f59e0b; }
         .bg-hybrid { background: linear-gradient(to bottom, #10b981, #f59e0b); border: 1px solid rgba(255,255,255,0.3); }
+        .bg-bonus-glow { background: linear-gradient(135deg, #f59e0b, #fbbf24); border: 1px solid white; }
         .bg-current { background: #22c55e; box-shadow: 0 0 15px rgba(34,229,94,0.6); border: 2px solid white; z-index: 10; }
         
         .policy-card { background: white; border-radius: 24px; border-left: 16px solid; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
@@ -51,14 +52,14 @@
         .mat-node { position: absolute; right: -12px; top: 50%; transform: translateY(-50%); width: 28px; height: 28px; background: #0f172a; border-radius: 50%; border: 3px solid white; z-index: 60; display: flex; align-items: center; justify-content: center; cursor: help; pointer-events: auto; }
         .mat-node:hover { transform: translateY(-50%) scale(1.2); }
 
-        .tooltip { visibility: hidden; opacity: 0; position: absolute; bottom: 140%; left: 50%; transform: translateX(-50%); background: #0f172a; color: white; padding: 8px; border-radius: 6px; width: 180px; text-align: center; z-index: 100; font-size: 10px; transition: 0.2s; pointer-events: none; }
+        .tooltip { visibility: hidden; opacity: 0; position: absolute; bottom: 140%; left: 50%; transform: translateX(-50%); background: #0f172a; color: white; padding: 12px; border-radius: 8px; width: 220px; text-align: center; z-index: 100; font-size: 10px; transition: 0.2s; pointer-events: none; line-height: 1.4; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4); }
         .segment:hover .tooltip, .mat-node:hover .tooltip { visibility: visible; opacity: 1; }
         .paid-logo { width: 100px; filter: drop-shadow(0 0 8px rgba(34, 197, 94, 0.8)); transform: rotate(-5deg); }
     </style>
 </head>
 <body>
 
-    <div class="build-tag" id="dynamic-build-tag">BUILD v3.5.35</div>
+    <div class="build-tag" id="dynamic-build-tag">BUILD v3.5.36</div>
 
     <div class="max-w-7xl mx-auto mb-8">
         <h1 class="brand-header">Nami Portfolio</h1>
@@ -79,9 +80,8 @@
     <script type="module">
         import { POLICY_DATA } from './data.js';
 
-        // LIVE DATE LOGIC
         const TODAY = new Date();
-        document.getElementById('dynamic-build-tag').innerText = `BUILD v3.5.35 | ${TODAY.toLocaleDateString('en-GB')}`;
+        document.getElementById('dynamic-build-tag').innerText = `BUILD v3.5.36 | ${TODAY.toLocaleDateString('en-GB')}`;
 
         window.toggleCard = (id) => document.getElementById(`card-${id}`).classList.toggle('open');
 
@@ -125,26 +125,39 @@
                     const polY = yr - startY + 1;
                     let color = "", phase = "", detail = "";
                     const isFortune = p.name.includes("Fortune Maximiser");
-                    const isPension = p.name.includes("Nishchit Pension SL");
 
-                    if (isFortune && polY >= 2 && yr <= premEndYear) {
-                        color = "bg-hybrid"; phase = "Hybrid Phase"; 
-                        detail = `Bonus + Prem: ${sym}${p.premium.toLocaleString()}`;
-                    } else if (isPension && polY === 7) {
+                    // LOGIC: Fortune Maximiser Special Handling
+                    if (isFortune && polY >= (p.bonusStartYear || 2)) {
+                        if (yr <= premEndYear) {
+                            color = "bg-hybrid"; 
+                            phase = "Premium + Bonus Accrual";
+                            detail = `<span class="text-white font-bold">Premium: ${sym}${p.premium.toLocaleString()}</span><br><span class="text-emerald-300">Bonus: ${sym}${(p.bonusAmount || 0).toLocaleString()}</span>`;
+                        } else {
+                            color = "bg-bonus-glow";
+                            phase = "Annual Bonus Phase";
+                            detail = `<span class="text-slate-900 font-black">Est. Bonus: ${sym}${(p.bonusAmount || 22050).toLocaleString()}</span>`;
+                        }
+                    } 
+                    // LOGIC: General Pension Gap Handling
+                    else if (p.name.includes("Nishchit Pension SL") && polY === 7) {
                         color = yr < currentYear ? "bg-wait-past" : "bg-wait-future";
                         phase = "Deferment Period"; detail = "Pre-Income Gap";
-                    } else if (yr <= premEndYear) {
+                    } 
+                    // LOGIC: Standard Premium Phase
+                    else if (yr <= premEndYear) {
                         const isDone = yr < currentYear || (yr === currentYear && isAnniversaryPassed) || p.dueDate === "PAID UP";
                         color = isDone ? "bg-prem-past" : (yr === currentYear ? "bg-current" : "bg-prem-future");
                         phase = "Premium Phase";
                         detail = isDone ? "Payment Completed" : `Premium: ${sym}${p.premium.toLocaleString()}`;
-                    } else {
+                    } 
+                    // LOGIC: Standard Growth/Income Phase
+                    else {
                         color = yr < currentYear ? "bg-wait-past" : "bg-wait-future";
                         let payoutAmt = p.annualPayout || (p.payoutSchedule && p.payoutSchedule[polY]);
                         phase = payoutAmt ? "Income Phase" : "Growth Phase";
                         detail = payoutAmt ? `Annual Payout: ${sym}${payoutAmt.toLocaleString()}` : "Wealth Accumulation";
                     }
-                    timelineHtml += `<div class="segment ${color}"><div class="tooltip"><b>${phase}</b><br><span class="text-orange-400">${detail}</span><br>Year ${polY} (${yr})</div></div>`;
+                    timelineHtml += `<div class="segment ${color}"><div class="tooltip"><b>${phase}</b><br>${detail}<br><span class="opacity-50 text-[8px]">Year ${polY} (${yr})</span></div></div>`;
                 }
 
                 return `
