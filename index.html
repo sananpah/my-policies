@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nami Portfolio v3.5.59</title>
+    <title>Nami Portfolio v3.5.60</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@800;900&family=Inter:wght@400;700;900&display=swap');
@@ -21,22 +21,25 @@
         .content-area { display: none; padding: 45px 40px; border-top: 1px solid #f1f5f9; background: #fafbfc; border-radius: 0 0 24px 0; overflow: visible !important; }
         .open .content-area { display: block; }
 
-        /* Timeline Restored */
+        /* Timeline */
         .timeline-track { position: relative; height: 44px; background: #e2e8f0; border-radius: 22px; display: flex; padding: 0 6px; align-items: center; margin-top: 60px; overflow: visible !important; }
         .segment { height: 36px; flex: 1; margin: 0 1px; border-radius: 4px; position: relative; cursor: help; transition: 0.2s; }
         .segment:hover { transform: scaleY(1.35); z-index: 50; }
         
-        /* Restored Temporal Colors */
-        .bg-prem-past { background: #064e3b; } 
-        .bg-prem-future { background: #10b981; }
+        /* NEW COLOR PALETTE */
+        .bg-prem-past { background: #064e3b; } /* Deep Green */
+        .bg-prem-future { background: #10b981; } /* Bright Green */
         .bg-current { background: #22c55e; box-shadow: 0 0 20px rgba(34,197,94,0.6); border: 3px solid white; z-index: 10; }
-        .bg-history-slate { background: #94a3b8; } 
-        .bg-future-amber { background: #78350f; } 
+        
+        /* THE BROWNS */
+        .bg-history-brown { background: #78350f; } /* HISTORICAL GROWTH (Deep Brown) */
+        .bg-future-light-brown { background: #b45309; } /* FUTURE GROWTH (Lighter Brown) */
+        
         .bg-payout-past { background: #d97706; } 
         .bg-payout-future { background: #f59e0b; } 
         .bg-hybrid { background: linear-gradient(to bottom, #10b981 50%, #f59e0b 50%); }
 
-        /* Tooltip Restored */
+        /* Tooltip */
         .tooltip { 
             visibility: hidden; opacity: 0; position: absolute; bottom: 55px; left: 50%; transform: translateX(-50%); 
             background: #0f172a; color: white; padding: 14px; border-radius: 12px; width: 220px; 
@@ -123,7 +126,7 @@
                     } 
                     // RULE 2: NISHCHIT YEAR 7 LOCK
                     else if (p.name.includes("Nishchit Pension") && polY === 7) {
-                        color = isPast ? "bg-history-slate" : "bg-future-amber";
+                        color = isPast ? "bg-history-brown" : "bg-future-light-brown";
                         phase = "Deferment Year"; detail = "Wealth Locked";
                     }
                     // RULE 3: INCOME / GROWTH
@@ -134,9 +137,10 @@
                             phase = isPast ? "Payout Received" : "Income Phase";
                             detail = `Payout: ${sym}${payout.toLocaleString()}`;
                         } else {
-                            color = isPast ? "bg-history-slate" : "bg-future-amber";
+                            // THE BROWN PALETTE LOGIC
+                            color = isPast ? "bg-history-brown" : "bg-future-light-brown";
                             phase = isPast ? "Growth (Historical)" : "Growth Phase";
-                            detail = "Accumulating";
+                            detail = "Accumulating Value";
                         }
                     }
 
