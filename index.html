@@ -3,13 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nami Portfolio v3.5.6</title>
+    <title>Nami Portfolio v3.5.7</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@800;900&family=Inter:wght@400;700;900&display=swap');
         body { background-color: #f8fafc; font-family: 'Inter', sans-serif; padding: 40px; }
         .brand-header { font-family: 'Orbitron', sans-serif; background: linear-gradient(90deg, #6366f1, #ec4899, #f59e0b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 3.5rem; font-weight: 900; text-transform: uppercase; line-height: 1.1; }
+        .build-tag { position: absolute; top: 40px; right: 40px; font-family: 'Orbitron', sans-serif; background: #e2e8f0; padding: 4px 12px; border-radius: 6px; font-size: 10px; font-weight: 800; color: #64748b; }
 
+        /* Timeline States */
         .bg-prem-past { background: #14532d; } .bg-prem-future { background: #a3e635; } 
         .bg-wait-past { background: #78350f; } .bg-wait-future { background: #f59e0b; }
         .bg-current { background: #22c55e; box-shadow: 0 0 15px rgba(34,229,94,0.6); border: 2px solid white; z-index: 10; }
@@ -35,13 +37,24 @@
 </head>
 <body>
 
+    <div class="build-tag">BUILD v3.5.7</div>
+
     <div class="max-w-7xl mx-auto mb-10">
         <h1 class="brand-header">Nami Portfolio</h1>
         
         <div id="summary-bar" class="grid grid-cols-3 gap-6 mt-8 bg-slate-900 p-8 rounded-[32px] text-white shadow-2xl">
-            <div><p class="text-[10px] uppercase font-black text-slate-400 mb-1">Portfolio Sum Assured</p><p id="total-sa" class="text-3xl font-black text-emerald-400">₹0</p></div>
-            <div><p class="text-[10px] uppercase font-black text-slate-400 mb-1">Est. Monthly Commitment</p><p id="total-premium" class="text-3xl font-black text-indigo-400">₹0</p></div>
-            <div><p class="text-[10px] uppercase font-black text-slate-400 mb-1">Due in next 30 Days</p><p id="due-count" class="text-3xl font-black text-orange-400">0 Policies</p></div>
+            <div class="border-r border-slate-700">
+                <p class="text-[10px] uppercase font-black text-slate-400 mb-1 tracking-widest">Total Sum Assured</p>
+                <p id="total-sa" class="text-4xl font-black text-emerald-400 tracking-tighter">₹0</p>
+            </div>
+            <div class="border-r border-slate-700">
+                <p class="text-[10px] uppercase font-black text-slate-400 mb-1 tracking-widest">Active Monthly Premium</p>
+                <p id="total-premium" class="text-4xl font-black text-indigo-400 tracking-tighter">₹0</p>
+            </div>
+            <div>
+                <p class="text-[10px] uppercase font-black text-slate-400 mb-1 tracking-widest">30-Day Pay Alert</p>
+                <p id="due-count" class="text-4xl font-black text-orange-400 tracking-tighter">0 Policies</p>
+            </div>
         </div>
 
         <div class="flex gap-3 mt-8">
@@ -59,8 +72,9 @@
 
         window.toggleCard = (id) => document.getElementById(`card-${id}`).classList.toggle('open');
 
-        function updateSummary(list) {
+        function updateSummary(list, sym) {
             const totalSA = list.reduce((acc, p) => acc + (p.sumAssured || 0), 0);
+            // Calculate monthly commitment for policies not yet paid up
             const totalPrem = list.reduce((acc, p) => acc + (p.dueDate !== "PAID UP" ? p.premium : 0), 0) / 12;
             
             const next30Days = list.filter(p => {
@@ -71,14 +85,16 @@
                 return diff >= 0 && diff <= 30;
             }).length;
 
-            document.getElementById('total-sa').innerText = `₹${totalSA.toLocaleString()}`;
-            document.getElementById('total-premium').innerText = `₹${Math.round(totalPrem).toLocaleString()}`;
-            document.getElementById('due-count').innerText = `${next30Days} Policies`;
+            document.getElementById('total-sa').innerText = `${sym}${totalSA.toLocaleString()}`;
+            document.getElementById('total-premium').innerText = `${sym}${Math.round(totalPrem).toLocaleString()}`;
+            document.getElementById('due-count').innerText = `${next30Days} Due Soon`;
         }
 
         window.render = function(cat) {
             const list = POLICY_DATA[cat];
-            updateSummary(list);
+            const sym = list[0]?.currency || "₹";
+            updateSummary(list, sym);
+
             document.querySelectorAll('button').forEach(b => b.className = "px-8 py-3 rounded-2xl font-bold bg-white text-slate-400 border border-slate-200");
             document.getElementById(`btn-${cat}`).className = "px-8 py-3 rounded-2xl font-bold bg-slate-900 text-white shadow-xl";
 
@@ -87,7 +103,6 @@
                 const matY = parseInt(p.maturity.split(' ')[2]);
                 const premEndYear = parseInt(p.premiumEnds.split(' ')[2]);
                 const isPaid = (p.dueDate === "PAID UP" || TODAY > new Date(p.premiumEnds));
-                const sym = p.currency || "₹";
                 
                 let timelineHtml = '';
                 for(let yr = startY; yr < matY; yr++) {
@@ -104,7 +119,7 @@
                         phase = hasBonus ? "Premium + Bonus" : "Premium Payment";
                         detail = `Pay ${sym}${p.premium.toLocaleString()}`;
                     } else if (p.defermentYear && yr === p.defermentYear) {
-                        color = "bg-wait-future"; phase = "Deferment Year"; detail = "Bonus Processing";
+                        color = "bg-wait-future"; phase = "Deferment Period"; detail = "Bonus Processing";
                     } else {
                         color = isPast ? "bg-wait-past" : "bg-wait-future";
                         if (p.isULIP) { phase = "Market Growth"; detail = "Wealth Accumulation"; }
@@ -126,7 +141,7 @@
                             <h3 class="text-xl font-black text-slate-900 tracking-tight leading-none">${p.name}</h3>
                         </div>
                         <div class="text-right">
-                            <p class="text-[10px] font-black text-slate-400 uppercase">Premium</p>
+                            <p class="text-[10px] font-black text-slate-400 uppercase">Yearly Premium</p>
                             <p class="text-lg font-black text-emerald-600">${sym}${p.premium.toLocaleString()}</p>
                         </div>
                         <div class="w-44 flex justify-end">
@@ -137,7 +152,7 @@
                         <div class="grid grid-cols-4 gap-4 mb-10">
                             <div class="bg-white border p-3 rounded-xl"><p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Policy Number</p><p class="font-black text-slate-700">${p.id}</p></div>
                             <div class="bg-white border p-3 rounded-xl"><p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Client ID</p><p class="font-black text-slate-700">${p.clientId || 'N/A'}</p></div>
-                            <div class="bg-white border p-3 rounded-xl"><p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Sum Assured</p><p class="font-black text-emerald-600">${sym}${p.sumAssured.toLocaleString()}</p></div>
+                            <div class="bg-white border p-3 rounded-xl shadow-inner"><p class="text-[9px] font-bold text-emerald-600 uppercase tracking-widest">Sum Assured</p><p class="font-black text-emerald-700 text-lg">${sym}${p.sumAssured.toLocaleString()}</p></div>
                             <div class="bg-white border p-3 rounded-xl"><p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Commenced</p><p class="font-black text-slate-700">${p.commenced}</p></div>
                         </div>
                         <div class="timeline-track">
