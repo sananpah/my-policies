@@ -99,8 +99,8 @@ export const POLICY_DATA = {
             commenced: "30 Dec 2021", premiumEnds: "30 Dec 2031", maturity: "30 Dec 2077", 
             color: "#d31145", currency: "$", maturityAmt: "Unit Value", isULIP: true 
         }
-    ]
-    "health": [
+    ],
+    health: [
         {
             "id": "2856207053065200000",
             "name": "HDFC Ergo: Optima Secure",
