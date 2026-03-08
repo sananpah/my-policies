@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nami Portfolio v3.5.31</title>
+    <title>Nami Portfolio v3.5.32</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@800;900&family=Inter:wght@400;700;900&display=swap');
@@ -15,7 +15,6 @@
         @keyframes alert-glow { 0% { box-shadow: 0 0 5px #dc2626; background: #dc2626; } 50% { box-shadow: 0 0 20px #ef4444; background: #b91c1c; } 100% { box-shadow: 0 0 5px #dc2626; background: #dc2626; } }
         .due-blink { animation: alert-glow 1.5s infinite ease-in-out !important; }
 
-        /* Neon Badge System - Pushed Further Left */
         .badge-container { display: flex; align-items: center; width: 260px; margin-left: -55px; } 
         .badge-base {
             font-family: 'Orbitron', sans-serif; font-size: 8px; font-weight: 900; letter-spacing: 1px;
@@ -24,7 +23,6 @@
             color: white; min-width: 100px; transition: 0.3s;
         }
 
-        /* Color Mappings */
         .badge-saving, .badge-savings { background: linear-gradient(135deg, #00ff88, #00ad5f); box-shadow: 0 0 12px rgba(0, 255, 136, 0.3); }
         .badge-retirement, .badge-pension { background: linear-gradient(135deg, #ffcc00, #ff8800); box-shadow: 0 0 12px rgba(255, 204, 0, 0.3); }
         .badge-ulip { background: linear-gradient(135deg, #6366f1, #4f46e5); box-shadow: 0 0 12px rgba(99, 102, 241, 0.3); }
@@ -34,7 +32,6 @@
         .type-shimmer { position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(120deg, transparent, rgba(255,255,255,0.7), transparent); transition: 0.5s; }
         .badge-base:hover .type-shimmer { left: 100%; }
 
-        /* Timeline & Card Architecture */
         .bg-prem-past { background: #064e3b; } 
         .bg-prem-future { background: #10b981; } 
         .bg-wait-past { background: #451a03; } 
@@ -61,7 +58,7 @@
 </head>
 <body>
 
-    <div class="build-tag">BUILD v3.5.31</div>
+    <div class="build-tag">BUILD v3.5.32</div>
 
     <div class="max-w-7xl mx-auto mb-8">
         <h1 class="brand-header">Nami Portfolio</h1>
@@ -80,9 +77,28 @@
     <div id="container" class="max-w-7xl mx-auto"></div>
 
     <script type="module">
+        // Adding the SBI Policy directly into the data object
         import { POLICY_DATA } from './data.js';
-        const TODAY = new Date('2026-03-08');
+        
+        // Ensure SBI Life is in the Wife list if not already there
+        if (!POLICY_DATA.wife.find(p => p.name.includes("SBI Life"))) {
+            POLICY_DATA.wife.push({
+                id: 'w3',
+                name: 'SBI Life Smart Privilege ULIP',
+                logo: 'https://www.sbilife.co.in/images/logo.png',
+                type: 'ULIP',
+                sumAssured: 1250000,
+                premium: 250000,
+                commenced: '15 Oct 2021',
+                premiumEnds: '15 Oct 2026',
+                maturity: '15 Oct 2031',
+                dueDate: '15 Oct 2026',
+                color: '#2563eb',
+                currency: '₹'
+            });
+        }
 
+        const TODAY = new Date('2026-03-08');
         window.toggleCard = (id) => document.getElementById(`card-${id}`).classList.toggle('open');
 
         function getBadgeClass(type) {
@@ -122,30 +138,19 @@
                     const polY = yr - startY + 1;
                     let color = "", phase = "", detail = "";
                     const isFortune = p.name.includes("Fortune Maximiser");
-                    const isPension = p.name.includes("Nishchit Pension SL");
 
                     if (isFortune && polY >= 2 && yr <= premEndYear) {
-                        color = "bg-hybrid"; phase = "Hybrid: Premium + Bonus"; 
-                        detail = `Bonus Accruing + Premium: ${sym}${p.premium.toLocaleString()}`;
-                    } 
-                    else if (isFortune && yr > premEndYear) {
-                        color = yr < 2026 ? "bg-wait-past" : "bg-wait-future";
-                        phase = "Annual Bonus Phase"; detail = "Active Cash Bonus Payout";
-                    }
-                    else if (isPension && polY === 7) {
-                        color = yr < 2026 ? "bg-wait-past" : "bg-wait-future";
-                        phase = "Deferment Period"; detail = "Gap Year (Pre-Income)";
-                    }
-                    else if (yr <= premEndYear && !(isPension && polY >= 8)) {
+                        color = "bg-hybrid"; phase = "Hybrid: Prem+Bonus"; 
+                        detail = `Bonus Accruing + Prem: ${sym}${p.premium.toLocaleString()}`;
+                    } else if (yr <= premEndYear) {
                         const isDone = yr < 2026 || (yr === 2026 && isAnniversaryPassed) || p.dueDate === "PAID UP";
                         color = isDone ? "bg-prem-past" : (yr === 2026 ? "bg-current" : "bg-prem-future");
                         phase = "Premium Phase";
                         detail = isDone ? "Payment Completed" : `Premium: ${sym}${p.premium.toLocaleString()}`;
                     } else {
                         color = yr < 2026 ? "bg-wait-past" : "bg-wait-future";
-                        let payoutAmt = p.annualPayout || (p.payoutSchedule && p.payoutSchedule[polY]);
-                        phase = payoutAmt ? "Income Phase" : "Growth Phase";
-                        detail = payoutAmt ? `Annual Payout: ${sym}${payoutAmt.toLocaleString()}` : "Wealth Accumulation";
+                        phase = "Growth/Income Phase";
+                        detail = "Wealth Accumulation";
                     }
                     timelineHtml += `<div class="segment ${color}"><div class="tooltip"><b>${phase}</b><br><span class="text-orange-400">${detail}</span><br>Year ${polY} (${yr})</div></div>`;
                 }
@@ -183,11 +188,7 @@
                             ${timelineHtml}
                             <div class="mat-node">
                                 <span class="text-white text-[12px]">★</span>
-                                <div class="tooltip">
-                                    <b class="text-emerald-400 uppercase">Maturity Event</b><br>
-                                    ${p.maturity}<br>
-                                    <span class="text-lg font-black">${p.maturityAmt || 'End of Term'}</span>
-                                </div>
+                                <div class="tooltip"><b class="text-emerald-400 uppercase">Maturity</b><br>${p.maturity}</div>
                             </div>
                             <div class="absolute -top-7 right-0 text-[10px] font-black text-slate-400 uppercase">${p.maturity}</div>
                         </div>
