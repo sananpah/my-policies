@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nami Portfolio v3.5.38</title>
+    <title>Nami Portfolio v3.5.39</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@800;900&family=Inter:wght@400;700;900&display=swap');
@@ -36,7 +36,6 @@
         .content-area { display: none; padding: 30px; border-top: 1px solid #f1f5f9; background: #fafbfc; border-radius: 0 0 24px 0; }
         .open .content-area { display: block; }
 
-        /* Credentials Bar Styling */
         .creds-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; background: #f1f5f9; padding: 15px 25px; border-radius: 12px; margin-bottom: 25px; border: 1px solid #e2e8f0; }
         .cred-item p:first-child { font-size: 9px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
         .cred-item p:last-child { font-size: 13px; font-weight: 700; color: #334155; font-family: 'Orbitron', sans-serif; }
@@ -58,7 +57,7 @@
 </head>
 <body>
 
-    <div class="build-tag" id="dynamic-build-tag">BUILD v3.5.38</div>
+    <div class="build-tag" id="dynamic-build-tag">BUILD v3.5.39</div>
 
     <div class="max-w-7xl mx-auto mb-8">
         <h1 class="brand-header">Nami Portfolio</h1>
@@ -80,7 +79,7 @@
         import { POLICY_DATA } from './data.js';
 
         const TODAY = new Date();
-        document.getElementById('dynamic-build-tag').innerText = `BUILD v3.5.38 | ${TODAY.toLocaleDateString('en-GB')}`;
+        document.getElementById('dynamic-build-tag').innerText = `BUILD v3.5.39 | ${TODAY.toLocaleDateString('en-GB')}`;
 
         window.toggleCard = (id) => document.getElementById(`card-${id}`).classList.toggle('open');
 
@@ -151,13 +150,17 @@
                     <div class="card-header" onclick="toggleCard('${p.id}')">
                         <div class="logo-container"><img src="${p.logo}" class="company-logo"></div>
                         <div class="flex-1 ml-4"><h3 class="font-black text-slate-800 text-lg tracking-tight">${p.name}</h3></div>
-                        <div class="flex gap-4 items-center justify-center flex-1">
+                        <div class="flex gap-4 items-center justify-end flex-1 pr-10">
                             <div class="badge-container">
                                 <div class="badge-base ${getBadgeClass(p.type)}">${p.type}<div class="type-shimmer"></div></div>
                                 <div class="text-center ml-4">
                                     <p class="text-[8px] font-bold text-slate-400 uppercase tracking-widest mb-1">Sum Assured</p>
                                     <p class="text-sm font-black text-slate-700">${sym}${p.sumAssured.toLocaleString()}</p>
                                 </div>
+                            </div>
+                            <div class="text-center border-l border-slate-100 pl-10">
+                                <p class="text-[8px] font-bold text-slate-400 uppercase tracking-widest mb-1">Annual Premium</p>
+                                <p class="text-sm font-black text-emerald-600">${sym}${p.premium.toLocaleString()}</p>
                             </div>
                         </div>
                         <div class="w-40 flex flex-col items-center">
@@ -171,7 +174,6 @@
                             <div class="cred-item"><p>Client ID</p><p>${p.clientId || 'N/A'}</p></div>
                             <div class="cred-item"><p>UIN</p><p>${p.uin || 'N/A'}</p></div>
                         </div>
-
                         <div class="timeline-track">
                             <div class="absolute -top-7 left-0 text-[10px] font-black text-slate-400 uppercase">${p.commenced}</div>
                             ${timelineHtml}
