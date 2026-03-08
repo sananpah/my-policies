@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nami Portfolio v3.5.21</title>
+    <title>Nami Portfolio v3.5.23</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@800;900&family=Inter:wght@400;700;900&display=swap');
@@ -12,23 +12,31 @@
         .brand-header { font-family: 'Orbitron', sans-serif; background: linear-gradient(90deg, #6366f1, #ec4899, #f59e0b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 3.5rem; font-weight: 900; text-transform: uppercase; }
         .build-tag { position: absolute; top: 40px; right: 40px; font-family: 'Orbitron', sans-serif; background: #e2e8f0; padding: 4px 12px; border-radius: 6px; font-size: 10px; font-weight: 800; color: #64748b; }
 
-        @keyframes alert-blink { 0% { opacity: 1; } 50% { opacity: 0.6; background-color: #dc2626; } 100% { opacity: 1; } }
-        .due-blink { animation: alert-blink 1.5s infinite ease-in-out; }
-
+        /* Neon Badge System */
+        .badge-container { display: flex; align-items: center; width: 220px; margin-left: -20px; }
+        
         .badge-base {
-            font-family: 'Orbitron', sans-serif; font-size: 8px; font-weight: 900; letter-spacing: 1px;
-            padding: 3px 12px; border-radius: 6px; text-transform: uppercase; position: relative;
+            font-family: 'Orbitron', sans-serif; font-size: 9px; font-weight: 900; letter-spacing: 1px;
+            padding: 5px 15px; border-radius: 10px; text-transform: uppercase; position: relative;
             overflow: hidden; display: inline-flex; align-items: center; justify-content: center;
-            color: white; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-right: 20px;
+            color: white; min-width: 100px; transition: 0.3s;
         }
-        .type-shimmer { position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(120deg, transparent, rgba(255,255,255,0.6), transparent); transition: 0.6s; }
-        .badge-base:hover .type-shimmer { left: 100%; }
 
-        /* Status Colors */
-        .bg-prem-past { background: #14532d; } 
-        .bg-prem-future { background: #a3e635; } 
-        .bg-wait-past { background: #78350f; } 
-        .bg-wait-future { background: #f59e0b; }
+        .badge-saving { background: linear-gradient(135deg, #00ff88, #00ad5f); box-shadow: 0 0 15px rgba(0, 255, 136, 0.3); }
+        .badge-retirement { background: linear-gradient(135deg, #ffcc00, #ff8800); box-shadow: 0 0 15px rgba(255, 204, 0, 0.3); }
+        .badge-ulip { background: linear-gradient(135deg, #6610f2, #007bff); box-shadow: 0 0 15px rgba(102, 16, 242, 0.3); }
+        .badge-ilp { background: linear-gradient(135deg, #ff0077, #aa0055); box-shadow: 0 0 15px rgba(255, 0, 119, 0.3); }
+        .badge-none { background: #64748b; }
+
+        .type-shimmer { position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(120deg, transparent, rgba(255,255,255,0.8), transparent); transition: 0.5s; }
+        .badge-base:hover .type-shimmer { left: 100%; }
+        .badge-base:hover { transform: scale(1.05); }
+
+        /* Timeline Styles */
+        .bg-prem-past { background: #064e3b; } /* Deep Forest Green */
+        .bg-prem-future { background: #10b981; } /* Emerald */
+        .bg-wait-past { background: #451a03; } /* Deep Brown */
+        .bg-wait-future { background: #f59e0b; } /* Amber */
         .bg-current { background: #22c55e; box-shadow: 0 0 15px rgba(34,229,94,0.6); border: 2px solid white; z-index: 10; }
         
         .paid-logo { width: 100px; filter: drop-shadow(0 0 8px rgba(34, 197, 94, 0.8)); transform: rotate(-5deg); }
@@ -49,14 +57,14 @@
 </head>
 <body>
 
-    <div class="build-tag">BUILD v3.5.21</div>
+    <div class="build-tag">BUILD v3.5.23</div>
 
     <div class="max-w-7xl mx-auto mb-8">
         <h1 class="brand-header">Nami Portfolio</h1>
         <div id="summary-bar" class="grid grid-cols-3 gap-4 mt-6 bg-slate-900 p-6 rounded-[24px] text-white shadow-xl">
             <div class="border-r border-slate-700 text-center"><p class="text-[9px] uppercase font-bold text-slate-400">Total Sum Assured</p><p id="total-sa" class="text-3xl font-black text-emerald-400">₹0</p></div>
             <div class="border-r border-slate-700 text-center"><p class="text-[9px] uppercase font-bold text-slate-400">Annual Commitment</p><p id="total-premium" class="text-3xl font-black text-indigo-400">₹0</p></div>
-            <div class="text-center"><p class="text-[9px] uppercase font-bold text-slate-400">Due Alerts</p><p id="due-count" class="text-3xl font-black text-orange-400">0</p></div>
+            <div class="text-center"><p class="text-[9px] uppercase font-bold text-slate-400">Active Policies</p><p id="policy-count" class="text-3xl font-black text-orange-400">0</p></div>
         </div>
         <div class="flex gap-2 mt-6">
             <button onclick="render('india')" id="btn-india" class="px-6 py-2 rounded-xl font-bold bg-slate-900 text-white shadow-lg">INDIA</button>
@@ -73,12 +81,13 @@
 
         window.toggleCard = (id) => document.getElementById(`card-${id}`).classList.toggle('open');
 
-        function checkIsDueSoon(dueDateStr) {
-            if (!dueDateStr || dueDateStr === "PAID UP") return false;
-            const [d, m, y] = dueDateStr.split(' ');
-            const due = new Date(`${m} ${d}, 2026`);
-            const diff = (due - TODAY) / 86400000;
-            return diff >= 0 && diff <= 30;
+        function getBadgeClass(type) {
+            const t = type.toLowerCase();
+            if (t.includes('saving')) return 'badge-saving';
+            if (t.includes('retirement')) return 'badge-retirement';
+            if (t.includes('ulip')) return 'badge-ulip';
+            if (t.includes('ilp')) return 'badge-ilp';
+            return 'badge-none';
         }
 
         window.render = function(cat) {
@@ -90,38 +99,26 @@
                 const parts = p.commenced.split(' ');
                 const anniversary = new Date(`${parts[1]} ${parts[0]}, 2026`);
                 const isAnniversaryPassed = TODAY >= anniversary;
-
                 const startY = parseInt(parts[2]);
                 const matY = parseInt(p.maturity.split(' ')[2]);
                 const premEndYear = parseInt(p.premiumEnds.split(' ')[2]);
-                const isZeroSA = p.name.includes("Fast track") || p.name.includes("Wealth pro") || p.name.includes("Fast Track Super");
-                const isDueSoon = checkIsDueSoon(p.dueDate);
-
+                const isZeroSA = p.name.toLowerCase().includes("fast track") || p.name.toLowerCase().includes("wealth pro");
+                
                 let timelineHtml = '';
                 for(let yr = startY; yr < matY; yr++) {
                     const polY = yr - startY + 1;
-                    const isPastYear = yr < 2026;
                     let color = ""; let phase = ""; let detail = "";
 
-                    // Generic Payment Completion Logic
                     if (yr <= premEndYear) {
-                        const isPaymentDone = yr < 2026 || (yr === 2026 && isAnniversaryPassed) || p.dueDate === "PAID UP";
-                        
-                        if (isPaymentDone) {
-                            color = "bg-prem-past"; phase = "Premium Phase"; detail = "Payment Completed";
-                        } else if (yr === 2026) {
-                            color = "bg-current"; phase = "Premium Phase"; detail = `Premium Due: ${sym}${p.premium.toLocaleString()}`;
-                        } else {
-                            color = "bg-prem-future"; phase = "Premium Phase"; detail = `Upcoming: ${sym}${p.premium.toLocaleString()}`;
-                        }
+                        const isDone = yr < 2026 || (yr === 2026 && isAnniversaryPassed) || p.dueDate === "PAID UP";
+                        color = isDone ? "bg-prem-past" : (yr === 2026 ? "bg-current" : "bg-prem-future");
+                        phase = "Premium Phase";
+                        detail = isDone ? "Payment Completed" : `Premium: ${sym}${p.premium.toLocaleString()}`;
                     } else {
-                        color = isPastYear ? "bg-wait-past" : "bg-wait-future";
+                        color = yr < 2026 ? "bg-wait-past" : "bg-wait-future";
                         let payoutAmt = p.annualPayout || (p.payoutSchedule && p.payoutSchedule[polY]);
-                        if (payoutAmt) {
-                            phase = "Income Phase"; detail = `Annual Payout: ${sym}${payoutAmt.toLocaleString()}`;
-                        } else {
-                            phase = "Growth Phase"; detail = "Wealth Accumulation";
-                        }
+                        phase = payoutAmt ? "Income Phase" : "Growth Phase";
+                        detail = payoutAmt ? `Annual Payout: ${sym}${payoutAmt.toLocaleString()}` : "Wealth Accumulation";
                     }
                     timelineHtml += `<div class="segment ${color}"><div class="tooltip"><b>${phase}</b><br><span class="text-orange-400">${detail}</span><br>Year ${polY} (${yr})</div></div>`;
                 }
@@ -131,23 +128,26 @@
                     <div class="card-header" onclick="toggleCard('${p.id}')">
                         <div class="w-20"><img src="${p.logo}" class="max-h-8"></div>
                         <div class="flex-1 ml-4"><h3 class="font-black text-slate-800 text-lg tracking-tight">${p.name}</h3></div>
-                        <div class="flex gap-12 items-center justify-center flex-1">
-                            <div class="flex items-center -ml-6">
-                                <div class="badge-base badge-${p.type.toLowerCase()}">${p.type}<div class="type-shimmer"></div></div>
-                                <div class="text-center">
+                        <div class="flex gap-4 items-center justify-center flex-1">
+                            <div class="badge-container">
+                                <div class="badge-base ${getBadgeClass(p.type)}">
+                                    ${p.type}
+                                    <div class="type-shimmer"></div>
+                                </div>
+                                <div class="text-center ml-4">
                                     <p class="text-[8px] font-bold text-slate-400 uppercase tracking-widest mb-1">Sum Assured</p>
-                                    <p class="text-base font-black text-slate-700">${sym}${(isZeroSA ? 0 : p.sumAssured).toLocaleString()}</p>
+                                    <p class="text-sm font-black text-slate-700">${sym}${(isZeroSA ? 0 : p.sumAssured).toLocaleString()}</p>
                                 </div>
                             </div>
                             <div class="text-center border-l border-r border-slate-100 px-10">
                                 <p class="text-[8px] font-bold text-slate-400 uppercase tracking-widest mb-1">Annual Premium</p>
-                                <p class="text-base font-black text-emerald-600">${sym}${p.premium.toLocaleString()}</p>
+                                <p class="text-sm font-black text-emerald-600">${sym}${p.premium.toLocaleString()}</p>
                             </div>
                         </div>
                         <div class="w-40 flex flex-col items-center">
                             ${(p.dueDate === "PAID UP" || (isAnniversaryPassed && premEndYear <= 2026)) ? `<img src="paid.jpg" class="paid-logo">` : 
                             `<p class="text-[8px] font-black text-slate-400 uppercase mb-1">Due Date</p>
-                             <div class="px-4 py-1.5 rounded-lg font-black text-[10px] text-center w-full ${isDueSoon ? 'bg-red-600 text-white due-blink' : 'bg-slate-900 text-white'}">${p.dueDate}</div>`}
+                             <div class="px-4 py-1.5 rounded-lg font-black text-[10px] text-center w-full bg-slate-900 text-white">${p.dueDate}</div>`}
                         </div>
                     </div>
                     <div class="content-area">
@@ -170,12 +170,11 @@
         }
 
         function updateSummary(list, sym) {
-            const totalSA = list.reduce((acc, p) => acc + ((p.name.includes("Fast track") || p.name.includes("Wealth pro") || p.name.includes("Fast Track Super")) ? 0 : (p.sumAssured || 0)), 0);
+            const totalSA = list.reduce((acc, p) => acc + ((p.name.toLowerCase().includes("fast track") || p.name.toLowerCase().includes("wealth pro")) ? 0 : (p.sumAssured || 0)), 0);
             const totalAnnual = list.reduce((acc, p) => acc + (p.dueDate !== "PAID UP" ? p.premium : 0), 0);
-            const dueSoon = list.filter(p => checkIsDueSoon(p.dueDate)).length;
             document.getElementById('total-sa').innerText = `${sym}${totalSA.toLocaleString()}`;
             document.getElementById('total-premium').innerText = `${sym}${totalAnnual.toLocaleString()}`;
-            document.getElementById('due-count').innerText = dueSoon;
+            document.getElementById('policy-count').innerText = list.length;
         }
         render('india');
     </script>
