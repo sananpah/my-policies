@@ -44,7 +44,7 @@ export const POLICY_DATA = {
             logo: "image_5d7f80.png", id: "79425536", uin: "107N124V01", clientId: "61491746", type: "SAVINGS", 
             premium: 70000, sumAssured: 711994, dueDate: "14 Aug 2026", 
             commenced: "14 Aug 2025", premiumEnds: "14 Aug 2034", maturity: "14 Aug 2089", 
-            color: "#e63946", bonusAmount: 22050, bonusStartYear: 2, maturityAmt: "₹ 7,11,994 + Bonus" 
+            color: "#e63946", bonusAmount: 22050, bonusStartYear: 2, income: "Est. Yearly: ₹ 23,140", maturityAmt: "₹ 7,11,994 + Bonus" 
         },
         { 
             name: "Wealth Pro", company: "BHARTI AXA",
