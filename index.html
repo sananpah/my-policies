@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nami Portfolio v3.5.30</title>
+    <title>Nami Portfolio v3.5.31</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@800;900&family=Inter:wght@400;700;900&display=swap');
@@ -15,25 +15,30 @@
         @keyframes alert-glow { 0% { box-shadow: 0 0 5px #dc2626; background: #dc2626; } 50% { box-shadow: 0 0 20px #ef4444; background: #b91c1c; } 100% { box-shadow: 0 0 5px #dc2626; background: #dc2626; } }
         .due-blink { animation: alert-glow 1.5s infinite ease-in-out !important; }
 
-        /* Neon Badge System */
-        .badge-container { display: flex; align-items: center; width: 240px; margin-left: -45px; } 
+        /* Neon Badge System - Pushed Further Left */
+        .badge-container { display: flex; align-items: center; width: 260px; margin-left: -55px; } 
         .badge-base {
             font-family: 'Orbitron', sans-serif; font-size: 8px; font-weight: 900; letter-spacing: 1px;
-            padding: 5px 12px; border-radius: 8px; text-transform: uppercase; position: relative;
+            padding: 5px 10px; border-radius: 8px; text-transform: uppercase; position: relative;
             overflow: hidden; display: inline-flex; align-items: center; justify-content: center;
-            color: white; min-width: 95px; transition: 0.3s;
+            color: white; min-width: 100px; transition: 0.3s;
         }
-        .badge-saving { background: linear-gradient(135deg, #00ff88, #00ad5f); box-shadow: 0 0 12px rgba(0, 255, 136, 0.3); }
-        .badge-retirement { background: linear-gradient(135deg, #ffcc00, #ff8800); box-shadow: 0 0 12px rgba(255, 204, 0, 0.3); }
+
+        /* Color Mappings */
+        .badge-saving, .badge-savings { background: linear-gradient(135deg, #00ff88, #00ad5f); box-shadow: 0 0 12px rgba(0, 255, 136, 0.3); }
+        .badge-retirement, .badge-pension { background: linear-gradient(135deg, #ffcc00, #ff8800); box-shadow: 0 0 12px rgba(255, 204, 0, 0.3); }
         .badge-ulip { background: linear-gradient(135deg, #6366f1, #4f46e5); box-shadow: 0 0 12px rgba(99, 102, 241, 0.3); }
         .badge-ilp, .badge-investmentlinked { background: linear-gradient(135deg, #ff0077, #aa0055); box-shadow: 0 0 12px rgba(255, 0, 119, 0.3); }
+        .badge-fallback { background: #64748b; }
 
-        /* Timeline Styling */
+        .type-shimmer { position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(120deg, transparent, rgba(255,255,255,0.7), transparent); transition: 0.5s; }
+        .badge-base:hover .type-shimmer { left: 100%; }
+
+        /* Timeline & Card Architecture */
         .bg-prem-past { background: #064e3b; } 
         .bg-prem-future { background: #10b981; } 
         .bg-wait-past { background: #451a03; } 
         .bg-wait-future { background: #f59e0b; }
-        /* Hybrid Logic: Green top (Premium) to Amber bottom (Bonus) */
         .bg-hybrid { background: linear-gradient(to bottom, #10b981, #f59e0b); border: 1px solid rgba(255,255,255,0.3); }
         .bg-current { background: #22c55e; box-shadow: 0 0 15px rgba(34,229,94,0.6); border: 2px solid white; z-index: 10; }
         
@@ -56,7 +61,7 @@
 </head>
 <body>
 
-    <div class="build-tag">BUILD v3.5.30</div>
+    <div class="build-tag">BUILD v3.5.31</div>
 
     <div class="max-w-7xl mx-auto mb-8">
         <h1 class="brand-header">Nami Portfolio</h1>
@@ -83,14 +88,16 @@
         function getBadgeClass(type) {
             if (!type) return 'badge-fallback';
             const slug = type.toLowerCase().replace(/\s+/g, '');
-            const validTypes = ['saving', 'retirement', 'ulip', 'ilp', 'investmentlinked'];
-            return validTypes.includes(slug) ? `badge-${slug}` : 'badge-fallback';
+            if (slug.includes('saving')) return 'badge-saving';
+            if (slug.includes('retirement') || slug.includes('pension')) return 'badge-retirement';
+            if (slug.includes('ulip')) return 'badge-ulip';
+            if (slug.includes('ilp') || slug.includes('investmentlinked')) return 'badge-ilp';
+            return 'badge-fallback';
         }
 
         function checkIsDueSoon(dueDateStr) {
             if (!dueDateStr || dueDateStr === "PAID UP") return false;
             const parts = dueDateStr.split(' ');
-            if (parts.length < 2) return false;
             const due = new Date(`${parts[1]} ${parts[0]}, 2026`);
             const diff = (due - TODAY) / 86400000;
             return diff >= 0 && diff <= 30;
@@ -117,21 +124,17 @@
                     const isFortune = p.name.includes("Fortune Maximiser");
                     const isPension = p.name.includes("Nishchit Pension SL");
 
-                    // Fortune Maximiser Hybrid Logic (Year 2 to Premium End)
                     if (isFortune && polY >= 2 && yr <= premEndYear) {
-                        color = "bg-hybrid"; 
-                        phase = "Hybrid: Premium + Bonus"; 
-                        detail = `Annual Bonus Applied + Premium: ${sym}${p.premium.toLocaleString()}`;
+                        color = "bg-hybrid"; phase = "Hybrid: Premium + Bonus"; 
+                        detail = `Bonus Accruing + Premium: ${sym}${p.premium.toLocaleString()}`;
                     } 
-                    // Fortune Maximiser Post-Premium Bonus
                     else if (isFortune && yr > premEndYear) {
                         color = yr < 2026 ? "bg-wait-past" : "bg-wait-future";
-                        phase = "Annual Bonus Phase";
-                        detail = "Annual Cash Bonus Payout";
+                        phase = "Annual Bonus Phase"; detail = "Active Cash Bonus Payout";
                     }
                     else if (isPension && polY === 7) {
                         color = yr < 2026 ? "bg-wait-past" : "bg-wait-future";
-                        phase = "Deferment Period"; detail = "Policy Gap Year";
+                        phase = "Deferment Period"; detail = "Gap Year (Pre-Income)";
                     }
                     else if (yr <= premEndYear && !(isPension && polY >= 8)) {
                         const isDone = yr < 2026 || (yr === 2026 && isAnniversaryPassed) || p.dueDate === "PAID UP";
