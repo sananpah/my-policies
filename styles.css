@@ -1,0 +1,34 @@
+/* Neon Glowing Paid Badge */
+.status-paid {
+    background: linear-gradient(135deg, #00b09b, #96c93d);
+    color: #fff;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-weight: 800;
+    font-size: 0.85rem;
+    box-shadow: 0 0 12px #96c93d;
+    animation: neon-pulse 2s infinite alternate;
+    border: 1px solid rgba(255,255,255,0.3);
+}
+
+@keyframes neon-pulse {
+    from { box-shadow: 0 0 5px #96c93d, 0 0 10px #96c93d; transform: scale(1); }
+    to { box-shadow: 0 0 15px #96c93d, 0 0 25px #00b09b; transform: scale(1.05); }
+}
+
+/* Funky Policy Type Badges */
+.type-badge {
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+}
+
+.type-savings { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+.type-retirement { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+.type-ulip { background: #f3e8ff; color: #7e22ce; border: 1px solid #e9d5ff; }
+
+/* Timeline Colors */
+.year-passed { color: #94a3b8; text-decoration: line-through; }
+.year-upcoming { color: #10b981; font-weight: bold; }
