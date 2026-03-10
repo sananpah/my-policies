@@ -12,7 +12,7 @@ export const POLICY_DATA = {
         { 
             name: "Nishchit Pension SL", company: "IndusInd Nippon Life",
             logo: "image_4e0b3d.png", id: "54679062", uin: "128N161V04", clientId: "60938507", type: "RETIREMENT", 
-            premium: 200000, sumAssured: 2000000, dueDate: "30 May 2026", 
+            premium: 200000, sumAssured: 89830, dueDate: "30 May 2026", 
             commenced: "30 May 2025", premiumEnds: "30 May 2030", maturity: "30 May 2077", 
             color: "#8b1d1d", annualPayout: 89830, maturityAmt: "Special Surrender Value", defermentYear: 2031
         },
