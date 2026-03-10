@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nami Portfolio v3.5.66</title>
+    <title>Nami Portfolio v3.5.67</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@800;900&family=Inter:wght@400;700;900&display=swap');
@@ -35,7 +35,6 @@
         .segment { height: 36px; flex: 1; margin: 0 1px; border-radius: 4px; position: relative; cursor: help; transition: 0.2s; }
         .segment:hover { transform: scaleY(1.35); z-index: 50; }
         
-        /* BROWNS Restoration */
         .bg-prem-past { background: #064e3b; } 
         .bg-prem-future { background: #10b981; }
         .bg-current { background: #22c55e; box-shadow: 0 0 20px rgba(34,197,94,0.6); border: 3px solid white; z-index: 10; }
@@ -45,7 +44,6 @@
         .bg-payout-future { background: #f59e0b; } 
         .bg-hybrid { background: linear-gradient(to bottom, #10b981 50%, #f59e0b 50%); }
 
-        /* TILTED TOOLTIP */
         .tooltip { 
             visibility: hidden; opacity: 0; position: absolute; bottom: 65px; left: 50%; transform: translateX(-50%) rotate(-3deg); 
             background: #0f172a; color: white; padding: 14px; border-radius: 12px; width: 200px; 
@@ -57,13 +55,42 @@
         .mat-star { flex: 0 0 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 26px; color: #f59e0b; cursor: help; position: relative; transition: 0.3s; }
         .mat-star:hover { transform: scale(1.5) rotate(15deg); color: #fbbf24; }
 
-        .badge-base { font-family: 'Orbitron', sans-serif; font-size: 8px; font-weight: 900; padding: 6px 12px; border-radius: 10px; text-transform: uppercase; color: white; min-width: 110px; text-align: center; }
+        /* THE FUNKY BADGE */
+        .funky-badge {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 9px;
+            font-weight: 900;
+            padding: 8px 14px;
+            border-radius: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            background: rgba(15, 23, 42, 0.9);
+            color: #fff;
+            border: 2px solid;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2), inset 0 0 10px rgba(255,255,255,0.1);
+            position: relative;
+            overflow: hidden;
+            min-width: 120px;
+            text-align: center;
+        }
+        /* Neon Sweep Animation */
+        .funky-badge::after {
+            content: '';
+            position: absolute;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+            transform: rotate(45deg);
+            animation: sweep 3s infinite linear;
+        }
+        @keyframes sweep { 0% { left: -100%; } 100% { left: 100%; } }
+
         .paid-logo { width: 110px; transform: rotate(-5deg); filter: drop-shadow(0 0 8px rgba(34, 197, 94, 0.4)); }
     </style>
 </head>
 <body>
 
-    <div class="build-tag">BUILD ID: v3.5.66.FINAL</div>
+    <div class="build-tag">BUILD ID: v3.5.67.FUNK</div>
 
     <div class="max-w-7xl mx-auto mb-10">
         <h1 class="brand-header">Nami Portfolio</h1>
@@ -83,7 +110,7 @@
     <div id="container" class="max-w-7xl mx-auto"></div>
 
     <script type="module">
-        import { POLICY_DATA } from './data.js?v=3.5.66';
+        import { POLICY_DATA } from './data.js?v=3.5.67';
 
         const TODAY = new Date();
         const CURRENT_YEAR = TODAY.getFullYear();
@@ -151,7 +178,6 @@
                     timelineHtml += `<div class="segment ${color}"><div class="tooltip"><b class="text-emerald-400 uppercase tracking-tighter">${phase}</b><br>${detail}<br><span class="opacity-40 text-[9px]">Year ${polY} (${yr})</span></div></div>`;
                 }
 
-                // MATURITY TOOLTIP: NO DATES, SLANTED ANIMATION
                 timelineHtml += `
                 <div class="mat-star">
                     ★
@@ -168,7 +194,7 @@
                         <div class="flex-1 ml-10"><h3 class="font-black text-slate-800 text-xl tracking-tight">${p.name}</h3></div>
                         <div class="flex gap-12 items-center mr-10">
                             <div class="flex items-center w-[300px] -ml-12">
-                                <div class="badge-base bg-slate-800">${p.type}</div>
+                                <div class="funky-badge" style="border-color: ${p.color}; box-shadow: 0 0 10px ${p.color}44;">${p.type}</div>
                                 <div class="ml-6"><p class="text-[9px] font-bold text-slate-400 uppercase">Sum Assured</p><p class="text-lg font-black text-slate-700">${sym}${p.sumAssured.toLocaleString()}</p></div>
                             </div>
                             <div class="text-center border-l-2 border-slate-100 pl-10">
