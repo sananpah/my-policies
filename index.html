@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nami Portfolio v3.5.74</title>
+    <title>Nami Portfolio v3.5.76</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@800;900&family=Inter:wght@400;700;900&display=swap');
@@ -73,7 +73,7 @@
 </head>
 <body>
 
-    <div class="build-tag">BUILD ID: v3.5.74.HYBRID</div>
+    <div class="build-tag">BUILD ID: v3.5.76.STABLE</div>
 
     <div class="max-w-7xl mx-auto mb-10">
         <h1 class="brand-header">Nami Portfolio</h1>
@@ -93,7 +93,7 @@
     <div id="container" class="max-w-7xl mx-auto"></div>
 
     <script type="module">
-        import { POLICY_DATA } from './data.js?v=3.5.74';
+        import { POLICY_DATA } from './data.js?v=3.5.76';
 
         const TODAY = new Date();
         const CURRENT_YEAR = TODAY.getFullYear();
@@ -113,7 +113,6 @@
             return diff >= 0 && diff <= 30;
         }
 
-        // AUTO-FORMAT: For Sum Assured and Premium badges
         function autoFmt(val, sym) {
             if (val === undefined || val === null) return sym + "0";
             const clean = String(val).replace(/[₹$,\s]/g, "");
@@ -121,7 +120,6 @@
             return isNaN(num) ? val : sym + num.toLocaleString();
         }
 
-        // RAW: For Maturity hovers (displays exactly what is in data.js)
         function raw(val) {
             return (val === undefined || val === null) ? "" : val;
         }
@@ -161,6 +159,11 @@
                             detail = `Amt: ${autoFmt(p.premium, sym)}`;
                         }
                     } 
+                    // REINSTATED DEFERMENT LOGIC
+                    else if (p.name.includes("Nishchit Pension") && polY === 7) {
+                        color = isPast ? "bg-history-brown" : "bg-future-light-brown";
+                        phase = "Deferment Year"; detail = "Wealth Locked";
+                    }
                     else {
                         const payout = (p.payoutSchedule && p.payoutSchedule[polY]) || p.annualPayout;
                         if (payout) {
