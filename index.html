@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nami Portfolio v3.5.67</title>
+    <title>Nami Portfolio v3.5.68</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@800;900&family=Inter:wght@400;700;900&display=swap');
@@ -55,33 +55,16 @@
         .mat-star { flex: 0 0 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 26px; color: #f59e0b; cursor: help; position: relative; transition: 0.3s; }
         .mat-star:hover { transform: scale(1.5) rotate(15deg); color: #fbbf24; }
 
-        /* THE FUNKY BADGE */
         .funky-badge {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 9px;
-            font-weight: 900;
-            padding: 8px 14px;
-            border-radius: 12px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            background: rgba(15, 23, 42, 0.9);
-            color: #fff;
-            border: 2px solid;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2), inset 0 0 10px rgba(255,255,255,0.1);
-            position: relative;
-            overflow: hidden;
-            min-width: 120px;
-            text-align: center;
+            font-family: 'Orbitron', sans-serif; font-size: 9px; font-weight: 900; padding: 8px 14px; border-radius: 12px;
+            text-transform: uppercase; letter-spacing: 1px; background: rgba(15, 23, 42, 0.9); color: #fff;
+            border: 2px solid; box-shadow: 0 4px 15px rgba(0,0,0,0.2), inset 0 0 10px rgba(255,255,255,0.1);
+            position: relative; overflow: hidden; min-width: 120px; text-align: center;
         }
-        /* Neon Sweep Animation */
         .funky-badge::after {
-            content: '';
-            position: absolute;
-            top: -50%; left: -50%;
-            width: 200%; height: 200%;
+            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
             background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
-            transform: rotate(45deg);
-            animation: sweep 3s infinite linear;
+            transform: rotate(45deg); animation: sweep 3s infinite linear;
         }
         @keyframes sweep { 0% { left: -100%; } 100% { left: 100%; } }
 
@@ -90,7 +73,7 @@
 </head>
 <body>
 
-    <div class="build-tag">BUILD ID: v3.5.67.FUNK</div>
+    <div class="build-tag">BUILD ID: v3.5.68.FIX</div>
 
     <div class="max-w-7xl mx-auto mb-10">
         <h1 class="brand-header">Nami Portfolio</h1>
@@ -110,7 +93,7 @@
     <div id="container" class="max-w-7xl mx-auto"></div>
 
     <script type="module">
-        import { POLICY_DATA } from './data.js?v=3.5.67';
+        import { POLICY_DATA } from './data.js?v=3.5.68';
 
         const TODAY = new Date();
         const CURRENT_YEAR = TODAY.getFullYear();
@@ -178,6 +161,7 @@
                     timelineHtml += `<div class="segment ${color}"><div class="tooltip"><b class="text-emerald-400 uppercase tracking-tighter">${phase}</b><br>${detail}<br><span class="opacity-40 text-[9px]">Year ${polY} (${yr})</span></div></div>`;
                 }
 
+                // FIXED DOUBLE SYMBOL BUG HERE
                 timelineHtml += `
                 <div class="mat-star">
                     ★
