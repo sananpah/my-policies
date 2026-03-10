@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nami Portfolio v3.5.73</title>
+    <title>Nami Portfolio v3.5.74</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@800;900&family=Inter:wght@400;700;900&display=swap');
@@ -73,7 +73,7 @@
 </head>
 <body>
 
-    <div class="build-tag">BUILD ID: v3.5.73.RAW</div>
+    <div class="build-tag">BUILD ID: v3.5.74.HYBRID</div>
 
     <div class="max-w-7xl mx-auto mb-10">
         <h1 class="brand-header">Nami Portfolio</h1>
@@ -93,7 +93,7 @@
     <div id="container" class="max-w-7xl mx-auto"></div>
 
     <script type="module">
-        import { POLICY_DATA } from './data.js?v=3.5.73';
+        import { POLICY_DATA } from './data.js?v=3.5.74';
 
         const TODAY = new Date();
         const CURRENT_YEAR = TODAY.getFullYear();
@@ -113,12 +113,19 @@
             return diff >= 0 && diff <= 30;
         }
 
-        // TRANSPARENT: Just returns the value as provided in data.js
+        // AUTO-FORMAT: For Sum Assured and Premium badges
+        function autoFmt(val, sym) {
+            if (val === undefined || val === null) return sym + "0";
+            const clean = String(val).replace(/[₹$,\s]/g, "");
+            const num = parseFloat(clean);
+            return isNaN(num) ? val : sym + num.toLocaleString();
+        }
+
+        // RAW: For Maturity hovers (displays exactly what is in data.js)
         function raw(val) {
             return (val === undefined || val === null) ? "" : val;
         }
 
-        // Calculation helper: strips everything but numbers for the top summary bar
         function toNum(val) {
             if(!val) return 0;
             const clean = String(val).replace(/[₹$,\s]/g, "");
@@ -147,11 +154,11 @@
                         const isDone = isPast || p.dueDate === "PAID UP";
                         if (p.name.includes("Fortune Maximiser") && polY >= (p.bonusStartYear || 2)) {
                             color = "bg-hybrid"; phase = "Premium + Bonus";
-                            detail = `Prem: ${raw(p.premium)} + Bonus`;
+                            detail = `Prem: ${autoFmt(p.premium, sym)} + Bonus`;
                         } else {
                             color = isCurrent ? "bg-current" : (isDone ? "bg-prem-past" : "bg-prem-future");
                             phase = isDone ? "Premium Completed" : "Premium Payment";
-                            detail = `Amt: ${raw(p.premium)}`;
+                            detail = `Amt: ${autoFmt(p.premium, sym)}`;
                         }
                     } 
                     else {
@@ -159,7 +166,7 @@
                         if (payout) {
                             color = isPast ? "bg-payout-past" : "bg-payout-future";
                             phase = isPast ? "Payout Received" : "Income Phase";
-                            detail = `Payout: ${raw(payout)}`;
+                            detail = `Payout: ${autoFmt(payout, sym)}`;
                         } else {
                             color = isPast ? "bg-history-brown" : "bg-future-light-brown";
                             phase = isPast ? "Growth (Historical)" : "Growth Phase";
@@ -188,11 +195,11 @@
                         <div class="flex gap-12 items-center mr-10">
                             <div class="flex items-center w-[300px] -ml-12">
                                 <div class="funky-badge" style="border-color: ${p.color}; box-shadow: 0 0 10px ${p.color}44;">${p.type}</div>
-                                <div class="ml-6"><p class="text-[9px] font-bold text-slate-400 uppercase">Sum Assured</p><p class="text-lg font-black text-slate-700">${raw(p.sumAssured)}</p></div>
+                                <div class="ml-6"><p class="text-[9px] font-bold text-slate-400 uppercase">Sum Assured</p><p class="text-lg font-black text-slate-700">${autoFmt(p.sumAssured, sym)}</p></div>
                             </div>
                             <div class="text-center border-l-2 border-slate-100 pl-10">
                                 <p class="text-[9px] font-bold text-slate-400 uppercase">Annual Premium</p>
-                                <p class="text-lg font-black text-emerald-600">${raw(p.premium)}</p>
+                                <p class="text-lg font-black text-emerald-600">${autoFmt(p.premium, sym)}</p>
                             </div>
                         </div>
                         <div class="w-44">
@@ -215,10 +222,8 @@
                 </div>`;
             }).join('');
 
-            // Summary bar still needs to strip symbols for math
             const tSA = list.reduce((acc, p) => acc + toNum(p.sumAssured), 0);
             const tAnn = list.reduce((acc, p) => acc + (p.dueDate !== "PAID UP" ? toNum(p.premium) : 0), 0);
-
             document.getElementById('total-sa').innerText = sym + tSA.toLocaleString();
             document.getElementById('total-premium').innerText = sym + tAnn.toLocaleString();
             document.getElementById('due-count').innerText = list.filter(p => checkIsDueSoon(p.dueDate)).length;
