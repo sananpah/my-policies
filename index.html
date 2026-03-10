@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nami Portfolio v3.5.68</title>
+    <title>Nami Portfolio v3.5.70</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@800;900&family=Inter:wght@400;700;900&display=swap');
@@ -35,6 +35,7 @@
         .segment { height: 36px; flex: 1; margin: 0 1px; border-radius: 4px; position: relative; cursor: help; transition: 0.2s; }
         .segment:hover { transform: scaleY(1.35); z-index: 50; }
         
+        /* COLORS */
         .bg-prem-past { background: #064e3b; } 
         .bg-prem-future { background: #10b981; }
         .bg-current { background: #22c55e; box-shadow: 0 0 20px rgba(34,197,94,0.6); border: 3px solid white; z-index: 10; }
@@ -44,6 +45,7 @@
         .bg-payout-future { background: #f59e0b; } 
         .bg-hybrid { background: linear-gradient(to bottom, #10b981 50%, #f59e0b 50%); }
 
+        /* TILTED TOOLTIP */
         .tooltip { 
             visibility: hidden; opacity: 0; position: absolute; bottom: 65px; left: 50%; transform: translateX(-50%) rotate(-3deg); 
             background: #0f172a; color: white; padding: 14px; border-radius: 12px; width: 200px; 
@@ -55,6 +57,7 @@
         .mat-star { flex: 0 0 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 26px; color: #f59e0b; cursor: help; position: relative; transition: 0.3s; }
         .mat-star:hover { transform: scale(1.5) rotate(15deg); color: #fbbf24; }
 
+        /* FUNKY BADGE */
         .funky-badge {
             font-family: 'Orbitron', sans-serif; font-size: 9px; font-weight: 900; padding: 8px 14px; border-radius: 12px;
             text-transform: uppercase; letter-spacing: 1px; background: rgba(15, 23, 42, 0.9); color: #fff;
@@ -73,7 +76,7 @@
 </head>
 <body>
 
-    <div class="build-tag">BUILD ID: v3.5.68.FIX</div>
+    <div class="build-tag">BUILD ID: v3.5.70.STABLE</div>
 
     <div class="max-w-7xl mx-auto mb-10">
         <h1 class="brand-header">Nami Portfolio</h1>
@@ -84,8 +87,8 @@
         </div>
         
         <div id="summary-bar" class="grid grid-cols-3 gap-6 bg-slate-900 p-8 rounded-[32px] text-white shadow-2xl">
-            <div class="border-r border-slate-700 text-center"><p class="text-[10px] font-bold text-slate-400 uppercase">Total Sum Assured</p><p id="total-sa" class="text-4xl font-black text-emerald-400">₹0</p></div>
-            <div class="border-r border-slate-700 text-center"><p class="text-[10px] font-bold text-slate-400 uppercase">Annual Premium</p><p id="total-premium" class="text-4xl font-black text-indigo-400">₹0</p></div>
+            <div class="border-r border-slate-700 text-center"><p class="text-[10px] font-bold text-slate-400 uppercase">Total Sum Assured</p><p id="total-sa" class="text-4xl font-black text-emerald-400">0</p></div>
+            <div class="border-r border-slate-700 text-center"><p class="text-[10px] font-bold text-slate-400 uppercase">Annual Premium</p><p id="total-premium" class="text-4xl font-black text-indigo-400">0</p></div>
             <div class="text-center"><p class="text-[10px] font-bold text-slate-400 uppercase">Policies Due</p><p id="due-count" class="text-4xl font-black text-orange-400">0</p></div>
         </div>
     </div>
@@ -93,7 +96,7 @@
     <div id="container" class="max-w-7xl mx-auto"></div>
 
     <script type="module">
-        import { POLICY_DATA } from './data.js?v=3.5.68';
+        import { POLICY_DATA } from './data.js?v=3.5.70';
 
         const TODAY = new Date();
         const CURRENT_YEAR = TODAY.getFullYear();
@@ -111,6 +114,14 @@
             const due = new Date(`${parts[1]} ${parts[0]}, ${parts[2]}`);
             const diff = (due - TODAY) / 86400000;
             return diff >= 0 && diff <= 30;
+        }
+
+        // Standardizing number formatting
+        function fmt(val, sym) {
+            if(!val) return sym + "0";
+            // Remove any existing symbols from the data string if present
+            const clean = String(val).replace(/[₹$,\s]/g, "");
+            return sym + Number(clean).toLocaleString();
         }
 
         window.render = function(cat) {
@@ -134,11 +145,11 @@
                         const isDone = isPast || p.dueDate === "PAID UP";
                         if (p.name.includes("Fortune Maximiser") && polY >= (p.bonusStartYear || 2)) {
                             color = "bg-hybrid"; phase = "Premium + Bonus";
-                            detail = `Prem: ${sym}${p.premium.toLocaleString()} + Bonus`;
+                            detail = `Prem: ${fmt(p.premium, sym)} + Bonus`;
                         } else {
                             color = isCurrent ? "bg-current" : (isDone ? "bg-prem-past" : "bg-prem-future");
                             phase = isDone ? "Premium Completed" : "Premium Payment";
-                            detail = `Amt: ${sym}${p.premium.toLocaleString()}`;
+                            detail = `Amt: ${fmt(p.premium, sym)}`;
                         }
                     } 
                     else if (p.name.includes("Nishchit Pension") && polY === 7) {
@@ -150,7 +161,7 @@
                         if (payout) {
                             color = isPast ? "bg-payout-past" : "bg-payout-future";
                             phase = isPast ? "Payout Received" : "Income Phase";
-                            detail = `Payout: ${sym}${payout.toLocaleString()}`;
+                            detail = `Payout: ${fmt(payout, sym)}`;
                         } else {
                             color = isPast ? "bg-history-brown" : "bg-future-light-brown";
                             phase = isPast ? "Growth (Historical)" : "Growth Phase";
@@ -161,13 +172,12 @@
                     timelineHtml += `<div class="segment ${color}"><div class="tooltip"><b class="text-emerald-400 uppercase tracking-tighter">${phase}</b><br>${detail}<br><span class="opacity-40 text-[9px]">Year ${polY} (${yr})</span></div></div>`;
                 }
 
-                // FIXED DOUBLE SYMBOL BUG HERE
                 timelineHtml += `
                 <div class="mat-star">
                     ★
                     <div class="tooltip">
                         <b class="text-orange-400 uppercase tracking-widest">Maturity</b><br>
-                        <span class="text-lg font-black">${sym}${(p.maturityAmt || p.sumAssured || 0).toLocaleString()}</span>
+                        <span class="text-lg font-black">${fmt((p.maturityAmt || p.sumAssured), sym)}</span>
                     </div>
                 </div>`;
 
@@ -179,11 +189,11 @@
                         <div class="flex gap-12 items-center mr-10">
                             <div class="flex items-center w-[300px] -ml-12">
                                 <div class="funky-badge" style="border-color: ${p.color}; box-shadow: 0 0 10px ${p.color}44;">${p.type}</div>
-                                <div class="ml-6"><p class="text-[9px] font-bold text-slate-400 uppercase">Sum Assured</p><p class="text-lg font-black text-slate-700">${sym}${p.sumAssured.toLocaleString()}</p></div>
+                                <div class="ml-6"><p class="text-[9px] font-bold text-slate-400 uppercase">Sum Assured</p><p class="text-lg font-black text-slate-700">${fmt(p.sumAssured, sym)}</p></div>
                             </div>
                             <div class="text-center border-l-2 border-slate-100 pl-10">
                                 <p class="text-[9px] font-bold text-slate-400 uppercase">Annual Premium</p>
-                                <p class="text-lg font-black text-emerald-600">${sym}${p.premium.toLocaleString()}</p>
+                                <p class="text-lg font-black text-emerald-600">${fmt(p.premium, sym)}</p>
                             </div>
                         </div>
                         <div class="w-44">
@@ -207,10 +217,10 @@
                 </div>`;
             }).join('');
 
-            const tSA = list.reduce((acc, p) => acc + (p.sumAssured || 0), 0);
-            const tAnn = list.reduce((acc, p) => acc + (p.dueDate !== "PAID UP" ? p.premium : 0), 0);
-            document.getElementById('total-sa').innerText = `${sym}${tSA.toLocaleString()}`;
-            document.getElementById('total-premium').innerText = `${sym}${tAnn.toLocaleString()}`;
+            const tSA = list.reduce((acc, p) => acc + Number(String(p.sumAssured).replace(/[₹$,\s]/g, "") || 0), 0);
+            const tAnn = list.reduce((acc, p) => acc + (p.dueDate !== "PAID UP" ? Number(String(p.premium).replace(/[₹$,\s]/g, "") || 0) : 0), 0);
+            document.getElementById('total-sa').innerText = sym + tSA.toLocaleString();
+            document.getElementById('total-premium').innerText = sym + tAnn.toLocaleString();
             document.getElementById('due-count').innerText = list.filter(p => checkIsDueSoon(p.dueDate)).length;
         }
 
