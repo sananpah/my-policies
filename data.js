@@ -73,18 +73,16 @@ export const POLICY_DATA = {
             premium: 30000, sumAssured: 300000, dueDate: "PAID UP", 
             commenced: "28 Nov 2019", premiumEnds: "28 Oct 2024", maturity: "27 Nov 2029", 
             color: "#005a9c", maturityAmt: "Unit Value", isULIP: true
-        }
-    ],
-    wife: [
+        },
         { 
-            name: "Signature", company: "ICICI PRUDENTIAL",
+            name: "Signature", company: "ICICI PRUDENTIAL",isWife: true,
             logo: "image_d82175.png", id: "K7639543", uin: "N/A", clientId: "N/A", type: "ULIP", 
             premium: 500000, sumAssured: 5000000, dueDate: "29 Nov 2026", 
             commenced: "29 Nov 2025", premiumEnds: "29 Nov 2032", maturity: "29 Nov 2052", 
             color: "#9b2226", maturityAmt: "Unit Value", isULIP: true 
         },
         { 
-            name: "Smart Privilege Plus LP Plan P", company: "SBI LIFE",
+            name: "Smart Privilege Plus LP Plan P", company: "SBI LIFE",isWife: true,
             logo: "image_cda45c.png", id: "3N307267702", uin: "N/A", clientId: "N/A", type: "ULIP", 
             premium: 600000, sumAssured: 4200000, dueDate: "23 Apr 2026", 
             commenced: "23 Apr 2025", premiumEnds: "23 Apr 2029", maturity: "23 Apr 2040", 
