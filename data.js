@@ -92,10 +92,12 @@ export const POLICY_DATA = {
     singapore: [
         { 
             name: "Pro-Achiever 2.0", company: "AIA SINGAPORE",
-            logo: "image_4b9b3f.png", id: "U126327913", uin: "N/A", clientId: "N/A", type: "ILP", 
+            logo: "image_4b9b3f.png", id: "U126327913", type: "ILP", 
             premium: 5000, sumAssured: 0, dueDate: "30 Dec 2026", 
             commenced: "30 Dec 2021", premiumEnds: "30 Dec 2031", maturity: "30 Dec 2077", 
-            color: "#d31145", currency: "$", maturityAmt: "Unit Value", isULIP: true 
+            color: "#d31145", currency: "$", welcomeBonus: { 1: 0.05, 2: 0.08, 3: 0.10 },
+            surrenderCharges: { 1: 1.0, 2: 1.0, 3: 0.8, 4: 0.7, 5: 0.6, 6: 0.5, 7: 0.45, 8: 0.35, 9: 0.2, 10: 0.05, 11: 0 },
+            isULIP: true 
         }
     ]
 };
