@@ -2,7 +2,7 @@
 export const POLICY_DATA = {
     india: [
         { 
-            name: "Nishchit Ace", company: "IndusInd Nippon Life",
+            name: "Nishchit Ace", company: "IndusInd Nippon Life", isDaughter: true,
             logo: "image_4e0b3d.png", id: "54751949", uin: "128N171V01", clientId: "60938507", type: "SAVINGS", 
             premium: 209000, sumAssured: 2626948, dueDate: "17 Nov 2026", 
             commenced: "17 Nov 2025", premiumEnds: "17 Nov 2034", maturity: "17 Nov 2055", 
@@ -68,7 +68,7 @@ export const POLICY_DATA = {
             color: "#005a9c", maturityAmt: "Unit Value", isULIP: true
         },
         { 
-            name: "Life Future Gain II", company: "BAJAJ LIFE",
+            name: "Life Future Gain II", company: "BAJAJ LIFE", isDaughter: true,
             logo: "image_349b41.png", id: "378816898", uin: "116L181V01", type: "ULIP", 
             premium: 30000, sumAssured: 300000, dueDate: "PAID UP", 
             commenced: "28 Nov 2019", premiumEnds: "28 Oct 2024", maturity: "27 Nov 2029", 
