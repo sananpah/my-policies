@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nami Portfolio v3.5.77</title>
+    <title>Nami Portfolio v3.5.78</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@800;900&family=Inter:wght@400;700;900&display=swap');
@@ -73,7 +73,7 @@
 </head>
 <body>
 
-    <div class="build-tag">BUILD ID: v3.5.77.STABLE</div>
+    <div class="build-tag">BUILD ID: v3.5.78.COUNTDOWN</div>
 
     <div class="max-w-7xl mx-auto mb-10">
         <h1 class="brand-header">Nami Portfolio</h1>
@@ -93,7 +93,7 @@
     <div id="container" class="max-w-7xl mx-auto"></div>
 
     <script type="module">
-        import { POLICY_DATA } from './data.js?v=3.5.77';
+        import { POLICY_DATA } from './data.js?v=3.5.78';
 
         const TODAY = new Date();
         const CURRENT_YEAR = TODAY.getFullYear();
@@ -111,6 +111,23 @@
             const due = new Date(`${parts[1]} ${parts[0]}, ${parts[2]}`);
             const diff = (due - TODAY) / 86400000;
             return diff >= 0 && diff <= 30;
+        }
+
+        function getTimeLeft(endDateStr) {
+            if (!endDateStr || endDateStr === "PAID UP") return "✓";
+            const parts = endDateStr.split(' ');
+            const end = new Date(`${parts[1]} ${parts[0]}, ${parts[2]}`);
+            
+            let years = end.getFullYear() - TODAY.getFullYear();
+            let months = end.getMonth() - TODAY.getMonth();
+
+            if (months < 0) {
+                years--;
+                months += 12;
+            }
+
+            if (years < 0) return "✓";
+            return `${String(years).padStart(2, '0')}y${String(months).padStart(2, '0')}m`;
         }
 
         function autoFmt(val, sym) {
@@ -140,6 +157,7 @@
                 const matY = parseInt(p.maturity.split(' ')[2]);
                 const premEndYear = parseInt(p.premiumEnds.split(' ')[2]);
                 const isDueSoon = checkIsDueSoon(p.dueDate);
+                const timeLeft = (p.dueDate === "PAID UP") ? "✓" : getTimeLeft(p.premiumEnds);
                 
                 let timelineHtml = '';
                 for(let yr = startY; yr < matY; yr++) {
@@ -202,6 +220,7 @@
                             <div class="text-center border-l-2 border-slate-100 pl-10">
                                 <p class="text-[9px] font-bold text-slate-400 uppercase">Annual Premium</p>
                                 <p class="text-lg font-black text-emerald-600">${autoFmt(p.premium, sym)}</p>
+                                <p class="text-[10px] font-bold text-slate-400 tracking-tighter mt-[-2px]">${timeLeft}</p>
                             </div>
                         </div>
                         <div class="w-44 text-center">
@@ -232,8 +251,7 @@
             document.getElementById('due-count').innerText = list.filter(p => checkIsDueSoon(p.dueDate)).length;
         }
 
-            // Initial Render
-            render('india');
+        render('india');
     </script>
 </body>
 </html>
