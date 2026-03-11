@@ -3,68 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nami Portfolio v3.5.88</title>
+    <title>Nami Portfolio v3.5.89</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@800;900&family=Inter:wght@400;700;900&display=swap');
         
-        body { background-color: #f8fafc; font-family: 'Inter', sans-serif; padding: 40px; position: relative; }
+        body { background-color: #f8fafc; font-family: 'Inter', sans-serif; padding: 40px; }
         
         .build-tag { 
-            position: fixed; top: 20px; right: 20px; 
-            font-family: 'Orbitron', sans-serif; font-size: 10px; font-weight: 900;
-            background: #1e293b; color: #6366f1; padding: 8px 16px; 
+            position: fixed; top: 20px; right: 20px; font-family: 'Orbitron', sans-serif; 
+            font-size: 10px; background: #1e293b; color: #6366f1; padding: 8px 16px; 
             border-radius: 99px; border: 1px solid #334155; z-index: 1000;
         }
 
-        .brand-header { font-family: 'Orbitron', sans-serif; background: linear-gradient(90deg, #6366f1, #ec4899, #f59e0b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 3.5rem; font-weight: 900; text-transform: uppercase; margin-bottom: 30px; }
+        .brand-header { font-family: 'Orbitron', sans-serif; background: linear-gradient(90deg, #6366f1, #ec4899, #f59e0b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 3.2rem; font-weight: 900; text-transform: uppercase; margin-bottom: 30px; letter-spacing: -2px; }
         
-        /* Card Styles */
-        .policy-card { background: white; border-radius: 24px; border-left: 16px solid; margin-bottom: 24px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); transition: 0.3s; position: relative; overflow: hidden; }
-        .card-header { cursor: pointer; display: flex; align-items: center; padding: 30px 40px; min-height: 120px; }
-        .content-area { display: none; padding: 40px; border-top: 1px solid #f1f5f9; background: #fafbfc; }
+        /* Premium Card UI */
+        .policy-card { background: white; border-radius: 28px; border-left: 16px solid; margin-bottom: 24px; box-shadow: 0 15px 35px -5px rgba(0,0,0,0.05); transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); overflow: hidden; }
+        .policy-card:hover { transform: translateY(-5px); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.1); }
+        .card-header { cursor: pointer; display: flex; align-items: center; padding: 32px 40px; }
+        .content-area { display: none; padding: 0 40px 40px 40px; }
         .open .content-area { display: block; }
 
-        /* Timeline Styles */
-        .timeline-track { position: relative; height: 44px; background: #e2e8f0; border-radius: 22px; display: flex; padding: 0 6px; align-items: center; margin-top: 60px; }
-        .segment { height: 36px; flex: 1; margin: 0 1px; border-radius: 4px; position: relative; cursor: help; transition: 0.2s; }
+        /* Timeline Mechanics */
+        .timeline-track { position: relative; height: 42px; background: #f1f5f9; border-radius: 21px; display: flex; padding: 0 4px; align-items: center; margin-top: 40px; }
+        .segment { height: 34px; flex: 1; margin: 0 1px; border-radius: 6px; position: relative; cursor: help; transition: 0.3s; }
         
-        /* India Colors (Frozen) */
-        .bg-prem-past { background: #064e3b; } 
-        .bg-prem-future { background: #10b981; }
-        .bg-current { background: #22c55e; box-shadow: 0 0 20px rgba(34,197,94,0.6); border: 3px solid white; z-index: 10; }
-        .bg-hybrid { background: linear-gradient(to bottom, #10b981 50%, #f59e0b 50%); }
+        /* India Specialized Colors */
+        .bg-prem-past { background: #064e3b; } /* Deep Emerald */
+        .bg-prem-future { background: #10b981; } /* Bright Emerald */
+        .bg-current { background: #0f172a; border: 3px solid #10b981; box-shadow: 0 0 20px rgba(16,185,129,0.5); z-index: 20; }
+        .bg-hybrid { background: repeating-linear-gradient(45deg, #064e3b, #064e3b 8px, #10b981 8px, #10b981 16px); }
+        .bg-payout { background: #3b82f6; }
+        .bg-defer { background: #94a3b8; }
 
-        /* Tooltip */
         .tooltip { 
-            visibility: hidden; opacity: 0; position: absolute; bottom: 65px; left: 50%; transform: translateX(-50%); 
-            background: #0f172a; color: white; padding: 12px; border-radius: 12px; width: 180px; 
-            text-align: center; font-size: 11px; z-index: 1000; transition: 0.3s; pointer-events: none;
+            visibility: hidden; opacity: 0; position: absolute; bottom: 60px; left: 50%; transform: translateX(-50%); 
+            background: #0f172a; color: white; padding: 12px; border-radius: 12px; width: 190px; 
+            text-align: center; font-size: 11px; z-index: 1000; box-shadow: 0 10px 15px rgba(0,0,0,0.3); pointer-events: none;
         }
-        .segment:hover .tooltip { visibility: visible; opacity: 1; bottom: 55px; }
+        .segment:hover .tooltip { visibility: visible; opacity: 1; transform: translateX(-50%) translateY(-10px); }
 
-        .family-marker { display: inline-flex; align-items: center; justify-content: center; margin-left: 14px; color: #94a3b8; font-size: 10px; font-weight: bold; background: #f1f5f9; padding: 2px 8px; border-radius: 10px;}
+        .family-marker { font-size: 10px; font-weight: 800; background: #f1f5f9; color: #64748b; padding: 4px 12px; border-radius: 99px; margin-left: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
     </style>
 </head>
 <body>
 
-    <div class="build-tag">BUILD ID: v3.5.88.UNIFIED</div>
+    <div class="build-tag">RESTORED BASELINE: v3.5.89</div>
 
-    <div class="max-w-7xl mx-auto mb-10">
+    <div class="max-w-7xl mx-auto">
         <h1 class="brand-header">Nami Portfolio</h1>
-        <div class="flex gap-4 mb-8">
-            <button onclick="renderRegion('india')" id="btn-india" class="px-8 py-3 bg-slate-800 text-white rounded-full font-bold transition">India</button>
-            <button onclick="renderRegion('singapore')" id="btn-singapore" class="px-8 py-3 bg-white text-slate-600 border rounded-full font-bold transition">Singapore</button>
+        
+        <div class="flex gap-4 mb-10">
+            <button onclick="renderRegion('india')" id="btn-india" class="px-10 py-4 bg-slate-900 text-white rounded-2xl font-black shadow-xl transition-all hover:scale-105 active:scale-95">INDIA</button>
+            <button onclick="renderRegion('singapore')" id="btn-singapore" class="px-10 py-4 bg-white text-slate-400 border border-slate-200 rounded-2xl font-black transition-all hover:bg-slate-50 hover:scale-105">SINGAPORE</button>
         </div>
         
-        <div id="summary-bar" class="grid grid-cols-3 gap-6 bg-slate-900 p-8 rounded-[32px] text-white shadow-2xl">
-            <div class="border-r border-slate-700 text-center"><p id="label-sa" class="text-[10px] font-bold text-slate-400 uppercase">Sum Assured</p><p id="total-sa" class="text-4xl font-black text-emerald-400">0</p></div>
-            <div class="border-r border-slate-700 text-center"><p class="text-[10px] font-bold text-slate-400 uppercase">Annual Premium</p><p id="total-premium" class="text-4xl font-black text-indigo-400">0</p></div>
-            <div class="text-center"><p class="text-[10px] font-bold text-slate-400 uppercase">Current Status</p><p id="status-val" class="text-4xl font-black text-orange-400">ACTIVE</p></div>
+        <div id="summary-bar" class="grid grid-cols-3 gap-8 bg-slate-950 p-10 rounded-[40px] text-white shadow-2xl mb-12">
+            <div class="border-r border-slate-800 text-center"><p id="label-sa" class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Total Sum Assured</p><p id="total-sa" class="text-5xl font-black text-emerald-400 tracking-tighter">0</p></div>
+            <div class="border-r border-slate-800 text-center"><p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Annual Premium</p><p id="total-premium" class="text-5xl font-black text-indigo-400 tracking-tighter">0</p></div>
+            <div class="text-center"><p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Portfolio Health</p><p id="status-val" class="text-5xl font-black text-orange-400 tracking-tighter">ELITE</p></div>
         </div>
-    </div>
 
-    <div id="container" class="max-w-7xl mx-auto"></div>
+        <div id="container"></div>
+    </div>
 
     <script type="module">
         import { POLICY_DATA } from './data.js';
@@ -84,86 +86,107 @@
             return isNaN(num) ? val : sym + num.toLocaleString();
         };
 
-        // --- THE ENGINES ---
-
         window.renderRegion = (region) => {
             const list = POLICY_DATA[region] || [];
             const sym = (region === 'singapore') ? "$" : "₹";
-            const container = document.getElementById('container');
             
-            // UI Toggle
-            document.getElementById('btn-india').className = region === 'india' ? "px-8 py-3 bg-slate-800 text-white rounded-full font-bold" : "px-8 py-3 bg-white text-slate-600 border rounded-full font-bold";
-            document.getElementById('btn-singapore').className = region === 'singapore' ? "px-8 py-3 bg-[#d31145] text-white rounded-full font-bold" : "px-8 py-3 bg-white text-slate-600 border rounded-full font-bold";
+            // UI Toggle Colors
+            document.getElementById('btn-india').className = region === 'india' ? "px-10 py-4 bg-slate-900 text-white rounded-2xl font-black shadow-xl scale-105" : "px-10 py-4 bg-white text-slate-400 border border-slate-200 rounded-2xl font-black";
+            document.getElementById('btn-singapore').className = region === 'singapore' ? "px-10 py-4 bg-[#d31145] text-white rounded-2xl font-black shadow-xl scale-105" : "px-10 py-4 bg-white text-slate-400 border border-slate-200 rounded-2xl font-black";
 
-            container.innerHTML = list.map(p => {
-                if (region === 'india') return renderIndiaCard(p, sym);
-                if (region === 'singapore') return renderSingaporeCard(p, sym);
+            document.getElementById('container').innerHTML = list.map(p => {
+                return (region === 'india') ? renderIndiaLogic(p, sym) : renderSingaporeLogic(p, sym);
             }).join('');
 
-            // Summary Logic
-            const totalPrem = list.reduce((acc, p) => acc + (p.dueDate !== "PAID UP" ? (typeof p.premium === 'number' ? p.premium : parseFloat(String(p.premium).replace(/[₹$,\s]/g, ""))) : 0), 0);
-            document.getElementById('total-premium').innerText = sym + totalPrem.toLocaleString();
-            document.getElementById('label-sa').innerText = region === 'india' ? "Total Sum Assured" : "Valuation Basis";
-            document.getElementById('total-sa').innerText = region === 'india' ? sym + " (Calculated)" : "Market Value";
+            updateSummaryBar(list, sym, region);
         };
 
-        function renderIndiaCard(p, sym) {
+        function renderIndiaLogic(p, sym) {
             const startY = parseInt(p.commenced.split(' ')[2]);
             const annDay = parseInt(p.commenced.split(' ')[0]);
             const annMonth = p.commenced.split(' ')[1];
             const matY = parseInt(p.maturity.split(' ')[2]);
             const premEndYear = parseInt(p.premiumEnds.split(' ')[2]);
-            const anniversaryDate = new Date(`${annMonth} ${annDay}, ${CURRENT_YEAR}`);
-            const hasPassed = TODAY > anniversaryDate;
+            const annDate = new Date(`${annMonth} ${annDay}, ${CURRENT_YEAR}`);
+            const hasPassed = TODAY > annDate;
 
             let timeline = '';
             for(let yr = startY; yr < matY; yr++) {
-                const isPast = yr < CURRENT_YEAR || (yr === CURRENT_YEAR && hasPassed);
-                const isCurrent = yr === CURRENT_YEAR && !hasPassed;
-                let color = (yr <= premEndYear) ? (isCurrent ? "bg-current" : (isPast ? "bg-prem-past" : "bg-prem-future")) : "bg-slate-200";
-                timeline += `<div class="segment ${color}"><div class="tooltip">Year ${yr}<br>${isPast ? 'Paid' : 'Due'}</div></div>`;
+                const polY = yr - startY + 1;
+                const isPast = yr < CURRENT_YEAR;
+                const isCurrent = yr === CURRENT_YEAR;
+                const effectivelyPaid = isPast || (isCurrent && hasPassed);
+                
+                let color = "bg-slate-100", label = "Growth";
+                
+                if(yr <= premEndYear) {
+                    if (p.name.includes("Fortune Maximiser") && polY >= 2) {
+                        color = "bg-hybrid"; label = "Premium + Bonus";
+                    } else {
+                        color = isCurrent && !hasPassed ? "bg-current" : (effectivelyPaid ? "bg-prem-past" : "bg-prem-future");
+                        label = effectivelyPaid ? "Premium Paid" : "Premium Due";
+                    }
+                } else if (p.name.includes("Nishchit Pension") && polY === 7) {
+                    color = "bg-defer"; label = "Deferment Year";
+                } else if (p.annualPayout || (p.payoutSchedule && p.payoutSchedule[polY])) {
+                    color = "bg-payout"; label = "Income Phase";
+                }
+
+                timeline += `<div class="segment ${color}"><div class="tooltip"><b class="text-emerald-400">${label}</b><br>Year ${polY} (${yr})<br>${autoFmt(p.premium, sym)}</div></div>`;
             }
 
-            return `<div class="policy-card" id="card-${p.id}" style="border-color: ${p.color}">
-                <div class="card-header" onclick="toggleCard('${p.id}')">
-                    <div class="w-32"><img src="${p.logo}" class="max-h-12"></div>
-                    <div class="flex-1 ml-10"><h3 class="font-black text-xl">${p.name} ${p.isWife ? '<span class="family-marker">Wife</span>' : ''}</h3></div>
-                    <div class="text-right mr-10"><p class="text-[9px] font-bold text-slate-400 uppercase">Premium</p><p class="text-lg font-black text-emerald-600">${autoFmt(p.premium, sym)}</p></div>
-                    <div class="bg-slate-900 text-white px-6 py-2 rounded-xl text-xs font-bold">${p.dueDate}</div>
-                </div>
-                <div class="content-area"><div class="timeline-track">${timeline}</div></div>
-            </div>`;
+            return buildCard(p, sym, timeline);
         }
 
-        function renderSingaporeCard(p, sym) {
+        function renderSingaporeLogic(p, sym) {
             const startY = parseInt(p.commenced.split(' ')[2]);
             let timeline = '';
-            for(let i = 0; i < 15; i++) {
-                const yr = startY + i;
-                const charge = (p.surrenderCharges && p.surrenderCharges[i+1]) || 0;
-                let color = (yr === CURRENT_YEAR) ? "bg-red-600 shadow-lg scale-110 z-10" : (yr < CURRENT_YEAR ? "bg-slate-400" : "bg-red-300");
-                timeline += `<div class="segment ${color}"><div class="tooltip">Year ${i+1} (${yr})<br>Exit Charge: ${charge}%</div></div>`;
+            for(let i = 1; i <= 15; i++) {
+                const yr = startY + i - 1;
+                const isCurrent = yr === CURRENT_YEAR;
+                const charge = (p.surrenderCharges && p.surrenderCharges[i]) || 0;
+                let color = isCurrent ? "bg-red-600 shadow-xl scale-110 z-10" : (yr < CURRENT_YEAR ? "bg-slate-400" : "bg-red-200");
+                
+                timeline += `<div class="segment ${color}"><div class="tooltip"><b class="text-red-400">ILP Year ${i}</b><br>${yr}<br>Exit Charge: ${charge}%</div></div>`;
             }
+            return buildCard(p, sym, timeline, true);
+        }
 
-            return `<div class="policy-card" id="card-${p.id}" style="border-color: #d31145">
+        function buildCard(p, sym, timeline, isSg = false) {
+            return `
+            <div class="policy-card" id="card-${p.id}" style="border-color: ${isSg ? '#d31145' : p.color}">
                 <div class="card-header" onclick="toggleCard('${p.id}')">
-                    <div class="w-32"><img src="${p.logo}" class="max-h-12"></div>
-                    <div class="flex-1 ml-10"><h3 class="font-black text-xl">${p.name}</h3><span class="text-[10px] bg-red-600 text-white px-2 py-1 rounded font-bold uppercase">${p.type}</span></div>
-                    <div class="text-right mr-10"><p class="text-[9px] font-bold text-slate-400 uppercase">Contribution</p><p class="text-lg font-black text-red-600">${autoFmt(p.premium, sym)}</p></div>
-                    <div class="bg-slate-900 text-white px-6 py-2 rounded-xl text-xs font-bold">${p.dueDate}</div>
+                    <div class="w-32 flex justify-center"><img src="${p.logo}" class="max-h-12"></div>
+                    <div class="flex-1 ml-10">
+                        <h3 class="font-black text-slate-800 text-2xl tracking-tighter">${p.name}
+                            ${p.isWife ? '<span class="family-marker">WIFE</span>' : ''}
+                            ${p.isDaughter ? '<span class="family-marker">DAUGHTER</span>' : ''}
+                        </h3>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase mt-1 tracking-widest">${p.company || 'Life Insurance'}</p>
+                    </div>
+                    <div class="flex gap-12 mr-10 text-right">
+                        <div><p class="text-[9px] font-bold text-slate-400 uppercase">Annual Premium</p><p class="text-xl font-black ${isSg ? 'text-red-600' : 'text-emerald-600'}">${autoFmt(p.premium, sym)}</p></div>
+                    </div>
+                    <div class="bg-slate-900 text-white px-6 py-3 rounded-2xl text-xs font-black shadow-lg">${p.dueDate}</div>
                 </div>
                 <div class="content-area">
-                    <div class="grid grid-cols-3 gap-4 mb-8">
-                        <div class="bg-slate-50 p-4 rounded-xl text-center"><p class="text-[9px] font-bold text-slate-400 uppercase">ILP Death Benefit</p><p class="text-xs font-bold text-emerald-600">Max(Premium, Value)</p></div>
-                        <div class="bg-slate-50 p-4 rounded-xl text-center"><p class="text-[9px] font-bold text-slate-400 uppercase">Withdrawals</p><p class="text-xs font-bold text-slate-700">Allowed after Yr 3</p></div>
-                        <div class="bg-slate-50 p-4 rounded-xl text-center"><p class="text-[9px] font-bold text-slate-400 uppercase">Full Liquidity</p><p class="text-xs font-bold text-red-700">Year 11 (2032)</p></div>
-                    </div>
+                    ${isSg ? `<div class="grid grid-cols-3 gap-4 mb-8">
+                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-center"><p class="text-[9px] font-bold text-slate-400 uppercase">Withdrawals</p><p class="font-black text-slate-700">After Year 3</p></div>
+                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-center"><p class="text-[9px] font-bold text-slate-400 uppercase">Policy Type</p><p class="font-black text-red-600">ILP / Wealth</p></div>
+                        <div class="bg-slate-50 p-4 rounded-2xl border border-red-100 text-center"><p class="text-[9px] font-black text-red-400 uppercase">Charge Free</p><p class="font-black text-slate-700">Year 11</p></div>
+                    </div>` : ''}
                     <div class="timeline-track">${timeline}</div>
                 </div>
             </div>`;
         }
 
-        // Initialize
+        function updateSummaryBar(list, sym, region) {
+            const totalPrem = list.reduce((acc, p) => acc + (p.dueDate !== "PAID UP" ? (typeof p.premium === 'number' ? p.premium : parseFloat(String(p.premium).replace(/[₹$,\s]/g, ""))) : 0), 0);
+            document.getElementById('total-premium').innerText = sym + totalPrem.toLocaleString();
+            document.getElementById('label-sa').innerText = region === 'india' ? "TOTAL SUM ASSURED" : "VALUATION BASIS";
+            document.getElementById('total-sa').innerText = region === 'india' ? sym + " (Calculated)" : "MARKET VALUE";
+        }
+
         setTimeout(() => renderRegion('india'), 100);
     </script>
 </body>
