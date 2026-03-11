@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nami Portfolio v3.5.87</title>
+    <title>Nami Portfolio v3.5.88</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@800;900&family=Inter:wght@400;700;900&display=swap');
@@ -19,21 +19,23 @@
 
         .brand-header { font-family: 'Orbitron', sans-serif; background: linear-gradient(90deg, #6366f1, #ec4899, #f59e0b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 3.5rem; font-weight: 900; text-transform: uppercase; margin-bottom: 30px; }
         
-        /* Shared Dashboard Components */
-        .policy-card { background: white; border-radius: 24px; border-left: 16px solid; margin-bottom: 24px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); transition: 0.3s; overflow: hidden; }
+        /* Card Styles */
+        .policy-card { background: white; border-radius: 24px; border-left: 16px solid; margin-bottom: 24px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); transition: 0.3s; position: relative; overflow: hidden; }
         .card-header { cursor: pointer; display: flex; align-items: center; padding: 30px 40px; min-height: 120px; }
         .content-area { display: none; padding: 40px; border-top: 1px solid #f1f5f9; background: #fafbfc; }
         .open .content-area { display: block; }
 
-        /* Timeline Styling */
+        /* Timeline Styles */
         .timeline-track { position: relative; height: 44px; background: #e2e8f0; border-radius: 22px; display: flex; padding: 0 6px; align-items: center; margin-top: 60px; }
         .segment { height: 36px; flex: 1; margin: 0 1px; border-radius: 4px; position: relative; cursor: help; transition: 0.2s; }
         
-        /* Shared Colors */
-        .bg-current { background: #22c55e; box-shadow: 0 0 20px rgba(34,197,94,0.6); border: 2px solid white; z-index: 10; }
-        .bg-prem-past { background: #064e3b; } /* Dark Green - Anniversary Passed */
+        /* India Colors (Frozen) */
+        .bg-prem-past { background: #064e3b; } 
         .bg-prem-future { background: #10b981; }
-        
+        .bg-current { background: #22c55e; box-shadow: 0 0 20px rgba(34,197,94,0.6); border: 3px solid white; z-index: 10; }
+        .bg-hybrid { background: linear-gradient(to bottom, #10b981 50%, #f59e0b 50%); }
+
+        /* Tooltip */
         .tooltip { 
             visibility: hidden; opacity: 0; position: absolute; bottom: 65px; left: 50%; transform: translateX(-50%); 
             background: #0f172a; color: white; padding: 12px; border-radius: 12px; width: 180px; 
@@ -41,37 +43,24 @@
         }
         .segment:hover .tooltip { visibility: visible; opacity: 1; bottom: 55px; }
 
-        .funky-badge {
-            font-family: 'Orbitron', sans-serif; font-size: 9px; font-weight: 900; padding: 8px 14px; border-radius: 12px;
-            text-transform: uppercase; background: rgba(15, 23, 42, 0.9); color: #fff; border: 2px solid;
-        }
+        .family-marker { display: inline-flex; align-items: center; justify-content: center; margin-left: 14px; color: #94a3b8; font-size: 10px; font-weight: bold; background: #f1f5f9; padding: 2px 8px; border-radius: 10px;}
     </style>
 </head>
 <body>
 
-    <div class="build-tag">BUILD ID: v3.5.87.DYNAMIC</div>
+    <div class="build-tag">BUILD ID: v3.5.88.UNIFIED</div>
 
     <div class="max-w-7xl mx-auto mb-10">
         <h1 class="brand-header">Nami Portfolio</h1>
-        
         <div class="flex gap-4 mb-8">
-            <button onclick="switchRegion('india')" id="nav-india" class="px-8 py-3 bg-slate-800 text-white rounded-full font-bold transition">India</button>
-            <button onclick="switchRegion('singapore')" id="nav-singapore" class="px-8 py-3 bg-white text-slate-600 border border-slate-200 rounded-full font-bold transition">Singapore</button>
+            <button onclick="renderRegion('india')" id="btn-india" class="px-8 py-3 bg-slate-800 text-white rounded-full font-bold transition">India</button>
+            <button onclick="renderRegion('singapore')" id="btn-singapore" class="px-8 py-3 bg-white text-slate-600 border rounded-full font-bold transition">Singapore</button>
         </div>
         
         <div id="summary-bar" class="grid grid-cols-3 gap-6 bg-slate-900 p-8 rounded-[32px] text-white shadow-2xl">
-            <div class="border-r border-slate-700 text-center">
-                <p id="label-sa" class="text-[10px] font-bold text-slate-400 uppercase">Total Sum Assured</p>
-                <p id="total-sa" class="text-4xl font-black text-emerald-400">0</p>
-            </div>
-            <div class="border-r border-slate-700 text-center">
-                <p class="text-[10px] font-bold text-slate-400 uppercase">Annual Premium</p>
-                <p id="total-premium" class="text-4xl font-black text-indigo-400">0</p>
-            </div>
-            <div class="text-center">
-                <p class="text-[10px] font-bold text-slate-400 uppercase">Current Status</p>
-                <p id="status-tag" class="text-4xl font-black text-orange-400">ACTIVE</p>
-            </div>
+            <div class="border-r border-slate-700 text-center"><p id="label-sa" class="text-[10px] font-bold text-slate-400 uppercase">Sum Assured</p><p id="total-sa" class="text-4xl font-black text-emerald-400">0</p></div>
+            <div class="border-r border-slate-700 text-center"><p class="text-[10px] font-bold text-slate-400 uppercase">Annual Premium</p><p id="total-premium" class="text-4xl font-black text-indigo-400">0</p></div>
+            <div class="text-center"><p class="text-[10px] font-bold text-slate-400 uppercase">Current Status</p><p id="status-val" class="text-4xl font-black text-orange-400">ACTIVE</p></div>
         </div>
     </div>
 
@@ -79,13 +68,10 @@
 
     <script type="module">
         import { POLICY_DATA } from './data.js';
-        window.POLICY_DATA = POLICY_DATA;
-        
-        // Dynamic Global Time
-        window.TODAY = new Date();
-        window.CURRENT_YEAR = window.TODAY.getFullYear();
 
-        // Global Card Toggle
+        const TODAY = new Date();
+        const CURRENT_YEAR = TODAY.getFullYear();
+
         window.toggleCard = (id) => {
             const card = document.getElementById(`card-${id}`);
             const wasOpen = card.classList.contains('open');
@@ -93,35 +79,92 @@
             if (!wasOpen) card.classList.add('open');
         };
 
-        // Shared Formatting Utility
-        window.autoFmt = (val, sym) => {
-            if (!val) return sym + "0";
-            const num = typeof val === 'number' ? val : parseFloat(String(val).replace(/[₹$,\s]/g, ""));
+        const autoFmt = (val, sym) => {
+            const num = typeof val === 'number' ? val : parseFloat(String(val || 0).replace(/[₹$,\s]/g, ""));
             return isNaN(num) ? val : sym + num.toLocaleString();
         };
 
-        // Navigation Switcher
-        window.switchRegion = (region) => {
-            const btnInd = document.getElementById('nav-india');
-            const btnSg = document.getElementById('nav-singapore');
+        // --- THE ENGINES ---
+
+        window.renderRegion = (region) => {
+            const list = POLICY_DATA[region] || [];
+            const sym = (region === 'singapore') ? "$" : "₹";
+            const container = document.getElementById('container');
             
-            if(region === 'india') {
-                btnInd.className = "px-8 py-3 bg-slate-800 text-white rounded-full font-bold transition";
-                btnSg.className = "px-8 py-3 bg-white text-slate-600 border border-slate-200 rounded-full font-bold transition";
-                renderIndia();
-            } else {
-                btnSg.className = "px-8 py-3 bg-[#d31145] text-white rounded-full font-bold transition";
-                btnInd.className = "px-8 py-3 bg-white text-slate-600 border border-slate-200 rounded-full font-bold transition";
-                renderSingapore();
-            }
+            // UI Toggle
+            document.getElementById('btn-india').className = region === 'india' ? "px-8 py-3 bg-slate-800 text-white rounded-full font-bold" : "px-8 py-3 bg-white text-slate-600 border rounded-full font-bold";
+            document.getElementById('btn-singapore').className = region === 'singapore' ? "px-8 py-3 bg-[#d31145] text-white rounded-full font-bold" : "px-8 py-3 bg-white text-slate-600 border rounded-full font-bold";
+
+            container.innerHTML = list.map(p => {
+                if (region === 'india') return renderIndiaCard(p, sym);
+                if (region === 'singapore') return renderSingaporeCard(p, sym);
+            }).join('');
+
+            // Summary Logic
+            const totalPrem = list.reduce((acc, p) => acc + (p.dueDate !== "PAID UP" ? (typeof p.premium === 'number' ? p.premium : parseFloat(String(p.premium).replace(/[₹$,\s]/g, ""))) : 0), 0);
+            document.getElementById('total-premium').innerText = sym + totalPrem.toLocaleString();
+            document.getElementById('label-sa').innerText = region === 'india' ? "Total Sum Assured" : "Valuation Basis";
+            document.getElementById('total-sa').innerText = region === 'india' ? sym + " (Calculated)" : "Market Value";
         };
 
-        // Boot
-        setTimeout(() => switchRegion('india'), 100);
+        function renderIndiaCard(p, sym) {
+            const startY = parseInt(p.commenced.split(' ')[2]);
+            const annDay = parseInt(p.commenced.split(' ')[0]);
+            const annMonth = p.commenced.split(' ')[1];
+            const matY = parseInt(p.maturity.split(' ')[2]);
+            const premEndYear = parseInt(p.premiumEnds.split(' ')[2]);
+            const anniversaryDate = new Date(`${annMonth} ${annDay}, ${CURRENT_YEAR}`);
+            const hasPassed = TODAY > anniversaryDate;
+
+            let timeline = '';
+            for(let yr = startY; yr < matY; yr++) {
+                const isPast = yr < CURRENT_YEAR || (yr === CURRENT_YEAR && hasPassed);
+                const isCurrent = yr === CURRENT_YEAR && !hasPassed;
+                let color = (yr <= premEndYear) ? (isCurrent ? "bg-current" : (isPast ? "bg-prem-past" : "bg-prem-future")) : "bg-slate-200";
+                timeline += `<div class="segment ${color}"><div class="tooltip">Year ${yr}<br>${isPast ? 'Paid' : 'Due'}</div></div>`;
+            }
+
+            return `<div class="policy-card" id="card-${p.id}" style="border-color: ${p.color}">
+                <div class="card-header" onclick="toggleCard('${p.id}')">
+                    <div class="w-32"><img src="${p.logo}" class="max-h-12"></div>
+                    <div class="flex-1 ml-10"><h3 class="font-black text-xl">${p.name} ${p.isWife ? '<span class="family-marker">Wife</span>' : ''}</h3></div>
+                    <div class="text-right mr-10"><p class="text-[9px] font-bold text-slate-400 uppercase">Premium</p><p class="text-lg font-black text-emerald-600">${autoFmt(p.premium, sym)}</p></div>
+                    <div class="bg-slate-900 text-white px-6 py-2 rounded-xl text-xs font-bold">${p.dueDate}</div>
+                </div>
+                <div class="content-area"><div class="timeline-track">${timeline}</div></div>
+            </div>`;
+        }
+
+        function renderSingaporeCard(p, sym) {
+            const startY = parseInt(p.commenced.split(' ')[2]);
+            let timeline = '';
+            for(let i = 0; i < 15; i++) {
+                const yr = startY + i;
+                const charge = (p.surrenderCharges && p.surrenderCharges[i+1]) || 0;
+                let color = (yr === CURRENT_YEAR) ? "bg-red-600 shadow-lg scale-110 z-10" : (yr < CURRENT_YEAR ? "bg-slate-400" : "bg-red-300");
+                timeline += `<div class="segment ${color}"><div class="tooltip">Year ${i+1} (${yr})<br>Exit Charge: ${charge}%</div></div>`;
+            }
+
+            return `<div class="policy-card" id="card-${p.id}" style="border-color: #d31145">
+                <div class="card-header" onclick="toggleCard('${p.id}')">
+                    <div class="w-32"><img src="${p.logo}" class="max-h-12"></div>
+                    <div class="flex-1 ml-10"><h3 class="font-black text-xl">${p.name}</h3><span class="text-[10px] bg-red-600 text-white px-2 py-1 rounded font-bold uppercase">${p.type}</span></div>
+                    <div class="text-right mr-10"><p class="text-[9px] font-bold text-slate-400 uppercase">Contribution</p><p class="text-lg font-black text-red-600">${autoFmt(p.premium, sym)}</p></div>
+                    <div class="bg-slate-900 text-white px-6 py-2 rounded-xl text-xs font-bold">${p.dueDate}</div>
+                </div>
+                <div class="content-area">
+                    <div class="grid grid-cols-3 gap-4 mb-8">
+                        <div class="bg-slate-50 p-4 rounded-xl text-center"><p class="text-[9px] font-bold text-slate-400 uppercase">ILP Death Benefit</p><p class="text-xs font-bold text-emerald-600">Max(Premium, Value)</p></div>
+                        <div class="bg-slate-50 p-4 rounded-xl text-center"><p class="text-[9px] font-bold text-slate-400 uppercase">Withdrawals</p><p class="text-xs font-bold text-slate-700">Allowed after Yr 3</p></div>
+                        <div class="bg-slate-50 p-4 rounded-xl text-center"><p class="text-[9px] font-bold text-slate-400 uppercase">Full Liquidity</p><p class="text-xs font-bold text-red-700">Year 11 (2032)</p></div>
+                    </div>
+                    <div class="timeline-track">${timeline}</div>
+                </div>
+            </div>`;
+        }
+
+        // Initialize
+        setTimeout(() => renderRegion('india'), 100);
     </script>
-
-    <script src="india.js"></script>
-    <script src="singapore.js"></script>
-
 </body>
 </html>
