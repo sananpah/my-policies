@@ -95,8 +95,8 @@ export const POLICY_DATA = {
             logo: "image_4b9b3f.png", id: "U126327913", type: "ILP", 
             premium: 5000, sumAssured: 0, dueDate: "30 Dec 2026", 
             commenced: "30 Dec 2021", premiumEnds: "30 Dec 2031", maturity: "30 Dec 2077", 
-            color: "#d31145", currency: "$", welcomeBonus: { 1: 0.05, 2: 0.08, 3: 0.10 },
-            surrenderCharges: { 1: 1.0, 2: 1.0, 3: 0.8, 4: 0.7, 5: 0.6, 6: 0.5, 7: 0.45, 8: 0.35, 9: 0.2, 10: 0.05, 11: 0 },
+            color: "#d31145", currency: "$", welcomeBonus: { 1: 5, 2: 8, 3: 10 },specialBonus: { 10: 5 },
+            surrenderCharges: { 1: 100, 2: 100, 3: 80, 4: 70, 5: 60, 6: 50, 7: 45, 8: 35, 9: 20, 10: 5, 11: 0 },
             isULIP: true 
         }
     ]
