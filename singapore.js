@@ -1,4 +1,4 @@
-/* singapore.js - The ILP Engine */
+/* singapore.js - Fully Dynamic ILP Engine */
 
 window.renderSingapore = function() {
     const list = POLICY_DATA.singapore || [];
@@ -10,11 +10,14 @@ window.renderSingapore = function() {
             const startYear = parseInt(p.commenced.split(' ')[2]);
             let timelineHtml = '';
 
+            // Generate 15-year projection from commencement
             for(let i = 0; i < 15; i++) {
                 const year = startYear + i;
                 const polY = i + 1;
-                const isPast = year < 2026; 
-                const isCurrent = year === 2026;
+                
+                // DYNAMIC CHECKS: No more hardcoding 2026
+                const isPast = year < window.CURRENT_YEAR; 
+                const isCurrent = year === window.CURRENT_YEAR;
                 
                 const wBonus = (p.welcomeBonus && p.welcomeBonus[polY]) || 0;
                 const sBonus = (p.specialBonus && p.specialBonus[polY]) || 0;
@@ -22,12 +25,16 @@ window.renderSingapore = function() {
                                ? p.surrenderCharges[polY] 
                                : 0;
 
-                let colorClass = isCurrent ? "bg-red-600 shadow-lg scale-110 z-10" : (isPast ? "bg-slate-400" : "bg-red-300");
+                // Visual Logic: Highlighting the actual current year
+                let colorClass = isCurrent 
+                    ? "bg-red-600 shadow-[0_0_15px_rgba(211,17,69,0.6)] scale-110 z-10" 
+                    : (isPast ? "bg-slate-400" : "bg-red-200");
 
                 timelineHtml += `
-                    <div class="segment ${colorClass} flex-1 h-8 rounded-sm relative group cursor-help">
+                    <div class="segment ${colorClass} flex-1 h-8 rounded-sm relative group cursor-help transition-all">
                         <div class="tooltip opacity-0 group-hover:opacity-100 absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] p-2 rounded w-32 text-center transition-all pointer-events-none">
                             <b class="text-red-300 uppercase">Year ${polY} (${year})</b><br>
+                            ${isCurrent ? '⭐ CURRENT YEAR<br>' : ''}
                             Total Bonus: ${wBonus + sBonus}%<br>
                             Exit Charge: ${charge}%
                         </div>
@@ -52,16 +59,16 @@ window.renderSingapore = function() {
 
                     <div class="px-8 pb-8">
                         <div class="grid grid-cols-3 gap-4 mb-8">
-                            <div class="bg-slate-50 p-4 rounded-2xl">
-                                <p class="text-[9px] font-bold text-slate-400 uppercase">Policy Number</p>
+                            <div class="bg-slate-50 p-4 rounded-2xl text-center">
+                                <p class="text-[9px] font-bold text-slate-400 uppercase">Policy ID</p>
                                 <p class="text-sm font-bold text-slate-700">${p.id}</p>
                             </div>
-                            <div class="bg-slate-50 p-4 rounded-2xl">
-                                <p class="text-[9px] font-bold text-slate-400 uppercase">ILP Death Benefit</p>
-                                <p class="text-[10px] font-bold text-emerald-600 uppercase">Higher of Premium or Value</p>
+                            <div class="bg-slate-50 p-4 rounded-2xl text-center">
+                                <p class="text-[9px] font-bold text-slate-400 uppercase">ILP Valuation</p>
+                                <p class="text-[10px] font-bold text-emerald-600 uppercase">Unit Value Basis</p>
                             </div>
-                            <div class="bg-slate-50 p-4 rounded-2xl">
-                                <p class="text-[9px] font-bold text-slate-400 uppercase">Minimum Investment Period</p>
+                            <div class="bg-slate-50 p-4 rounded-2xl text-center">
+                                <p class="text-[9px] font-bold text-slate-400 uppercase">MIP Period</p>
                                 <p class="text-sm font-bold text-red-700">10 Years</p>
                             </div>
                         </div>
@@ -74,7 +81,8 @@ window.renderSingapore = function() {
                             </div>
                             <div class="flex justify-between mt-2 text-[10px] font-bold text-slate-400 uppercase">
                                 <span>Commenced ${startYear}</span>
-                                <span>Exit Charges end Yr 11</span>
+                                <span class="text-red-600 font-black text-xs">Current: ${window.CURRENT_YEAR}</span>
+                                <span>15Y Projection</span>
                             </div>
                         </div>
                     </div>
@@ -82,8 +90,13 @@ window.renderSingapore = function() {
         }
     });
     
-    // Summary logic for Singapore
+    updateSummary(list, "$");
+};
+
+// Simple summary updater to avoid duplication
+function updateSummary(list, sym) {
     const totalPrem = list.reduce((sum, pol) => sum + pol.premium, 0);
     document.getElementById('total-sa').innerText = "Market Value";
-    document.getElementById('total-premium').innerText = "$" + totalPrem.toLocaleString();
-};
+    document.getElementById('total-sa-label').innerText = "Portfolio Basis";
+    document.getElementById('total-premium').innerText = sym + totalPrem.toLocaleString();
+}
