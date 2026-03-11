@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nami Portfolio v3.5.78</title>
+    <title>Nami Portfolio v3.5.79</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@800;900&family=Inter:wght@400;700;900&display=swap');
@@ -69,17 +69,19 @@
         @keyframes sweep { 0% { left: -100%; } 100% { left: 100%; } }
 
         .paid-logo { width: 110px; transform: rotate(-5deg); filter: drop-shadow(0 0 8px rgba(34, 197, 94, 0.4)); }
+        
+        /* Female Marker Styling */
+        .wife-marker { display: inline-flex; align-items: center; justify-content: center; margin-left: 12px; color: #94a3b8; }
     </style>
 </head>
 <body>
 
-    <div class="build-tag">BUILD ID: v3.5.78.COUNTDOWN</div>
+    <div class="build-tag">BUILD ID: v3.5.79.HYBRID-CONSO</div>
 
     <div class="max-w-7xl mx-auto mb-10">
         <h1 class="brand-header">Nami Portfolio</h1>
         <div class="flex gap-4 mb-8">
-            <button onclick="render('india')" class="px-8 py-3 bg-slate-800 text-white rounded-full font-bold hover:bg-slate-700 transition">India</button>
-            <button onclick="render('wife')" class="px-8 py-3 bg-slate-800 text-white rounded-full font-bold hover:bg-slate-700 transition">Wife</button>
+            <button onclick="render('india')" class="px-8 py-3 bg-slate-800 text-white rounded-full font-bold hover:bg-slate-700 transition">India Combined</button>
             <button onclick="render('singapore')" class="px-8 py-3 bg-slate-800 text-white rounded-full font-bold hover:bg-slate-700 transition">Singapore</button>
         </div>
         
@@ -93,7 +95,7 @@
     <div id="container" class="max-w-7xl mx-auto"></div>
 
     <script type="module">
-        import { POLICY_DATA } from './data.js?v=3.5.78';
+        import { POLICY_DATA } from './data.js?v=3.5.79';
 
         const TODAY = new Date();
         const CURRENT_YEAR = TODAY.getFullYear();
@@ -117,15 +119,9 @@
             if (!endDateStr || endDateStr === "PAID UP") return "✓";
             const parts = endDateStr.split(' ');
             const end = new Date(`${parts[1]} ${parts[0]}, ${parts[2]}`);
-            
             let years = end.getFullYear() - TODAY.getFullYear();
             let months = end.getMonth() - TODAY.getMonth();
-
-            if (months < 0) {
-                years--;
-                months += 12;
-            }
-
+            if (months < 0) { years--; months += 12; }
             if (years < 0) return "✓";
             return `${String(years).padStart(2, '0')}y${String(months).padStart(2, '0')}m`;
         }
@@ -137,9 +133,7 @@
             return isNaN(num) ? val : sym + num.toLocaleString();
         }
 
-        function raw(val) {
-            return (val === undefined || val === null) ? "" : val;
-        }
+        function raw(val) { return (val === undefined || val === null) ? "" : val; }
 
         function toNum(val) {
             if(!val) return 0;
@@ -196,22 +190,21 @@
                     timelineHtml += `<div class="segment ${color}"><div class="tooltip"><b class="text-emerald-400 uppercase tracking-tighter">${phase}</b><br>${detail}<br><span class="opacity-40 text-[9px]">Year ${polY} (${yr})</span></div></div>`;
                 }
 
-                timelineHtml += `
-                <div class="mat-star">
-                    ★
-                    <div class="tooltip">
-                        <b class="text-orange-400 uppercase tracking-widest">Maturity</b><br>
-                        <span class="${String(p.maturityAmt || p.sumAssured).length > 15 ? 'text-[10px]' : 'text-lg'} font-black">
-                            ${raw(p.maturityAmt || p.sumAssured)}
-                        </span>
-                    </div>
-                </div>`;
+                timelineHtml += `<div class="mat-star">★<div class="tooltip"><b class="text-orange-400 uppercase tracking-widest">Maturity</b><br><span class="${String(p.maturityAmt || p.sumAssured).length > 15 ? 'text-[10px]' : 'text-lg'} font-black">${raw(p.maturityAmt || p.sumAssured)}</span></div></div>`;
 
                 return `
                 <div class="policy-card" id="card-${p.id}" style="border-color: ${p.color}">
                     <div class="card-header" onclick="toggleCard('${p.id}')">
                         <div class="w-32 flex justify-center"><img src="${p.logo}" class="max-h-12"></div>
-                        <div class="flex-1 ml-10"><h3 class="font-black text-slate-800 text-xl tracking-tight">${p.name}</h3></div>
+                        <div class="flex-1 ml-10">
+                            <h3 class="font-black text-slate-800 text-xl tracking-tight flex items-center">
+                                ${p.name}
+                                ${p.isWife ? `
+                                <span class="wife-marker" title="Wife's Policy">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm8.94 14c-.46-4.17-3.97-7.41-8.19-7.41s-7.73 3.24-8.19 7.41c-.02.21.11.41.32.41H20.62c.21 0 .34-.2.32-.41z"/></svg>
+                                </span>` : ''}
+                            </h3>
+                        </div>
                         <div class="flex gap-12 items-center mr-10">
                             <div class="flex items-center w-[300px] -ml-12">
                                 <div class="funky-badge" style="border-color: ${p.color}; box-shadow: 0 0 10px ${p.color}44;">${p.type}</div>
