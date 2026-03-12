@@ -1,0 +1,20 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@800;900&family=Inter:wght@400;700;900&display=swap'); 
+
+body { 
+    background-color: #f8fafc;
+    font-family: 'Inter', sans-serif;
+    padding: 40px;
+    position: relative;
+    }
+
+.brand-header { 
+  font-family: 'Orbitron', sans-serif;
+  background: linear-gradient(90deg, #6366f1, #ec4899, #f59e0b);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-size: 3.5rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  margin-bottom: 30px;
+  }
+
