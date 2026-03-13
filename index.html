@@ -48,7 +48,6 @@
                     <option value="premium">Premium: High to Low</option>
                     <option value="time">Maturity: Soonest First</option>
                     <option value="due">Due Date: Earliest First</option>
-                    <option value="company">Company: A to Z</option>
                 </select>
             </div>
         </div>
@@ -70,7 +69,6 @@
         const TODAY = new Date();
         const CURRENT_YEAR = TODAY.getFullYear();
         
-        // State tracking
         window.currentCategory = 'india';
 
         window.toggleCard = (id) => {
@@ -80,9 +78,8 @@
             if (!wasOpen) card.classList.add('open');
         };
 
-        // Helper to convert "DD MMM YYYY" to Sortable Date
         const parseDate = (str) => {
-            if (!str || str === "PAID UP") return new Date(9999, 0, 1); // Push to end
+            if (!str || str === "PAID UP") return new Date(9999, 0, 1);
             const p = str.split(' ');
             return new Date(`${p[1]} ${p[0]}, ${p[2]}`);
         };
@@ -96,9 +93,6 @@
             // --- SORTING ENGINE ---
             if (sortBy === 'premium') {
                 list.sort((a, b) => toNum(b.premium) - toNum(a.premium));
-            } 
-            else if (sortBy === 'company') {
-                list.sort((a, b) => a.name.localeCompare(b.name));
             } 
             else if (sortBy === 'due') {
                 list.sort((a, b) => parseDate(a.dueDate) - parseDate(b.dueDate));
@@ -121,7 +115,6 @@
             document.getElementById('due-count').innerText = list.filter(p => checkIsDueSoon(p.dueDate)).length;
         }
 
-        // Initial Load
         render('india');
     </script>
 </body>
