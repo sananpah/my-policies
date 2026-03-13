@@ -1,4 +1,6 @@
-   function checkIsDueSoon(dueDateStr) {
+/* india.js - Utility Section */
+
+      export function checkIsDueSoon(dueDateStr) {
             if (!dueDateStr || dueDateStr === "PAID UP") return false;
             const parts = dueDateStr.split(' '); 
             const due = new Date(`${parts[1]} ${parts[0]}, ${parts[2]}`);
@@ -6,7 +8,7 @@
             return diff >= 0 && diff <= 30;
         }
 
-        function getTimeLeft(endDateStr) {
+        export function getTimeLeft(endDateStr) {
             if (!endDateStr || endDateStr === "PAID UP") return null;
             const parts = endDateStr.split(' ');
             const end = new Date(`${parts[1]} ${parts[0]}, ${parts[2]}`);
@@ -17,16 +19,16 @@
             return `${String(years).padStart(2, '0')}y${String(months).padStart(2, '0')}m`;
         }
 
-        function autoFmt(val, sym) {
+        export function autoFmt(val, sym) {
             if (val === undefined || val === null) return sym + "0";
             const clean = String(val).replace(/[₹$,\s]/g, "");
             const num = parseFloat(clean);
             return isNaN(num) ? val : sym + num.toLocaleString();
         }
 
-        function raw(val) { return (val === undefined || val === null) ? "" : val; }
+        export function raw(val) { return (val === undefined || val === null) ? "" : val; }
 
-        function toNum(val) {
+        export function toNum(val) {
             if(!val) return 0;
             const clean = String(val).replace(/[₹$,\s]/g, "");
             const n = parseFloat(clean);
