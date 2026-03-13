@@ -7,18 +7,30 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="india_styles.css">
     <style>
-        .build-tag { 
-            position: fixed; top: 20px; right: 20px; 
-            font-family: 'Orbitron', sans-serif; font-size: 10px; font-weight: 900;
-            background: #1e293b; color: #6366f1; padding: 8px 16px; 
-            border-radius: 99px; border: 1px solid #334155; z-index: 1000;
+        /* Expansion Logic: Must be in index.html */
+        .policy-card .content-area { display: none; }
+        .policy-card.open .content-area { display: block; }
+
+        /* Simple Build ID with a soft glow effect */
+        .simple-build {
+            position: fixed; top: 15px; right: 20px;
+            font-family: monospace; font-size: 11px; font-weight: bold;
+            color: #6366f1; background: rgba(99, 102, 241, 0.1);
+            padding: 4px 12px; border-radius: 20px;
+            box-shadow: 0 0 10px rgba(99, 102, 241, 0.2);
+            animation: pulse-soft 3s infinite;
+            z-index: 1000;
+        }
+        @keyframes pulse-soft {
+            0%, 100% { opacity: 0.8; }
+            50% { opacity: 1; box-shadow: 0 0 15px rgba(99, 102, 241, 0.4); }
         }
 
         .funky-badge {
-            font-family: 'Orbitron', sans-serif; font-size: 9px; font-weight: 900; padding: 8px 14px; border-radius: 12px;
-            text-transform: uppercase; letter-spacing: 1px; background: rgba(15, 23, 42, 0.9); color: #fff;
-            border: 2px solid; box-shadow: 0 4px 15px rgba(0,0,0,0.2), inset 0 0 10px rgba(255,255,255,0.1);
-            position: relative; overflow: hidden; min-width: 120px; text-align: center;
+            font-family: 'Orbitron', sans-serif; font-size: 9px; font-weight: 900; 
+            padding: 8px 14px; border-radius: 12px;
+            text-transform: uppercase; background: #0f172a; color: #fff;
+            position: relative; overflow: hidden; display: inline-block;
         }
         .funky-badge::after {
             content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
@@ -30,20 +42,23 @@
 </head>
 <body class="bg-slate-50">
 
-    <div class="build-tag">BUILD ID: v3.5.85 [MODULAR + SORT]</div>
+    <div class="simple-build">v3.5.85</div>
 
-    <div class="max-w-7xl mx-auto mb-10 pt-10">
-        <h1 class="brand-header">Nami Portfolio</h1>
+    <div class="max-w-7xl mx-auto mb-10 pt-10 px-4">
+        <div class="flex justify-between items-end mb-6">
+            <h1 class="text-5xl font-black text-slate-900 tracking-tighter">Nami Portfolio</h1>
+            <div id="portfolio-status" class="funky-badge">India Portfolio</div>
+        </div>
         
         <div class="flex flex-wrap items-center justify-between gap-4 mb-8">
             <div class="flex gap-4">
-                <button onclick="render('india')" class="px-8 py-3 bg-slate-800 text-white rounded-full font-bold hover:bg-slate-700 transition">India</button>
-                <button onclick="render('singapore')" class="px-8 py-3 bg-slate-800 text-white rounded-full font-bold hover:bg-slate-700 transition">Singapore</button>
+                <button onclick="render('india')" class="px-8 py-3 bg-slate-800 text-white rounded-full font-bold hover:bg-slate-700 transition shadow-lg">India</button>
+                <button onclick="render('singapore')" class="px-8 py-3 bg-slate-800 text-white rounded-full font-bold hover:bg-slate-700 transition shadow-lg">Singapore</button>
             </div>
 
             <div class="flex items-center gap-3 bg-white p-2 rounded-2xl border border-slate-200 shadow-sm">
                 <span class="text-[10px] font-black uppercase text-slate-400 ml-2">Sort By</span>
-                <select id="sort-trigger" onchange="render(window.currentCategory)" class="bg-transparent text-xs font-bold rounded-lg px-2 py-1 outline-none cursor-pointer text-slate-700">
+                <select id="sort-trigger" onchange="render(window.currentCategory)" class="bg-transparent text-xs font-bold rounded-lg px-2 py-1 outline-none cursor-pointer">
                     <option value="default">Default Order</option>
                     <option value="premium">Premium: High to Low</option>
                     <option value="time">Maturity: Soonest First</option>
@@ -53,22 +68,33 @@
         </div>
         
         <div id="summary-bar" class="grid grid-cols-3 gap-6 bg-slate-900 p-8 rounded-[32px] text-white shadow-2xl">
-            <div class="border-r border-slate-700 text-center"><p class="text-[10px] font-bold text-slate-400 uppercase">Total Sum Assured</p><p id="total-sa" class="text-4xl font-black text-emerald-400">0</p></div>
-            <div class="border-r border-slate-700 text-center"><p class="text-[10px] font-bold text-slate-400 uppercase">Annual Premium</p><p id="total-premium" class="text-4xl font-black text-indigo-400">0</p></div>
-            <div class="text-center"><p class="text-[10px] font-bold text-slate-400 uppercase">Policies Due</p><p id="due-count" class="text-4xl font-black text-orange-400">0</p></div>
+            <div class="border-r border-slate-700 text-center">
+                <p class="text-[10px] font-bold text-slate-400 uppercase">Total Sum Assured</p>
+                <p id="total-sa" class="text-4xl font-black text-emerald-400">0</p>
+            </div>
+            <div class="border-r border-slate-700 text-center">
+                <p class="text-[10px] font-bold text-slate-400 uppercase">Annual Premium</p>
+                <p id="total-premium" class="text-4xl font-black text-indigo-400">0</p>
+            </div>
+            <div class="text-center">
+                <p class="text-[10px] font-bold text-slate-400 uppercase">Policies Due</p>
+                <p id="due-count" class="text-4xl font-black text-orange-400">0</p>
+            </div>
         </div>
     </div>
 
-    <div id="container" class="max-w-7xl mx-auto pb-20"></div>
+    <div id="container" class="max-w-7xl mx-auto pb-20 px-4"></div>
 
     <script type="module">
         import { POLICY_DATA } from './data.js?v=3.5.85';
         import { checkIsDueSoon, toNum } from './india.js';
-        import { createPolicyCard } from './components.js';
+        
+        // This is where we use two different files
+        import { createPolicyCard } from './component.js'; 
+        import { createSGCard } from './component_sg.js';
 
         const TODAY = new Date();
         const CURRENT_YEAR = TODAY.getFullYear();
-        
         window.currentCategory = 'india';
 
         window.toggleCard = (id) => {
@@ -90,23 +116,19 @@
             let list = [...(POLICY_DATA[cat] || [])];
             const sym = (cat === 'singapore') ? "$" : "₹";
 
-            // --- SORTING ENGINE ---
-            if (sortBy === 'premium') {
-                list.sort((a, b) => toNum(b.premium) - toNum(a.premium));
-            } 
-            else if (sortBy === 'due') {
-                list.sort((a, b) => parseDate(a.dueDate) - parseDate(b.dueDate));
-            } 
-            else if (sortBy === 'time') {
-                list.sort((a, b) => parseDate(a.premiumEnds) - parseDate(b.premiumEnds));
-            }
+            document.getElementById('portfolio-status').innerText = `${cat} Portfolio`;
 
-            // --- UI RENDER ---
-            document.getElementById('container').innerHTML = list.map(p => 
-                createPolicyCard(p, sym, TODAY, CURRENT_YEAR)
+            if (sortBy === 'premium') list.sort((a, b) => toNum(b.premium) - toNum(a.premium));
+            else if (sortBy === 'due') list.sort((a, b) => parseDate(a.dueDate) - parseDate(b.dueDate));
+            else if (sortBy === 'time') list.sort((a, b) => parseDate(a.premiumEnds) - parseDate(b.premiumEnds));
+
+            const container = document.getElementById('container');
+            container.innerHTML = list.map(p => 
+                (cat === 'singapore') 
+                    ? createSGCard(p, sym, TODAY, CURRENT_YEAR) 
+                    : createPolicyCard(p, sym, TODAY, CURRENT_YEAR)
             ).join('');
 
-            // --- SUMMARY RECALC ---
             const tSA = list.reduce((acc, p) => acc + toNum(p.sumAssured), 0);
             const tAnn = list.reduce((acc, p) => acc + (p.dueDate !== "PAID UP" ? toNum(p.premium) : 0), 0);
             
