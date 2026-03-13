@@ -1,5 +1,7 @@
 /* india.js - Utility Section */
 
+const TODAY = new Date();
+
       export function checkIsDueSoon(dueDateStr) {
             if (!dueDateStr || dueDateStr === "PAID UP") return false;
             const parts = dueDateStr.split(' '); 
