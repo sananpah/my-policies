@@ -28,15 +28,29 @@
         @keyframes sweep { 0% { left: -100%; } 100% { left: 100%; } }
     </style>
 </head>
-<body>
+<body class="bg-slate-50">
 
-    <div class="build-tag">BUILD ID: v3.5.85 [MODULAR]</div>
+    <div class="build-tag">BUILD ID: v3.5.85 [MODULAR + SORT]</div>
 
-    <div class="max-w-7xl mx-auto mb-10">
+    <div class="max-w-7xl mx-auto mb-10 pt-10">
         <h1 class="brand-header">Nami Portfolio</h1>
-        <div class="flex gap-4 mb-8">
-            <button onclick="render('india')" class="px-8 py-3 bg-slate-800 text-white rounded-full font-bold hover:bg-slate-700 transition">India</button>
-            <button onclick="render('singapore')" class="px-8 py-3 bg-slate-800 text-white rounded-full font-bold hover:bg-slate-700 transition">Singapore</button>
+        
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-8">
+            <div class="flex gap-4">
+                <button onclick="render('india')" class="px-8 py-3 bg-slate-800 text-white rounded-full font-bold hover:bg-slate-700 transition">India</button>
+                <button onclick="render('singapore')" class="px-8 py-3 bg-slate-800 text-white rounded-full font-bold hover:bg-slate-700 transition">Singapore</button>
+            </div>
+
+            <div class="flex items-center gap-3 bg-white p-2 rounded-2xl border border-slate-200 shadow-sm">
+                <span class="text-[10px] font-black uppercase text-slate-400 ml-2">Sort By</span>
+                <select id="sort-trigger" onchange="render(window.currentCategory)" class="bg-transparent text-xs font-bold rounded-lg px-2 py-1 outline-none cursor-pointer text-slate-700">
+                    <option value="default">Default Order</option>
+                    <option value="premium">Premium: High to Low</option>
+                    <option value="time">Maturity: Soonest First</option>
+                    <option value="due">Due Date: Earliest First</option>
+                    <option value="company">Company: A to Z</option>
+                </select>
+            </div>
         </div>
         
         <div id="summary-bar" class="grid grid-cols-3 gap-6 bg-slate-900 p-8 rounded-[32px] text-white shadow-2xl">
@@ -46,7 +60,7 @@
         </div>
     </div>
 
-    <div id="container" class="max-w-7xl mx-auto"></div>
+    <div id="container" class="max-w-7xl mx-auto pb-20"></div>
 
     <script type="module">
         import { POLICY_DATA } from './data.js?v=3.5.85';
@@ -55,6 +69,9 @@
 
         const TODAY = new Date();
         const CURRENT_YEAR = TODAY.getFullYear();
+        
+        // State tracking
+        window.currentCategory = 'india';
 
         window.toggleCard = (id) => {
             const card = document.getElementById(`card-${id}`);
@@ -63,16 +80,39 @@
             if (!wasOpen) card.classList.add('open');
         };
 
+        // Helper to convert "DD MMM YYYY" to Sortable Date
+        const parseDate = (str) => {
+            if (!str || str === "PAID UP") return new Date(9999, 0, 1); // Push to end
+            const p = str.split(' ');
+            return new Date(`${p[1]} ${p[0]}, ${p[2]}`);
+        };
+
         window.render = function(cat) {
-            const list = POLICY_DATA[cat] || [];
+            window.currentCategory = cat;
+            const sortBy = document.getElementById('sort-trigger').value;
+            let list = [...(POLICY_DATA[cat] || [])];
             const sym = (cat === 'singapore') ? "$" : "₹";
 
-            // Use the component to build the HTML
+            // --- SORTING ENGINE ---
+            if (sortBy === 'premium') {
+                list.sort((a, b) => toNum(b.premium) - toNum(a.premium));
+            } 
+            else if (sortBy === 'company') {
+                list.sort((a, b) => a.name.localeCompare(b.name));
+            } 
+            else if (sortBy === 'due') {
+                list.sort((a, b) => parseDate(a.dueDate) - parseDate(b.dueDate));
+            } 
+            else if (sortBy === 'time') {
+                list.sort((a, b) => parseDate(a.premiumEnds) - parseDate(b.premiumEnds));
+            }
+
+            // --- UI RENDER ---
             document.getElementById('container').innerHTML = list.map(p => 
                 createPolicyCard(p, sym, TODAY, CURRENT_YEAR)
             ).join('');
 
-            // Summary calculations
+            // --- SUMMARY RECALC ---
             const tSA = list.reduce((acc, p) => acc + toNum(p.sumAssured), 0);
             const tAnn = list.reduce((acc, p) => acc + (p.dueDate !== "PAID UP" ? toNum(p.premium) : 0), 0);
             
@@ -81,6 +121,7 @@
             document.getElementById('due-count').innerText = list.filter(p => checkIsDueSoon(p.dueDate)).length;
         }
 
+        // Initial Load
         render('india');
     </script>
 </body>
