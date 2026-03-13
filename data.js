@@ -97,7 +97,7 @@ export const POLICY_DATA = {
             commenced: "30 Dec 2021", premiumEnds: "30 Dec 2031", maturity: "30 Dec 2077", 
             color: "#d31145", currency: "$", welcomeBonus: { 1: 5, 2: 8, 3: 10 },specialBonus: { 10: 5 },
             surrenderCharges: { 1: 100, 2: 100, 3: 80, 4: 70, 5: 60, 6: 50, 7: 45, 8: 35, 9: 20, 10: 5, 11: 0 },
-            currentUnitValue: "27589"
+            currentUnitValue: "27589",
             isULIP: true 
         }
     ]
