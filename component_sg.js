@@ -1,24 +1,28 @@
-/* component_sg.js - v3.9.3 - Hover Fixes */
+/* component_sg.js - v3.9.5 - Specific Year Offsets */
 import { autoFmt, toNum } from './india.js';
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const commDate = new Date(p.commenced);
     const startY = commDate.getFullYear();
     
-    // --- 1. CALCULATIONS ---
+    // --- 1. CORE CALCULATIONS ---
     const accountValue = Math.round(toNum(p.currentUnitValue || 0));
     const annualPremium = toNum(p.premium || 0);
     const displaySumAssured = (toNum(p.sumAssured) === 0) ? accountValue : toNum(p.sumAssured);
 
-    let chargeYear = TODAY.getFullYear() - startY;
-    const anniversaryThisYear = new Date(TODAY.getFullYear(), commDate.getMonth(), commDate.getDate());
-    if (TODAY >= anniversaryThisYear) chargeYear++;
-    
-    const totalPremiumsPaid = annualPremium * 3; 
+    // LOGIC ADJUSTMENT
+    // Manulife: 4th Bar active. AIA: 6th Bar active.
+    const isManulife = p.company.toUpperCase().includes("MANULIFE");
+    const currentInPhase = isManulife ? 4 : 6; 
+
+    // Financial Year for Surrender (Remains at 3 for Manulife per previous step)
+    const financialYear = isManulife ? 3 : 5;
 
     // --- 2. SURRENDER LOGIC ---
-    const chargePct = p.surrenderCharges[chargeYear] || 0;
-    let surrenderChargeAmount = p.company.toUpperCase().includes("MANULIFE") 
+    const totalPremiumsPaid = annualPremium * 3; 
+    const chargePct = p.surrenderCharges[financialYear] || 0;
+    
+    let surrenderChargeAmount = isManulife 
         ? totalPremiumsPaid * (chargePct / 100)
         : accountValue * (chargePct / 100);
 
@@ -26,23 +30,22 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const lockedValue = Math.round(accountValue - surrenderValue);
 
     // --- 3. BRANDING ---
-    const isManulife = p.company.toUpperCase().includes("MANULIFE");
     const brandColor = isManulife ? "#00a758" : "#d31145";
     const brandBg = isManulife ? "rgba(0, 167, 88, 0.03)" : "rgba(211, 17, 69, 0.03)";
 
-    // --- 4. TIMELINE GENERATION (With Tooltips) ---
+    // --- 4. TIMELINE GENERATION ---
     let timelineHtml = '';
     for(let polY = 1; polY <= 15; polY++) {
         const yr = startY + polY - 1;
-        const isCurrent = (polY === chargeYear);
-        const isPast = (polY < chargeYear);
+        const isCurrent = (polY === currentInPhase);
+        const isPast = (polY < currentInPhase);
         const chargeAtYear = p.surrenderCharges[polY] || 0;
         
         let colorClass = isCurrent ? "bg-black ring-2 ring-white z-20 scale-110 shadow-xl" 
                        : (isPast ? "bg-emerald-900" 
                        : (chargeAtYear === 0 ? "bg-red-600" : "bg-pink-400"));
 
-        const statusLabel = isCurrent ? "Current Year" : (isPast ? "History" : (chargeAtYear > 0 ? "Locked Phase" : "Vested / Liquid"));
+        const statusLabel = isCurrent ? "Active Year" : (isPast ? "Completed" : (chargeAtYear > 0 ? "Locked" : "Vested"));
 
         timelineHtml += `
             <div class="segment ${colorClass} h-8 flex-1 border-r border-white/10 first:rounded-l-lg last:rounded-r-lg transition-all relative group/item">
@@ -54,7 +57,6 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
             </div>`;
     }
 
-    // Maturity Star with Hover
     const starHtml = `
         <div class="ml-2 relative group/star flex items-center justify-center w-12 h-10 bg-white rounded-xl shadow-sm border border-slate-200 cursor-help">
             <span class="text-amber-500 text-xl transition-transform group-hover/star:scale-125">★</span>
@@ -67,7 +69,6 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
 
     return `
     <div class="policy-card mb-10 rounded-[40px] bg-white overflow-hidden transition-all duration-500 shadow-[0_20px_50px_rgba(0,0,0,0.08)] border border-slate-100" id="card-${p.id}">
-        
         <div class="p-8 flex items-center justify-between cursor-pointer" onclick="toggleCard('${p.id}')">
             <div class="flex items-center gap-8">
                 <div class="relative">
