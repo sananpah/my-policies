@@ -1,27 +1,23 @@
-/* component_sg.js - Final Baseline v3.5.97 */
+/* component_sg.js - Final Baseline v3.5.99 */
 import { checkIsDueSoon, autoFmt, toNum } from './india.js';
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const commDate = new Date(p.commenced); // Dec 30, 2021
     const startY = commDate.getFullYear();
     
-    // --- CORRECT POLICY YEAR CALCULATION ---
-    // 1. Calculate the difference in calendar years
-    let yearsPassed = TODAY.getFullYear() - startY; 
-    
-    // 2. Determine if the anniversary (Dec 30) has already happened THIS year
+    // --- CALCULATION FOR YEAR 5 (60%) ---
+    // Since today is March 2026 and policy started Dec 2021:
+    // Dec 2021 (Yr 1), Dec 2022 (Yr 2), Dec 2023 (Yr 3), Dec 2024 (Yr 4), Dec 2025 (Yr 5)
+    let polYearToday = (TODAY.getFullYear() - startY);
     const anniversaryThisYear = new Date(TODAY.getFullYear(), commDate.getMonth(), commDate.getDate());
     
-    // 3. Current Policy Year logic:
-    // If today is March 2026 and anniversary is Dec 2026, we are in Policy Year 5.
-    // (2026 - 2021 = 5). Since today < Dec 30, we remain in Year 5.
-    let polYearToday = yearsPassed;
-    if (TODAY >= anniversaryThisYear) {
-        polYearToday = yearsPassed + 1; 
+    // We haven't hit Dec 30, 2026 yet, so we stay in the Year 5 bracket
+    if (TODAY < anniversaryThisYear) {
+        polYearToday = polYearToday; 
     } else {
-        polYearToday = yearsPassed + 1; // Since 2021 is Yr 1, 2026 is Yr 5 before Dec 30
+        polYearToday = polYearToday + 1;
     }
-    // ---------------------------------------
+    // ------------------------------------
 
     const accountValue = Math.round(toNum(p.currentUnitValue || 0));
     const hasVestingLogic = p.surrenderCharges && Object.keys(p.surrenderCharges).length > 0;
@@ -32,21 +28,22 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
 
     if (hasVestingLogic) {
         currentSCharge = p.surrenderCharges[polYearToday] || 0;
-        // Apply the 60% penalty for Year 5
+        // Calculation: 27589 * 0.60 = 16553 charge. 27589 - 16553 = 11036 Liquid.
         surrenderValue = Math.round(accountValue * (1 - (currentSCharge / 100)));
         lockedValue = accountValue - surrenderValue;
     }
 
+    // --- TIMELINE COLOR LOGIC (RESTORED) ---
     let timelineHtml = '';
     if (hasVestingLogic) {
         for(let yr = startY; yr < (startY + 15); yr++) {
             const polY = yr - startY + 1;
             const chargeAtYear = p.surrenderCharges[polY] || 0;
             const isCurrent = (polY === polYearToday);
-            const isPast = (polY < polYearToday);
-
+            
+            // Emerald for Past, Blue for Current, Red for Locked Future, Light Green for Vested Future
             let color = isCurrent ? "bg-blue-600 ring-2 ring-blue-400 z-10 scale-110" : 
-                        (isPast ? "bg-emerald-800" : 
+                        (polY < polYearToday ? "bg-emerald-800" : 
                         (chargeAtYear > 0 ? "bg-red-500/10 border border-red-200" : "bg-emerald-500/20 border border-emerald-200"));
 
             timelineHtml += `
@@ -85,9 +82,9 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
 
         <div class="content-area px-8 pb-10 pt-6 bg-slate-50 border-t">
             <div class="grid grid-cols-3 gap-4 mb-8">
-                <div class="bg-slate-900 p-5 rounded-[24px] border-b-4 border-sky-500 shadow-lg flex flex-col justify-center text-center">
-                    <p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Current Policy Year</p>
-                    <p class="text-xl font-black text-sky-400 font-mono">YEAR ${polYearToday}</p>
+                <div class="bg-slate-900 p-5 rounded-[24px] border-b-4 border-lime-500 shadow-lg flex flex-col justify-center text-center">
+                    <p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Policy Number</p>
+                    <p class="text-sm font-black text-lime-400 tracking-widest font-mono">${p.id}</p>
                 </div>
 
                 <div class="bg-emerald-600 p-5 rounded-[24px] shadow-lg flex flex-col justify-center text-center">
