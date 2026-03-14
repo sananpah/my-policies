@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nami Portfolio v3.5.90</title>
+    <title>Nami Portfolio v3.5.91</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="india_styles.css">
     <style>
@@ -42,7 +42,7 @@
 </head>
 <body class="bg-slate-50">
 
-    <div class="simple-build">v3.5.90</div>
+    <div class="simple-build">v3.5.91</div>
 
     <div class="max-w-7xl mx-auto mb-10 pt-10 px-4">
         <div class="flex justify-between items-end mb-6">
@@ -86,12 +86,12 @@
     <div id="container" class="max-w-7xl mx-auto pb-20 px-4"></div>
 
     <script type="module">
-        import { POLICY_DATA } from './data.js?v=3.5.90';
-        import { checkIsDueSoon, toNum } from './india.js';
+        import { POLICY_DATA } from './data.js?v=3.5.91';
+        import { checkIsDueSoon, toNum } from './india.js?v=3.5.91';
         
         // This is where we use two different files
-        import { createPolicyCard } from './component_in.js'; 
-        import { createSGCard } from './component_sg.js';
+        import { createPolicyCard } from './component_in.js?v=3.5.91'; 
+        import { createSGCard } from './component_sg.js?v=3.5.91';
 
         const TODAY = new Date();
         const CURRENT_YEAR = TODAY.getFullYear();
