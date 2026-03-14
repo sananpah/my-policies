@@ -85,7 +85,7 @@
 
     <script type="module">
         // --- THE ONLY PLACE YOU EVER CHANGE THE VERSION ---
-        const APP_VERSION = "3.8.8";
+        const APP_VERSION = "3.8.9";
 
         // Push version to the Document Title and the UI Badge
         document.title = `Nami Portfolio v${APP_VERSION}`;
@@ -140,7 +140,15 @@
                     : createPolicyCard(p, sym, TODAY, CURRENT_YEAR)
             ).join('');
 
-            const tSA = list.reduce((acc, p) => acc + toNum(p.sumAssured), 0);
+            // Calculate Total Sum Assured with fallback logic
+            const tSA = list.reduce((acc, p) => {
+            const rawSA = toNum(p.sumAssured);
+            const accountVal = toNum(p.currentUnitValue || 0);
+            // Logic: If Sum Assured is 0, use current account value
+            const effectiveSA = (rawSA === 0) ? accountVal : rawSA;
+            return acc + effectiveSA;
+            }, 0);
+
             const tAnn = list.reduce((acc, p) => acc + (p.dueDate !== "PAID UP" ? toNum(p.premium) : 0), 0);
             const tUnitValue = list.reduce((acc, p) => acc + toNum(p.currentUnitValue || 0), 0);
             
