@@ -17,7 +17,7 @@ export const POLICY_DATA = {
             color: "#8b1d1d", annualPayout: 89830, maturityAmt: "Special Surrender Value", defermentYear: 2031
         },
         { 
-            name: "Nishchit Samrudhi Income Limited", company: "IndusInd Nippon Life",
+            name: "Nishchit Samrudhi IL", company: "IndusInd Nippon Life",
             logo: "image_4e0b3d.png", id: "54040166", uin: "128N154V02", clientId: "60938507", type: "SAVINGS", 
             premium: 200000, sumAssured: 1750854, dueDate: "10 Jan 2027", 
             commenced: "10 Jan 2022", premiumEnds: "10 Jan 2028", maturity: "10 Jan 2050", 
