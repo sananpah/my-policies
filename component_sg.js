@@ -1,16 +1,20 @@
-/* component_sg.js - Baseline v3.8.6 (Bug Fix + Clean Mirror) */
+/* component_sg.js - Baseline v3.8.8 (Dynamic Sum Assured Logic) */
 import { autoFmt, toNum } from './india.js';
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const commDate = new Date(p.commenced);
     const startY = commDate.getFullYear();
     
-    // --- CALCULATION (60% Penalty / Year 5 Logic) ---
+    // --- CALCULATIONS ---
+    const accountValue = Math.round(toNum(p.currentUnitValue || 0));
+    
+    // Updated Logic: If sumAssured is 0, use currentUnitValue
+    const displaySumAssured = (toNum(p.sumAssured) === 0) ? accountValue : toNum(p.sumAssured);
+
     let chargeYear = TODAY.getFullYear() - startY;
     const anniversaryThisYear = new Date(TODAY.getFullYear(), commDate.getMonth(), commDate.getDate());
     if (TODAY >= anniversaryThisYear) chargeYear++;
     
-    const accountValue = Math.round(toNum(p.currentUnitValue || 0));
     const currentSCharge = p.surrenderCharges[chargeYear] || 0; 
     const surrenderValue = Math.round(accountValue * (1 - (currentSCharge / 100)));
     const lockedValue = accountValue - surrenderValue;
@@ -38,7 +42,6 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
             </div>`;
     }
 
-    // --- STAR LOGIC (Mirrors India Tooltip exactly) ---
     const starHtml = `
         <div class="mat-star relative group flex items-center justify-center px-4 h-8 border-l border-slate-300 ml-1">
             <span class="text-amber-500 text-lg cursor-help transition-transform group-hover:scale-125">★</span>
@@ -57,7 +60,7 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
                 </div>
                 <div>
                     <h3 class="font-black text-2xl text-slate-800 tracking-tighter">${p.name}</h3>
-                    <p class="text-[10px] text-red-600 font-bold uppercase tracking-widest">AIA Singapore</p>
+                    <p class="text-[10px] text-red-600 font-bold uppercase tracking-widest">${p.company}</p>
                 </div>
             </div>
             <div class="text-right">
@@ -67,10 +70,14 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
         </div>
 
         <div class="content-area px-8 pb-10 pt-4 bg-slate-50 border-t">
-            <div class="grid grid-cols-3 gap-4 mb-10">
+            <div class="grid grid-cols-4 gap-4 mb-10">
                 <div class="bg-slate-900 p-5 rounded-[24px] text-center shadow-lg">
-                    <p class="text-[9px] font-bold text-slate-500 uppercase mb-1">Policy Number</p>
-                    <p class="text-sm font-black text-lime-400 font-mono tracking-wider">${p.id}</p>
+                    <p class="text-[9px] font-bold text-slate-500 uppercase mb-1">Sum Assured</p>
+                    <p class="text-sm font-black text-white tracking-wider">${autoFmt(displaySumAssured, sym)}</p>
+                </div>
+                <div class="bg-slate-900 p-5 rounded-[24px] text-center shadow-lg">
+                    <p class="text-[9px] font-bold text-slate-500 uppercase mb-1">Annual Premium</p>
+                    <p class="text-sm font-black text-lime-400 tracking-wider">${autoFmt(p.premium, sym)}</p>
                 </div>
                 <div class="bg-emerald-600 p-5 rounded-[24px] shadow-lg text-center">
                     <p class="text-[9px] font-bold text-emerald-100 uppercase mb-1">Surrender Value</p>
@@ -93,12 +100,6 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
                     <div class="flex-[0.3] h-8 bg-transparent"></div>
                 </div>
                 ${starHtml}
-            </div>
-
-            <div class="flex gap-4 text-[9px] font-bold text-slate-400 uppercase mt-4 px-1">
-                <span class="flex items-center gap-1"><span class="w-2 h-2 bg-emerald-900 rounded-sm"></span> Paid</span>
-                <span class="flex items-center gap-1"><span class="w-2 h-2 bg-red-600 rounded-sm"></span> Locked</span>
-                <span class="flex items-center gap-1"><span class="w-2 h-2 bg-pink-500 rounded-sm"></span> Bonus</span>
             </div>
         </div>
     </div>`;
