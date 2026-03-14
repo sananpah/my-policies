@@ -92,7 +92,7 @@ export const POLICY_DATA = {
             isULIP: true 
         },
         { 
-            name: "Smart Privilege Plus LP Plan P", company: "SBI LIFE",isWife: true,
+            name: "Smart Privilege Plus", company: "SBI LIFE",isWife: true,
             logo: "image_cda45c.png", id: "3N307267702", uin: "N/A", clientId: "N/A", type: "ULIP", 
             premium: 600000, sumAssured: 4200000, dueDate: "23 Apr 2026", 
             commenced: "23 Apr 2025", premiumEnds: "23 Apr 2029", maturity: "23 Apr 2040", 
