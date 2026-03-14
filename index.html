@@ -131,10 +131,11 @@
 
             const tSA = list.reduce((acc, p) => acc + toNum(p.sumAssured), 0);
             const tAnn = list.reduce((acc, p) => acc + (p.dueDate !== "PAID UP" ? toNum(p.premium) : 0), 0);
+            const tUnitValue = list.reduce((acc, p) => acc + toNum(p.currentUnitValue || 0), 0);
             
             document.getElementById('total-sa').innerText = sym + tSA.toLocaleString();
             document.getElementById('total-premium').innerText = sym + tAnn.toLocaleString();
-            document.getElementById('due-count').innerText = list.filter(p => checkIsDueSoon(p.dueDate)).length;
+            document.getElementById('total-unit-value').innerText = sym + Math.round(tUnitValue).toLocaleString();
         }
 
         render('india');
