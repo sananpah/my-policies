@@ -1,4 +1,4 @@
-/* component_sg.js - v4.3.0 - Final Precision Timeline */
+/* component_sg.js - v4.4.0 - Layout Sync & Color Precision */
 import { autoFmt, toNum } from './india.js';
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -13,9 +13,12 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const calendarYearDiff = TODAY.getFullYear() - startY;
     const currentInPhase = calendarYearDiff + 1;
 
+    // DYNAMIC DUE DATE
+    const nextDueDate = new Date(2026, commDate.getMonth(), commDate.getDate());
+    const dateStr = nextDueDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+
     const isManulife = p.company.toUpperCase().includes("MANULIFE");
     const premiumsPaidCount = p.premiumsPaid || 3; 
-    
     const financialYear = isManulife ? premiumsPaidCount : calendarYearDiff;
 
     // --- 2. SURRENDER VALUE MATH ---
@@ -33,7 +36,7 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const brandColor = isManulife ? "#00a758" : "#d31145";
     const brandBg = isManulife ? "rgba(0, 167, 88, 0.03)" : "rgba(211, 17, 69, 0.03)";
 
-    // --- 4. TIMELINE GENERATION (Explicit State Logic) ---
+    // --- 4. TIMELINE GENERATION ---
     let timelineHtml = '';
     for(let polY = 1; polY <= 15; polY++) {
         const yr = startY + polY - 1;
@@ -44,7 +47,6 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
         let colorClass = "";
         let statusLabel = "";
 
-        // MANULIFE SPECIFIC SEQUENCE
         if (isCurrent) {
             colorClass = "bg-black ring-2 ring-white z-20 scale-110 shadow-xl";
             statusLabel = "Current Active Year";
@@ -53,17 +55,16 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
             statusLabel = "Year Completed";
         } else if (isManulife) {
             if (polY === 5) {
-                colorClass = "bg-indigo-500"; // Subtle Purple
+                colorClass = "bg-indigo-500"; 
                 statusLabel = "Locked Phase";
             } else if (polY >= 6 && polY <= 10) {
-                colorClass = "bg-pink-400";   // Pink
+                colorClass = "bg-pink-400";   
                 statusLabel = "Flexi Premium + Locked";
             } else {
-                colorClass = "bg-red-600";    // Red
+                colorClass = "bg-red-600";    
                 statusLabel = "Vested / Liquid";
             }
         } else {
-            // Standard AIA/Generic Logic
             colorClass = chargeAtYear > 0 ? "bg-pink-400" : "bg-red-600";
             statusLabel = chargeAtYear > 0 ? "Locked Phase" : "Vested / Liquid";
         }
@@ -106,9 +107,20 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
                     </div>
                 </div>
             </div>
-            <div class="text-right">
-                <p class="text-[11px] font-black text-slate-300 uppercase tracking-[0.2em] mb-1">Market Valuation</p>
-                <p class="text-4xl font-black text-slate-900 tracking-tighter">${autoFmt(accountValue, sym)}</p>
+
+            <div class="flex items-center gap-12 text-right">
+                <div>
+                    <p class="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] mb-1">Annual Premium</p>
+                    <p class="text-2xl font-black text-slate-800 tracking-tight">${autoFmt(p.premium, sym)}</p>
+                </div>
+                <div>
+                    <p class="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] mb-1">Market Valuation</p>
+                    <p class="text-2xl font-black text-slate-900 tracking-tighter">${autoFmt(accountValue, sym)}</p>
+                </div>
+                <div class="bg-slate-50 px-6 py-3 rounded-[20px] border border-slate-100">
+                    <p class="text-[9px] font-black text-sky-500 uppercase tracking-[0.2em] mb-1 text-center">Next Due Date</p>
+                    <p class="text-lg font-black text-slate-700 tracking-tight whitespace-nowrap">${dateStr}</p>
+                </div>
             </div>
         </div>
 
@@ -121,8 +133,8 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
                 </div>
                 <div class="relative p-6 rounded-[32px] bg-white border border-slate-100 shadow-sm overflow-hidden">
                     <div class="absolute top-0 left-0 w-1.5 h-full bg-sky-500"></div>
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Annual Premium</p>
-                    <p class="text-2xl font-black text-slate-800 tracking-tight">${autoFmt(p.premium, sym)}</p>
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Investment Base</p>
+                    <p class="text-2xl font-black text-slate-800 tracking-tight">${autoFmt(totalPremiumsPaid, sym)}</p>
                 </div>
                 <div class="relative p-6 rounded-[32px] bg-emerald-50 border border-emerald-100 shadow-sm overflow-hidden">
                     <p class="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-2">Surrender Value</p>
