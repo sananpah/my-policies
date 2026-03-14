@@ -1,4 +1,4 @@
-/* component_sg.js - Baseline v3.8.3 (Direct India Star/Hover Mirror) */
+/* component_sg.js - Baseline v3.8.4 (Fixed Hover & Label Placement) */
 import { autoFmt, toNum } from './india.js';
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -31,13 +31,13 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
 
         timelineHtml += `
             <div class="segment ${color} relative group h-8 flex-1 border-r border-white/5 first:rounded-l-lg">
-                <div class="tooltip opacity-0 group-hover:opacity-100 absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-2 py-1 rounded text-[9px] z-50 whitespace-nowrap">
+                <div class="tooltip opacity-0 group-hover:opacity-100 absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-2 py-1 rounded text-[9px] z-50 whitespace-nowrap shadow-xl">
                     YR ${polY} (${yr})
                 </div>
             </div>`;
     }
 
-    // --- EXACT STAR MIRROR FROM COMPONENT_IN.JS ---
+    // --- STAR LOGIC (Mirrored from India with Tooltip Fix) ---
     const starHtml = `
         <div class="mat-star relative group flex items-center justify-center px-4 h-8 border-l border-slate-300 ml-1">
             <span class="text-amber-500 text-lg">★</span>
@@ -72,7 +72,7 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
 
             <div class="flex justify-between items-end mb-2 px-1 text-[11px] font-black text-slate-400 uppercase">
                 <span>${p.commenced}</span>
-                <div class="text-center transform -skew-x-12 leading-none">
+                <div class="flex flex-col items-end transform -skew-x-12 leading-none">
                     <span class="text-slate-600 block text-[10px]">⭐ MATURITY</span>
                     <span class="text-[8px] font-bold">Unit Value</span>
                 </div>
