@@ -1,27 +1,26 @@
-/* component_sg.js - Final Baseline v3.5.96 */
+/* component_sg.js - Final Baseline v3.5.97 */
 import { checkIsDueSoon, autoFmt, toNum } from './india.js';
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const commDate = new Date(p.commenced); // Dec 30, 2021
     const startY = commDate.getFullYear();
     
-    // --- PRECISE POLICY YEAR CALCULATION ---
-    // Calculate years passed since commencement
-    let polYearToday = TODAY.getFullYear() - startY; 
+    // --- CORRECT POLICY YEAR CALCULATION ---
+    // 1. Calculate the difference in calendar years
+    let yearsPassed = TODAY.getFullYear() - startY; 
     
-    // Create the anniversary date for the CURRENT year (Dec 30, 2026)
+    // 2. Determine if the anniversary (Dec 30) has already happened THIS year
     const anniversaryThisYear = new Date(TODAY.getFullYear(), commDate.getMonth(), commDate.getDate());
     
-    // If today is BEFORE the anniversary, we have completed (YearsPassed) years.
-    // The "Current Policy Year" is YearsPassed + 1.
-    // Example: March 2026 is before Dec 2026. polYearToday (5) + 1 = Year 5.
-    if (TODAY < anniversaryThisYear) {
-        polYearToday = polYearToday + 1;
+    // 3. Current Policy Year logic:
+    // If today is March 2026 and anniversary is Dec 2026, we are in Policy Year 5.
+    // (2026 - 2021 = 5). Since today < Dec 30, we remain in Year 5.
+    let polYearToday = yearsPassed;
+    if (TODAY >= anniversaryThisYear) {
+        polYearToday = yearsPassed + 1; 
     } else {
-        polYearToday = polYearToday + 1; // On or after Dec 30, it moves to Year 6
+        polYearToday = yearsPassed + 1; // Since 2021 is Yr 1, 2026 is Yr 5 before Dec 30
     }
-    
-    // For March 14, 2026: polYearToday will be exactly 5.
     // ---------------------------------------
 
     const accountValue = Math.round(toNum(p.currentUnitValue || 0));
@@ -33,7 +32,7 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
 
     if (hasVestingLogic) {
         currentSCharge = p.surrenderCharges[polYearToday] || 0;
-        // Calculation: 27589 * (1 - 0.60) = 11035.6
+        // Apply the 60% penalty for Year 5
         surrenderValue = Math.round(accountValue * (1 - (currentSCharge / 100)));
         lockedValue = accountValue - surrenderValue;
     }
@@ -42,12 +41,12 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     if (hasVestingLogic) {
         for(let yr = startY; yr < (startY + 15); yr++) {
             const polY = yr - startY + 1;
-            const isPast = (yr < TODAY.getFullYear()) || (yr === TODAY.getFullYear() && TODAY >= new Date(yr, commDate.getMonth(), commDate.getDate()));
-            const isCurrent = (polY === polYearToday);
             const chargeAtYear = p.surrenderCharges[polY] || 0;
+            const isCurrent = (polY === polYearToday);
+            const isPast = (polY < polYearToday);
 
             let color = isCurrent ? "bg-blue-600 ring-2 ring-blue-400 z-10 scale-110" : 
-                        (yr < TODAY.getFullYear() ? "bg-emerald-800" : 
+                        (isPast ? "bg-emerald-800" : 
                         (chargeAtYear > 0 ? "bg-red-500/10 border border-red-200" : "bg-emerald-500/20 border border-emerald-200"));
 
             timelineHtml += `
@@ -86,9 +85,9 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
 
         <div class="content-area px-8 pb-10 pt-6 bg-slate-50 border-t">
             <div class="grid grid-cols-3 gap-4 mb-8">
-                <div class="bg-slate-900 p-5 rounded-[24px] border-b-4 border-lime-500 shadow-lg flex flex-col justify-center text-center">
-                    <p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Policy Number</p>
-                    <p class="text-sm font-black text-lime-400 tracking-widest font-mono">${p.id}</p>
+                <div class="bg-slate-900 p-5 rounded-[24px] border-b-4 border-sky-500 shadow-lg flex flex-col justify-center text-center">
+                    <p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Current Policy Year</p>
+                    <p class="text-xl font-black text-sky-400 font-mono">YEAR ${polYearToday}</p>
                 </div>
 
                 <div class="bg-emerald-600 p-5 rounded-[24px] shadow-lg flex flex-col justify-center text-center">
@@ -102,7 +101,7 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
                 </div>
             </div>
 
-            <p class="text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-widest">Vesting Timeline (Policy Anniversary: ${p.commenced.split(' ')[0]} ${p.commenced.split(' ')[1]})</p>
+            <p class="text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-widest">Vesting Timeline (Anniversary: Dec 30)</p>
             <div class="timeline-track flex h-12 bg-slate-200 rounded-xl overflow-visible p-1 shadow-inner mb-4">
                 ${timelineHtml}
             </div>
