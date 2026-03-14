@@ -1,4 +1,4 @@
-/* component_sg.js - Updated Color Scheme & Logic */
+/* component_sg.js - Sleek UI Refresh */
 import { autoFmt, toNum } from './india.js';
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -8,125 +8,117 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     // --- 1. CORE CALCULATIONS ---
     const accountValue = Math.round(toNum(p.currentUnitValue || 0));
     const annualPremium = toNum(p.premium || 0);
-    
-    // Fallback Sum Assured logic
     const displaySumAssured = (toNum(p.sumAssured) === 0) ? accountValue : toNum(p.sumAssured);
 
-    // Determine Policy Year
     let chargeYear = TODAY.getFullYear() - startY;
     const anniversaryThisYear = new Date(TODAY.getFullYear(), commDate.getMonth(), commDate.getDate());
     if (TODAY >= anniversaryThisYear) chargeYear++;
     
     const totalPremiumsPaid = annualPremium * 3; 
 
-    // --- 2. SURRENDER LOGIC BY COMPANY ---
+    // --- 2. SURRENDER LOGIC ---
     const chargePct = p.surrenderCharges[chargeYear] || 0;
-    let surrenderChargeAmount = 0;
-
-    if (p.company.toUpperCase().includes("MANULIFE")) {
-        surrenderChargeAmount = totalPremiumsPaid * (chargePct / 100);
-    } else {
-        surrenderChargeAmount = accountValue * (chargePct / 100);
-    }
+    let surrenderChargeAmount = p.company.toUpperCase().includes("MANULIFE") 
+        ? totalPremiumsPaid * (chargePct / 100)
+        : accountValue * (chargePct / 100);
 
     const surrenderValue = Math.round(Math.max(0, accountValue - surrenderChargeAmount));
     const lockedValue = Math.round(accountValue - surrenderValue);
-    const displayYear = chargeYear; 
 
-    // --- 3. BRANDING ---
+    // --- 3. BRANDING & DYNAMIC STYLES ---
     const isManulife = p.company.toUpperCase().includes("MANULIFE");
     const brandColor = isManulife ? "#00a758" : "#d31145";
-    const shadowStyle = isManulife 
-        ? "0 20px 25px -5px rgba(0, 167, 88, 0.25)" 
-        : "0 20px 25px -5px rgba(211, 17, 69, 0.15)";
+    const brandBg = isManulife ? "rgba(0, 167, 88, 0.05)" : "rgba(211, 17, 69, 0.05)";
 
-    // --- 4. TIMELINE GENERATION (New Color Scheme) ---
+    // --- 4. TIMELINE GENERATION (User's Specific Colors) ---
     let timelineHtml = '';
-    const totalSegments = 15;
-    for(let polY = 1; polY <= totalSegments; polY++) {
-        const yr = startY + polY - 1;
-        const isCurrent = (polY === displayYear);
-        const isPast = (polY < displayYear);
+    for(let polY = 1; polY <= 15; polY++) {
+        const isCurrent = (polY === chargeYear);
+        const isPast = (polY < chargeYear);
         const chargeAtYear = p.surrenderCharges[polY] || 0;
         
-        // APPLY USER PREFERENCES
-        let colorClass = "";
-        if (isCurrent) {
-            colorClass = "bg-black ring-2 ring-white z-10 shadow-lg"; // Current Year: Black with White Border
-        } else if (isPast) {
-            colorClass = "bg-emerald-900"; // Past Years: Dark Green
-        } else if (chargeAtYear === 0) {
-            colorClass = "bg-red-600"; // Vested: Red
-        } else {
-            colorClass = "bg-pink-400"; // Future Locked: Pink
-        }
+        let colorClass = isCurrent ? "bg-black ring-2 ring-white z-10 scale-110 shadow-xl" 
+                       : (isPast ? "bg-emerald-900" 
+                       : (chargeAtYear === 0 ? "bg-red-600" : "bg-pink-400"));
 
-        timelineHtml += `
-            <div class="segment ${colorClass} relative group h-8 flex-1 border-r border-white/10 first:rounded-l-lg transition-all">
-                <div class="opacity-0 group-hover:opacity-100 absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-3 py-2 rounded-lg text-[10px] z-[100] whitespace-nowrap pointer-events-none shadow-2xl transition-all duration-200">
-                    <b class="text-sky-400 uppercase">YR ${polY} (${yr})</b><br>
-                    <span class="text-slate-300">${isCurrent ? 'Current' : (chargeAtYear > 0 ? 'Locked' : 'Vested')}</span>
-                </div>
-            </div>`;
+        timelineHtml += `<div class="segment ${colorClass} h-8 flex-1 border-r border-white/10 first:rounded-l-lg last:rounded-r-lg transition-all hover:brightness-125"></div>`;
     }
 
-    const starHtml = `
-        <div class="mat-star relative group flex items-center justify-center px-4 h-8 border-l border-slate-300 ml-1">
-            <span class="text-amber-500 text-lg cursor-help transition-transform group-hover:scale-125">★</span>
-        </div>`;
-
     return `
-    <div class="policy-card mb-8 rounded-[32px] bg-white overflow-hidden transition-all duration-300" 
-         style="border-top: 8px solid ${brandColor}; box-shadow: ${shadowStyle};" 
-         id="card-${p.id}">
+    <div class="policy-card mb-10 rounded-[40px] bg-white overflow-hidden transition-all duration-500 shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-slate-100 hover:shadow-[0_30px_60px_rgba(0,0,0,0.15)]" id="card-${p.id}">
         
-        <div class="p-8 flex items-center justify-between cursor-pointer hover:bg-slate-50/50" onclick="toggleCard('${p.id}')">
-            <div class="flex items-center gap-6">
-                <div class="w-16 h-16 flex items-center justify-center bg-white rounded-2xl border border-slate-100">
-                    <img src="${p.logo}" class="max-h-12 object-contain">
+        <div class="p-8 flex items-center justify-between cursor-pointer" onclick="toggleCard('${p.id}')">
+            <div class="flex items-center gap-8">
+                <div class="relative">
+                    <div class="w-20 h-20 flex items-center justify-center bg-white rounded-[24px] shadow-sm border border-slate-50 p-3">
+                        <img src="${p.logo}" class="max-h-full object-contain">
+                    </div>
+                    <div class="absolute -bottom-2 -right-2 px-3 py-1 bg-black text-white text-[9px] font-black rounded-full tracking-tighter uppercase">SG</div>
                 </div>
                 <div>
-                    <h3 class="font-black text-2xl text-slate-800 tracking-tighter">${p.name}</h3>
-                    <p class="text-[10px] font-bold uppercase tracking-widest" style="color: ${brandColor}">${p.company}</p>
+                    <h3 class="font-black text-3xl text-slate-900 tracking-tight leading-none mb-2">${p.name}</h3>
+                    <div class="flex items-center gap-3">
+                        <span class="px-3 py-1 rounded-md text-[10px] font-bold text-white uppercase tracking-widest" style="background: ${brandColor}">${p.company}</span>
+                        <span class="font-mono text-xs font-bold text-slate-400">#${p.id}</span>
+                    </div>
                 </div>
             </div>
             <div class="text-right">
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Market Value</p>
-                <p class="text-3xl font-black text-slate-900">${autoFmt(accountValue, sym)}</p>
+                <p class="text-[11px] font-black text-slate-300 uppercase tracking-[0.2em] mb-1">Market Valuation</p>
+                <p class="text-4xl font-black text-slate-900 tracking-tighter">${autoFmt(accountValue, sym)}</p>
             </div>
         </div>
 
-        <div class="content-area px-8 pb-10 pt-4 bg-slate-50 border-t">
-            <div class="grid grid-cols-4 gap-4 mb-10">
-                <div class="bg-slate-900 p-5 rounded-[24px] text-center shadow-lg">
-                    <p class="text-[9px] font-bold text-slate-500 uppercase mb-1">Sum Assured</p>
-                    <p class="text-sm font-black text-white">${autoFmt(displaySumAssured, sym)}</p>
+        <div class="content-area px-8 pb-10 pt-2" style="background: linear-gradient(to bottom, #ffffff, ${brandBg})">
+            
+            <div class="grid grid-cols-4 gap-6 mb-12">
+                <div class="relative p-6 rounded-[32px] bg-white border border-slate-100 shadow-sm overflow-hidden group">
+                    <div class="absolute top-0 left-0 w-1 h-full" style="background: ${brandColor}"></div>
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Sum Assured</p>
+                    <p class="text-2xl font-black text-slate-800 tracking-tight">${autoFmt(displaySumAssured, sym)}</p>
                 </div>
-                <div class="bg-slate-900 p-5 rounded-[24px] text-center shadow-lg">
-                    <p class="text-[9px] font-bold text-slate-500 uppercase mb-1">Annual Premium</p>
-                    <p class="text-sm font-black text-sky-400">${autoFmt(p.premium, sym)}</p>
+
+                <div class="relative p-6 rounded-[32px] bg-white border border-slate-100 shadow-sm overflow-hidden">
+                    <div class="absolute top-0 left-0 w-1 h-full bg-sky-500"></div>
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Annual Premium</p>
+                    <p class="text-2xl font-black text-slate-800 tracking-tight">${autoFmt(p.premium, sym)}</p>
                 </div>
-                <div class="bg-emerald-600 p-5 rounded-[24px] shadow-lg text-center">
-                    <p class="text-[9px] font-bold text-emerald-100 uppercase mb-1">Surrender Value</p>
-                    <p class="text-2xl font-black text-white">${autoFmt(surrenderValue, sym)}</p>
+
+                <div class="relative p-6 rounded-[32px] bg-emerald-50 border border-emerald-100 shadow-sm overflow-hidden">
+                    <p class="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-2">Surrender Value</p>
+                    <p class="text-3xl font-black text-emerald-700 tracking-tight">${autoFmt(surrenderValue, sym)}</p>
                 </div>
-                <div class="bg-white p-5 rounded-[24px] border border-red-100 text-center shadow-sm">
-                    <p class="text-[9px] font-bold text-red-400 uppercase mb-1">Locked Value</p>
-                    <p class="text-2xl font-black text-red-600">-${autoFmt(lockedValue, sym)}</p>
+
+                <div class="relative p-6 rounded-[32px] bg-red-50 border border-red-100 shadow-sm overflow-hidden">
+                    <p class="text-[10px] font-black text-red-400 uppercase tracking-widest mb-2">Locked Capital</p>
+                    <p class="text-3xl font-black text-red-600 tracking-tight">-${autoFmt(lockedValue, sym)}</p>
                 </div>
             </div>
 
-            <div class="flex justify-between items-center mb-2 px-1 text-[11px] font-black text-slate-400 uppercase tracking-widest">
-                <span>Start: ${p.commenced}</span>
-                <span>End: ${p.maturity}</span>
+            <div class="flex justify-between items-end mb-4">
+                <div class="flex gap-10">
+                    <div>
+                        <p class="text-[9px] font-black text-slate-400 uppercase mb-1">Commencement</p>
+                        <p class="text-xs font-bold text-slate-700 underline decoration-2 decoration-sky-300 underline-offset-4">${p.commenced}</p>
+                    </div>
+                    <div>
+                        <p class="text-[9px] font-black text-slate-400 uppercase mb-1">Maturity Date</p>
+                        <p class="text-xs font-bold text-slate-700 underline decoration-2 decoration-amber-300 underline-offset-4">${p.maturity}</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <span class="text-[10px] font-black text-slate-400 uppercase mr-2">Status:</span>
+                    <span class="text-[10px] font-black text-emerald-600 uppercase tracking-widest bg-emerald-100 px-3 py-1 rounded-full">Active Portfolio</span>
+                </div>
             </div>
 
-            <div class="relative flex items-center h-12 bg-slate-200 rounded-xl px-1 shadow-inner">
-                <div class="flex-1 flex h-8 items-center overflow-visible">
+            <div class="relative flex items-center h-16 bg-slate-100 rounded-[24px] px-2 shadow-inner border border-slate-200/50">
+                <div class="flex-1 flex h-10 items-center gap-1">
                     ${timelineHtml}
-                    <div class="flex-[0.3] h-8 bg-transparent"></div>
                 </div>
-                ${starHtml}
+                <div class="ml-2 flex items-center justify-center w-12 h-10 bg-white rounded-xl shadow-sm border border-slate-200">
+                    <span class="text-amber-500 text-xl">★</span>
+                </div>
             </div>
         </div>
     </div>`;
