@@ -1,12 +1,30 @@
-/* component_sg.js - Final Baseline v3.5.95 */
+/* component_sg.js - Final Baseline v3.5.96 */
 import { checkIsDueSoon, autoFmt, toNum } from './india.js';
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
-    const startY = p.commenced ? parseInt(p.commenced.split(' ')[2]) : CURRENT_YEAR;
-    const accountValue = Math.round(toNum(p.currentUnitValue || 0));
-    const polYearToday = CURRENT_YEAR - startY + 1;
+    const commDate = new Date(p.commenced); // Dec 30, 2021
+    const startY = commDate.getFullYear();
     
-    // Trigger logic for AIA-style penalties
+    // --- PRECISE POLICY YEAR CALCULATION ---
+    // Calculate years passed since commencement
+    let polYearToday = TODAY.getFullYear() - startY; 
+    
+    // Create the anniversary date for the CURRENT year (Dec 30, 2026)
+    const anniversaryThisYear = new Date(TODAY.getFullYear(), commDate.getMonth(), commDate.getDate());
+    
+    // If today is BEFORE the anniversary, we have completed (YearsPassed) years.
+    // The "Current Policy Year" is YearsPassed + 1.
+    // Example: March 2026 is before Dec 2026. polYearToday (5) + 1 = Year 5.
+    if (TODAY < anniversaryThisYear) {
+        polYearToday = polYearToday + 1;
+    } else {
+        polYearToday = polYearToday + 1; // On or after Dec 30, it moves to Year 6
+    }
+    
+    // For March 14, 2026: polYearToday will be exactly 5.
+    // ---------------------------------------
+
+    const accountValue = Math.round(toNum(p.currentUnitValue || 0));
     const hasVestingLogic = p.surrenderCharges && Object.keys(p.surrenderCharges).length > 0;
     
     let surrenderValue = accountValue;
@@ -15,20 +33,22 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
 
     if (hasVestingLogic) {
         currentSCharge = p.surrenderCharges[polYearToday] || 0;
+        // Calculation: 27589 * (1 - 0.60) = 11035.6
         surrenderValue = Math.round(accountValue * (1 - (currentSCharge / 100)));
         lockedValue = accountValue - surrenderValue;
     }
 
-    // Timeline Loop
     let timelineHtml = '';
     if (hasVestingLogic) {
         for(let yr = startY; yr < (startY + 15); yr++) {
             const polY = yr - startY + 1;
-            const isPast = yr < CURRENT_YEAR;
-            const isCurrent = yr === CURRENT_YEAR;
+            const isPast = (yr < TODAY.getFullYear()) || (yr === TODAY.getFullYear() && TODAY >= new Date(yr, commDate.getMonth(), commDate.getDate()));
+            const isCurrent = (polY === polYearToday);
             const chargeAtYear = p.surrenderCharges[polY] || 0;
 
-            let color = isPast ? "bg-emerald-800" : (isCurrent ? "bg-blue-600 ring-2 ring-blue-400 z-10 scale-110" : (chargeAtYear > 0 ? "bg-red-500/10 border border-red-200" : "bg-emerald-500/20 border border-emerald-200"));
+            let color = isCurrent ? "bg-blue-600 ring-2 ring-blue-400 z-10 scale-110" : 
+                        (yr < TODAY.getFullYear() ? "bg-emerald-800" : 
+                        (chargeAtYear > 0 ? "bg-red-500/10 border border-red-200" : "bg-emerald-500/20 border border-emerald-200"));
 
             timelineHtml += `
                 <div class="segment ${color} relative group h-12 flex-1 border-r border-white/10 transition-all">
@@ -54,7 +74,7 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
             </div>
             <div class="flex gap-12 items-center">
                 <div class="text-right">
-                    <p class="text-[10px] font-bold text-slate-400 uppercase">Current Value</p>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase">Current Market Value</p>
                     <p class="text-3xl font-black text-slate-900">${autoFmt(accountValue, sym)}</p>
                 </div>
                 <div class="w-48 py-3 bg-slate-900 text-white rounded-2xl text-center shadow-lg">
@@ -76,20 +96,16 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
                     <p class="text-2xl font-black text-white">${autoFmt(surrenderValue, sym)}</p>
                 </div>
 
-                <div class="bg-white p-5 rounded-[24px] border ${hasVestingLogic ? 'border-red-100' : 'border-slate-200'} shadow-sm flex flex-col justify-center text-center">
-                    <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">${hasVestingLogic ? `Locked Penalty (${currentSCharge}%)` : 'Status'}</p>
-                    <p class="text-2xl font-black ${hasVestingLogic ? 'text-red-600' : 'text-emerald-600'}">
-                        ${hasVestingLogic ? `-${autoFmt(lockedValue, sym)}` : 'Fully Vested'}
-                    </p>
+                <div class="bg-white p-5 rounded-[24px] border border-red-100 shadow-sm flex flex-col justify-center text-center">
+                    <p class="text-[10px] font-bold text-red-400 uppercase mb-1">Locked Penalty (${currentSCharge}%)</p>
+                    <p class="text-2xl font-black text-red-600">-${autoFmt(lockedValue, sym)}</p>
                 </div>
             </div>
 
-            ${hasVestingLogic ? `
-                <p class="text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-widest">Vesting Timeline</p>
-                <div class="timeline-track flex h-12 bg-slate-200 rounded-xl overflow-visible p-1 shadow-inner">
-                    ${timelineHtml}
-                </div>
-            ` : ''}
+            <p class="text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-widest">Vesting Timeline (Policy Anniversary: ${p.commenced.split(' ')[0]} ${p.commenced.split(' ')[1]})</p>
+            <div class="timeline-track flex h-12 bg-slate-200 rounded-xl overflow-visible p-1 shadow-inner mb-4">
+                ${timelineHtml}
+            </div>
         </div>
     </div>`;
 }
