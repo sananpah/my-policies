@@ -1,4 +1,4 @@
-/* component_sg.js - v4.0.0 - Date-Driven & Future-Proof */
+/* component_sg.js - v4.1.0 */
 import { autoFmt, toNum } from './india.js';
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -10,26 +10,21 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const annualPremium = toNum(p.premium || 0);
     const displaySumAssured = (toNum(p.sumAssured) === 0) ? accountValue : toNum(p.sumAssured);
 
-    // DYNAMIC DATE LOGIC
-    const diffInMs = TODAY - commDate;
-    const diffInYears = diffInMs / (1000 * 60 * 60 * 24 * 365.25);
+    // DYNAMIC CALENDAR LOGIC
+    // We use the Calendar Year difference to determine the "Current Active Bar"
+    const calendarYearDiff = TODAY.getFullYear() - startY;
     
-    // Visual Year: The bar that should be Black (Current Phase)
-    // If 2.2 years have passed, you are in the 3rd year (Math.floor + 1)
-    const currentInPhase = Math.floor(diffInYears) + 1;
+    // The bar currently active (e.g., if 3 years passed, you are in the 4th year)
+    const currentInPhase = calendarYearDiff + 1;
 
-    // Financial Year: 
-    // For Manulife, it's based on Premiums Paid. 
-    // We calculate how many premiums have been paid based on the start date vs today, 
-    // but you mentioned you've paid 3, so we can use a "paidCount" from your data.js
-    const premiumsPaidCount = p.premiumsPaid || 3; // Fallback to 3 if not in data.js
-    
+    // Financial Logic: How many premiums have been paid (influences surrender charge)
     const isManulife = p.company.toUpperCase().includes("MANULIFE");
+    const premiumsPaidCount = p.premiumsPaid || 3; 
     
-    // For Manulife, use the premium count for charges. For others, use elapsed years.
-    const financialYear = isManulife ? premiumsPaidCount : currentInPhase;
+    // Surrender Charge logic: Manulife uses premium count, AIA uses calendar progression
+    const financialYear = isManulife ? premiumsPaidCount : calendarYearDiff;
 
-    // --- 2. SURRENDER LOGIC ---
+    // --- 2. SURRENDER VALUE MATH ---
     const totalPremiumsPaid = annualPremium * premiumsPaidCount; 
     const chargePct = p.surrenderCharges[financialYear] || 0;
     
@@ -40,7 +35,7 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const surrenderValue = Math.round(Math.max(0, accountValue - surrenderChargeAmount));
     const lockedValue = Math.round(accountValue - surrenderValue);
 
-    // --- 3. BRANDING & COLORS ---
+    // --- 3. BRANDING ---
     const brandColor = isManulife ? "#00a758" : "#d31145";
     const brandBg = isManulife ? "rgba(0, 167, 88, 0.03)" : "rgba(211, 17, 69, 0.03)";
 
@@ -52,6 +47,7 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
         const isPast = (polY < currentInPhase);
         const chargeAtYear = p.surrenderCharges[polY] || 0;
         
+        // Color mapping per user request
         let colorClass = isCurrent ? "bg-black ring-2 ring-white z-20 scale-110 shadow-xl" 
                        : (isPast ? "bg-emerald-900" 
                        : (chargeAtYear === 0 ? "bg-red-600" : "bg-pink-400"));
@@ -66,7 +62,6 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
             </div>`;
     }
 
-    // [Rest of starHtml and return template same as previous premium UI]
     const starHtml = `
         <div class="ml-2 relative group/star flex items-center justify-center w-12 h-10 bg-white rounded-xl shadow-sm border border-slate-200 cursor-help">
             <span class="text-amber-500 text-xl transition-transform group-hover/star:scale-125">★</span>
