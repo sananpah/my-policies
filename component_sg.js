@@ -41,10 +41,11 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
             }
         }
 
+        // Tooltip now matches India solution with Year shown in hover
         timelineHtml += `
             <div class="segment ${color} relative group h-12 flex-1 border-r border-white/10 transition-all">
                 <div class="tooltip opacity-0 group-hover:opacity-100 absolute bottom-full mb-3 left-1/2 -translate-x-1/2 bg-slate-900 text-white p-2 rounded text-[9px] z-50 whitespace-nowrap pointer-events-none shadow-2xl">
-                    YR ${polY}: ${label}
+                    <b class="text-sky-400 uppercase">YR ${polY} (${yr})</b><br>${label}
                 </div>
             </div>`;
     }
@@ -75,19 +76,19 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
 
         <div class="content-area px-8 pb-10 pt-6 bg-slate-50 border-t">
             <div class="grid grid-cols-3 gap-4 mb-8">
-                <div class="bg-indigo-900 p-5 rounded-[24px] shadow-lg border border-indigo-700">
+                <div class="bg-white p-5 rounded-[24px] border border-slate-200 flex flex-col justify-center">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase mb-1 tracking-wider">Policy Number</p>
+                    <p class="text-sm font-black text-slate-800 tracking-tight">${p.id || 'N/A'}</p>
+                </div>
+
+                <div class="bg-indigo-900 p-5 rounded-[24px] shadow-lg border border-indigo-700 flex flex-col justify-center">
                     <p class="text-[10px] font-bold text-indigo-300 uppercase mb-1 tracking-wider">Account Value</p>
                     <p class="text-2xl font-black text-white">${autoFmt(unitValue, sym)}</p>
                 </div>
 
-                <div class="bg-emerald-100 p-5 rounded-[24px] border-2 border-emerald-200 shadow-sm">
+                <div class="bg-emerald-100 p-5 rounded-[24px] border-2 border-emerald-200 shadow-sm flex flex-col justify-center">
                     <p class="text-[10px] font-bold text-emerald-700 uppercase mb-1 tracking-wider">Surrender Value</p>
                     <p class="text-2xl font-black text-emerald-900">${autoFmt(surrenderValue, sym)}</p>
-                </div>
-
-                <div class="bg-white p-5 rounded-[24px] border border-slate-200">
-                    <p class="text-[10px] font-bold text-slate-400 uppercase mb-1 tracking-wider">Policy Number</p>
-                    <p class="text-sm font-black text-slate-800 tracking-tight">${p.id || 'N/A'}</p>
                 </div>
             </div>
 
@@ -98,7 +99,7 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
                 <span class="flex items-center gap-1"><span class="w-2 h-2 bg-pink-500 rounded-sm shadow-[0_0_5px_rgba(236,72,153,0.5)]"></span> BONUS</span>
             </div>
             
-            <div class="timeline-track flex h-12 bg-slate-200 rounded-xl overflow-hidden shadow-inner">
+            <div class="timeline-track flex h-12 bg-slate-200 rounded-xl overflow-visible p-1 shadow-inner">
                 ${timelineHtml}
             </div>
         </div>
