@@ -1,5 +1,5 @@
 /* components.js - UI Component Module */
-import { checkIsDueSoon, getTimeLeft, autoFmt, raw } from './india.js';
+import { checkIsDueSoon, getTimeLeft, autoFmt, toNum, raw } from './india.js';
 
 export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
     const startParts = p.commenced.split(' ');
@@ -14,6 +14,10 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
     
     const currentAnniversary = new Date(`${anniversaryMonth} ${anniversaryDay}, ${CURRENT_YEAR}`);
     const hasPassedThisYear = TODAY > currentAnniversary;
+
+    const isULIP = p.isULIP === true;
+    const unitValue = Math.round(toNum(p.currentUnitValue || 0));
+    const prem = Math.round(toNum(p.premium));
 
     // Build Timeline
     let timelineHtml = '';
@@ -92,6 +96,42 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
                 <div class="absolute -top-8 left-0 text-[11px] font-black text-slate-400 uppercase">${p.commenced}</div>
                 ${timelineHtml}
                 <div class="absolute -top-8 right-0 text-[11px] font-black text-slate-400 uppercase">${p.maturity}</div>
+            </div>
+        </div>
+    </div>`;
+
+    return `
+    <div class="policy-card mb-6 rounded-[32px] bg-white shadow-lg border-t-8" id="card-${p.id}" style="border-color: ${p.color}">
+        <div class="p-8 flex items-center justify-between cursor-pointer" onclick="toggleCard('${p.id}')">
+            <div class="flex items-center gap-6">
+                <img src="${p.logo}" class="h-10">
+                <div>
+                    <h3 class="font-black text-2xl text-slate-800 tracking-tighter">${p.name}</h3>
+                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+                        ${p.company} ${isULIP ? '<span class="ml-2 text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full text-[8px]">ULIP</span>' : ''}
+                    </p>
+                </div>
+            </div>
+            <div class="text-right">
+                <p class="text-[10px] font-bold text-slate-400 uppercase">Annual Premium</p>
+                <p class="text-2xl font-black">${autoFmt(prem, sym)}</p>
+            </div>
+        </div>
+
+        <div class="content-area px-8 pb-10 pt-6 bg-slate-50 border-t">
+            ${(isULIP && unitValue > 0) ? `
+                <div class="bg-indigo-900 p-6 rounded-[24px] mb-6 shadow-xl relative overflow-hidden">
+                    <p class="text-[10px] font-bold text-indigo-300 uppercase mb-1 tracking-widest">Current Portfolio Value</p>
+                    <p class="text-4xl font-black text-white">${autoFmt(unitValue, sym)}</p>
+                </div>
+            ` : ''}
+
+            <div class="flex justify-between items-center mb-4">
+                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest tracking-tighter italic">Status: ${p.dueDate}</p>
+            </div>
+            
+            <div class="timeline-track flex h-10 bg-slate-200 rounded-xl overflow-hidden shadow-inner">
+                ${timelineHtml}
             </div>
         </div>
     </div>`;
