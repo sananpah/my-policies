@@ -106,10 +106,20 @@ export const POLICY_DATA = {
             name: "Pro-Achiever 2.0", company: "AIA SINGAPORE",
             logo: "image_4b9b3f.png", id: "U126327913", type: "ILP", 
             premium: 5000, sumAssured: 0, dueDate: "30 Dec 2026", 
-            commenced: "30 Dec 2021", premiumEnds: "30 Dec 2031", maturity: "30 Dec 2077", 
-            color: "#d31145", currency: "$", welcomeBonus: { 1: 5, 2: 8, 3: 10 },specialBonus: { 10: 5 },
+            commenced: "30 Dec 2021", maturity: "30 Dec 2077", 
+            color: "#d31145", currency: "$",
             surrenderCharges: { 1: 100, 2: 100, 3: 80, 4: 70, 5: 60, 6: 50, 7: 45, 8: 35, 9: 20, 10: 5, 11: 0 },
             currentUnitValue: "27589",
+            isULIP: true 
+        },
+        { 
+            name: "InvestReady III", company: "MANULIFE SINGAPORE",
+            logo: "image_d1e382.png", id: "2451556041", type: "ILP", 
+            premium: 6000, sumAssured: 0, dueDate: "26 Dec 2026", 
+            commenced: "26 Dec 2023" , maturity: "26 Dec 2076", 
+            color: "#00a758", currency: "$",
+            surrenderCharges: { 1: 100, 2: 100, 3: 79, 4: 60, 5: 50, 6: 47, 7: 44, 8: 21, 9: 16, 10: 8, 11: 0 },
+            currentUnitValue: "19460",
             isULIP: true 
         }
     ]
