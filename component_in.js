@@ -1,3 +1,4 @@
+/* component_in.js - Restored Baseline with Unit Value Integration */
 import { checkIsDueSoon, getTimeLeft, autoFmt, toNum, raw } from './india.js';
 
 export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -18,7 +19,7 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
     const unitValue = Math.round(toNum(p.currentUnitValue || 0));
     const prem = Math.round(toNum(p.premium));
 
-    // --- FULL COLOR LOGIC RESTORED ---
+    // --- REINSTATED ORIGINAL TIMELINE LOGIC ---
     let timelineHtml = '';
     for(let yr = startY; yr < matY; yr++) {
         const polY = yr - startY + 1;
@@ -54,63 +55,51 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
         timelineHtml += `<div class="segment ${color}"><div class="tooltip"><b class="text-emerald-400 uppercase tracking-tighter">${phase}</b><br>${detail}<br><span class="opacity-40 text-[9px]">Year ${polY} (${yr})</span></div></div>`;
     }
 
-    // Maturity Star with tooltip safety
     timelineHtml += `<div class="mat-star">★<div class="tooltip"><b class="text-orange-400 uppercase tracking-widest">Maturity</b><br><span class="${String(p.maturityAmt || p.sumAssured).length > 15 ? 'text-[10px]' : 'text-lg'} font-black">${raw(p.maturityAmt || p.sumAssured)}</span></div></div>`;
 
     return `
-    <div class="policy-card mb-8 rounded-[32px] bg-white shadow-xl border-t-8" id="card-${p.id}" style="border-color: ${p.color}">
-        <div class="p-8 flex items-center justify-between cursor-pointer" onclick="toggleCard('${p.id}')">
-            <div class="flex items-center w-1/3">
-                <div class="w-16 flex justify-center mr-6"><img src="${p.logo}" class="max-h-10"></div>
-                <div>
-                    <h3 class="font-black text-xl text-slate-800 tracking-tighter flex items-center">
-                        ${p.name}
-                        ${p.isWife ? `<span class="ml-2 text-pink-500">👩‍💼</span>` : ''}
-                    </h3>
-                    <div class="funky-badge inline-block mt-1" style="border-color: ${p.color}; color: ${p.color}">${p.type}</div>
-                </div>
+    <div class="policy-card mb-6" id="card-${p.id}" style="border-color: ${p.color}">
+        <div class="card-header" onclick="toggleCard('${p.id}')">
+            <div class="w-32 flex justify-center"><img src="${p.logo}" class="max-h-12"></div>
+            <div class="flex-1 ml-10">
+                <h3 class="font-black text-slate-800 text-xl tracking-tight flex items-center">
+                    ${p.name}
+                    ${p.isWife ? `<span class="family-marker" title="Wife's Policy"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm8.94 14c-.46-4.17-3.97-7.41-8.19-7.41s-7.73 3.24-8.19 7.41c-.02.21.11.41.32.41H20.62c.21 0 .34-.2.32-.41z"/></svg></span>` : ''}
+                </h3>
             </div>
-
-            <div class="flex flex-1 justify-around border-x border-slate-100 px-6">
-                <div>
-                    <p class="text-[9px] font-bold text-slate-400 uppercase">Sum Assured</p>
-                    <p class="text-lg font-black text-slate-700">${autoFmt(p.sumAssured, sym)}</p>
+            <div class="flex gap-12 items-center mr-10">
+                <div class="flex items-center w-[300px] -ml-12">
+                    <div class="funky-badge" style="border-color: ${p.color}; box-shadow: 0 0 10px ${p.color}44;">${p.type}</div>
+                    <div class="ml-6">
+                        <p class="text-[9px] font-bold text-slate-400 uppercase">Sum Assured</p>
+                        <p class="text-lg font-black text-slate-700">${autoFmt(p.sumAssured, sym)}</p>
+                    </div>
                 </div>
-                <div>
+                <div class="text-center border-l-2 border-slate-100 pl-10">
                     <p class="text-[9px] font-bold text-slate-400 uppercase">Annual Premium</p>
                     <p class="text-lg font-black ${isPaidUp ? 'text-slate-300 line-through' : 'text-emerald-600'}">${autoFmt(prem, sym)}</p>
-                    ${timeLeft && !isPaidUp ? `<p class="text-[10px] font-bold text-slate-400 tracking-tighter mt-[-2px]">${timeLeft}</p>` : ''}
                 </div>
             </div>
-
             <div class="w-44 text-center">
                 <p class="text-[9px] font-bold text-slate-400 uppercase mb-1">Next Due Date</p>
                 ${isPaidUp ? `<img src="paid.jpg" class="paid-logo mx-auto">` : 
-                `<div class="px-6 py-3 rounded-xl font-black text-xs ${checkIsDueSoon(p.dueDate) ? 'due-blink' : 'bg-slate-900 text-white'}">${p.dueDate}</div>`}
+                `<div class="px-6 py-3 rounded-xl font-black text-xs text-center shadow-lg ${checkIsDueSoon(p.dueDate) ? 'due-blink' : 'bg-slate-900 text-white'}">${p.dueDate}</div>`}
             </div>
         </div>
 
-        <div class="content-area px-8 pb-10 pt-6 bg-slate-50 border-t">
-            <div class="grid grid-cols-3 gap-4 mb-8 text-center">
-                <div class="bg-white p-4 rounded-xl border border-slate-200">
-                    <p class="text-[9px] font-bold text-slate-400 uppercase mb-1">Policy Number</p>
-                    <p class="text-xs font-black text-slate-700">${p.id || 'N/A'}</p>
-                </div>
-                <div class="bg-white p-4 rounded-xl border border-slate-200">
-                    <p class="text-[9px] font-bold text-slate-400 uppercase mb-1">UIN Number</p>
-                    <p class="text-xs font-black text-slate-700">${p.uin || 'N/A'}</p>
-                </div>
-                <div class="${isULIP ? 'bg-indigo-900 text-white' : 'bg-slate-200 text-slate-500'} p-4 rounded-xl shadow-md transition-all">
-                    <p class="text-[9px] font-bold ${isULIP ? 'text-indigo-300' : 'text-slate-500'} uppercase mb-1">Portfolio Value</p>
-                    <p class="text-sm font-black">${isULIP ? autoFmt(unitValue, sym) : 'N/A'}</p>
+        <div class="content-area">
+            <div class="detail-grid" style="display: grid; grid-template-cols: repeat(3, 1fr); gap: 20px; padding: 20px;">
+                <div class="detail-item"><p>Policy Number</p><p>${p.id || 'N/A'}</p></div>
+                <div class="detail-item"><p>UIN Number</p><p>${p.uin || 'N/A'}</p></div>
+                <div class="detail-item" style="${isULIP ? 'background: #312e81; color: white; border-radius: 12px; padding: 10px;' : ''}">
+                    <p style="${isULIP ? 'color: #a5b4fc;' : ''}">Portfolio Value</p>
+                    <p style="font-weight: 900;">${isULIP ? autoFmt(unitValue, sym) : 'N/A (Traditional)'}</p>
                 </div>
             </div>
 
-            <div class="timeline-track relative">
+            <div class="timeline-track">
                 <div class="absolute -top-8 left-0 text-[11px] font-black text-slate-400 uppercase">${p.commenced}</div>
-                <div class="flex h-10 bg-slate-200 rounded-xl overflow-visible p-1 shadow-inner">
-                    ${timelineHtml}
-                </div>
+                ${timelineHtml}
                 <div class="absolute -top-8 right-0 text-[11px] font-black text-slate-400 uppercase">${p.maturity}</div>
             </div>
         </div>
