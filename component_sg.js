@@ -1,4 +1,4 @@
-/* component_sg.js - Singapore Specialist (Final Baseline v3.5.90) */
+/* component_sg.js - Singapore Specialist (Final Baseline v3.5.91) */
 import { checkIsDueSoon, autoFmt, toNum } from './india.js';
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -41,7 +41,6 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
             }
         }
 
-        // Tooltip now matches India solution with Year shown in hover
         timelineHtml += `
             <div class="segment ${color} relative group h-12 flex-1 border-r border-white/10 transition-all">
                 <div class="tooltip opacity-0 group-hover:opacity-100 absolute bottom-full mb-3 left-1/2 -translate-x-1/2 bg-slate-900 text-white p-2 rounded text-[9px] z-50 whitespace-nowrap pointer-events-none shadow-2xl">
@@ -76,9 +75,9 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
 
         <div class="content-area px-8 pb-10 pt-6 bg-slate-50 border-t">
             <div class="grid grid-cols-3 gap-4 mb-8">
-                <div class="bg-white p-5 rounded-[24px] border border-slate-200 flex flex-col justify-center">
-                    <p class="text-[10px] font-bold text-slate-400 uppercase mb-1 tracking-wider">Policy Number</p>
-                    <p class="text-sm font-black text-slate-800 tracking-tight">${p.id || 'N/A'}</p>
+                <div class="bg-slate-900 p-5 rounded-[24px] border-b-4 border-lime-500 shadow-lg flex flex-col justify-center">
+                    <p class="text-[10px] font-bold text-slate-500 uppercase mb-1 tracking-wider">Policy Number</p>
+                    <p class="text-sm font-black text-lime-400 tracking-widest font-mono">${p.id || 'N/A'}</p>
                 </div>
 
                 <div class="bg-indigo-900 p-5 rounded-[24px] shadow-lg border border-indigo-700 flex flex-col justify-center">
