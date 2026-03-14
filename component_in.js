@@ -1,4 +1,4 @@
-/* component_in.js - Restored Baseline with Unit Value Integration */
+/* component_in.js - Baseline v3.5.90 | Finalized Family Icons & ULIP Logic */
 import { checkIsDueSoon, getTimeLeft, autoFmt, toNum, raw } from './india.js';
 
 export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -15,6 +15,7 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
     const currentAnniversary = new Date(`${anniversaryMonth} ${anniversaryDay}, ${CURRENT_YEAR}`);
     const hasPassedThisYear = TODAY > currentAnniversary;
 
+    // Strict check for isULIP flag from your updated data.js
     const isULIP = p.isULIP === true;
     const unitValue = Math.round(toNum(p.currentUnitValue || 0));
     const prem = Math.round(toNum(p.premium));
@@ -64,7 +65,8 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
             <div class="flex-1 ml-10">
                 <h3 class="font-black text-slate-800 text-xl tracking-tight flex items-center">
                     ${p.name}
-                    ${p.isWife ? `<span class="family-marker" title="Wife's Policy"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm8.94 14c-.46-4.17-3.97-7.41-8.19-7.41s-7.73 3.24-8.19 7.41c-.02.21.11.41.32.41H20.62c.21 0 .34-.2.32-.41z"/></svg></span>` : ''}
+                    ${p.isWife ? `<span class="family-marker ml-3" title="Wife's Policy"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#db2777" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm8.94 14c-.46-4.17-3.97-7.41-8.19-7.41s-7.73 3.24-8.19 7.41c-.02.21.11.41.32.41H20.62c.21 0 .34-.2.32-.41z"/></svg></span>` : ''}
+                    ${p.isDaughter ? `<span class="family-marker ml-3" title="Daughter's Policy"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4"/><path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg></span>` : ''}
                 </h3>
             </div>
             <div class="flex gap-12 items-center mr-10">
@@ -91,10 +93,18 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
             <div class="detail-grid" style="display: grid; grid-template-cols: repeat(3, 1fr); gap: 20px; padding: 20px;">
                 <div class="detail-item"><p>Policy Number</p><p>${p.id || 'N/A'}</p></div>
                 <div class="detail-item"><p>UIN Number</p><p>${p.uin || 'N/A'}</p></div>
-                <div class="detail-item" style="${isULIP ? 'background: #312e81; color: white; border-radius: 12px; padding: 10px;' : ''}">
-                    <p style="${isULIP ? 'color: #a5b4fc;' : ''}">Portfolio Value</p>
-                    <p style="font-weight: 900;">${isULIP ? autoFmt(unitValue, sym) : 'N/A (Traditional)'}</p>
-                </div>
+                
+                ${isULIP ? `
+                    <div class="detail-item" style="background: #eef2ff; border: 2px solid #6366f1; border-radius: 12px; padding: 10px; display: flex; flex-direction: column; justify-content: center;">
+                        <p style="color: #4338ca; font-weight: 800; font-size: 10px; margin: 0; text-transform: uppercase;">Portfolio Value</p>
+                        <p style="font-weight: 900; color: #1e1b4b; font-size: 18px; margin: 0;">${autoFmt(unitValue, sym)}</p>
+                    </div>
+                ` : `
+                    <div class="detail-item">
+                        <p>Customer ID</p>
+                        <p>${p.clientId || 'N/A'}</p>
+                    </div>
+                `}
             </div>
 
             <div class="timeline-track">
