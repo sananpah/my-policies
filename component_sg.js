@@ -1,4 +1,4 @@
-/* component_sg.js - v4.1.2 - Tooltip Fix */
+/* component_sg.js - v4.3.0 - Final Precision Timeline */
 import { autoFmt, toNum } from './india.js';
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -33,7 +33,7 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const brandColor = isManulife ? "#00a758" : "#d31145";
     const brandBg = isManulife ? "rgba(0, 167, 88, 0.03)" : "rgba(211, 17, 69, 0.03)";
 
-    // --- 4. TIMELINE GENERATION (Fixed Tooltip Labels) ---
+    // --- 4. TIMELINE GENERATION (Explicit State Logic) ---
     let timelineHtml = '';
     for(let polY = 1; polY <= 15; polY++) {
         const yr = startY + polY - 1;
@@ -44,18 +44,28 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
         let colorClass = "";
         let statusLabel = "";
 
+        // MANULIFE SPECIFIC SEQUENCE
         if (isCurrent) {
             colorClass = "bg-black ring-2 ring-white z-20 scale-110 shadow-xl";
             statusLabel = "Current Active Year";
         } else if (isPast) {
             colorClass = "bg-emerald-900";
             statusLabel = "Year Completed";
-        } else if (chargeAtYear > 0) {
-            colorClass = "bg-pink-400";
-            statusLabel = "Locked Phase"; // Pink Bar
+        } else if (isManulife) {
+            if (polY === 5) {
+                colorClass = "bg-indigo-500"; // Subtle Purple
+                statusLabel = "Locked Phase";
+            } else if (polY >= 6 && polY <= 10) {
+                colorClass = "bg-pink-400";   // Pink
+                statusLabel = "Flexi Premium + Locked";
+            } else {
+                colorClass = "bg-red-600";    // Red
+                statusLabel = "Vested / Liquid";
+            }
         } else {
-            colorClass = "bg-red-600";
-            statusLabel = "Vested / Liquid"; // Red Bar
+            // Standard AIA/Generic Logic
+            colorClass = chargeAtYear > 0 ? "bg-pink-400" : "bg-red-600";
+            statusLabel = chargeAtYear > 0 ? "Locked Phase" : "Vested / Liquid";
         }
 
         timelineHtml += `
