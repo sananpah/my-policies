@@ -1,4 +1,4 @@
-/* component_sg.js - v4.1.0 */
+/* component_sg.js - v4.1.2 - Tooltip Fix */
 import { autoFmt, toNum } from './india.js';
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -10,18 +10,12 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const annualPremium = toNum(p.premium || 0);
     const displaySumAssured = (toNum(p.sumAssured) === 0) ? accountValue : toNum(p.sumAssured);
 
-    // DYNAMIC CALENDAR LOGIC
-    // We use the Calendar Year difference to determine the "Current Active Bar"
     const calendarYearDiff = TODAY.getFullYear() - startY;
-    
-    // The bar currently active (e.g., if 3 years passed, you are in the 4th year)
     const currentInPhase = calendarYearDiff + 1;
 
-    // Financial Logic: How many premiums have been paid (influences surrender charge)
     const isManulife = p.company.toUpperCase().includes("MANULIFE");
     const premiumsPaidCount = p.premiumsPaid || 3; 
     
-    // Surrender Charge logic: Manulife uses premium count, AIA uses calendar progression
     const financialYear = isManulife ? premiumsPaidCount : calendarYearDiff;
 
     // --- 2. SURRENDER VALUE MATH ---
@@ -39,7 +33,7 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const brandColor = isManulife ? "#00a758" : "#d31145";
     const brandBg = isManulife ? "rgba(0, 167, 88, 0.03)" : "rgba(211, 17, 69, 0.03)";
 
-    // --- 4. TIMELINE GENERATION ---
+    // --- 4. TIMELINE GENERATION (Fixed Tooltip Labels) ---
     let timelineHtml = '';
     for(let polY = 1; polY <= 15; polY++) {
         const yr = startY + polY - 1;
@@ -47,16 +41,28 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
         const isPast = (polY < currentInPhase);
         const chargeAtYear = p.surrenderCharges[polY] || 0;
         
-        // Color mapping per user request
-        let colorClass = isCurrent ? "bg-black ring-2 ring-white z-20 scale-110 shadow-xl" 
-                       : (isPast ? "bg-emerald-900" 
-                       : (chargeAtYear === 0 ? "bg-red-600" : "bg-pink-400"));
+        let colorClass = "";
+        let statusLabel = "";
+
+        if (isCurrent) {
+            colorClass = "bg-black ring-2 ring-white z-20 scale-110 shadow-xl";
+            statusLabel = "Current Active Year";
+        } else if (isPast) {
+            colorClass = "bg-emerald-900";
+            statusLabel = "Year Completed";
+        } else if (chargeAtYear > 0) {
+            colorClass = "bg-pink-400";
+            statusLabel = "Locked Phase"; // Pink Bar
+        } else {
+            colorClass = "bg-red-600";
+            statusLabel = "Vested / Liquid"; // Red Bar
+        }
 
         timelineHtml += `
             <div class="segment ${colorClass} h-8 flex-1 border-r border-white/10 first:rounded-l-lg last:rounded-r-lg transition-all relative group/item">
                 <div class="opacity-0 group-hover/item:opacity-100 absolute bottom-full mb-3 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-3 py-2 rounded-xl text-[10px] z-[100] whitespace-nowrap pointer-events-none shadow-2xl transition-all duration-200">
-                    <b class="text-sky-400 uppercase tracking-widest block mb-1">Year ${polY} (${yr})</b>
-                    <span class="text-slate-300 font-bold">${isCurrent ? 'Current' : (isPast ? 'Completed' : 'Future')}</span>
+                    <b class="text-sky-400 uppercase tracking-widest block mb-1 font-black">Year ${polY} (${yr})</b>
+                    <span class="text-white font-bold">${statusLabel}</span>
                     <div class="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-slate-900"></div>
                 </div>
             </div>`;
