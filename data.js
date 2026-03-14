@@ -37,7 +37,7 @@ export const POLICY_DATA = {
             logo: "image_5d7f80.png", id: "79079094", uin: "107N105V02", clientId: "61491746", type: "RETIREMENT", 
             premium: 50000, sumAssured: 323695, dueDate: "13 Mar 2026", 
             commenced: "13 Mar 2025", premiumEnds: "13 Mar 2031", maturity: "13 Mar 2040", 
-            color: "#e63946", maturityAmt: "₹ 3,23,695 + Bonus", isULIP: true 
+            color: "#e63946", maturityAmt: "₹ 3,23,695 + Bonus"
         },
         { 
             name: "Fortune Maximiser", company: "KOTAK",
