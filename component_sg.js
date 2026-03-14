@@ -1,4 +1,4 @@
-/* component_sg.js - Sleek UI Refresh */
+/* component_sg.js - v3.9.2 */
 import { autoFmt, toNum } from './india.js';
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -28,9 +28,9 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     // --- 3. BRANDING & DYNAMIC STYLES ---
     const isManulife = p.company.toUpperCase().includes("MANULIFE");
     const brandColor = isManulife ? "#00a758" : "#d31145";
-    const brandBg = isManulife ? "rgba(0, 167, 88, 0.05)" : "rgba(211, 17, 69, 0.05)";
+    const brandBg = isManulife ? "rgba(0, 167, 88, 0.03)" : "rgba(211, 17, 69, 0.03)";
 
-    // --- 4. TIMELINE GENERATION (User's Specific Colors) ---
+    // --- 4. TIMELINE GENERATION ---
     let timelineHtml = '';
     for(let polY = 1; polY <= 15; polY++) {
         const isCurrent = (polY === chargeYear);
@@ -41,11 +41,11 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
                        : (isPast ? "bg-emerald-900" 
                        : (chargeAtYear === 0 ? "bg-red-600" : "bg-pink-400"));
 
-        timelineHtml += `<div class="segment ${colorClass} h-8 flex-1 border-r border-white/10 first:rounded-l-lg last:rounded-r-lg transition-all hover:brightness-125"></div>`;
+        timelineHtml += `<div class="segment ${colorClass} h-8 flex-1 border-r border-white/10 first:rounded-l-lg last:rounded-r-lg transition-all hover:brightness-110"></div>`;
     }
 
     return `
-    <div class="policy-card mb-10 rounded-[40px] bg-white overflow-hidden transition-all duration-500 shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-slate-100 hover:shadow-[0_30px_60px_rgba(0,0,0,0.15)]" id="card-${p.id}">
+    <div class="policy-card mb-10 rounded-[40px] bg-white overflow-hidden transition-all duration-500 shadow-[0_20px_50px_rgba(0,0,0,0.08)] border border-slate-100" id="card-${p.id}">
         
         <div class="p-8 flex items-center justify-between cursor-pointer" onclick="toggleCard('${p.id}')">
             <div class="flex items-center gap-8">
@@ -72,14 +72,14 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
         <div class="content-area px-8 pb-10 pt-2" style="background: linear-gradient(to bottom, #ffffff, ${brandBg})">
             
             <div class="grid grid-cols-4 gap-6 mb-12">
-                <div class="relative p-6 rounded-[32px] bg-white border border-slate-100 shadow-sm overflow-hidden group">
-                    <div class="absolute top-0 left-0 w-1 h-full" style="background: ${brandColor}"></div>
+                <div class="relative p-6 rounded-[32px] bg-white border border-slate-100 shadow-sm overflow-hidden">
+                    <div class="absolute top-0 left-0 w-1.5 h-full" style="background: ${brandColor}"></div>
                     <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Sum Assured</p>
                     <p class="text-2xl font-black text-slate-800 tracking-tight">${autoFmt(displaySumAssured, sym)}</p>
                 </div>
 
                 <div class="relative p-6 rounded-[32px] bg-white border border-slate-100 shadow-sm overflow-hidden">
-                    <div class="absolute top-0 left-0 w-1 h-full bg-sky-500"></div>
+                    <div class="absolute top-0 left-0 w-1.5 h-full bg-sky-500"></div>
                     <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Annual Premium</p>
                     <p class="text-2xl font-black text-slate-800 tracking-tight">${autoFmt(p.premium, sym)}</p>
                 </div>
@@ -95,20 +95,14 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
                 </div>
             </div>
 
-            <div class="flex justify-between items-end mb-4">
-                <div class="flex gap-10">
-                    <div>
-                        <p class="text-[9px] font-black text-slate-400 uppercase mb-1">Commencement</p>
-                        <p class="text-xs font-bold text-slate-700 underline decoration-2 decoration-sky-300 underline-offset-4">${p.commenced}</p>
-                    </div>
-                    <div>
-                        <p class="text-[9px] font-black text-slate-400 uppercase mb-1">Maturity Date</p>
-                        <p class="text-xs font-bold text-slate-700 underline decoration-2 decoration-amber-300 underline-offset-4">${p.maturity}</p>
-                    </div>
+            <div class="flex justify-between items-end mb-4 px-2">
+                <div>
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Commencement</p>
+                    <p class="text-sm font-bold text-slate-700 underline decoration-2 decoration-sky-300 underline-offset-4">${p.commenced}</p>
                 </div>
                 <div class="text-right">
-                    <span class="text-[10px] font-black text-slate-400 uppercase mr-2">Status:</span>
-                    <span class="text-[10px] font-black text-emerald-600 uppercase tracking-widest bg-emerald-100 px-3 py-1 rounded-full">Active Portfolio</span>
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Maturity Date</p>
+                    <p class="text-sm font-bold text-slate-700 underline decoration-2 decoration-amber-300 underline-offset-4">${p.maturity}</p>
                 </div>
             </div>
 
