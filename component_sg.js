@@ -1,10 +1,9 @@
-/* component_sg.js - Singapore Specialist (Final Baseline v3.5.85) */
+/* component_sg.js - Singapore Specialist (Final Baseline v3.5.90) */
 import { checkIsDueSoon, autoFmt, toNum } from './india.js';
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const startY = p.commenced ? parseInt(p.commenced.split(' ')[2]) : CURRENT_YEAR;
     
-    // Amount rounding to nearest dollar logic
     const unitValue = Math.round(toNum(p.currentUnitValue || 0));
     const polYearToday = CURRENT_YEAR - startY + 1;
     const sCharges = p.surrenderCharges || {};
@@ -23,21 +22,19 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
         let label = sCharge > 0 ? "Vesting..." : "Fully Vested";
 
         if (isPast) {
-            color = "bg-emerald-800"; // Dark Green History
+            color = "bg-emerald-800"; 
             label = "Premium Paid";
         } else if (isCurrent) {
             color = "bg-blue-600 ring-2 ring-offset-2 ring-blue-400 z-10 scale-110";
             label = "Current Position";
         } else {
-            // Future Years
             if (sCharge > 0) {
-                color = "bg-red-600"; // Locked
+                color = "bg-red-600"; 
                 label = `Locked (${sCharge}%)`;
             } else {
-                color = "bg-pink-300 border border-pink-400"; // Changed to PINK as requested
+                color = "bg-pink-300 border border-pink-400";
                 label = "Vested";
             }
-            // Overlays bonus glow if applicable
             if (wBonus) {
                 color = "bg-pink-500 shadow-[0_0_12px_rgba(236,72,153,0.7)]";
                 label += ` + Bonus`;
@@ -77,14 +74,20 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
         </div>
 
         <div class="content-area px-8 pb-10 pt-6 bg-slate-50 border-t">
-            <div class="grid grid-cols-2 gap-4 mb-6">
-                <div class="bg-white p-6 rounded-[24px] border border-slate-200">
-                    <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Account Value</p>
-                    <p class="text-3xl font-black text-slate-800">${autoFmt(unitValue, sym)}</p>
+            <div class="grid grid-cols-3 gap-4 mb-8">
+                <div class="bg-indigo-900 p-5 rounded-[24px] shadow-lg border border-indigo-700">
+                    <p class="text-[10px] font-bold text-indigo-300 uppercase mb-1 tracking-wider">Account Value</p>
+                    <p class="text-2xl font-black text-white">${autoFmt(unitValue, sym)}</p>
                 </div>
-                <div class="bg-emerald-900 p-6 rounded-[24px] shadow-xl">
-                    <p class="text-[10px] font-bold text-emerald-400 uppercase mb-1">Surrender Value</p>
-                    <p class="text-3xl font-black text-white">${autoFmt(surrenderValue, sym)}</p>
+
+                <div class="bg-emerald-100 p-5 rounded-[24px] border-2 border-emerald-200 shadow-sm">
+                    <p class="text-[10px] font-bold text-emerald-700 uppercase mb-1 tracking-wider">Surrender Value</p>
+                    <p class="text-2xl font-black text-emerald-900">${autoFmt(surrenderValue, sym)}</p>
+                </div>
+
+                <div class="bg-white p-5 rounded-[24px] border border-slate-200">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase mb-1 tracking-wider">Policy Number</p>
+                    <p class="text-sm font-black text-slate-800 tracking-tight">${p.id || 'N/A'}</p>
                 </div>
             </div>
 
