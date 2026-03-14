@@ -3,15 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nami Portfolio v3.5.91</title>
+    <title id="main-title">Nami Portfolio</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="india_styles.css">
     <style>
-        /* Expansion Logic: Must be in index.html */
         .policy-card .content-area { display: none; }
         .policy-card.open .content-area { display: block; }
 
-        /* Simple Build ID with a soft glow effect */
         .simple-build {
             position: fixed; top: 15px; right: 20px;
             font-family: monospace; font-size: 11px; font-weight: bold;
@@ -42,7 +40,7 @@
 </head>
 <body class="bg-slate-50">
 
-    <div class="simple-build">v3.5.91</div>
+    <div id="version-tag" class="simple-build"></div>
 
     <div class="max-w-7xl mx-auto mb-10 pt-10 px-4">
         <div class="flex justify-between items-end mb-6">
@@ -86,12 +84,25 @@
     <div id="container" class="max-w-7xl mx-auto pb-20 px-4"></div>
 
     <script type="module">
-        import { POLICY_DATA } from './data.js?v=3.5.91';
-        import { checkIsDueSoon, toNum } from './india.js?v=3.5.91';
-        
-        // This is where we use two different files
-        import { createPolicyCard } from './component_in.js?v=3.5.91'; 
-        import { createSGCard } from './component_sg.js?v=3.5.91';
+        // --- THE ONLY PLACE YOU EVER CHANGE THE VERSION ---
+        const APP_VERSION = "3.5.91";
+
+        // Push version to the Document Title and the UI Badge
+        document.title = `Nami Portfolio v${APP_VERSION}`;
+        document.getElementById('version-tag').innerText = `v${APP_VERSION}`;
+
+        // Dynamic Imports
+        const [Data, Tools, IndiaComp, SGComp] = await Promise.all([
+            import(`./data.js?v=${APP_VERSION}`),
+            import(`./india.js?v=${APP_VERSION}`),
+            import(`./component_in.js?v=${APP_VERSION}`),
+            import(`./component_sg.js?v=${APP_VERSION}`)
+        ]);
+
+        const { POLICY_DATA } = Data;
+        const { toNum } = Tools;
+        const { createPolicyCard } = IndiaComp;
+        const { createSGCard } = SGComp;
 
         const TODAY = new Date();
         const CURRENT_YEAR = TODAY.getFullYear();
@@ -133,8 +144,8 @@
             const tAnn = list.reduce((acc, p) => acc + (p.dueDate !== "PAID UP" ? toNum(p.premium) : 0), 0);
             const tUnitValue = list.reduce((acc, p) => acc + toNum(p.currentUnitValue || 0), 0);
             
-            document.getElementById('total-sa').innerText = sym + tSA.toLocaleString();
-            document.getElementById('total-premium').innerText = sym + tAnn.toLocaleString();
+            document.getElementById('total-sa').innerText = sym + Math.round(tSA).toLocaleString();
+            document.getElementById('total-premium').innerText = sym + Math.round(tAnn).toLocaleString();
             document.getElementById('total-unit-value').innerText = sym + Math.round(tUnitValue).toLocaleString();
         }
 
