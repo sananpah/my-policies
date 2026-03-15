@@ -3,9 +3,16 @@ import { autoFmt, toNum } from './india.js';
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const commDate = new Date(p.commenced);
+    const matDate = new Date(p.maturity);
+    
     const startY = commDate.getFullYear();
+    const endY = matDate.getFullYear();
+    
     const commMonth = commDate.getMonth();
     const commDay = commDate.getDate();
+
+    // Calculate exact policy duration for the timeline
+    const policyDuration = endY - startY + 1;
     
     const accountValue = Math.round(toNum(p.currentUnitValue || 0));
     const annualPremium = toNum(p.premium || 0);
@@ -40,8 +47,8 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
 
     // 4. TIMELINE GENERATION (Chronology > Brand Phase)
     let timelineHtml = '';
-    const maxYears = isAIA ? 30 : 15;
-
+    const maxYears = (policyDuration > 0 && policyDuration < 50) ? policyDuration : (isAIA ? 30 : 15);
+  
     for (let polY = 1; polY <= maxYears; polY++) {
         const yr = startY + polY - 1;
         let colorClass = "";
