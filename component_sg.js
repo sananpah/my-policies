@@ -1,24 +1,32 @@
-/* component_sg.js - v6.3.0 - Final Logic Correction */
+/* component_sg.js - v6.3.1 - Strict Anniversary & Phase Logic */
 import { autoFmt, toNum } from './india.js';
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const commDate = new Date(p.commenced);
     const startY = commDate.getFullYear();
+    const commMonth = commDate.getMonth();
+    const commDay = commDate.getDate();
+    
     const accountValue = Math.round(toNum(p.currentUnitValue || 0));
     const annualPremium = toNum(p.premium || 0);
     const displaySumAssured = (toNum(p.sumAssured) === 0) ? accountValue : toNum(p.sumAssured);
 
-    let yearsElapsed = TODAY.getFullYear() - startY;
-    if (TODAY < new Date(TODAY.getFullYear(), commDate.getMonth(), commDate.getDate())) yearsElapsed--;
+    // Calculate exactly how many full years have been COMPLETED
+    let yearsCompleted = TODAY.getFullYear() - startY;
+    const thisYearAnniversary = new Date(TODAY.getFullYear(), commMonth, commDay);
+    if (TODAY < thisYearAnniversary) yearsCompleted--;
     
-    const currentInPhase = yearsElapsed + 1;
+    // The year we are currently IN (The "Black" bar year)
+    const currentInPhase = yearsCompleted + 1;
+    
     const totalWithdrawn = (p.withdrawals || []).reduce((a, b) => a + b, 0);
     const totalInvestmentBase = p.totalPremiumPaid ? toNum(p.totalPremiumPaid) : (annualPremium * currentInPhase);
     const netInvestmentBase = totalInvestmentBase - totalWithdrawn;
 
+    // Calculate the Next Due Date string
     let dueYear = TODAY.getFullYear();
-    if (TODAY >= new Date(dueYear, commDate.getMonth(), commDate.getDate())) dueYear++;
-    const nextDueDate = new Date(dueYear, commDate.getMonth(), commDate.getDate());
+    if (TODAY >= thisYearAnniversary) dueYear++;
+    const nextDueDate = new Date(dueYear, commMonth, commDay);
     const dateStr = nextDueDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 
     const isPrudential = p.company.toUpperCase().includes("PRUDENTIAL");
@@ -38,31 +46,34 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
 
     for (let polY = 1; polY <= maxYears; polY++) {
         const yr = startY + polY - 1;
-        const isCurrentDue = (polY === currentInPhase && nextDueDate.getFullYear() === TODAY.getFullYear());
-        const isCompleted = (polY < currentInPhase) || (polY === currentInPhase && nextDueDate.getFullYear() > TODAY.getFullYear());
-        const chargeAtYear = p.surrenderCharges[polY] || 0;
-        
         let colorClass = "";
         let statusLabel = "";
 
-        // --- THE FIXED LOGIC ---
-        if (isCurrentDue) {
+        // 1. COMPLETED YEARS (Dark Green)
+        if (polY <= yearsCompleted) {
+            colorClass = "bg-emerald-900";
+            statusLabel = "Completed";
+        } 
+        // 2. THE CURRENT YEAR (Black)
+        else if (polY === currentInPhase) {
             colorClass = "bg-black ring-2 ring-white z-20 scale-110 shadow-xl";
             statusLabel = "Premium Due";
-        } else if (isCompleted) {
-            colorClass = "bg-emerald-900"; // Always Dark Green for completed
-            statusLabel = "Completed";
-        } else if (isSinglife) {
-            if (polY <= 3) { colorClass = "bg-indigo-500"; statusLabel = "Locked"; }
-            else if (polY <= 10) { colorClass = "bg-pink-400"; statusLabel = "Flexi Premium+Locked"; }
-            else { colorClass = "bg-red-600"; statusLabel = "Vested"; }
-        } else if (isFlexiBrand) {
-            if (polY <= 5) { colorClass = "bg-indigo-500"; statusLabel = "Locked"; }
-            else if (polY <= 10) { colorClass = "bg-pink-400"; statusLabel = "Flexi Premium+Locked"; }
-            else { colorClass = "bg-red-600"; statusLabel = "Vested"; }
-        } else {
-            colorClass = chargeAtYear > 0 ? "bg-pink-400" : "bg-red-600";
-            statusLabel = chargeAtYear > 0 ? "Locked" : "Vested";
+        }
+        // 3. FUTURE YEARS (Brand Logic)
+        else {
+            if (isSinglife) {
+                if (polY <= 3) { colorClass = "bg-indigo-500"; statusLabel = "Locked"; }
+                else if (polY <= 10) { colorClass = "bg-pink-400"; statusLabel = "Flexi Premium+Locked"; }
+                else { colorClass = "bg-red-600"; statusLabel = "Vested"; }
+            } else if (isFlexiBrand) {
+                if (polY <= 5) { colorClass = "bg-indigo-500"; statusLabel = "Locked"; }
+                else if (polY <= 10) { colorClass = "bg-pink-400"; statusLabel = "Flexi Premium+Locked"; }
+                else { colorClass = "bg-red-600"; statusLabel = "Vested"; }
+            } else {
+                const chargeAtYear = p.surrenderCharges[polY] || 0;
+                colorClass = chargeAtYear > 0 ? "bg-pink-400" : "bg-red-600";
+                statusLabel = chargeAtYear > 0 ? "Locked" : "Vested";
+            }
         }
 
         timelineHtml += `
@@ -77,7 +88,7 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
 
     const starHtml = `
         <div class="ml-2 relative group flex items-center justify-center w-12 h-10 bg-white rounded-xl shadow-sm border border-slate-200 cursor-help">
-            <span class="text-amber-500 text-xl transition-transform group-hover:scale-125">★</span>
+            <span class="text-xl text-amber-500 transition-transform group-hover:scale-125">★</span>
             <div class="opacity-0 group-hover:opacity-100 absolute bottom-full mb-4 right-0 bg-slate-900 text-white p-3 rounded-xl z-[100] shadow-2xl border border-white/10 pointer-events-none min-w-[180px]">
                 <b class="text-amber-400 uppercase tracking-widest block text-[9px] mb-1">Maturity</b>
                 <span class="text-xs font-black block">Unit Value : ${autoFmt(accountValue, sym)}</span>
@@ -99,7 +110,7 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
         </div>` : '';
 
     return `
-    <div class="policy-card mb-10 rounded-[40px] bg-white overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.08)] border border-slate-100 relative" id="card-${p.id}">
+    <div class="policy-card mb-10 rounded-[40px] bg-white overflow-visible shadow-[0_20px_50px_rgba(0,0,0,0.08)] border border-slate-100 relative" id="card-${p.id}">
         <div class="absolute top-0 left-0 w-2 h-full z-30" style="background: ${brandColor}"></div>
         <div class="p-8 flex items-center justify-between cursor-pointer relative" style="background: ${brandBg}" onclick="toggleCard('${p.id}')">
             <div class="flex items-center gap-8 px-4">
@@ -116,8 +127,8 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
             <div class="grid grid-cols-4 gap-6 mb-8">
                 <div class="p-6 rounded-[32px] bg-white border border-slate-100 relative"><p class="text-[10px] font-black text-slate-400 mb-2 uppercase">Sum Assured</p><p class="text-2xl font-black text-slate-800">${autoFmt(displaySumAssured, sym)}</p></div>
                 <div class="p-6 rounded-[32px] bg-white border border-slate-100 relative"><p class="text-[10px] font-black text-slate-400 mb-2 uppercase">Invested</p><p class="text-2xl font-black text-slate-800">${autoFmt(totalInvestmentBase, sym)}</p></div>
-                <div class="p-6 rounded-[32px] bg-emerald-50 border border-emerald-100"><p class="text-[10px] font-black text-emerald-600 mb-2 uppercase text-center">Surrender</p><p class="text-3xl font-black text-emerald-700 text-center">${autoFmt(surrenderValue, sym)}</p></div>
-                <div class="p-6 rounded-[32px] bg-red-50 border border-red-100"><p class="text-[10px] font-black text-red-400 mb-2 uppercase text-center">Locked</p><p class="text-3xl font-black text-red-600 text-center">-${autoFmt(lockedValue, sym)}</p></div>
+                <div class="p-6 rounded-[32px] bg-emerald-50 border border-emerald-100 shadow-sm"><p class="text-[10px] font-black text-emerald-600 mb-2 uppercase text-center">Surrender</p><p class="text-3xl font-black text-emerald-700 text-center">${autoFmt(surrenderValue, sym)}</p></div>
+                <div class="p-6 rounded-[32px] bg-red-50 border border-red-100 shadow-sm"><p class="text-[10px] font-black text-red-400 mb-2 uppercase text-center">Locked</p><p class="text-3xl font-black text-red-600 text-center">-${autoFmt(lockedValue, sym)}</p></div>
             </div>
             ${capHtml}
             <div class="flex justify-between items-end mb-4 px-2">
