@@ -122,13 +122,15 @@ body {
     color: white;
     padding: 14px;
     border-radius: 12px;
-    width: 200px; 
+    width: max-content; /* Grows with text */
+    min-width: 140px;
+    max-width: 220px;
     text-align: center;
     font-size: 11px;
     z-index: 1000;
     transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
     pointer-events: none;
-    box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3);
+    box-shadow: 0 20px 25px -5px rgba(0,0,0,0.4);
     border: 1px solid #334155;
 }
 
@@ -139,7 +141,7 @@ body {
     transform: translateX(-50%) translateY(0);
 }
 
-/* --- MATURITY STAR --- */
+/* --- MATURITY STAR & EDGE-SAFE TOOLTIP --- */
 .mat-star { 
     flex: 0 0 44px;
     height: 44px;
@@ -156,6 +158,30 @@ body {
 .mat-star:hover {
     transform: scale(1.4) rotate(15deg);
     color: #fbbf24;
+}
+
+/* Specific override to prevent right-side truncation */
+.mat-star .tooltip {
+    left: auto !important;   /* Disables the default 50% left positioning */
+    right: 0 !important;      /* Forces tooltip to align with the right edge of the star */
+    transform: translateY(10px) !important; /* Resets the default translateX(-50%) */
+    width: max-content;
+    min-width: 180px;
+}
+
+/* Specific hover state for the star tooltip */
+.mat-star:hover .tooltip {
+    visibility: visible;
+    opacity: 1;
+    bottom: 55px;
+    transform: translateY(0) !important; /* Moves straight up, no horizontal shift */
+}
+
+/* Optional: Apply the 'Tilted' look to the maturity amount inside the tooltip */
+.mat-star .tooltip span {
+    display: block;
+    transform: skewX(-10deg) rotate(-2deg);
+    transform-origin: left;
 }
 
 /* --- STATUS COLORS --- */
