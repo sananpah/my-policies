@@ -141,7 +141,7 @@ body {
     transform: translateX(-50%) translateY(0);
 }
 
-/* --- MATURITY STAR & LEFT-SHIFTED TOOLTIP --- */
+/* --- MATURITY STAR & OFFSET TOOLTIP --- */
 .mat-star { 
     flex: 0 0 44px;
     height: 44px;
@@ -160,30 +160,31 @@ body {
     color: #fbbf24;
 }
 
-/* We force the tooltip to align its RIGHT side to the star's center */
+/* Fix: Pin to right edge and nudge left */
 .mat-star .tooltip {
     left: auto !important;
-    right: 50% !important; /* Start from the middle of the star */
-    transform: translateX(20%) translateY(10px) !important; /* Shift it 80% to the left */
+    right: 0 !important; 
+    margin-right: 15px; /* Nudges the whole box slightly to the left */
+    transform: translateY(10px) rotate(0deg) !important; /* Keep box straight */
     width: max-content;
     min-width: 180px;
-    margin-right: -20px; /* Fine-tune the "poking out" edge */
+    text-align: center;
 }
 
 .mat-star:hover .tooltip {
     visibility: visible;
     opacity: 1;
     bottom: 55px;
-    /* Maintain the left-shift while it moves up */
-    transform: translateX(20%) translateY(0) !important; 
+    transform: translateY(0) rotate(0deg) !important;
 }
 
-/* Tilted text effect for the amount */
+/* Apply the tilt ONLY to the text inside, not the box */
 .mat-star .tooltip span {
     display: block;
-    transform: skewX(-10deg) rotate(-2deg);
-    transform-origin: left;
+    transform: skewX(-12deg) rotate(-1deg);
+    transform-origin: center;
     font-weight: 900;
+    margin-top: 4px;
 }
 
 /* --- STATUS COLORS --- */
