@@ -1,4 +1,4 @@
-/* component_in.js - Baseline v3.5.90 | Finalized Family Icons & ULIP Logic */
+/* component_in.js - Updated with Brand Opacity Backgrounds */
 import { checkIsDueSoon, getTimeLeft, autoFmt, toNum, raw } from './india.js';
 
 export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -15,10 +15,13 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
     const currentAnniversary = new Date(`${anniversaryMonth} ${anniversaryDay}, ${CURRENT_YEAR}`);
     const hasPassedThisYear = TODAY > currentAnniversary;
 
-    // Strict check for isULIP flag from your updated data.js
     const isULIP = p.isULIP === true;
     const unitValue = Math.round(toNum(p.currentUnitValue || 0));
-    const prem = Math.round(toNum(p.premium));
+    const prem = Math.round(toNum(prem || 0)); // Safety check on prem
+
+    // --- NEW BRAND BACKGROUND LOGIC ---
+    const brandColor = p.color || "#000000";
+    const brandBg = `rgba(${parseInt(brandColor.slice(1,3), 16)}, ${parseInt(brandColor.slice(3,5), 16)}, ${parseInt(brandColor.slice(5,7), 16)}, 0.04)`;
 
     // --- REINSTATED ORIGINAL TIMELINE LOGIC ---
     let timelineHtml = '';
@@ -59,8 +62,8 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
     timelineHtml += `<div class="mat-star">★<div class="tooltip"><b class="text-orange-400 uppercase tracking-widest">Maturity</b><br><span class="${String(p.maturityAmt || p.sumAssured).length > 15 ? 'text-[10px]' : 'text-lg'} font-black">${raw(p.maturityAmt || p.sumAssured)}</span></div></div>`;
 
     return `
-    <div class="policy-card mb-6" id="card-${p.id}" style="border-color: ${p.color}">
-        <div class="card-header" onclick="toggleCard('${p.id}')">
+    <div class="policy-card mb-6" id="card-${p.id}" style="border-color: ${brandColor}">
+        <div class="card-header transition-colors" style="background: ${brandBg};" onclick="toggleCard('${p.id}')">
             <div class="w-32 flex justify-center"><img src="${p.logo}" class="max-h-12"></div>
             <div class="flex-1 ml-10">
                 <h3 class="font-black text-slate-800 text-xl tracking-tight flex items-center">
@@ -71,7 +74,7 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
             </div>
             <div class="flex gap-12 items-center mr-10">
                 <div class="flex items-center w-[300px] -ml-12">
-                    <div class="funky-badge" style="border-color: ${p.color}; box-shadow: 0 0 10px ${p.color}44;">${p.type}</div>
+                    <div class="funky-badge" style="border-color: ${brandColor}; box-shadow: 0 0 10px ${brandColor}44;">${p.type}</div>
                     <div class="ml-6">
                         <p class="text-[9px] font-bold text-slate-400 uppercase">Sum Assured</p>
                         <p class="text-lg font-black text-slate-700">${autoFmt(p.sumAssured, sym)}</p>
@@ -89,8 +92,8 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
             </div>
         </div>
 
-        <div class="content-area">
-            <div class="detail-grid" style="display: grid; grid-template-cols: repeat(3, 1fr); gap: 20px; padding: 20px;">
+        <div class="content-area" style="background: linear-gradient(to bottom, ${brandBg}, #ffffff)">
+            <div class="detail-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; padding: 20px;">
                 <div class="detail-item"><p>Policy Number</p><p>${p.id || 'N/A'}</p></div>
                 <div class="detail-item"><p>UIN Number</p><p>${p.uin || 'N/A'}</p></div>
                 
