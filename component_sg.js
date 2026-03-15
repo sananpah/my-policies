@@ -1,37 +1,27 @@
-/* component_sg.js - v6.3.3 - Brand Specific Phase Logic */
+/* component_sg.js - v6.3.5 - Calendar Year Trigger Fix */
 import { autoFmt, toNum } from './india.js';
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const commDate = new Date(p.commenced);
     const startY = commDate.getFullYear();
+    const commMonth = commDate.getMonth();
+    const commDay = commDate.getDate();
+    
     const accountValue = Math.round(toNum(p.currentUnitValue || 0));
     const annualPremium = toNum(p.premium || 0);
     const displaySumAssured = (toNum(p.sumAssured) === 0) ? accountValue : toNum(p.sumAssured);
 
-    // Identify Brands
     const company = p.company.toUpperCase();
     const isSinglife = company.includes("SINGLIFE");
     const isFlexiBrand = company.includes("MANULIFE") || company.includes("HSBC");
     const isAIA = company.includes("AIA") || company.includes("PRUDENTIAL");
 
-    // Current Status Logic (Anniversary Check)
-    let yearsPassed = TODAY.getFullYear() - startY;
-    const thisYearAnniversary = new Date(TODAY.getFullYear(), commDate.getMonth(), commDate.getDate());
-    if (TODAY < thisYearAnniversary) yearsPassed--;
-    
-    // Total Premium Calculation (Years passed + the current year we are in)
-    const totalInvestmentBase = p.totalPremiumPaid ? toNum(p.totalPremiumPaid) : (annualPremium * (yearsPassed + 1));
-    const totalWithdrawn = (p.withdrawals || []).reduce((a, b) => a + b, 0);
-    const netInvestmentBase = totalInvestmentBase - totalWithdrawn;
+    // Anniversary check for the CURRENT calendar year only
+    const thisYearAnniversary = new Date(CURRENT_YEAR, commMonth, commDay);
+    const hasPassedThisYear = TODAY >= thisYearAnniversary;
 
     const brandColor = p.color || "#000000";
     const brandBg = `rgba(${parseInt(brandColor.slice(1,3), 16)}, ${parseInt(brandColor.slice(3,5), 16)}, ${parseInt(brandColor.slice(5,7), 16)}, 0.04)`;
-
-    // Surrender Calculation
-    const chargePct = p.surrenderCharges[yearsPassed + 1] || 0;
-    let surrenderChargeAmount = (isSinglife || isFlexiBrand) ? totalInvestmentBase * (chargePct / 100) : accountValue * (chargePct / 100);
-    const surrenderValue = Math.round(Math.max(0, accountValue - surrenderChargeAmount));
-    const lockedValue = Math.round(accountValue - surrenderValue);
 
     let timelineHtml = '';
     const maxYears = isAIA ? 30 : 15;
@@ -41,16 +31,26 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
         let colorClass = "";
         let statusLabel = "";
 
-        // 1. CHRONOLOGICAL STATUS
-        if (yr < TODAY.getFullYear()) {
-            colorClass = "bg-emerald-900"; // DARK GREEN for past years
+        // --- CALENDAR BASED LOGIC ---
+        
+        // 1. PAST YEARS
+        if (yr < CURRENT_YEAR) {
+            colorClass = "bg-emerald-900";
             statusLabel = "Completed";
-        } else if (yr === TODAY.getFullYear()) {
-            colorClass = "bg-black ring-2 ring-white z-20 scale-110 shadow-xl"; // BLACK for current year
-            statusLabel = "Premium Due";
         } 
-        // 2. FUTURE PHASE LOGIC (Brand Specific)
+        // 2. CURRENT YEAR (2026)
+        else if (yr === CURRENT_YEAR) {
+            if (hasPassedThisYear) {
+                colorClass = "bg-emerald-900"; // Feb HSBC: Already paid, so Green
+                statusLabel = "Completed";
+            } else {
+                colorClass = "bg-black ring-2 ring-white z-20 scale-110 shadow-xl"; // Dec Manulife: Not yet paid, so Black
+                statusLabel = "Premium Due";
+            }
+        } 
+        // 3. FUTURE YEARS (2027+)
         else {
+            // Future years NEVER show black. They only show Phase colors.
             if (isSinglife) {
                 if (polY <= 3) { colorClass = "bg-indigo-500"; statusLabel = "Locked"; }
                 else if (polY <= 10) { colorClass = "bg-pink-400"; statusLabel = "Flexi Premium+Locked"; }
@@ -60,7 +60,6 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
                 else if (polY <= 10) { colorClass = "bg-pink-400"; statusLabel = "Flexi Premium+Locked"; }
                 else { colorClass = "bg-red-600"; statusLabel = "Vested"; }
             } else {
-                // AIA / Prudential Logic (No "Flexi Premium" concept)
                 const chargeAtYear = p.surrenderCharges[polY] || 0;
                 colorClass = chargeAtYear > 0 ? "bg-pink-400" : "bg-red-600";
                 statusLabel = chargeAtYear > 0 ? "Locked" : "Vested";
@@ -77,7 +76,9 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
             </div>`;
     }
 
-    const starHtml = `<div class="ml-2 relative group flex items-center justify-center w-12 h-10 bg-white rounded-xl shadow-sm border border-slate-200 cursor-help"><span class="text-xl text-amber-500 transition-transform group-hover:scale-125">★</span><div class="opacity-0 group-hover:opacity-100 absolute bottom-full mb-4 right-0 bg-slate-900 text-white p-3 rounded-xl z-[100] shadow-2xl border border-white/10 pointer-events-none min-w-[180px]"><b class="text-amber-400 uppercase tracking-widest block text-[9px] mb-1">Maturity</b><span class="text-xs font-black block">Unit Value : ${autoFmt(accountValue, sym)}</span><div class="absolute top-full right-4 border-8 border-transparent border-t-slate-900"></div></div></div>`;
+    // Next Due Date logic for Header
+    const nextDueYear = hasPassedThisYear ? CURRENT_YEAR + 1 : CURRENT_YEAR;
+    const nextDueDisplay = new Date(nextDueYear, commMonth, commDay).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 
     return `
     <div class="policy-card mb-10 rounded-[40px] bg-white overflow-visible shadow-[0_20px_50px_rgba(0,0,0,0.08)] border border-slate-100 relative" id="card-${p.id}">
@@ -90,7 +91,7 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
             <div class="flex items-center gap-10 text-right px-4">
                 <div><p class="text-[10px] font-black text-slate-300 uppercase mb-1">Premium</p><p class="text-2xl font-black text-slate-800">${autoFmt(p.premium, sym)}</p></div>
                 <div><p class="text-[10px] font-black text-slate-300 uppercase mb-1">Valuation</p><p class="text-2xl font-black text-slate-900">${autoFmt(accountValue, sym)}</p></div>
-                <div class="bg-white/60 px-6 py-3 rounded-[20px] border border-white/50"><p class="text-[9px] font-black text-sky-500 uppercase mb-1 text-center">Next Due</p><p class="text-lg font-black text-slate-700">${thisYearAnniversary.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</p></div>
+                <div class="bg-white/60 px-6 py-3 rounded-[20px] border border-white/50"><p class="text-[9px] font-black text-sky-500 uppercase mb-1 text-center">Next Due</p><p class="text-lg font-black text-slate-700">${nextDueDisplay}</p></div>
             </div>
         </div>
         <div class="content-area px-10 pb-10 pt-2" style="background: linear-gradient(to bottom, ${brandBg}, #ffffff)">
@@ -102,7 +103,6 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
             </div>
             <div class="relative flex items-center h-16 bg-slate-100 rounded-[24px] px-2 border border-slate-200/50">
                 <div class="flex-1 flex h-10 items-center gap-1">${timelineHtml}</div>
-                ${starHtml}
             </div>
         </div>
     </div>`;
