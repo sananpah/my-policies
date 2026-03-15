@@ -1,4 +1,4 @@
-/* component_sg.js - v4.8.1 - Final Baseline with Preserved Color Mapping */
+/* component_sg.js - v5.0.0 - Fully Dynamic Anniversary Logic */
 import { autoFmt, toNum } from './india.js';
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -10,6 +10,7 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const annualPremium = toNum(p.premium || 0);
     const displaySumAssured = (toNum(p.sumAssured) === 0) ? accountValue : toNum(p.sumAssured);
 
+    // AUTO-DERIVE PREMIUMS PAID (Anniversaries crossed since start)
     let yearsElapsed = TODAY.getFullYear() - commDate.getFullYear();
     if (TODAY.getMonth() < commDate.getMonth() || 
        (TODAY.getMonth() === commDate.getMonth() && TODAY.getDate() < commDate.getDate())) {
@@ -18,16 +19,22 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const derivedPremiumsPaid = yearsElapsed + 1;
     const currentInPhase = (TODAY.getFullYear() - startY) + 1;
 
-    let dueYear = CURRENT_YEAR;
-    const thisYearDue = new Date(CURRENT_YEAR, commDate.getMonth(), commDate.getDate());
-    if (TODAY > thisYearDue) dueYear = CURRENT_YEAR + 1;
-    const dateStr = new Date(dueYear, commDate.getMonth(), commDate.getDate()).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    // DYNAMIC NEXT DUE DATE
+    let dueYear = TODAY.getFullYear();
+    const thisYearAnniversary = new Date(dueYear, commDate.getMonth(), commDate.getDate());
+    
+    // If today is past this year's anniversary, the NEXT due date is next year
+    if (TODAY >= thisYearAnniversary) {
+        dueYear++;
+    }
+    const nextDueDate = new Date(dueYear, commDate.getMonth(), commDate.getDate());
+    const dateStr = nextDueDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 
     const isFlexiBrand = p.company.toUpperCase().includes("MANULIFE") || p.company.toUpperCase().includes("HSBC");
     const brandColor = p.color || "#000000";
     const brandBg = `rgba(${parseInt(brandColor.slice(1,3), 16)}, ${parseInt(brandColor.slice(3,5), 16)}, ${parseInt(brandColor.slice(5,7), 16)}, 0.03)`;
 
-    // --- 2. SURRENDER VALUE MATH (Split Logic) ---
+    // --- 2. SURRENDER VALUE MATH ---
     const totalInvestmentBase = annualPremium * derivedPremiumsPaid; 
     const chargePct = p.surrenderCharges[derivedPremiumsPaid] || 0;
     
@@ -38,37 +45,38 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const surrenderValue = Math.round(Math.max(0, accountValue - surrenderChargeAmount));
     const lockedValue = Math.round(accountValue - surrenderValue);
 
-    // --- 3. TIMELINE GENERATION (Preserving specific color combinations) ---
+    // --- 3. TIMELINE GENERATION (Payment Cycle Logic) ---
     let timelineHtml = '';
     for(let polY = 1; polY <= 15; polY++) {
         const yr = startY + polY - 1;
-        const isCurrent = (polY === currentInPhase);
-        const isPast = (polY < currentInPhase);
-        const chargeAtYear = p.surrenderCharges[polY] || 0;
         
+        // BLACK BAR TRIGGER: Only if the current cycle year is NOT yet "Completed" by payment
+        // Since Feb 2026 is paid, Year 4 (2026) is Green. Black starts in 2027.
+        const isCurrent = (polY === currentInPhase && TODAY >= nextDueDate);
+        const isCompleted = (polY < currentInPhase) || (polY === currentInPhase && TODAY < nextDueDate);
+        
+        const chargeAtYear = p.surrenderCharges[polY] || 0;
         let colorClass = "";
         let statusLabel = "";
 
         if (isCurrent) {
             colorClass = "bg-black ring-2 ring-white z-20 scale-110 shadow-xl";
             statusLabel = "Current Active Year";
-        } else if (isPast) {
+        } else if (isCompleted) {
             colorClass = "bg-emerald-900";
             statusLabel = "Year Completed";
         } else if (isFlexiBrand) {
-            // HSBC/Manulife Specific Logic
             if (polY === 5) {
-                colorClass = "bg-indigo-500"; // Subtle Purple
-                statusLabel = "Locked Phase";
+                colorClass = "bg-indigo-500"; 
+                statusLabel = "Year 5: Purple (Locked)";
             } else if (polY >= 6 && polY <= 10) {
-                colorClass = "bg-pink-400";   // Pink
-                statusLabel = "Flexi Premium + Locked";
+                colorClass = "bg-pink-400";   
+                statusLabel = "Years 6-10: Pink (Flexi Premium + Locked)";
             } else {
                 colorClass = "bg-red-600";    
-                statusLabel = "Vested / Liquid";
+                statusLabel = "Years 11-15: Red (Vested)";
             }
         } else {
-            // AIA/Standard Logic
             colorClass = chargeAtYear > 0 ? "bg-pink-400" : "bg-red-600";
             statusLabel = chargeAtYear > 0 ? "Locked Phase" : "Vested / Liquid";
         }
@@ -103,6 +111,7 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
                     </div>
                 </div>
             </div>
+
             <div class="flex items-center gap-12 text-right">
                 <div>
                     <p class="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] mb-1">Annual Premium</p>
@@ -118,6 +127,7 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
                 </div>
             </div>
         </div>
+
         <div class="content-area px-8 pb-10 pt-2" style="background: linear-gradient(to bottom, #ffffff, ${brandBg})">
             <div class="grid grid-cols-4 gap-6 mb-12">
                 <div class="relative p-6 rounded-[32px] bg-white border border-slate-100 shadow-sm overflow-hidden">
@@ -139,6 +149,7 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
                     <p class="text-3xl font-black text-red-600 tracking-tight">-${autoFmt(lockedValue, sym)}</p>
                 </div>
             </div>
+            
             <div class="relative flex items-center h-16 bg-slate-100 rounded-[24px] px-2 shadow-inner border border-slate-200/50">
                 <div class="flex-1 flex h-10 items-center gap-1">${timelineHtml}</div>
                 ${starHtml}
