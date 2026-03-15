@@ -121,6 +121,17 @@ export const POLICY_DATA = {
             surrenderCharges: { 1: 100, 2: 100, 3: 79, 4: 60, 5: 50, 6: 47, 7: 44, 8: 21, 9: 16, 10: 8, 11: 0 },
             currentUnitValue: "19460",
             isULIP: true 
-        }
+        },
+        { 
+            name: "Pulsar", company: "HSBC Life",
+            logo: "image_8bcf5a.png", id: "104-1315514", type: "ILP", 
+            premium: 3600, sumAssured: 0, dueDate: "21 Feb 2027", 
+            commenced: "22 Feb 2023" , maturity: "21 Feb 2076", 
+            color: "#db0011", currency: "$",
+            surrenderCharges: { 1: 100, 2: 52, 3: 49, 4: 45, 5: 40, 6: 32, 7: 26, 8: 20, 9: 14, 10: 8, 11: 0 },
+            currentUnitValue: "14742",
+            isULIP: true 
+}
+
     ]
 };
