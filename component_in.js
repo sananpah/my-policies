@@ -17,7 +17,7 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
 
     const isULIP = p.isULIP === true;
     const unitValue = Math.round(toNum(p.currentUnitValue || 0));
-    const prem = Math.round(toNum(prem || 0)); // Safety check on prem
+    const prem = Math.round(toNum(p.premium || 0));
 
     // --- NEW BRAND BACKGROUND LOGIC ---
     const brandColor = p.color || "#000000";
