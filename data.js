@@ -103,6 +103,25 @@ export const POLICY_DATA = {
     ],
     singapore: [
         { 
+            name: "PruLink Protection Plus", 
+            company: "Prudential",
+            logo: "image_7aee9a.png", 
+            id: "33401114", 
+            type: "ILP", 
+            premium: 2849.28, 
+            totalPremiumPaid: 72835.86, // Added to reflect premium holidays
+            sumAssured: 139000, 
+            dueDate: "04 Jul 2026", 
+            commenced: "04 Jul 2007", 
+            maturity: "04 Jul 2086", 
+            color: "#ED1B2E", 
+            currency: "$",
+            currentUnitValue: "9071",
+            isULIP: true,
+            withdrawals: [27481.38, 12072.37], 
+            surrenderCharges: { 1: 0 } 
+        },
+        { 
             name: "Pro-Achiever 2.0", company: "AIA SINGAPORE",
             logo: "image_4b9b3f.png", id: "U126327913", type: "ILP", 
             premium: 5000, sumAssured: 0, dueDate: "30 Dec 2026", 
