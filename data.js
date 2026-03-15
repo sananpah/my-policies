@@ -131,6 +131,23 @@ export const POLICY_DATA = {
             surrenderCharges: { 1: 100, 2: 52, 3: 49, 4: 45, 5: 40, 6: 32, 7: 26, 8: 20, 9: 14, 10: 8, 11: 0 },
             currentUnitValue: "14742",
             isULIP: true 
+        },
+        { 
+            name: "Savvy Invest II", 
+            company: "Singlife",
+            logo: "image_89093e.png", //
+            id: "P4172398", 
+            type: "ILP", 
+            premium: 15000, 
+            sumAssured: 0, 
+            dueDate: "02 Jul 2026", 
+            commenced: "02 Jul 2025", 
+            maturity: "02 Jul 2776", 
+            color: "#E60000", // Singlife Primary Red
+            currency: "$",
+            surrenderCharges: { 1: 100, 2: 100, 3: 80, 4: 60, 5: 50, 6: 45, 7: 40, 8: 20, 9: 15, 10: 10, 11: 0 },
+            currentUnitValue: "16205",
+            isULIP: true 
         }
     ]
 };
