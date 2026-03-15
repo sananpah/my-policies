@@ -141,7 +141,7 @@ body {
     transform: translateX(-50%) translateY(0);
 }
 
-/* --- MATURITY STAR & EDGE-SAFE TOOLTIP --- */
+/* --- MATURITY STAR & LEFT-SHIFTED TOOLTIP --- */
 .mat-star { 
     flex: 0 0 44px;
     height: 44px;
@@ -160,28 +160,30 @@ body {
     color: #fbbf24;
 }
 
-/* Specific override to prevent right-side truncation */
+/* We force the tooltip to align its RIGHT side to the star's center */
 .mat-star .tooltip {
-    left: auto !important;   /* Disables the default 50% left positioning */
-    right: 0 !important;      /* Forces tooltip to align with the right edge of the star */
-    transform: translateY(10px) !important; /* Resets the default translateX(-50%) */
+    left: auto !important;
+    right: 50% !important; /* Start from the middle of the star */
+    transform: translateX(20%) translateY(10px) !important; /* Shift it 80% to the left */
     width: max-content;
     min-width: 180px;
+    margin-right: -20px; /* Fine-tune the "poking out" edge */
 }
 
-/* Specific hover state for the star tooltip */
 .mat-star:hover .tooltip {
     visibility: visible;
     opacity: 1;
     bottom: 55px;
-    transform: translateY(0) !important; /* Moves straight up, no horizontal shift */
+    /* Maintain the left-shift while it moves up */
+    transform: translateX(20%) translateY(0) !important; 
 }
 
-/* Optional: Apply the 'Tilted' look to the maturity amount inside the tooltip */
+/* Tilted text effect for the amount */
 .mat-star .tooltip span {
     display: block;
     transform: skewX(-10deg) rotate(-2deg);
     transform-origin: left;
+    font-weight: 900;
 }
 
 /* --- STATUS COLORS --- */
