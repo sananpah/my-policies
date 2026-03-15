@@ -39,7 +39,7 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
 
     // --- 3. TIMELINE GENERATION ---
     let timelineHtml = '';
-    for(let polY = 1; polY <= 15; polY++) {
+    for (let polY = 1; polY <= 15; polY++) {
         const yr = startY + polY - 1;
         const isCurrentDue = (polY === currentInPhase && nextDueDate.getFullYear() === TODAY.getFullYear());
         const isCompleted = (polY < currentInPhase) || (polY === currentInPhase && nextDueDate.getFullYear() > TODAY.getFullYear());
@@ -54,15 +54,14 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
         } else if (isCompleted) {
             colorClass = "bg-emerald-900";
             statusLabel = "Completed";
-            // SPECIFIC SINGLIFE LOGIC
-        }  else if (isSinglife) {
+        } else if (isSinglife) {
             if (polY === 3) {
                 colorClass = "bg-indigo-500"; 
                 statusLabel = "Locked"; // Year 3 Purple
             } else if (polY >= 4 && polY <= 10) {
                 colorClass = "bg-pink-400";   
                 statusLabel = "Flexi Premium/Locked"; // Year 4-10 Pink
-            } else if (polY >= 11) {
+            } else {
                 colorClass = "bg-red-600";    
                 statusLabel = "Vested"; // Year 11+ Red
             }
