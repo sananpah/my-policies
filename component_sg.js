@@ -28,6 +28,8 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const brandColor = p.color || "#000000";
     const brandBg = `rgba(${parseInt(brandColor.slice(1,3), 16)}, ${parseInt(brandColor.slice(3,5), 16)}, ${parseInt(brandColor.slice(5,7), 16)}, 0.04)`;
 
+    const isSinglife = p.company.toUpperCase().includes("SINGLIFE");
+    
     // --- 2. SURRENDER VALUE MATH ---
     const totalInvestmentBase = annualPremium * derivedPremiumsPaid; 
     const chargePct = p.surrenderCharges[derivedPremiumsPaid] || 0;
@@ -52,6 +54,18 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
         } else if (isCompleted) {
             colorClass = "bg-emerald-900";
             statusLabel = "Completed";
+            // SPECIFIC SINGLIFE LOGIC
+        }  else if (isSinglife) {
+            if (polY === 3) {
+                colorClass = "bg-indigo-500"; 
+                statusLabel = "Locked"; // Year 3 Purple
+            } else if (polY >= 4 && polY <= 10) {
+                colorClass = "bg-pink-400";   
+                statusLabel = "Flexi Premium/Locked"; // Year 4-10 Pink
+            } else if (polY >= 11) {
+                colorClass = "bg-red-600";    
+                statusLabel = "Vested"; // Year 11+ Red
+            }
         } else if (isFlexiBrand) {
             if (polY === 5) {
                 colorClass = "bg-indigo-500"; 
