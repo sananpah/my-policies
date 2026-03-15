@@ -1,4 +1,4 @@
-/* component_sg.js - v5.0.0 - Fully Dynamic Anniversary Logic */
+/* component_sg.js - v5.2.0 - Safe Spacing & Dynamic Maturity Star */
 import { autoFmt, toNum } from './india.js';
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -10,7 +10,7 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const annualPremium = toNum(p.premium || 0);
     const displaySumAssured = (toNum(p.sumAssured) === 0) ? accountValue : toNum(p.sumAssured);
 
-    // AUTO-DERIVE PREMIUMS PAID (Anniversaries crossed since start)
+    // AUTO-DERIVE PREMIUMS PAID
     let yearsElapsed = TODAY.getFullYear() - commDate.getFullYear();
     if (TODAY.getMonth() < commDate.getMonth() || 
        (TODAY.getMonth() === commDate.getMonth() && TODAY.getDate() < commDate.getDate())) {
@@ -22,8 +22,6 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     // DYNAMIC NEXT DUE DATE
     let dueYear = TODAY.getFullYear();
     const thisYearAnniversary = new Date(dueYear, commDate.getMonth(), commDate.getDate());
-    
-    // If today is past this year's anniversary, the NEXT due date is next year
     if (TODAY >= thisYearAnniversary) {
         dueYear++;
     }
@@ -45,13 +43,10 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const surrenderValue = Math.round(Math.max(0, accountValue - surrenderChargeAmount));
     const lockedValue = Math.round(accountValue - surrenderValue);
 
-    // --- 3. TIMELINE GENERATION (Payment Cycle Logic) ---
+    // --- 3. TIMELINE GENERATION ---
     let timelineHtml = '';
     for(let polY = 1; polY <= 15; polY++) {
         const yr = startY + polY - 1;
-        
-        // BLACK BAR TRIGGER: Only if the current cycle year is NOT yet "Completed" by payment
-        // Since Feb 2026 is paid, Year 4 (2026) is Green. Black starts in 2027.
         const isCurrent = (polY === currentInPhase && TODAY >= nextDueDate);
         const isCompleted = (polY < currentInPhase) || (polY === currentInPhase && TODAY < nextDueDate);
         
@@ -91,12 +86,20 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
             </div>`;
     }
 
-    const starHtml = `<div class="ml-2 relative group/star flex items-center justify-center w-12 h-10 bg-white rounded-xl shadow-sm border border-slate-200 cursor-help"><span class="text-amber-500 text-xl transition-transform group-hover/star:scale-125">★</span></div>`;
+    const starHtml = `
+        <div class="ml-2 relative group/star flex items-center justify-center w-12 h-10 bg-white rounded-xl shadow-sm border border-slate-200 cursor-help">
+            <span class="text-amber-500 text-xl transition-transform group-hover/star:scale-125">★</span>
+            <div class="opacity-0 group-hover/star:opacity-100 absolute bottom-full mb-3 right-0 bg-slate-900 text-white p-3 rounded-xl z-[100] shadow-2xl border border-white/10 pointer-events-none transition-all duration-200 min-w-[160px]">
+                <b class="text-amber-400 uppercase tracking-widest block text-[9px] mb-1">Maturity</b>
+                <span class="text-xs font-black">Maturity : ${autoFmt(accountValue, sym)}</span>
+                <div class="absolute top-full right-4 border-8 border-transparent border-t-slate-900"></div>
+            </div>
+        </div>`;
 
     return `
     <div class="policy-card mb-10 rounded-[40px] bg-white overflow-hidden transition-all shadow-[0_20px_50px_rgba(0,0,0,0.08)] border border-slate-100" id="card-${p.id}">
         <div class="p-8 flex items-center justify-between cursor-pointer" onclick="toggleCard('${p.id}')">
-            <div class="flex items-center gap-8">
+            <div class="flex items-center gap-8 px-2">
                 <div class="relative">
                     <div class="w-20 h-20 flex items-center justify-center bg-white rounded-[24px] shadow-sm border border-slate-50 p-3">
                         <img src="${p.logo}" class="max-h-full object-contain">
@@ -112,7 +115,7 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
                 </div>
             </div>
 
-            <div class="flex items-center gap-12 text-right">
+            <div class="flex items-center gap-10 text-right px-2">
                 <div>
                     <p class="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] mb-1">Annual Premium</p>
                     <p class="text-2xl font-black text-slate-800 tracking-tight">${autoFmt(p.premium, sym)}</p>
