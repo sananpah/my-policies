@@ -1,4 +1,4 @@
-/* component_sg.js - v5.8.0 - Full Hover Header & Status Logic */
+/* component_sg.js - v5.9.0 - Integrated Withdrawal & Manual Base Logic */
 import { autoFmt, toNum } from './india.js';
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -18,6 +18,12 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const derivedPremiumsPaid = yearsElapsed + 1;
     const currentInPhase = (TODAY.getFullYear() - startY) + 1;
 
+    // --- NEW: MANUAL BASE & WITHDRAWAL LOGIC ---
+    const totalWithdrawn = (p.withdrawals || []).reduce((a, b) => a + b, 0);
+    // Use manual totalPremiumPaid if available (for Premium Holidays), else use derived math
+    const totalInvestmentBase = p.totalPremiumPaid ? toNum(p.totalPremiumPaid) : (annualPremium * derivedPremiumsPaid);
+    const netInvestmentBase = totalInvestmentBase - totalWithdrawn;
+
     let dueYear = TODAY.getFullYear();
     const thisYearAnniversary = new Date(dueYear, commDate.getMonth(), commDate.getDate());
     if (TODAY >= thisYearAnniversary) dueYear++;
@@ -31,7 +37,6 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const isSinglife = p.company.toUpperCase().includes("SINGLIFE");
     
     // --- 2. SURRENDER VALUE MATH ---
-    const totalInvestmentBase = annualPremium * derivedPremiumsPaid; 
     const chargePct = p.surrenderCharges[derivedPremiumsPaid] || 0;
     let surrenderChargeAmount = isFlexiBrand ? totalInvestmentBase * (chargePct / 100) : accountValue * (chargePct / 100);
     const surrenderValue = Math.round(Math.max(0, accountValue - surrenderChargeAmount));
@@ -57,13 +62,13 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
         } else if (isSinglife) {
             if (polY === 3) {
                 colorClass = "bg-indigo-500"; 
-                statusLabel = "Locked"; // Year 3 Purple
+                statusLabel = "Locked";
             } else if (polY >= 4 && polY <= 10) {
                 colorClass = "bg-pink-400";   
-                statusLabel = "Flexi Premium/Locked"; // Year 4-10 Pink
+                statusLabel = "Flexi Premium/Locked";
             } else {
                 colorClass = "bg-red-600";    
-                statusLabel = "Vested"; // Year 11+ Red
+                statusLabel = "Vested";
             }
         } else if (isFlexiBrand) {
             if (polY === 5) {
@@ -101,6 +106,30 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
             </div>
         </div>`;
 
+    // --- NEW: CAPITAL ANALYSIS SECTION ---
+    const capitalAnalysisHtml = p.totalPremiumPaid ? `
+        <div class="mb-8 p-6 rounded-[32px] bg-white border border-slate-100 shadow-sm">
+            <div class="flex justify-between items-center mb-4">
+                <h4 class="text-[10px] font-black uppercase text-slate-400 tracking-widest">Capital Analysis</h4>
+                <span class="px-2 py-1 rounded bg-emerald-50 text-emerald-600 text-[9px] font-bold">Past Premium Holiday Tracked</span>
+            </div>
+            <div class="grid grid-cols-3 gap-4">
+                <div class="p-3 rounded-2xl bg-slate-50">
+                    <p class="text-[9px] font-bold text-slate-400 uppercase">Actual Paid</p>
+                    <p class="font-black text-slate-700">${autoFmt(p.totalPremiumPaid, sym)}</p>
+                </div>
+                <div class="p-3 rounded-2xl bg-slate-50">
+                    <p class="text-[9px] font-bold text-slate-400 uppercase">Total Withdrawn</p>
+                    <p class="font-black text-red-500">-${autoFmt(totalWithdrawn, sym)}</p>
+                </div>
+                <div class="p-3 rounded-2xl bg-indigo-50 border border-indigo-100">
+                    <p class="text-[9px] font-bold text-indigo-400 uppercase">Net Base</p>
+                    <p class="font-black text-indigo-900">${autoFmt(netInvestmentBase, sym)}</p>
+                </div>
+            </div>
+        </div>
+    ` : '';
+
     return `
     <div class="policy-card mb-10 rounded-[40px] bg-white overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.08)] border border-slate-100 relative" id="card-${p.id}">
         <div class="absolute top-0 left-0 w-2 h-full z-30" style="background: ${brandColor}"></div>
@@ -130,7 +159,7 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
         </div>
 
         <div class="content-area px-10 pb-10 pt-2" style="background: linear-gradient(to bottom, ${brandBg}, #ffffff)">
-            <div class="grid grid-cols-4 gap-6 mb-12">
+            <div class="grid grid-cols-4 gap-6 mb-8">
                 <div class="p-6 rounded-[32px] bg-white border border-slate-100 shadow-sm relative overflow-hidden">
                     <div class="absolute top-0 left-0 w-1.5 h-full" style="background: ${brandColor}"></div>
                     <p class="text-[10px] font-black text-slate-400 mb-2 uppercase">Sum Assured</p>
@@ -138,7 +167,7 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
                 </div>
                 <div class="p-6 rounded-[32px] bg-white border border-slate-100 shadow-sm relative overflow-hidden">
                     <div class="absolute top-0 left-0 w-1.5 h-full bg-sky-500"></div>
-                    <p class="text-[10px] font-black text-slate-400 mb-2 uppercase">Investment Base</p>
+                    <p class="text-[10px] font-black text-slate-400 mb-2 uppercase">Total Invested</p>
                     <p class="text-2xl font-black text-slate-800">${autoFmt(totalInvestmentBase, sym)}</p>
                 </div>
                 <div class="p-6 rounded-[32px] bg-emerald-50 border border-emerald-100 shadow-sm">
@@ -150,6 +179,8 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
                     <p class="text-3xl font-black text-red-600">-${autoFmt(lockedValue, sym)}</p>
                 </div>
             </div>
+
+            ${capitalAnalysisHtml}
 
             <div class="flex justify-between items-end mb-4 px-2">
                 <div><p class="text-[10px] font-black text-slate-400 uppercase mb-1">Commencement</p><p class="text-sm font-bold text-slate-700 underline decoration-2 decoration-sky-300 underline-offset-4">${p.commenced}</p></div>
