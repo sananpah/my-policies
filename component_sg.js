@@ -1,4 +1,4 @@
-/* component_sg.js - v6.1.0 - Restored Original Hover Text */
+/* component_sg.js - v6.2.0 - Full Stable Build */
 import { autoFmt, toNum } from './india.js';
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -78,7 +78,6 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
             statusLabel = chargeAtYear > 0 ? "Locked" : "Vested";
         }
 
-        // RESTORED ORIGINAL TOOLTIP TEXT VERSION
         timelineHtml += `
             <div class="segment ${colorClass} h-8 flex-1 border-r border-white/10 first:rounded-l-lg last:rounded-r-lg transition-all relative group/item">
                 <div class="opacity-0 group-hover/item:opacity-100 absolute bottom-full mb-3 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-3 py-2 rounded-xl text-[10px] z-[100] whitespace-nowrap pointer-events-none shadow-2xl transition-all duration-200">
@@ -142,4 +141,47 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
 
             <div class="flex items-center gap-10 text-right px-4">
                 <div><p class="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-1">Annual Premium</p><p class="text-2xl font-black text-slate-800 tracking-tight">${autoFmt(p.premium, sym)}</p></div>
-                <div><p class="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-1">Valuation</p><p class="text-2xl font-black text-slate-900 tracking-tighter">${autoFmt(
+                <div><p class="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-1">Valuation</p><p class="text-2xl font-black text-slate-900 tracking-tighter">${autoFmt(accountValue, sym)}</p></div>
+                <div class="bg-white/60 backdrop-blur-sm px-6 py-3 rounded-[20px] border border-white/50">
+                    <p class="text-[9px] font-black text-sky-500 uppercase tracking-widest mb-1 text-center">Next Due</p>
+                    <p class="text-lg font-black text-slate-700 tracking-tight">${dateStr}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-area px-10 pb-10 pt-2" style="background: linear-gradient(to bottom, ${brandBg}, #ffffff)">
+            <div class="grid grid-cols-4 gap-6 mb-8">
+                <div class="p-6 rounded-[32px] bg-white border border-slate-100 shadow-sm relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-1.5 h-full" style="background: ${brandColor}"></div>
+                    <p class="text-[10px] font-black text-slate-400 mb-2 uppercase">Sum Assured</p>
+                    <p class="text-2xl font-black text-slate-800">${autoFmt(displaySumAssured, sym)}</p>
+                </div>
+                <div class="p-6 rounded-[32px] bg-white border border-slate-100 shadow-sm relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-1.5 h-full bg-sky-500"></div>
+                    <p class="text-[10px] font-black text-slate-400 mb-2 uppercase">Total Invested</p>
+                    <p class="text-2xl font-black text-slate-800">${autoFmt(totalInvestmentBase, sym)}</p>
+                </div>
+                <div class="p-6 rounded-[32px] bg-emerald-50 border border-emerald-100 shadow-sm">
+                    <p class="text-[10px] font-black text-emerald-600 mb-2 uppercase">Surrender Value</p>
+                    <p class="text-3xl font-black text-emerald-700">${autoFmt(surrenderValue, sym)}</p>
+                </div>
+                <div class="p-6 rounded-[32px] bg-red-50 border border-red-100 shadow-sm">
+                    <p class="text-[10px] font-black text-red-400 mb-2 uppercase">Locked Capital</p>
+                    <p class="text-3xl font-black text-red-600">-${autoFmt(lockedValue, sym)}</p>
+                </div>
+            </div>
+
+            ${capitalAnalysisHtml}
+
+            <div class="flex justify-between items-end mb-4 px-2">
+                <div><p class="text-[10px] font-black text-slate-400 uppercase mb-1">Commencement</p><p class="text-sm font-bold text-slate-700 underline decoration-2 decoration-sky-300 underline-offset-4">${p.commenced}</p></div>
+                <div class="text-right"><p class="text-[10px] font-black text-slate-400 uppercase mb-1">Maturity Date</p><p class="text-sm font-bold text-slate-700 underline decoration-2 decoration-amber-300 underline-offset-4">${p.maturity}</p></div>
+            </div>
+            
+            <div class="relative flex items-center h-16 bg-slate-100 rounded-[24px] px-2 shadow-inner border border-slate-200/50">
+                <div class="flex-1 flex h-10 items-center gap-1 overflow-hidden">${timelineHtml}</div>
+                ${starHtml}
+            </div>
+        </div>
+    </div>\`;
+}
