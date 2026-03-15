@@ -131,7 +131,6 @@ export const POLICY_DATA = {
             surrenderCharges: { 1: 100, 2: 52, 3: 49, 4: 45, 5: 40, 6: 32, 7: 26, 8: 20, 9: 14, 10: 8, 11: 0 },
             currentUnitValue: "14742",
             isULIP: true 
-}
-
+        }
     ]
 };
