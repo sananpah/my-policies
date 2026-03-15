@@ -1,4 +1,4 @@
-/* component_sg.js - v5.4.0 - Segmented Brand Logic & Fixed Star Hover */
+/* component_sg.js - v5.5.0 - Brand BG & Clean Hover Tooltip */
 import { autoFmt, toNum } from './india.js';
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -28,7 +28,9 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
 
     const isFlexiBrand = p.company.toUpperCase().includes("MANULIFE") || p.company.toUpperCase().includes("HSBC");
     const brandColor = p.color || "#000000";
-    const brandBg = `rgba(${parseInt(brandColor.slice(1,3), 16)}, ${parseInt(brandColor.slice(3,5), 16)}, ${parseInt(brandColor.slice(5,7), 16)}, 0.03)`;
+    
+    // BRAND BG LOGIC (Restored for Collapsed & Expanded)
+    const brandBg = `rgba(${parseInt(brandColor.slice(1,3), 16)}, ${parseInt(brandColor.slice(3,5), 16)}, ${parseInt(brandColor.slice(5,7), 16)}, 0.04)`;
 
     // --- 2. SURRENDER VALUE MATH ---
     const totalInvestmentBase = annualPremium * derivedPremiumsPaid; 
@@ -59,7 +61,6 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
             colorClass = "bg-emerald-900";
             statusLabel = "Year Completed";
         } else if (isFlexiBrand) {
-            // HSBC & MANULIFE ONLY
             if (polY === 5) {
                 colorClass = "bg-indigo-500"; 
                 statusLabel = "Year 5: Purple (Locked)";
@@ -71,7 +72,6 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
                 statusLabel = "Years 11-15: Red (Vested)";
             }
         } else {
-            // AIA & STANDARD LOGIC (No Flexi Feature)
             colorClass = chargeAtYear > 0 ? "bg-pink-400" : "bg-red-600";
             statusLabel = chargeAtYear > 0 ? "Locked Phase" : "Vested / Liquid";
         }
@@ -86,20 +86,20 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
             </div>`;
     }
 
-    // FIXED STAR TOOLTIP
+    // CLEAN STAR TOOLTIP
     const starHtml = `
         <div class="ml-2 relative group/star flex items-center justify-center w-12 h-10 bg-white rounded-xl shadow-sm border border-slate-200 cursor-help">
             <span class="text-amber-500 text-xl transition-transform group-hover/star:scale-125">★</span>
             <div class="opacity-0 group-hover/star:opacity-100 absolute bottom-full mb-4 right-0 bg-slate-900 text-white p-3 rounded-xl z-[100] shadow-2xl border border-white/10 pointer-events-none transition-all duration-300 min-w-[180px]">
                 <b class="text-amber-400 uppercase tracking-widest block text-[9px] mb-1">Maturity</b>
-                <span class="text-xs font-black">Maturity : ${autoFmt(accountValue, sym)}</span>
+                <span class="text-xs font-black italic">Unit Value : ${autoFmt(accountValue, sym)}</span>
                 <div class="absolute top-full right-4 border-8 border-transparent border-t-slate-900"></div>
             </div>
         </div>`;
 
     return `
     <div class="policy-card mb-10 rounded-[40px] bg-white overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.08)] border border-slate-100" id="card-${p.id}">
-        <div class="p-8 flex items-center justify-between cursor-pointer" onclick="toggleCard('${p.id}')">
+        <div class="p-8 flex items-center justify-between cursor-pointer transition-colors" style="background: ${brandBg}" onclick="toggleCard('${p.id}')">
             <div class="flex items-center gap-8 px-2">
                 <div class="w-20 h-20 flex items-center justify-center bg-white rounded-[24px] shadow-sm border border-slate-50 p-3">
                     <img src="${p.logo}" class="max-h-full object-contain">
@@ -116,14 +116,14 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
             <div class="flex items-center gap-10 text-right px-2">
                 <div><p class="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-1">Annual Premium</p><p class="text-2xl font-black text-slate-800 tracking-tight">${autoFmt(p.premium, sym)}</p></div>
                 <div><p class="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-1">Market Valuation</p><p class="text-2xl font-black text-slate-900 tracking-tighter">${autoFmt(accountValue, sym)}</p></div>
-                <div class="bg-slate-50 px-6 py-3 rounded-[20px] border border-slate-100">
-                    <p class="text-[9px] font-black text-sky-500 uppercase tracking-widest mb-1">Next Due Date</p>
+                <div class="bg-white/60 backdrop-blur-sm px-6 py-3 rounded-[20px] border border-white/50">
+                    <p class="text-[9px] font-black text-sky-500 uppercase tracking-widest mb-1 text-center">Next Due Date</p>
                     <p class="text-lg font-black text-slate-700 tracking-tight">${dateStr}</p>
                 </div>
             </div>
         </div>
 
-        <div class="content-area px-8 pb-10 pt-2" style="background: linear-gradient(to bottom, #ffffff, ${brandBg})">
+        <div class="content-area px-8 pb-10 pt-2" style="background: linear-gradient(to bottom, ${brandBg}, #ffffff)">
             <div class="grid grid-cols-4 gap-6 mb-12">
                 <div class="p-6 rounded-[32px] bg-white border border-slate-100 shadow-sm relative overflow-hidden">
                     <div class="absolute top-0 left-0 w-1.5 h-full" style="background: ${brandColor}"></div>
