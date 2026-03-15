@@ -62,7 +62,7 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
     timelineHtml += `<div class="mat-star">★<div class="tooltip"><b class="text-orange-400 uppercase tracking-widest">Maturity</b><br><span class="${String(p.maturityAmt || p.sumAssured).length > 15 ? 'text-[10px]' : 'text-lg'} font-black">${raw(p.maturityAmt || p.sumAssured)}</span></div></div>`;
 
     return `
-    <div class="policy-card mb-6" id="card-${p.id}" style="border-color: ${brandColor}">
+    <div class="policy-card mb-6" id="card-${p.id}" style="border-left: 16px solid ${brandColor}; border-color: ${brandColor};">
         <div class="card-header transition-colors" style="background: ${brandBg};" onclick="toggleCard('${p.id}')">
             <div class="w-32 flex justify-center"><img src="${p.logo}" class="max-h-12"></div>
             <div class="flex-1 ml-10">
