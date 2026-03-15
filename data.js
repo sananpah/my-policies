@@ -102,8 +102,27 @@ export const POLICY_DATA = {
         }
     ],
     singapore: [
+         { 
+            name: "PruSave", 
+            company: "Prudential",
+            logo: "image_7aee9a.png", 
+            id: "34874419", 
+            type: "ILP", 
+            premium: 3557.55, 
+            totalPremiumPaid: 69176.18, // Added to reflect premium holidays
+            sumAssured: 40000, 
+            dueDate: "31 Jan 2027", 
+            commenced: "31 Jan 2008", 
+            maturity: "31 Jan 2029", 
+            color: "#ED1B2E", 
+            currency: "$",
+            currentUnitValue: "24671",
+            isULIP: true,
+            withdrawals: [9195], 
+            surrenderCharges: { 1: 0 } 
+        },
         { 
-            name: "PruLink Protection Plus", 
+            name: "PruLink Protection", 
             company: "Prudential",
             logo: "image_7aee9a.png", 
             id: "33401114", 
