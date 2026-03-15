@@ -1,4 +1,4 @@
-/* component_sg.js - v4.4.0 - Layout Sync & Color Precision */
+/* component_sg.js - v4.8.1 - Final Baseline with Preserved Color Mapping */
 import { autoFmt, toNum } from './india.js';
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -10,33 +10,35 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const annualPremium = toNum(p.premium || 0);
     const displaySumAssured = (toNum(p.sumAssured) === 0) ? accountValue : toNum(p.sumAssured);
 
-    const calendarYearDiff = TODAY.getFullYear() - startY;
-    const currentInPhase = calendarYearDiff + 1;
+    let yearsElapsed = TODAY.getFullYear() - commDate.getFullYear();
+    if (TODAY.getMonth() < commDate.getMonth() || 
+       (TODAY.getMonth() === commDate.getMonth() && TODAY.getDate() < commDate.getDate())) {
+        yearsElapsed--;
+    }
+    const derivedPremiumsPaid = yearsElapsed + 1;
+    const currentInPhase = (TODAY.getFullYear() - startY) + 1;
 
-    // DYNAMIC DUE DATE
-    const nextDueDate = new Date(2026, commDate.getMonth(), commDate.getDate());
-    const dateStr = nextDueDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    let dueYear = CURRENT_YEAR;
+    const thisYearDue = new Date(CURRENT_YEAR, commDate.getMonth(), commDate.getDate());
+    if (TODAY > thisYearDue) dueYear = CURRENT_YEAR + 1;
+    const dateStr = new Date(dueYear, commDate.getMonth(), commDate.getDate()).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 
-    const isManulife = p.company.toUpperCase().includes("MANULIFE");
-    const premiumsPaidCount = p.premiumsPaid || 3; 
-    const financialYear = isManulife ? premiumsPaidCount : calendarYearDiff;
+    const isFlexiBrand = p.company.toUpperCase().includes("MANULIFE") || p.company.toUpperCase().includes("HSBC");
+    const brandColor = p.color || "#000000";
+    const brandBg = `rgba(${parseInt(brandColor.slice(1,3), 16)}, ${parseInt(brandColor.slice(3,5), 16)}, ${parseInt(brandColor.slice(5,7), 16)}, 0.03)`;
 
-    // --- 2. SURRENDER VALUE MATH ---
-    const totalPremiumsPaid = annualPremium * premiumsPaidCount; 
-    const chargePct = p.surrenderCharges[financialYear] || 0;
+    // --- 2. SURRENDER VALUE MATH (Split Logic) ---
+    const totalInvestmentBase = annualPremium * derivedPremiumsPaid; 
+    const chargePct = p.surrenderCharges[derivedPremiumsPaid] || 0;
     
-    let surrenderChargeAmount = isManulife 
-        ? totalPremiumsPaid * (chargePct / 100)
+    let surrenderChargeAmount = isFlexiBrand 
+        ? totalInvestmentBase * (chargePct / 100)
         : accountValue * (chargePct / 100);
 
     const surrenderValue = Math.round(Math.max(0, accountValue - surrenderChargeAmount));
     const lockedValue = Math.round(accountValue - surrenderValue);
 
-    // --- 3. BRANDING ---
-    const brandColor = isManulife ? "#00a758" : "#d31145";
-    const brandBg = isManulife ? "rgba(0, 167, 88, 0.03)" : "rgba(211, 17, 69, 0.03)";
-
-    // --- 4. TIMELINE GENERATION ---
+    // --- 3. TIMELINE GENERATION (Preserving specific color combinations) ---
     let timelineHtml = '';
     for(let polY = 1; polY <= 15; polY++) {
         const yr = startY + polY - 1;
@@ -53,18 +55,20 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
         } else if (isPast) {
             colorClass = "bg-emerald-900";
             statusLabel = "Year Completed";
-        } else if (isManulife) {
+        } else if (isFlexiBrand) {
+            // HSBC/Manulife Specific Logic
             if (polY === 5) {
-                colorClass = "bg-indigo-500"; 
+                colorClass = "bg-indigo-500"; // Subtle Purple
                 statusLabel = "Locked Phase";
             } else if (polY >= 6 && polY <= 10) {
-                colorClass = "bg-pink-400";   
+                colorClass = "bg-pink-400";   // Pink
                 statusLabel = "Flexi Premium + Locked";
             } else {
                 colorClass = "bg-red-600";    
                 statusLabel = "Vested / Liquid";
             }
         } else {
+            // AIA/Standard Logic
             colorClass = chargeAtYear > 0 ? "bg-pink-400" : "bg-red-600";
             statusLabel = chargeAtYear > 0 ? "Locked Phase" : "Vested / Liquid";
         }
@@ -79,18 +83,10 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
             </div>`;
     }
 
-    const starHtml = `
-        <div class="ml-2 relative group/star flex items-center justify-center w-12 h-10 bg-white rounded-xl shadow-sm border border-slate-200 cursor-help">
-            <span class="text-amber-500 text-xl transition-transform group-hover/star:scale-125">★</span>
-            <div class="opacity-0 group-hover/star:opacity-100 absolute bottom-full mb-3 right-0 bg-slate-900 text-white p-3 rounded-xl z-[100] shadow-2xl border border-white/10 pointer-events-none transition-all duration-200 min-w-[120px]">
-                <b class="text-amber-400 uppercase tracking-widest block text-[9px] mb-1">Maturity</b>
-                <span class="text-xs font-black">100% Fund Value</span>
-                <div class="absolute top-full right-4 border-8 border-transparent border-t-slate-900"></div>
-            </div>
-        </div>`;
+    const starHtml = `<div class="ml-2 relative group/star flex items-center justify-center w-12 h-10 bg-white rounded-xl shadow-sm border border-slate-200 cursor-help"><span class="text-amber-500 text-xl transition-transform group-hover/star:scale-125">★</span></div>`;
 
     return `
-    <div class="policy-card mb-10 rounded-[40px] bg-white overflow-hidden transition-all duration-500 shadow-[0_20px_50px_rgba(0,0,0,0.08)] border border-slate-100" id="card-${p.id}">
+    <div class="policy-card mb-10 rounded-[40px] bg-white overflow-hidden transition-all shadow-[0_20px_50px_rgba(0,0,0,0.08)] border border-slate-100" id="card-${p.id}">
         <div class="p-8 flex items-center justify-between cursor-pointer" onclick="toggleCard('${p.id}')">
             <div class="flex items-center gap-8">
                 <div class="relative">
@@ -107,7 +103,6 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
                     </div>
                 </div>
             </div>
-
             <div class="flex items-center gap-12 text-right">
                 <div>
                     <p class="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] mb-1">Annual Premium</p>
@@ -123,7 +118,6 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
                 </div>
             </div>
         </div>
-
         <div class="content-area px-8 pb-10 pt-2" style="background: linear-gradient(to bottom, #ffffff, ${brandBg})">
             <div class="grid grid-cols-4 gap-6 mb-12">
                 <div class="relative p-6 rounded-[32px] bg-white border border-slate-100 shadow-sm overflow-hidden">
@@ -134,7 +128,7 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
                 <div class="relative p-6 rounded-[32px] bg-white border border-slate-100 shadow-sm overflow-hidden">
                     <div class="absolute top-0 left-0 w-1.5 h-full bg-sky-500"></div>
                     <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Investment Base</p>
-                    <p class="text-2xl font-black text-slate-800 tracking-tight">${autoFmt(totalPremiumsPaid, sym)}</p>
+                    <p class="text-2xl font-black text-slate-800 tracking-tight">${autoFmt(totalInvestmentBase, sym)}</p>
                 </div>
                 <div class="relative p-6 rounded-[32px] bg-emerald-50 border border-emerald-100 shadow-sm overflow-hidden">
                     <p class="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-2">Surrender Value</p>
@@ -145,22 +139,8 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
                     <p class="text-3xl font-black text-red-600 tracking-tight">-${autoFmt(lockedValue, sym)}</p>
                 </div>
             </div>
-
-            <div class="flex justify-between items-end mb-4 px-2">
-                <div>
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Commencement</p>
-                    <p class="text-sm font-bold text-slate-700 underline decoration-2 decoration-sky-300 underline-offset-4">${p.commenced}</p>
-                </div>
-                <div class="text-right">
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Maturity Date</p>
-                    <p class="text-sm font-bold text-slate-700 underline decoration-2 decoration-amber-300 underline-offset-4">${p.maturity}</p>
-                </div>
-            </div>
-
             <div class="relative flex items-center h-16 bg-slate-100 rounded-[24px] px-2 shadow-inner border border-slate-200/50">
-                <div class="flex-1 flex h-10 items-center gap-1">
-                    ${timelineHtml}
-                </div>
+                <div class="flex-1 flex h-10 items-center gap-1">${timelineHtml}</div>
                 ${starHtml}
             </div>
         </div>
