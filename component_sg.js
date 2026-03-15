@@ -1,4 +1,4 @@
-/* component_sg.js - v5.6.0 - Brand Border & Tilted Hover */
+/* component_sg.js - v5.8.0 - Full Hover Header & Status Logic */
 import { autoFmt, toNum } from './india.js';
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -45,32 +45,39 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
         
         let colorClass = "";
         let statusLabel = "";
+
         if (isCurrentDue) {
             colorClass = "bg-black ring-2 ring-white z-20 scale-110 shadow-xl";
-            statusLabel = "Payment Due / Active Year";
+            statusLabel = "Premium Due";
         } else if (isCompleted) {
             colorClass = "bg-emerald-900";
-            statusLabel = "Year Completed";
+            statusLabel = "Completed";
         } else if (isFlexiBrand) {
-            if (polY === 5) { colorClass = "bg-indigo-500"; statusLabel = "Year 5: Purple (Locked)"; }
-            else if (polY >= 6 && polY <= 10) { colorClass = "bg-pink-400"; statusLabel = "Years 6-10: Pink (Flexi Premium + Locked)"; }
-            else { colorClass = "bg-red-600"; statusLabel = "Years 11-15: Red (Vested)"; }
+            if (polY === 5) {
+                colorClass = "bg-indigo-500"; 
+                statusLabel = "Locked";
+            } else if (polY >= 6 && polY <= 10) {
+                colorClass = "bg-pink-400";   
+                statusLabel = "Flexi Premium/Locked";
+            } else {
+                colorClass = "bg-red-600";    
+                statusLabel = "Vested";
+            }
         } else {
             colorClass = chargeAtYear > 0 ? "bg-pink-400" : "bg-red-600";
-            statusLabel = chargeAtYear > 0 ? "Locked Phase" : "Vested / Liquid";
+            statusLabel = chargeAtYear > 0 ? "Locked" : "Vested";
         }
 
         timelineHtml += `
             <div class="segment ${colorClass} h-8 flex-1 border-r border-white/10 first:rounded-l-lg last:rounded-r-lg transition-all relative group/item">
                 <div class="opacity-0 group-hover/item:opacity-100 absolute bottom-full mb-3 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-3 py-2 rounded-xl text-[10px] z-[100] whitespace-nowrap pointer-events-none shadow-2xl transition-all duration-200">
                     <b class="text-sky-400 uppercase tracking-widest block mb-1 font-black">Year ${polY} (${yr})</b>
-                    <span class="text-white font-bold">${statusLabel}</span>
+                    <span class="text-white font-bold tracking-tight">${statusLabel}</span>
                     <div class="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-slate-900"></div>
                 </div>
             </div>`;
     }
 
-    // TILTED HOVER TEXT
     const starHtml = `
         <div class="ml-2 relative group/star flex items-center justify-center w-12 h-10 bg-white rounded-xl shadow-sm border border-slate-200 cursor-help">
             <span class="text-amber-500 text-xl transition-transform group-hover/star:scale-125">★</span>
