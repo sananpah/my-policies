@@ -1,4 +1,4 @@
-/* component_sg.js - v5.9.0 - Integrated Withdrawal & Manual Base Logic */
+/* component_sg.js - v6.0.0 - Baseline (Dynamic Timeline & Capital Analysis) */
 import { autoFmt, toNum } from './india.js';
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -18,9 +18,9 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const derivedPremiumsPaid = yearsElapsed + 1;
     const currentInPhase = (TODAY.getFullYear() - startY) + 1;
 
-    // --- NEW: MANUAL BASE & WITHDRAWAL LOGIC ---
+    // --- WITHDRAWAL & MANUAL BASE LOGIC (For Prudential/Manual Entry) ---
     const totalWithdrawn = (p.withdrawals || []).reduce((a, b) => a + b, 0);
-    // Use manual totalPremiumPaid if available (for Premium Holidays), else use derived math
+    // Use totalPremiumPaid if available (handles holidays), else use derived math
     const totalInvestmentBase = p.totalPremiumPaid ? toNum(p.totalPremiumPaid) : (annualPremium * derivedPremiumsPaid);
     const netInvestmentBase = totalInvestmentBase - totalWithdrawn;
 
@@ -30,21 +30,25 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const nextDueDate = new Date(dueYear, commDate.getMonth(), commDate.getDate());
     const dateStr = nextDueDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 
+    // --- BRAND LOGIC ---
+    const isPrudential = p.company.toUpperCase().includes("PRUDENTIAL");
+    const isSinglife = p.company.toUpperCase().includes("SINGLIFE");
     const isFlexiBrand = p.company.toUpperCase().includes("MANULIFE") || p.company.toUpperCase().includes("HSBC");
+    
     const brandColor = p.color || "#000000";
     const brandBg = `rgba(${parseInt(brandColor.slice(1,3), 16)}, ${parseInt(brandColor.slice(3,5), 16)}, ${parseInt(brandColor.slice(5,7), 16)}, 0.04)`;
 
-    const isSinglife = p.company.toUpperCase().includes("SINGLIFE");
-    
     // --- 2. SURRENDER VALUE MATH ---
     const chargePct = p.surrenderCharges[derivedPremiumsPaid] || 0;
     let surrenderChargeAmount = isFlexiBrand ? totalInvestmentBase * (chargePct / 100) : accountValue * (chargePct / 100);
     const surrenderValue = Math.round(Math.max(0, accountValue - surrenderChargeAmount));
     const lockedValue = Math.round(accountValue - surrenderValue);
 
-    // --- 3. TIMELINE GENERATION ---
+    // --- 3. DYNAMIC TIMELINE GENERATION ---
     let timelineHtml = '';
-    for (let polY = 1; polY <= 15; polY++) {
+    const maxYears = isPrudential ? 30 : 15; // Exclusive 30-year view for Prudential
+
+    for (let polY = 1; polY <= maxYears; polY++) {
         const yr = startY + polY - 1;
         const isCurrentDue = (polY === currentInPhase && nextDueDate.getFullYear() === TODAY.getFullYear());
         const isCompleted = (polY < currentInPhase) || (polY === currentInPhase && nextDueDate.getFullYear() > TODAY.getFullYear());
@@ -59,29 +63,18 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
         } else if (isCompleted) {
             colorClass = "bg-emerald-900";
             statusLabel = "Completed";
-        } else if (isSinglife) {
-            if (polY === 3) {
-                colorClass = "bg-indigo-500"; 
-                statusLabel = "Locked";
-            } else if (polY >= 4 && polY <= 10) {
-                colorClass = "bg-pink-400";   
-                statusLabel = "Flexi Premium/Locked";
-            } else {
-                colorClass = "bg-red-600";    
-                statusLabel = "Vested";
-            }
-        } else if (isFlexiBrand) {
-            if (polY === 5) {
-                colorClass = "bg-indigo-500"; 
-                statusLabel = "Locked";
-            } else if (polY >= 6 && polY <= 10) {
-                colorClass = "bg-pink-400";   
-                statusLabel = "Flexi Premium/Locked";
-            } else {
-                colorClass = "bg-red-600";    
-                statusLabel = "Vested";
-            }
-        } else {
+        } 
+        else if (isSinglife) {
+            if (polY === 3) { colorClass = "bg-indigo-500"; statusLabel = "Locked"; }
+            else if (polY >= 4 && polY <= 10) { colorClass = "bg-pink-400"; statusLabel = "Flexi Premium/Locked"; }
+            else { colorClass = "bg-red-600"; statusLabel = "Vested"; }
+        } 
+        else if (isFlexiBrand) {
+            if (polY === 5) { colorClass = "bg-indigo-500"; statusLabel = "Locked"; }
+            else if (polY >= 6 && polY <= 10) { colorClass = "bg-pink-400"; statusLabel = "Flexi Premium/Locked"; }
+            else { colorClass = "bg-red-600"; statusLabel = "Vested"; }
+        } 
+        else {
             colorClass = chargeAtYear > 0 ? "bg-pink-400" : "bg-red-600";
             statusLabel = chargeAtYear > 0 ? "Locked" : "Vested";
         }
@@ -106,12 +99,12 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
             </div>
         </div>`;
 
-    // --- NEW: CAPITAL ANALYSIS SECTION ---
+    // --- CAPITAL ANALYSIS BLOCK (Conditional for Premium Holidays/Withdrawals) ---
     const capitalAnalysisHtml = p.totalPremiumPaid ? `
         <div class="mb-8 p-6 rounded-[32px] bg-white border border-slate-100 shadow-sm">
             <div class="flex justify-between items-center mb-4">
                 <h4 class="text-[10px] font-black uppercase text-slate-400 tracking-widest">Capital Analysis</h4>
-                <span class="px-2 py-1 rounded bg-emerald-50 text-emerald-600 text-[9px] font-bold">Past Premium Holiday Tracked</span>
+                <span class="px-2 py-1 rounded bg-emerald-50 text-emerald-600 text-[9px] font-bold">Manual History Tracked</span>
             </div>
             <div class="grid grid-cols-3 gap-4">
                 <div class="p-3 rounded-2xl bg-slate-50">
@@ -150,9 +143,9 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
 
             <div class="flex items-center gap-10 text-right px-4">
                 <div><p class="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-1">Annual Premium</p><p class="text-2xl font-black text-slate-800 tracking-tight">${autoFmt(p.premium, sym)}</p></div>
-                <div><p class="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-1">Market Valuation</p><p class="text-2xl font-black text-slate-900 tracking-tighter">${autoFmt(accountValue, sym)}</p></div>
+                <div><p class="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-1">Valuation</p><p class="text-2xl font-black text-slate-900 tracking-tighter">${autoFmt(accountValue, sym)}</p></div>
                 <div class="bg-white/60 backdrop-blur-sm px-6 py-3 rounded-[20px] border border-white/50">
-                    <p class="text-[9px] font-black text-sky-500 uppercase tracking-widest mb-1 text-center">Next Due Date</p>
+                    <p class="text-[9px] font-black text-sky-500 uppercase tracking-widest mb-1 text-center">Next Due</p>
                     <p class="text-lg font-black text-slate-700 tracking-tight">${dateStr}</p>
                 </div>
             </div>
@@ -188,7 +181,7 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
             </div>
             
             <div class="relative flex items-center h-16 bg-slate-100 rounded-[24px] px-2 shadow-inner border border-slate-200/50">
-                <div class="flex-1 flex h-10 items-center gap-1">${timelineHtml}</div>
+                <div class="flex-1 flex h-10 items-center gap-1 overflow-hidden">${timelineHtml}</div>
                 ${starHtml}
             </div>
         </div>
