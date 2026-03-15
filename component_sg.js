@@ -1,4 +1,4 @@
-/* component_sg.js - v6.3.6 - Variable Scope & Logic Fix */
+/* component_sg.js - v6.3.7 - Restored Date Headers & Logic Final */
 import { autoFmt, toNum } from './india.js';
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -20,12 +20,11 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const thisYearAnniversary = new Date(CURRENT_YEAR, commMonth, commDay);
     const hasPassedThisYear = TODAY >= thisYearAnniversary;
 
-    // Calculate Policy Year for Surrender Charges
+    // Policy Year Index (for surrender charges and investment base)
     let yearsPassedForCharges = CURRENT_YEAR - startY;
     if (TODAY < thisYearAnniversary) yearsPassedForCharges--;
     const policyYearIdx = yearsPassedForCharges + 1;
 
-    // Premium Calculations
     const totalInvestmentBase = p.totalPremiumPaid ? toNum(p.totalPremiumPaid) : (annualPremium * policyYearIdx);
     const totalWithdrawn = (p.withdrawals || []).reduce((a, b) => a + b, 0);
     const netInvestmentBase = totalInvestmentBase - totalWithdrawn;
@@ -33,7 +32,6 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const brandColor = p.color || "#000000";
     const brandBg = `rgba(${parseInt(brandColor.slice(1,3), 16)}, ${parseInt(brandColor.slice(3,5), 16)}, ${parseInt(brandColor.slice(5,7), 16)}, 0.04)`;
 
-    // Surrender Calculation (Fixed Reference Order)
     const chargePct = p.surrenderCharges[policyYearIdx] || 0;
     let surrenderChargeAmount = (isSinglife || isFlexiBrand) ? totalInvestmentBase * (chargePct / 100) : accountValue * (chargePct / 100);
     const surrenderValue = Math.round(Math.max(0, accountValue - surrenderChargeAmount));
@@ -112,6 +110,18 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
                 <div class="p-6 rounded-[32px] bg-emerald-50 border border-emerald-100"><p class="text-[10px] font-black text-emerald-600 mb-2 uppercase text-center">Surrender</p><p class="text-3xl font-black text-emerald-700 text-center">${autoFmt(surrenderValue, sym)}</p></div>
                 <div class="p-6 rounded-[32px] bg-red-50 border border-red-100"><p class="text-[10px] font-black text-red-400 mb-2 uppercase text-center">Locked</p><p class="text-3xl font-black text-red-600 text-center">-${autoFmt(lockedValue, sym)}</p></div>
             </div>
+
+            <div class="flex justify-between items-end mb-4 px-2">
+                <div>
+                    <p class="text-[10px] font-black text-slate-400 uppercase mb-1">Commencement</p>
+                    <p class="text-sm font-bold text-slate-700 underline decoration-sky-300 decoration-2 underline-offset-4">${p.commenced}</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-[10px] font-black text-slate-400 uppercase mb-1">Maturity</p>
+                    <p class="text-sm font-bold text-slate-700 underline decoration-amber-300 decoration-2 underline-offset-4">${p.maturity}</p>
+                </div>
+            </div>
+
             <div class="relative flex items-center h-16 bg-slate-100 rounded-[24px] px-2 border border-slate-200/50">
                 <div class="flex-1 flex h-10 items-center gap-1">${timelineHtml}</div>
                 ${starHtml}
