@@ -1,4 +1,4 @@
-/* component_sg.js - v5.2.0 - Safe Spacing & Dynamic Maturity Star */
+/* component_sg.js - v5.4.0 - Segmented Brand Logic & Fixed Star Hover */
 import { autoFmt, toNum } from './india.js';
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -22,9 +22,7 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     // DYNAMIC NEXT DUE DATE
     let dueYear = TODAY.getFullYear();
     const thisYearAnniversary = new Date(dueYear, commDate.getMonth(), commDate.getDate());
-    if (TODAY >= thisYearAnniversary) {
-        dueYear++;
-    }
+    if (TODAY >= thisYearAnniversary) dueYear++;
     const nextDueDate = new Date(dueYear, commDate.getMonth(), commDate.getDate());
     const dateStr = nextDueDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 
@@ -47,20 +45,21 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     let timelineHtml = '';
     for(let polY = 1; polY <= 15; polY++) {
         const yr = startY + polY - 1;
-        const isCurrent = (polY === currentInPhase && TODAY >= nextDueDate);
-        const isCompleted = (polY < currentInPhase) || (polY === currentInPhase && TODAY < nextDueDate);
-        
+        const isCurrentDue = (polY === currentInPhase && nextDueDate.getFullYear() === TODAY.getFullYear());
+        const isCompleted = (polY < currentInPhase) || (polY === currentInPhase && nextDueDate.getFullYear() > TODAY.getFullYear());
         const chargeAtYear = p.surrenderCharges[polY] || 0;
+        
         let colorClass = "";
         let statusLabel = "";
 
-        if (isCurrent) {
+        if (isCurrentDue) {
             colorClass = "bg-black ring-2 ring-white z-20 scale-110 shadow-xl";
-            statusLabel = "Current Active Year";
+            statusLabel = "Payment Due / Active Year";
         } else if (isCompleted) {
             colorClass = "bg-emerald-900";
             statusLabel = "Year Completed";
         } else if (isFlexiBrand) {
+            // HSBC & MANULIFE ONLY
             if (polY === 5) {
                 colorClass = "bg-indigo-500"; 
                 statusLabel = "Year 5: Purple (Locked)";
@@ -72,6 +71,7 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
                 statusLabel = "Years 11-15: Red (Vested)";
             }
         } else {
+            // AIA & STANDARD LOGIC (No Flexi Feature)
             colorClass = chargeAtYear > 0 ? "bg-pink-400" : "bg-red-600";
             statusLabel = chargeAtYear > 0 ? "Locked Phase" : "Vested / Liquid";
         }
@@ -86,10 +86,11 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
             </div>`;
     }
 
+    // FIXED STAR TOOLTIP
     const starHtml = `
         <div class="ml-2 relative group/star flex items-center justify-center w-12 h-10 bg-white rounded-xl shadow-sm border border-slate-200 cursor-help">
             <span class="text-amber-500 text-xl transition-transform group-hover/star:scale-125">★</span>
-            <div class="opacity-0 group-hover/star:opacity-100 absolute bottom-full mb-3 right-0 bg-slate-900 text-white p-3 rounded-xl z-[100] shadow-2xl border border-white/10 pointer-events-none transition-all duration-200 min-w-[160px]">
+            <div class="opacity-0 group-hover/star:opacity-100 absolute bottom-full mb-4 right-0 bg-slate-900 text-white p-3 rounded-xl z-[100] shadow-2xl border border-white/10 pointer-events-none transition-all duration-300 min-w-[180px]">
                 <b class="text-amber-400 uppercase tracking-widest block text-[9px] mb-1">Maturity</b>
                 <span class="text-xs font-black">Maturity : ${autoFmt(accountValue, sym)}</span>
                 <div class="absolute top-full right-4 border-8 border-transparent border-t-slate-900"></div>
@@ -97,14 +98,11 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
         </div>`;
 
     return `
-    <div class="policy-card mb-10 rounded-[40px] bg-white overflow-hidden transition-all shadow-[0_20px_50px_rgba(0,0,0,0.08)] border border-slate-100" id="card-${p.id}">
+    <div class="policy-card mb-10 rounded-[40px] bg-white overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.08)] border border-slate-100" id="card-${p.id}">
         <div class="p-8 flex items-center justify-between cursor-pointer" onclick="toggleCard('${p.id}')">
             <div class="flex items-center gap-8 px-2">
-                <div class="relative">
-                    <div class="w-20 h-20 flex items-center justify-center bg-white rounded-[24px] shadow-sm border border-slate-50 p-3">
-                        <img src="${p.logo}" class="max-h-full object-contain">
-                    </div>
-                    <div class="absolute -bottom-2 -right-2 px-3 py-1 bg-black text-white text-[9px] font-black rounded-full tracking-tighter uppercase">SG</div>
+                <div class="w-20 h-20 flex items-center justify-center bg-white rounded-[24px] shadow-sm border border-slate-50 p-3">
+                    <img src="${p.logo}" class="max-h-full object-contain">
                 </div>
                 <div>
                     <h3 class="font-black text-3xl text-slate-900 tracking-tight leading-none mb-2">${p.name}</h3>
@@ -116,41 +114,40 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
             </div>
 
             <div class="flex items-center gap-10 text-right px-2">
-                <div>
-                    <p class="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] mb-1">Annual Premium</p>
-                    <p class="text-2xl font-black text-slate-800 tracking-tight">${autoFmt(p.premium, sym)}</p>
-                </div>
-                <div>
-                    <p class="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] mb-1">Market Valuation</p>
-                    <p class="text-2xl font-black text-slate-900 tracking-tighter">${autoFmt(accountValue, sym)}</p>
-                </div>
+                <div><p class="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-1">Annual Premium</p><p class="text-2xl font-black text-slate-800 tracking-tight">${autoFmt(p.premium, sym)}</p></div>
+                <div><p class="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-1">Market Valuation</p><p class="text-2xl font-black text-slate-900 tracking-tighter">${autoFmt(accountValue, sym)}</p></div>
                 <div class="bg-slate-50 px-6 py-3 rounded-[20px] border border-slate-100">
-                    <p class="text-[9px] font-black text-sky-500 uppercase tracking-[0.2em] mb-1 text-center">Next Due Date</p>
-                    <p class="text-lg font-black text-slate-700 tracking-tight whitespace-nowrap">${dateStr}</p>
+                    <p class="text-[9px] font-black text-sky-500 uppercase tracking-widest mb-1">Next Due Date</p>
+                    <p class="text-lg font-black text-slate-700 tracking-tight">${dateStr}</p>
                 </div>
             </div>
         </div>
 
         <div class="content-area px-8 pb-10 pt-2" style="background: linear-gradient(to bottom, #ffffff, ${brandBg})">
             <div class="grid grid-cols-4 gap-6 mb-12">
-                <div class="relative p-6 rounded-[32px] bg-white border border-slate-100 shadow-sm overflow-hidden">
+                <div class="p-6 rounded-[32px] bg-white border border-slate-100 shadow-sm relative overflow-hidden">
                     <div class="absolute top-0 left-0 w-1.5 h-full" style="background: ${brandColor}"></div>
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Sum Assured</p>
-                    <p class="text-2xl font-black text-slate-800 tracking-tight">${autoFmt(displaySumAssured, sym)}</p>
+                    <p class="text-[10px] font-black text-slate-400 mb-2 uppercase">Sum Assured</p>
+                    <p class="text-2xl font-black text-slate-800">${autoFmt(displaySumAssured, sym)}</p>
                 </div>
-                <div class="relative p-6 rounded-[32px] bg-white border border-slate-100 shadow-sm overflow-hidden">
+                <div class="p-6 rounded-[32px] bg-white border border-slate-100 shadow-sm relative overflow-hidden">
                     <div class="absolute top-0 left-0 w-1.5 h-full bg-sky-500"></div>
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Investment Base</p>
-                    <p class="text-2xl font-black text-slate-800 tracking-tight">${autoFmt(totalInvestmentBase, sym)}</p>
+                    <p class="text-[10px] font-black text-slate-400 mb-2 uppercase">Investment Base</p>
+                    <p class="text-2xl font-black text-slate-800">${autoFmt(totalInvestmentBase, sym)}</p>
                 </div>
-                <div class="relative p-6 rounded-[32px] bg-emerald-50 border border-emerald-100 shadow-sm overflow-hidden">
-                    <p class="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-2">Surrender Value</p>
-                    <p class="text-3xl font-black text-emerald-700 tracking-tight">${autoFmt(surrenderValue, sym)}</p>
+                <div class="p-6 rounded-[32px] bg-emerald-50 border border-emerald-100 shadow-sm">
+                    <p class="text-[10px] font-black text-emerald-600 mb-2 uppercase">Surrender Value</p>
+                    <p class="text-3xl font-black text-emerald-700">${autoFmt(surrenderValue, sym)}</p>
                 </div>
-                <div class="relative p-6 rounded-[32px] bg-red-50 border border-red-100 shadow-sm overflow-hidden">
-                    <p class="text-[10px] font-black text-red-400 uppercase tracking-widest mb-2">Locked Capital</p>
-                    <p class="text-3xl font-black text-red-600 tracking-tight">-${autoFmt(lockedValue, sym)}</p>
+                <div class="p-6 rounded-[32px] bg-red-50 border border-red-100 shadow-sm">
+                    <p class="text-[10px] font-black text-red-400 mb-2 uppercase">Locked Capital</p>
+                    <p class="text-3xl font-black text-red-600">-${autoFmt(lockedValue, sym)}</p>
                 </div>
+            </div>
+
+            <div class="flex justify-between items-end mb-4 px-2">
+                <div><p class="text-[10px] font-black text-slate-400 uppercase mb-1">Commencement</p><p class="text-sm font-bold text-slate-700 underline decoration-2 decoration-sky-300 underline-offset-4">${p.commenced}</p></div>
+                <div class="text-right"><p class="text-[10px] font-black text-slate-400 uppercase mb-1">Maturity Date</p><p class="text-sm font-bold text-slate-700 underline decoration-2 decoration-amber-300 underline-offset-4">${p.maturity}</p></div>
             </div>
             
             <div class="relative flex items-center h-16 bg-slate-100 rounded-[24px] px-2 shadow-inner border border-slate-200/50">
