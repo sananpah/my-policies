@@ -1,4 +1,4 @@
-/* component_sg.js - v6.4.1 - Replicated India Border Style */
+/* component_sg.js - v6.4.2 - Fixed Reference Error & Brand Borders */
 import { autoFmt, toNum } from './india.js';
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -45,13 +45,17 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const totalPremiumsPaid = p.totalPremiumPaid ? toNum(p.totalPremiumPaid) : (annualPremium * policyYearIdx);
     const netInvestmentBase = totalPremiumsPaid - totalWithdrawn;
 
-    // --- COLOR LOGIC ---
+    // --- COLOR & VALUATION LOGIC ---
     const brandColor = p.color || "#000000";
-    // 0.04 opacity for header background, 0.2 for the subtle border glow
     const brandBg = `rgba(${parseInt(brandColor.slice(1,3), 16)}, ${parseInt(brandColor.slice(3,5), 16)}, ${parseInt(brandColor.slice(5,7), 16)}, 0.04)`;
-    const borderColor = brandColor;
+    
+    // Fixed: Ensure Surrender & Locked values are calculated before the return
+    const chargePct = (p.surrenderCharges && p.surrenderCharges[policyYearIdx]) || 0;
+    let surrenderChargeAmount = (isSinglife || isFlexiBrand) ? totalPremiumsPaid * (chargePct / 100) : accountValue * (chargePct / 100);
+    const surrenderValue = Math.round(Math.max(0, accountValue - surrenderChargeAmount));
+    const lockedValue = Math.round(accountValue - surrenderValue);
 
-    // Timeline Generation (Preserved)
+    // Timeline Generation
     let timelineHtml = '';
     const maxYears = (endY - startY + 1 > 0 && endY - startY + 1 < 50) ? (endY - startY + 1) : (isAIA ? 30 : 15);
   
@@ -72,7 +76,7 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
                 else if (polY <= 10) { colorClass = "bg-pink-400"; statusLabel = "Flexi Premium+Locked"; }
                 else { colorClass = "bg-red-600"; statusLabel = "Vested"; }
             } else {
-                const chargeAtYear = p.surrenderCharges[polY] || 0;
+                const chargeAtYear = (p.surrenderCharges && p.surrenderCharges[polY]) || 0;
                 colorClass = chargeAtYear > 0 ? "bg-pink-400" : "bg-red-600";
                 statusLabel = chargeAtYear > 0 ? "Locked" : "Vested";
             }
@@ -107,9 +111,9 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const nextDueDisplay = new Date(nextDueYear, commMonth, commDay).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 
 return `
-    <div class="policy-card mb-10 rounded-[40px] bg-white overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.08)] border-2 border-slate-100 relative" 
+    <div class="policy-card mb-10 rounded-[40px] bg-white overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.08)] border-2 relative" 
          id="card-${p.id}" 
-         style="border-left: 16px solid ${brandColor}; border-color: ${borderColor};">
+         style="border-left: 16px solid ${brandColor}; border-color: ${brandColor};">
         
         <div class="p-8 flex items-center justify-between cursor-pointer relative" style="background: ${brandBg}" onclick="toggleCard('${p.id}')">
             <div class="flex items-center gap-8 pl-6 pr-4">
