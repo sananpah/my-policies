@@ -50,9 +50,17 @@
     </div>
 
     <div class="max-w-7xl mx-auto px-4 flex flex-wrap items-center justify-between gap-4 mb-8">
+
         <div class="flex gap-4">
-            <button onclick="render('india')" class="px-8 py-3 bg-slate-800 text-white rounded-full font-bold hover:bg-slate-700 transition shadow-lg">🇮🇳 India</button>
-            <button onclick="render('singapore')" class="px-8 py-3 bg-slate-800 text-white rounded-full font-bold hover:bg-slate-700 transition shadow-lg">🇸🇬 Singapore</button>
+            
+            <button onclick="render('india')" class="px-8 py-3 bg-slate-800 text-white rounded-full font-bold hover:bg-slate-700 transition shadow-lg flex items-center gap-3">
+                <span class="text-xl">🇮🇳</span>
+                <span>India</span>
+            </button>
+            <button onclick="render('singapore')" class="px-8 py-3 bg-slate-800 text-white rounded-full font-bold hover:bg-slate-700 transition shadow-lg flex items-center gap-3">
+                <span class="text-xl">🇸🇬</span>
+                <span>Singapore</span>
+            </button>
         </div>
 
         <div class="flex items-center gap-3 bg-white p-2 rounded-2xl border border-slate-200 shadow-sm">
@@ -88,7 +96,7 @@
     <div id="container" class="max-w-7xl mx-auto pb-20 px-4"></div>
 
     <script type="module">
-        const APP_VERSION = "4.0.42";
+        const APP_VERSION = "4.0.43";
         document.title = `Nami Portfolio v${APP_VERSION}`;
         document.getElementById('version-tag').innerText = `v${APP_VERSION}`;
 
@@ -126,9 +134,13 @@
             const sortBy = document.getElementById('sort-trigger').value;
             let list = [...(POLICY_DATA[cat] || [])];
             const sym = (cat === 'singapore') ? "$" : "₹";
+            
+            // This creates the flag based on the country
+            const flag = (cat === 'india') ? '🇮🇳 ' : '🇸🇬 ';
 
-            document.getElementById('portfolio-status').innerText = `${cat} Portfolio`;
-
+            // This updates the badge with the flag and capitalizes the name (e.g., "🇮🇳 India Portfolio")
+            document.getElementById('portfolio-status').innerText = `${flag}${cat.charAt(0).toUpperCase() + cat.slice(1)} Portfolio`;
+            
             if (sortBy === 'premium') list.sort((a, b) => toNum(b.premium) - toNum(a.premium));
             else if (sortBy === 'due') list.sort((a, b) => parseDate(a.dueDate) - parseDate(b.dueDate));
             else if (sortBy === 'time') list.sort((a, b) => parseDate(a.premiumEnds) - parseDate(b.premiumEnds));
