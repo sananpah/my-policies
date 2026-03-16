@@ -54,12 +54,12 @@
 
         <div class="flex gap-4">
             <button onclick="render('india')" class="px-8 py-3 bg-slate-800 text-white rounded-full font-bold hover:bg-slate-700 transition shadow-lg flex items-center gap-3">
-                <span class="material-symbols-outlined text-orange-400">flag</span>
+                <img src="https://flagcdn.com/w40/in.png" class="w-6 h-auto rounded-sm shadow-sm" alt="India">
                 <span>India</span>
             </button>
         
             <button onclick="render('singapore')" class="px-8 py-3 bg-slate-800 text-white rounded-full font-bold hover:bg-slate-700 transition shadow-lg flex items-center gap-3">
-                <span class="material-symbols-outlined text-red-500">flag</span>
+                <img src="https://flagcdn.com/w40/sg.png" class="w-6 h-auto rounded-sm shadow-sm" alt="Singapore">
                 <span>Singapore</span>
             </button>
         </div>
@@ -97,7 +97,7 @@
     <div id="container" class="max-w-7xl mx-auto pb-20 px-4"></div>
 
     <script type="module">
-        const APP_VERSION = "4.0.44";
+        const APP_VERSION = "4.0.45";
         document.title = `Nami Portfolio v${APP_VERSION}`;
         document.getElementById('version-tag').innerText = `v${APP_VERSION}`;
 
@@ -139,12 +139,12 @@
            // 1. Get the badge element
             const statusBadge = document.getElementById('portfolio-status');
 
-            // 2. Determine icon color based on country
-            const iconColor = (cat === 'india') ? 'text-orange-400' : 'text-red-500';
+          // Define the REAL flag image based on the country
+            const flagSrc = (cat === 'india') ? 'in' : 'sg';
 
             // 3. Update with Google Font Icon
             statusBadge.innerHTML = `
-                <span class="material-symbols-outlined align-middle mr-1 ${iconColor}" style="font-size: 14px;">flag</span>
+                <img src="https://flagcdn.com/w40/${flagSrc}.png" class="w-5 h-auto inline-block align-middle mr-2 rounded-sm">
                 <span class="align-middle">${cat.toUpperCase()} PORTFOLIO</span>
             `;
             
