@@ -114,7 +114,9 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
 
     return `
     <div class="policy-card mb-10 rounded-[40px] bg-white overflow-visible shadow-[0_20px_50px_rgba(0,0,0,0.08)] border border-slate-100 relative" id="card-${p.id}">
-        <div class="absolute top-0 left-0 w-2 h-full z-30" style="background: ${brandColor}"></div>
+        <div class="w-20 h-20 flex items-center justify-center bg-white rounded-[24px] shadow-sm p-3 border-2" style="border-color: ${brandColor}">
+            <img src="${p.logo}" class="max-h-full object-contain">
+        </div>
         <div class="p-8 flex items-center justify-between cursor-pointer relative" style="background: ${brandBg}" onclick="toggleCard('${p.id}')">
             <div class="flex items-center gap-8 px-4">
                 <div class="w-20 h-20 flex items-center justify-center bg-white rounded-[24px] shadow-sm p-3"><img src="${p.logo}" class="max-h-full object-contain"></div>
