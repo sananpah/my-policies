@@ -40,61 +40,46 @@
 </head>
 <body class="bg-slate-50">
 
-        <div id="version-tag" class="simple-build"></div>
-        <div class="max-w-7xl mx-auto mb-6 pt-10 px-4">
-            <div class="flex justify-between items-end mb-6">
-                <h1 class="text-5xl font-black text-slate-900 tracking-tighter">Nami Portfolio</h1>
-                <div id="portfolio-status" class="funky-badge">India Portfolio</div>
-            </div>
-        </div>
-        <div class="max-w-7xl mx-auto px-4 mb-10">
-            <div class="rounded-[40px] bg-slate-900 text-white p-8 flex items-center justify-between relative overflow-hidden shadow-2xl">
-                <div class="absolute left-0 top-0 bottom-0 w-4 bg-sky-500 opacity-50"></div> 
-                
-                <div class="flex items-center gap-8 pl-6">
-                    <div>
-                        <p class="text-[10px] font-black uppercase tracking-[0.2em] text-sky-400 mb-1">Total Portfolio</p>
-                        <h2 class="text-3xl font-black">Consolidated View</h2>
-                    </div>
-                </div>
-        
-                <div class="flex gap-10 items-center pr-4">
-                    <div class="text-right">
-                        <p class="text-[10px] font-black uppercase text-slate-400 mb-1">Total Valuation</p>
-                        <p class="text-2xl font-black text-white" id="total-valuation-display">$0.00</p>
-                    </div>
-                    </div>
-            </div>
-        </div>
-    
-        <div class="flex flex-wrap items-center justify-between gap-4 mb-8">
-            <div class="flex gap-4">
-                <button onclick="render('india')" class="px-8 py-3 bg-slate-800 text-white rounded-full font-bold hover:bg-slate-700 transition shadow-lg">India</button>
-                <button onclick="render('singapore')" class="px-8 py-3 bg-slate-800 text-white rounded-full font-bold hover:bg-slate-700 transition shadow-lg">Singapore</button>
-            </div>
+    <div id="version-tag" class="simple-build"></div>
 
-            <div class="flex items-center gap-3 bg-white p-2 rounded-2xl border border-slate-200 shadow-sm">
-                <span class="text-[10px] font-black uppercase text-slate-400 ml-2">Sort By</span>
-                <select id="sort-trigger" onchange="render(window.currentCategory)" class="bg-transparent text-xs font-bold rounded-lg px-2 py-1 outline-none cursor-pointer">
-                    <option value="default">Default Order</option>
-                    <option value="premium">Premium: High to Low</option>
-                    <option value="time">Maturity: Soonest First</option>
-                    <option value="due">Due Date: Earliest First</option>
-                </select>
-            </div>
+    <div class="max-w-7xl mx-auto mb-6 pt-10 px-4">
+        <div class="flex justify-between items-end mb-6">
+            <h1 class="text-5xl font-black text-slate-900 tracking-tighter">Nami Portfolio</h1>
+            <div id="portfolio-status" class="funky-badge">India Portfolio</div>
         </div>
-        
-        <div id="summary-bar" class="grid grid-cols-3 gap-6 bg-slate-900 p-8 rounded-[32px] text-white shadow-2xl mb-10">
-            <div class="border-r border-slate-700 text-center">
-                <p class="text-[10px] font-bold text-slate-400 uppercase">Total Sum Assured</p>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 flex flex-wrap items-center justify-between gap-4 mb-8">
+        <div class="flex gap-4">
+            <button onclick="render('india')" class="px-8 py-3 bg-slate-800 text-white rounded-full font-bold hover:bg-slate-700 transition shadow-lg">🇮🇳 India</button>
+            <button onclick="render('singapore')" class="px-8 py-3 bg-slate-800 text-white rounded-full font-bold hover:bg-slate-700 transition shadow-lg">🇸🇬 Singapore</button>
+        </div>
+
+        <div class="flex items-center gap-3 bg-white p-2 rounded-2xl border border-slate-200 shadow-sm">
+            <span class="text-[10px] font-black uppercase text-slate-400 ml-2">Sort By</span>
+            <select id="sort-trigger" onchange="render(window.currentCategory)" class="bg-transparent text-xs font-bold rounded-lg px-2 py-1 outline-none cursor-pointer">
+                <option value="default">Default Order</option>
+                <option value="premium">Premium: High to Low</option>
+                <option value="time">Maturity: Soonest First</option>
+                <option value="due">Due Date: Earliest First</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 mb-10">
+        <div id="summary-bar" class="grid grid-cols-3 gap-6 bg-slate-900 p-8 rounded-[40px] text-white shadow-2xl relative overflow-hidden">
+            <div class="absolute left-0 top-0 bottom-0 w-4 bg-sky-500 opacity-50"></div>
+            
+            <div class="border-r border-slate-700 text-center pl-4">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Sum Assured</p>
                 <p id="total-sa" class="text-4xl font-black text-emerald-400">0</p>
             </div>
             <div class="border-r border-slate-700 text-center">
-                <p class="text-[10px] font-bold text-slate-400 uppercase">Annual Premium</p>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Annual Premium</p>
                 <p id="total-premium" class="text-4xl font-black text-indigo-400">0</p>
             </div>
             <div class="text-center">
-                <p class="text-[10px] font-bold text-slate-400 uppercase">Portfolio Value</p>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Portfolio Value</p>
                 <p id="total-unit-value" class="text-4xl font-black text-pink-500">0</p>
             </div>
         </div>
@@ -103,14 +88,10 @@
     <div id="container" class="max-w-7xl mx-auto pb-20 px-4"></div>
 
     <script type="module">
-        // --- THE ONLY PLACE YOU EVER CHANGE THE VERSION ---
-        const APP_VERSION = "4.0.41";
-
-        // Push version to the Document Title and the UI Badge
+        const APP_VERSION = "4.0.42";
         document.title = `Nami Portfolio v${APP_VERSION}`;
         document.getElementById('version-tag').innerText = `v${APP_VERSION}`;
 
-        // Dynamic Imports
         const [Data, Tools, IndiaComp, SGComp] = await Promise.all([
             import(`./data.js?v=${APP_VERSION}`),
             import(`./india.js?v=${APP_VERSION}`),
@@ -159,13 +140,11 @@
                     : createPolicyCard(p, sym, TODAY, CURRENT_YEAR)
             ).join('');
 
-            // Calculate Total Sum Assured with fallback logic
             const tSA = list.reduce((acc, p) => {
-            const rawSA = toNum(p.sumAssured);
-            const accountVal = toNum(p.currentUnitValue || 0);
-            // Logic: If Sum Assured is 0, use current account value
-            const effectiveSA = (rawSA === 0) ? accountVal : rawSA;
-            return acc + effectiveSA;
+                const rawSA = toNum(p.sumAssured);
+                const accountVal = toNum(p.currentUnitValue || 0);
+                const effectiveSA = (rawSA === 0) ? accountVal : rawSA;
+                return acc + effectiveSA;
             }, 0);
 
             const tAnn = list.reduce((acc, p) => acc + (p.dueDate !== "PAID UP" ? toNum(p.premium) : 0), 0);
