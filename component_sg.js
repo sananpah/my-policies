@@ -1,4 +1,4 @@
-/* component_sg.js - v6.3.9 - Baseline Integrated Logic */
+/* component_sg.js - v6.4.1 - Replicated India Border Style */
 import { autoFmt, toNum } from './india.js';
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -11,9 +11,20 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const commMonth = commDate.getMonth();
     const commDay = commDate.getDate();
 
-    // Calculate exact policy duration for the timeline
-    const policyDuration = endY - startY + 1;
+    // 1. PREMIUM REMAINING CALCULATION
+    let premRemainingStr = "";
+    const isPaidUp = p.dueDate === "PAID UP";
     
+    if (!isPaidUp && matDate > TODAY) {
+        let years = matDate.getFullYear() - TODAY.getFullYear();
+        let months = matDate.getMonth() - TODAY.getMonth();
+        if (months < 0) { years--; months += 12; }
+        
+        const yStr = String(Math.max(0, years)).padStart(2, '0');
+        const mStr = String(Math.max(0, months)).padStart(2, '0');
+        premRemainingStr = `${yStr}y${mStr}m`;
+    }
+
     const accountValue = Math.round(toNum(p.currentUnitValue || 0));
     const annualPremium = toNum(p.premium || 0);
     const displaySumAssured = (toNum(p.sumAssured) === 0) ? accountValue : toNum(p.sumAssured);
@@ -23,11 +34,9 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const isFlexiBrand = company.includes("MANULIFE") || company.includes("HSBC");
     const isAIA = company.includes("AIA") || company.includes("PRUDENTIAL");
 
-    // 1. CHRONOLOGY CHECK (Calendar Year Based)
     const thisYearAnniversary = new Date(CURRENT_YEAR, commMonth, commDay);
     const hasPassedThisYear = TODAY >= thisYearAnniversary;
 
-    // 2. WITHDRAWAL & INVESTMENT CALCULATIONS
     let yearsPassedForCharges = CURRENT_YEAR - startY;
     if (TODAY < thisYearAnniversary) yearsPassedForCharges--;
     const policyYearIdx = yearsPassedForCharges + 1;
@@ -36,18 +45,15 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const totalPremiumsPaid = p.totalPremiumPaid ? toNum(p.totalPremiumPaid) : (annualPremium * policyYearIdx);
     const netInvestmentBase = totalPremiumsPaid - totalWithdrawn;
 
-    // 3. SURRENDER & BRAND COLORS
+    // --- COLOR LOGIC ---
     const brandColor = p.color || "#000000";
+    // 0.04 opacity for header background, 0.2 for the subtle border glow
     const brandBg = `rgba(${parseInt(brandColor.slice(1,3), 16)}, ${parseInt(brandColor.slice(3,5), 16)}, ${parseInt(brandColor.slice(5,7), 16)}, 0.04)`;
+    const borderColor = brandColor;
 
-    const chargePct = p.surrenderCharges[policyYearIdx] || 0;
-    let surrenderChargeAmount = (isSinglife || isFlexiBrand) ? totalPremiumsPaid * (chargePct / 100) : accountValue * (chargePct / 100);
-    const surrenderValue = Math.round(Math.max(0, accountValue - surrenderChargeAmount));
-    const lockedValue = Math.round(accountValue - surrenderValue);
-
-    // 4. TIMELINE GENERATION (Chronology > Brand Phase)
+    // Timeline Generation (Preserved)
     let timelineHtml = '';
-    const maxYears = (policyDuration > 0 && policyDuration < 50) ? policyDuration : (isAIA ? 30 : 15);
+    const maxYears = (endY - startY + 1 > 0 && endY - startY + 1 < 50) ? (endY - startY + 1) : (isAIA ? 30 : 15);
   
     for (let polY = 1; polY <= maxYears; polY++) {
         const yr = startY + polY - 1;
@@ -55,26 +61,14 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
         let statusLabel = "";
 
         if (yr < CURRENT_YEAR) {
-            colorClass = "bg-emerald-900"; // Completed
-            statusLabel = "Completed";
-        } 
-        else if (yr === CURRENT_YEAR) {
-            if (hasPassedThisYear) {
-                colorClass = "bg-emerald-900"; // Anniversary passed (HSBC Feb)
-                statusLabel = "Completed";
-            } else {
-                colorClass = "bg-black ring-2 ring-white z-20 scale-110 shadow-xl"; // Anniversary pending (Manulife Dec)
-                statusLabel = "Premium Due";
-            }
-        } 
-        else {
-            // Future Phases
-            if (isSinglife) {
-                if (polY <= 3) { colorClass = "bg-indigo-500"; statusLabel = "Locked"; }
-                else if (polY <= 10) { colorClass = "bg-pink-400"; statusLabel = "Flexi Premium+Locked"; }
-                else { colorClass = "bg-red-600"; statusLabel = "Vested"; }
-            } else if (isFlexiBrand) {
-                if (polY <= 5) { colorClass = "bg-indigo-500"; statusLabel = "Locked"; }
+            colorClass = "bg-emerald-900"; statusLabel = "Completed";
+        } else if (yr === CURRENT_YEAR) {
+            if (hasPassedThisYear) { colorClass = "bg-emerald-900"; statusLabel = "Completed"; }
+            else { colorClass = "bg-black ring-2 ring-white z-20 scale-110 shadow-xl"; statusLabel = "Premium Due"; }
+        } else {
+            if (isSinglife || isFlexiBrand) {
+                const lockLimit = isSinglife ? 3 : 5;
+                if (polY <= lockLimit) { colorClass = "bg-indigo-500"; statusLabel = "Locked"; }
                 else if (polY <= 10) { colorClass = "bg-pink-400"; statusLabel = "Flexi Premium+Locked"; }
                 else { colorClass = "bg-red-600"; statusLabel = "Vested"; }
             } else {
@@ -113,17 +107,17 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const nextDueDisplay = new Date(nextDueYear, commMonth, commDay).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 
 return `
-    <div class="policy-card mb-10 rounded-[40px] bg-white overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.08)] border border-slate-100 relative" id="card-${p.id}">
-        <div class="absolute left-0 top-0 bottom-0 w-4 z-10" style="background: ${brandColor}; border-radius: 0 40px 40px 0;"></div>
-
+    <div class="policy-card mb-10 rounded-[40px] bg-white overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.08)] border-2 border-slate-100 relative" 
+         id="card-${p.id}" 
+         style="border-left: 16px solid ${brandColor}; border-color: ${borderColor};">
+        
         <div class="p-8 flex items-center justify-between cursor-pointer relative" style="background: ${brandBg}" onclick="toggleCard('${p.id}')">
             <div class="flex items-center gap-8 pl-6 pr-4">
                 <div class="w-20 h-20 flex-shrink-0 flex items-center justify-center bg-white rounded-[24px] shadow-sm p-3 relative z-20">
                     <img src="${p.logo}" class="max-h-full object-contain">
                 </div>
-                
                 <div class="relative z-20">
-                    <h3 class="font-black text-3xl text-slate-900 mb-2">${p.name}</h3>
+                    <h3 class="font-black text-3xl text-slate-900 mb-2 tracking-tight">${p.name}</h3>
                     <div class="flex items-center gap-3">
                         <span class="px-3 py-1 rounded-md text-[10px] font-bold text-white uppercase" style="background: ${brandColor}">${p.company}</span>
                         <span class="font-mono text-xs font-bold text-slate-400">#${p.id}</span>
@@ -134,7 +128,18 @@ return `
             <div class="flex items-center gap-10 text-right px-4 relative z-20">
                 <div><p class="text-[10px] font-black text-slate-300 uppercase mb-1">Premium</p><p class="text-2xl font-black text-slate-800">${autoFmt(p.premium, sym)}</p></div>
                 <div><p class="text-[10px] font-black text-slate-300 uppercase mb-1">Valuation</p><p class="text-2xl font-black text-slate-900">${autoFmt(accountValue, sym)}</p></div>
-                <div class="bg-white/60 px-6 py-3 rounded-[20px] border border-white/50"><p class="text-[9px] font-black text-sky-500 uppercase mb-1 text-center">Next Due</p><p class="text-lg font-black text-slate-700">${nextDueDisplay}</p></div>
+                
+                <div class="bg-white/60 px-6 py-3 rounded-[20px] border border-white/50 flex flex-col justify-center min-w-[125px] h-[64px]">
+                    ${isPaidUp ? `
+                        <p class="text-[10px] font-black text-emerald-500 uppercase text-center">Status</p>
+                        <p class="text-sm font-black text-emerald-700 text-center uppercase tracking-tighter">FULLY PAID</p>
+                    ` : `
+                        <p class="text-[9px] font-black text-indigo-500 uppercase text-center">Left: <span class="text-slate-700">${premRemainingStr}</span></p>
+                        <div class="h-[1px] bg-slate-200/40 w-full my-1"></div>
+                        <p class="text-[9px] font-black text-sky-500 uppercase text-center">Next Due</p>
+                        <p class="text-sm font-black text-slate-700 text-center tracking-tight">${nextDueDisplay}</p>
+                    `}
+                </div>
             </div>
         </div>
 
