@@ -113,21 +113,32 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const nextDueDisplay = new Date(nextDueYear, commMonth, commDay).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 
 return `
-    <div class="policy-card mb-10 rounded-[40px] bg-white overflow-visible shadow-[0_20px_50px_rgba(0,0,0,0.08)] border border-slate-100 relative" id="card-${p.id}">
-        <div class="p-8 flex items-center justify-between cursor-pointer relative rounded-b-[40px]" style="background: ${brandBg}" onclick="toggleCard('${p.id}')">
-            <div class="flex items-center gap-8 px-4">
-                <div class="w-20 h-20 flex-shrink-0 flex items-center justify-center bg-white rounded-[24px] shadow-sm p-3" style="border: 2px solid ${brandColor};">
+    <div class="policy-card mb-10 rounded-[40px] bg-white overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.08)] border border-slate-100 relative" id="card-${p.id}">
+        <div class="absolute left-0 top-0 bottom-0 w-4 z-10" style="background: ${brandColor}; border-radius: 0 40px 40px 0;"></div>
+
+        <div class="p-8 flex items-center justify-between cursor-pointer relative" style="background: ${brandBg}" onclick="toggleCard('${p.id}')">
+            <div class="flex items-center gap-8 pl-6 pr-4">
+                <div class="w-20 h-20 flex-shrink-0 flex items-center justify-center bg-white rounded-[24px] shadow-sm p-3 relative z-20">
                     <img src="${p.logo}" class="max-h-full object-contain">
                 </div>
-                <div><h3 class="font-black text-3xl text-slate-900 mb-2">${p.name}</h3><div class="flex items-center gap-3"><span class="px-3 py-1 rounded-md text-[10px] font-bold text-white uppercase" style="background: ${brandColor}">${p.company}</span><span class="font-mono text-xs font-bold text-slate-400">#${p.id}</span></div></div>
+                
+                <div class="relative z-20">
+                    <h3 class="font-black text-3xl text-slate-900 mb-2">${p.name}</h3>
+                    <div class="flex items-center gap-3">
+                        <span class="px-3 py-1 rounded-md text-[10px] font-bold text-white uppercase" style="background: ${brandColor}">${p.company}</span>
+                        <span class="font-mono text-xs font-bold text-slate-400">#${p.id}</span>
+                    </div>
+                </div>
             </div>
-            <div class="flex items-center gap-10 text-right px-4">
+
+            <div class="flex items-center gap-10 text-right px-4 relative z-20">
                 <div><p class="text-[10px] font-black text-slate-300 uppercase mb-1">Premium</p><p class="text-2xl font-black text-slate-800">${autoFmt(p.premium, sym)}</p></div>
                 <div><p class="text-[10px] font-black text-slate-300 uppercase mb-1">Valuation</p><p class="text-2xl font-black text-slate-900">${autoFmt(accountValue, sym)}</p></div>
                 <div class="bg-white/60 px-6 py-3 rounded-[20px] border border-white/50"><p class="text-[9px] font-black text-sky-500 uppercase mb-1 text-center">Next Due</p><p class="text-lg font-black text-slate-700">${nextDueDisplay}</p></div>
             </div>
         </div>
-        <div class="content-area px-10 pb-10 pt-2" style="background: linear-gradient(to bottom, ${brandBg}, #ffffff)">
+
+        <div class="content-area px-10 pb-10 pt-2 relative z-20" style="background: linear-gradient(to bottom, ${brandBg}, #ffffff)">
             <div class="grid grid-cols-4 gap-6 mb-8">
                 <div class="p-6 rounded-[32px] bg-white border border-slate-100 relative shadow-sm"><p class="text-[10px] font-black text-slate-400 mb-2 uppercase">Sum Assured</p><p class="text-2xl font-black text-slate-800">${autoFmt(displaySumAssured, sym)}</p></div>
                 <div class="p-6 rounded-[32px] bg-white border border-slate-100 relative shadow-sm"><p class="text-[10px] font-black text-slate-400 mb-2 uppercase">Invested</p><p class="text-2xl font-black text-slate-800">${autoFmt(netInvestmentBase, sym)}</p></div>
