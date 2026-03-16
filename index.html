@@ -6,6 +6,7 @@
     <title id="main-title">Nami Portfolio</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="india_styles.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
     <style>
         .policy-card .content-area { display: none; }
         .policy-card.open .content-area { display: block; }
@@ -52,13 +53,13 @@
     <div class="max-w-7xl mx-auto px-4 flex flex-wrap items-center justify-between gap-4 mb-8">
 
         <div class="flex gap-4">
-            
             <button onclick="render('india')" class="px-8 py-3 bg-slate-800 text-white rounded-full font-bold hover:bg-slate-700 transition shadow-lg flex items-center gap-3">
-                <span class="text-xl">🇮🇳</span>
+                <span class="material-symbols-outlined text-orange-400">flag</span>
                 <span>India</span>
             </button>
+        
             <button onclick="render('singapore')" class="px-8 py-3 bg-slate-800 text-white rounded-full font-bold hover:bg-slate-700 transition shadow-lg flex items-center gap-3">
-                <span class="text-xl">🇸🇬</span>
+                <span class="material-symbols-outlined text-red-500">flag</span>
                 <span>Singapore</span>
             </button>
         </div>
@@ -96,7 +97,7 @@
     <div id="container" class="max-w-7xl mx-auto pb-20 px-4"></div>
 
     <script type="module">
-        const APP_VERSION = "4.0.43";
+        const APP_VERSION = "4.0.44";
         document.title = `Nami Portfolio v${APP_VERSION}`;
         document.getElementById('version-tag').innerText = `v${APP_VERSION}`;
 
@@ -135,11 +136,17 @@
             let list = [...(POLICY_DATA[cat] || [])];
             const sym = (cat === 'singapore') ? "$" : "₹";
             
-            // This creates the flag based on the country
-            const flag = (cat === 'india') ? '🇮🇳 ' : '🇸🇬 ';
+           // 1. Get the badge element
+            const statusBadge = document.getElementById('portfolio-status');
 
-            // This updates the badge with the flag and capitalizes the name (e.g., "🇮🇳 India Portfolio")
-            document.getElementById('portfolio-status').innerText = `${flag}${cat.charAt(0).toUpperCase() + cat.slice(1)} Portfolio`;
+            // 2. Determine icon color based on country
+            const iconColor = (cat === 'india') ? 'text-orange-400' : 'text-red-500';
+
+            // 3. Update with Google Font Icon
+            statusBadge.innerHTML = `
+                <span class="material-symbols-outlined align-middle mr-1 ${iconColor}" style="font-size: 14px;">flag</span>
+                <span class="align-middle">${cat.toUpperCase()} PORTFOLIO</span>
+            `;
             
             if (sortBy === 'premium') list.sort((a, b) => toNum(b.premium) - toNum(a.premium));
             else if (sortBy === 'due') list.sort((a, b) => parseDate(a.dueDate) - parseDate(b.dueDate));
