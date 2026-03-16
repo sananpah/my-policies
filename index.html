@@ -40,14 +40,23 @@
 </head>
 <body class="bg-slate-50">
 
-    <div id="version-tag" class="simple-build"></div>
+        <div id="version-tag" class="simple-build"></div>
 
-    <div class="max-w-7xl mx-auto mb-10 pt-10 px-4">
-        <div class="flex justify-between items-end mb-6">
-            <h1 class="text-5xl font-black text-slate-900 tracking-tighter">Nami Portfolio</h1>
-            <div id="portfolio-status" class="funky-badge">India Portfolio</div>
-        </div>
+        <div class="max-w-7xl mx-auto mb-10 pt-10 px-4">
+            <div class="flex justify-between items-end mb-6">
+                <div>
+                    <h1 class="text-6xl font-[1000] tracking-tighter italic bg-clip-text text-transparent bg-gradient-to-br from-slate-900 via-indigo-600 to-sky-500">
+                    Nami Family
+                    </h1>
+                    <p class="text-xs font-black uppercase tracking-[0.3em] text-slate-400 mt-1 ml-1">Portfolio Management</p>
+                </div>
         
+                <div id="portfolio-status" class="px-6 py-2 rounded-2xl bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest shadow-xl border border-white/10 animate-pulse">
+                India Portfolio
+                </div>
+           </div>
+        </div>
+    
         <div class="flex flex-wrap items-center justify-between gap-4 mb-8">
             <div class="flex gap-4">
                 <button onclick="render('india')" class="px-8 py-3 bg-slate-800 text-white rounded-full font-bold hover:bg-slate-700 transition shadow-lg">India</button>
@@ -85,7 +94,7 @@
 
     <script type="module">
         // --- THE ONLY PLACE YOU EVER CHANGE THE VERSION ---
-        const APP_VERSION = "4.0.38";
+        const APP_VERSION = "4.0.39";
 
         // Push version to the Document Title and the UI Badge
         document.title = `Nami Portfolio v${APP_VERSION}`;
