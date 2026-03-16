@@ -1,7 +1,14 @@
-/* component_in.js - Updated with Brand Opacity Backgrounds */
+/* component_in.js - Preserving Timeline & Hover Logic */
 import { checkIsDueSoon, getTimeLeft, autoFmt, toNum, raw } from './india.js';
 
 export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
+    // --- HELPER FOR DATE COMPARISON ---
+    const parseDate = (str) => {
+        if (!str || str === "PAID UP") return new Date(9999, 0, 1);
+        const pParts = str.split(' ');
+        return new Date(`${pParts[1]} ${pParts[0]}, ${pParts[2]}`);
+    };
+
     const startParts = p.commenced.split(' ');
     const startY = parseInt(startParts[2]);
     const anniversaryDay = parseInt(startParts[0]);
@@ -10,7 +17,6 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
     const matY = parseInt(p.maturity.split(' ')[2]);
     const premEndYear = parseInt(p.premiumEnds.split(' ')[2]);
     const isPaidUp = p.dueDate === "PAID UP";
-    const timeLeft = getTimeLeft(p.premiumEnds);
     
     const currentAnniversary = new Date(`${anniversaryMonth} ${anniversaryDay}, ${CURRENT_YEAR}`);
     const hasPassedThisYear = TODAY > currentAnniversary;
@@ -19,11 +25,22 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
     const unitValue = Math.round(toNum(p.currentUnitValue || 0));
     const prem = Math.round(toNum(p.premium || 0));
 
-    // --- NEW BRAND BACKGROUND LOGIC ---
+    // --- NEW: PREMIUM REMAINING CALCULATION (00y00m) ---
+    let premRemainingStr = "";
+    if (!isPaidUp) {
+        const premEndDate = parseDate(p.premiumEnds);
+        let years = premEndDate.getFullYear() - TODAY.getFullYear();
+        let months = premEndDate.getMonth() - TODAY.getMonth();
+        if (months < 0) { years--; months += 12; }
+        const yStr = String(Math.max(0, years)).padStart(2, '0');
+        const mStr = String(Math.max(0, months)).padStart(2, '0');
+        premRemainingStr = `${yStr}y${mStr}m`;
+    }
+
     const brandColor = p.color || "#000000";
     const brandBg = `rgba(${parseInt(brandColor.slice(1,3), 16)}, ${parseInt(brandColor.slice(3,5), 16)}, ${parseInt(brandColor.slice(5,7), 16)}, 0.04)`;
 
-    // --- REINSTATED ORIGINAL TIMELINE LOGIC ---
+    // --- TIMELINE LOGIC (RETAINED EXACTLY) ---
     let timelineHtml = '';
     for(let yr = startY; yr < matY; yr++) {
         const polY = yr - startY + 1;
@@ -72,8 +89,9 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
                     ${p.isDaughter ? `<span class="family-marker ml-3" title="Daughter's Policy"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4"/><path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg></span>` : ''}
                 </h3>
             </div>
-            <div class="flex gap-12 items-center mr-10">
-                <div class="flex items-center w-[300px] -ml-12">
+            
+            <div class="flex gap-12 items-center mr-6">
+                <div class="flex items-center w-[260px] -ml-4">
                     <div class="funky-badge" style="border-color: ${brandColor}; box-shadow: 0 0 10px ${brandColor}44;">${p.type}</div>
                     <div class="ml-6">
                         <p class="text-[9px] font-bold text-slate-400 uppercase">Sum Assured</p>
@@ -85,10 +103,19 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
                     <p class="text-lg font-black ${isPaidUp ? 'text-slate-300 line-through' : 'text-emerald-600'}">${autoFmt(prem, sym)}</p>
                 </div>
             </div>
-            <div class="w-44 text-center">
-                <p class="text-[9px] font-bold text-slate-400 uppercase mb-1">Next Due Date</p>
-                ${isPaidUp ? `<img src="paid.jpg" class="paid-logo mx-auto">` : 
-                `<div class="px-6 py-3 rounded-xl font-black text-xs text-center shadow-lg ${checkIsDueSoon(p.dueDate) ? 'due-blink' : 'bg-slate-900 text-white'}">${p.dueDate}</div>`}
+
+            <div class="w-40 text-center flex flex-col justify-center min-h-[60px]">
+                ${isPaidUp ? 
+                    `<img src="paid.jpg" class="paid-logo mx-auto h-12 object-contain">` : 
+                    `
+                    <div class="bg-white/60 p-2 rounded-xl border border-white/50 shadow-sm">
+                        <p class="text-[9px] font-bold text-indigo-500 uppercase leading-none mb-1">Left: <span class="text-slate-700">${premRemainingStr}</span></p>
+                        <div class="h-[1px] bg-slate-200/50 w-full mb-1"></div>
+                        <p class="text-[9px] font-bold text-slate-400 uppercase leading-none mb-1">Next Due</p>
+                        <div class="font-black text-[11px] ${checkIsDueSoon(p.dueDate) ? 'text-red-500 animate-pulse' : 'text-slate-900'}">${p.dueDate}</div>
+                    </div>
+                    `
+                }
             </div>
         </div>
 
@@ -96,17 +123,13 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
             <div class="detail-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; padding: 20px;">
                 <div class="detail-item"><p>Policy Number</p><p>${p.id || 'N/A'}</p></div>
                 <div class="detail-item"><p>UIN Number</p><p>${p.uin || 'N/A'}</p></div>
-                
                 ${isULIP ? `
                     <div class="detail-item" style="background: #eef2ff; border: 2px solid #6366f1; border-radius: 12px; padding: 10px; display: flex; flex-direction: column; justify-content: center;">
                         <p style="color: #4338ca; font-weight: 800; font-size: 10px; margin: 0; text-transform: uppercase;">Portfolio Value</p>
                         <p style="font-weight: 900; color: #1e1b4b; font-size: 18px; margin: 0;">${autoFmt(unitValue, sym)}</p>
                     </div>
                 ` : `
-                    <div class="detail-item">
-                        <p>Customer ID</p>
-                        <p>${p.clientId || 'N/A'}</p>
-                    </div>
+                    <div class="detail-item"><p>Customer ID</p><p>${p.clientId || 'N/A'}</p></div>
                 `}
             </div>
 
