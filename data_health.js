@@ -1,0 +1,85 @@
+/* data_health.js - AIA Health Policies */
+export const healthData = [
+    {
+        id: "H237311630",
+        owner: "Suhail",
+        name: "HealthShield Gold Max",
+        company: "AIA",
+        logo: "logos/aia.png",
+        category: "Health : Hospitalisation",
+        premium: 1764.47, // $565.47 (CPF) + $1199 (Cash)
+        currency: "SGD",
+        paymentMode: "CPF + ANNUAL",
+        totalPaid: 8685.00,
+        sumAssured: 1000000, // Hospitalisation limit per year
+        expiryDate: "01 Sep 2077",
+        benefits: [
+            "Hospitalisation: $1,000,000 /year",
+            "Ward: Private - Standard room",
+            "As-Charged Coverage"
+        ],
+        nominee: "N/A",
+        color: "#d31145"
+    },
+    {
+        id: "E237311630",
+        owner: "Suhail",
+        name: "HealthShield Gold Max Rider",
+        company: "AIA",
+        logo: "logos/aia.png",
+        category: "Health : Hospitalisation",
+        premium: 1516.84,
+        currency: "SGD",
+        paymentMode: "ANNUAL",
+        totalPaid: 13051.06,
+        sumAssured: 0, // Rider usually enhances the main plan
+        expiryDate: "01 Sep 2077",
+        benefits: [
+            "Cancer Care Booster: 21x Medishield Limit",
+            "Co-insurance cap: $50,000 /year",
+            "Private Hospital Deductible: $2,000"
+        ],
+        nominee: "N/A",
+        color: "#d31145"
+    },
+    {
+        id: "P565596237",
+        owner: "Suhail",
+        name: "Multistage Cancer Cover",
+        company: "AIA",
+        logo: "logos/aia.png",
+        category: "Health : Critical Illness",
+        premium: 1268.25,
+        currency: "SGD",
+        paymentMode: "ANNUAL",
+        totalPaid: 3307.14,
+        sumAssured: 150000,
+        expiryDate: "03 Aug 2043",
+        benefits: [
+            "Major Critical Illness",
+            "Multistage Payout"
+        ],
+        nominee: "N/A",
+        color: "#d31145"
+    },
+    {
+        id: "L548553200",
+        owner: "Sulmas",
+        name: "Absolute Critical Cover (ASCC)",
+        company: "AIA",
+        logo: "logos/aia.png",
+        category: "Health : Critical Illness",
+        premium: 100.45,
+        currency: "SGD",
+        paymentMode: "MONTHLY",
+        totalPaid: 3796.95,
+        sumAssured: 50000,
+        expiryDate: "04 Apr 2105",
+        benefits: [
+            "Early Critical Illness: $50,000",
+            "ASCC Booster: $50,000"
+        ],
+        nominee: "N/A",
+        color: "#d31145"
+    }
+];
