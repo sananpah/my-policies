@@ -1,5 +1,14 @@
-/* health.js - v1.1.0 - Collapsible & Brand Synced */
+/* health.js - v1.2.0 - Family Icons & Collapsible */
 import { autoFmt } from './india.js';
+
+function getOwnerIcon(owner) {
+    const name = owner.toLowerCase();
+    if (name.includes('suhail')) return `<span class="material-symbols-outlined text-[14px] align-middle">man</span> HUSBAND`;
+    if (name.includes('saima')) return `<span class="material-symbols-outlined text-[14px] align-middle">woman</span> WIFE`;
+    if (name.includes('sulmas')) return `<span class="material-symbols-outlined text-[14px] align-middle">child_care</span> DAUGHTER`;
+    if (name.includes('family')) return `<span class="material-symbols-outlined text-[14px] align-middle">family_restroom</span> FAMILY`;
+    return owner;
+}
 
 export function createHealthCard(p) {
     const sym = p.currency === "INR" ? "₹" : "$";
@@ -14,18 +23,20 @@ export function createHealthCard(p) {
     const timeRemaining = `${String(Math.max(0, years)).padStart(2, '0')}y${String(Math.max(0, months)).padStart(2, '0')}m`;
 
     return `
-    <div class="health-card policy-card mb-8 rounded-[40px] bg-white border-2 relative overflow-hidden transition-all" 
+    <div class="health-card policy-card mb-8 rounded-[40px] bg-white border-2 relative overflow-hidden transition-all hover:shadow-xl" 
          id="card-${p.id}"
          style="border-left: 16px solid ${brandColor}; border-color: ${brandColor};">
         
         <div class="p-8 flex items-center justify-between cursor-pointer group" style="background: ${brandBg}" onclick="toggleCard('${p.id}')">
             <div class="flex items-center gap-8 pl-4">
-                <div class="w-20 h-20 bg-white rounded-3xl shadow-sm p-3 flex items-center justify-center border border-slate-100 transition-transform group-hover:scale-105">
+                <div class="w-20 h-20 bg-white rounded-3xl shadow-sm p-3 flex items-center justify-center border border-slate-100">
                     <img src="${p.logo}" class="max-h-full object-contain">
                 </div>
                 <div>
                     <div class="flex items-center gap-3 mb-2">
-                        <span class="text-[10px] font-black px-3 py-1 rounded-full bg-slate-800 text-white uppercase tracking-wider">${p.owner}</span>
+                        <span class="flex items-center gap-1 text-[10px] font-black px-3 py-1 rounded-full bg-slate-800 text-white uppercase tracking-wider">
+                            ${getOwnerIcon(p.owner)}
+                        </span>
                         <span class="text-[10px] font-black px-3 py-1 rounded-full text-white uppercase tracking-wider" style="background: ${brandColor}">${p.category}</span>
                     </div>
                     <h3 class="font-black text-2xl text-slate-900 leading-none">${p.name}</h3>
@@ -44,7 +55,6 @@ export function createHealthCard(p) {
                     <p class="text-[9px] font-black text-emerald-600 uppercase mb-1">Coverage Left</p>
                     <p class="text-lg font-black text-slate-800">${timeRemaining}</p>
                 </div>
-
                 <span class="material-symbols-outlined text-slate-300 transition-transform group-[.open]:rotate-180">expand_more</span>
             </div>
         </div>
@@ -77,7 +87,7 @@ export function createHealthCard(p) {
                     <span class="text-[10px] font-black uppercase tracking-tighter">Next Renewal: <span class="text-slate-800 ml-1 font-black">${p.expiryDate}</span></span>
                 </div>
                 <div class="text-[10px] font-black text-slate-400 uppercase">
-                    Nominee: <span class="text-slate-800 ml-1 font-black">${p.nominee}</span>
+                    Nominee: <span class="text-slate-800 ml-1 font-black">${p.nominee || 'N/A'}</span>
                 </div>
             </div>
         </div>
