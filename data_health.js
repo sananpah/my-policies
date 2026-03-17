@@ -35,8 +35,11 @@ export const healthData = [
         sumAssured: 0, // Rider usually enhances the main plan
         expiryDate: "01 Sep 2077",
         benefits: [
+            "Emergency and OutPatient Care: $2000 / year",
             "Cancer Care Booster: 21x Medishield Limit",
+            "Non Cancer Drug List: $200,000 / year"
             "Co-insurance cap: $50,000 /year",
+            "Public Hospital 5% co-payment (cap at $3,000 / year)"
             "Private Hospital Deductible: $2,000"
         ],
         nominee: "N/A",
