@@ -1,14 +1,13 @@
-/* health.js - v1.3.0 - Visual Icons Only */
+/* health.js - v1.4.0 - High Capacity & Family Icons */
 import { autoFmt } from './india.js';
 
 function getOwnerIcon(owner) {
     const name = owner.toLowerCase();
-    // Returning just the icon with a specific background for each person
     if (name.includes('suhail')) return `<span class="material-symbols-outlined text-lg">man</span>`;
     if (name.includes('saima')) return `<span class="material-symbols-outlined text-lg">woman</span>`;
     if (name.includes('sulmas')) return `<span class="material-symbols-outlined text-lg">child_care</span>`;
     if (name.includes('family')) return `<span class="material-symbols-outlined text-lg">family_restroom</span>`;
-    return owner;
+    return `<span class="material-symbols-outlined text-lg">person</span>`;
 }
 
 export function createHealthCard(p) {
@@ -30,7 +29,7 @@ export function createHealthCard(p) {
         
         <div class="p-8 flex items-center justify-between cursor-pointer group" style="background: ${brandBg}" onclick="toggleCard('${p.id}')">
             <div class="flex items-center gap-8 pl-4">
-                <div class="w-20 h-20 bg-white rounded-3xl shadow-sm p-3 flex items-center justify-center border border-slate-100 transition-transform group-hover:scale-105">
+                <div class="w-20 h-20 bg-white rounded-3xl shadow-sm p-3 flex items-center justify-center border border-slate-100">
                     <img src="${p.logo}" class="max-h-full object-contain">
                 </div>
                 <div>
@@ -63,22 +62,28 @@ export function createHealthCard(p) {
         </div>
 
         <div class="content-area p-8 bg-white border-t border-slate-50">
-            <div class="grid grid-cols-12 gap-6">
-                <div class="col-span-4 p-6 rounded-[32px] bg-slate-50 border border-slate-100 flex flex-col justify-center">
-                    <p class="text-[10px] font-black text-slate-400 uppercase mb-2 tracking-widest">Yearly Limit / SA</p>
-                    <p class="text-2xl font-black text-slate-800">
-                        ${p.sumAssured === 0 ? 'Rider Benefit' : autoFmt(p.sumAssured, sym)}
-                    </p>
-                    <p class="text-[10px] font-bold text-slate-400 mt-2 uppercase italic">Invested: ${autoFmt(p.totalPaid, sym)}</p>
+            <div class="flex gap-6">
+                <div class="w-1/3 space-y-4">
+                    <div class="p-6 rounded-[32px] bg-slate-50 border border-slate-100">
+                        <p class="text-[10px] font-black text-slate-400 uppercase mb-2 tracking-widest">Yearly Limit / SA</p>
+                        <p class="text-2xl font-black text-slate-800">
+                            ${p.sumAssured === 0 ? 'Rider Benefit' : autoFmt(p.sumAssured, sym)}
+                        </p>
+                    </div>
+                    <div class="p-6 rounded-[32px] bg-slate-50 border border-slate-100">
+                        <p class="text-[10px] font-black text-slate-400 uppercase mb-1 tracking-widest">Total Invested</p>
+                        <p class="text-xl font-black text-slate-600">${autoFmt(p.totalPaid, sym)}</p>
+                    </div>
                 </div>
 
-                <div class="col-span-8 p-6 rounded-[32px] bg-sky-50 border border-sky-100">
+                <div class="w-2/3 p-6 rounded-[32px] bg-sky-50 border border-sky-100">
                     <p class="text-[10px] font-black text-sky-600 uppercase mb-4 tracking-widest">Key Coverage Benefits</p>
-                    <div class="flex flex-wrap gap-2">
+                    <div class="grid grid-cols-2 gap-x-4 gap-y-3">
                         ${p.benefits.map(b => `
-                            <span class="text-[11px] font-extrabold text-sky-900 bg-white px-4 py-2 rounded-xl shadow-sm border border-sky-200/30">
-                                ${b}
-                            </span>
+                            <div class="flex items-start gap-2">
+                                <span class="material-symbols-outlined text-sky-500 text-sm mt-0.5">check_circle</span>
+                                <span class="text-[12px] font-bold text-sky-900 leading-tight">${b}</span>
+                            </div>
                         `).join('')}
                     </div>
                 </div>
