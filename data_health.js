@@ -84,5 +84,24 @@ export const healthData = [
         ],
         nominee: "N/A",
         color: "#d31145"
+    },
+    {
+        id: "E5664237",
+        owner: "Suhail",
+        name:  "ElderShield Plus",
+        company: "SingLife",
+        logo: "image_89093e.png",
+        category: "ACCIDENT",
+        premium: 598.08,
+        currency: "SGD",
+        paymentMode: "CPF",
+        totalPaid: 5211.42,
+        sumAssured: 1300,
+        expiryDate: "24.Mar.2075",
+        benefits: [
+            "Lifetime Monthly Payouts",
+        ],
+        nominee: "N/A",
+        color: "#003b71"
     }
 ];
