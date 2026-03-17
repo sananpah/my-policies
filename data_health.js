@@ -102,6 +102,6 @@ export const healthData = [
             "Lifetime Monthly Payouts",
         ],
         nominee: "N/A",
-        color: "#003b71"
+        color: "#E60000"
     }
 ];
