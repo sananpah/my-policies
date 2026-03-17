@@ -14,15 +14,43 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     // 1. PREMIUM REMAINING CALCULATION
     let premRemainingStr = "";
     const isPaidUp = p.dueDate === "PAID UP";
+    const isPruLink = p.name.toUpperCase().includes("PRULINK");
     
-    if (!isPaidUp && matDate > TODAY) {
-        let years = matDate.getFullYear() - TODAY.getFullYear();
-        let months = matDate.getMonth() - TODAY.getMonth();
-        if (months < 0) { years--; months += 12; }
-        
-        const yStr = String(Math.max(0, years)).padStart(2, '0');
-        const mStr = String(Math.max(0, months)).padStart(2, '0');
-        premRemainingStr = `${yStr}y${mStr}m`;
+    if (!isPaidUp) {
+        if (isPruLink) {
+            premRemainingStr = "Vested";
+        } else {
+            // Find the first year where surrender charges hit 0%
+            let zeroChargeYear = 0;
+            if (p.surrenderCharges) {
+                // We check from year 1 up to 20 to find the exit point
+                for (let i = 1; i <= 20; i++) {
+                    if (p.surrenderCharges[i] === 0) {
+                        zeroChargeYear = i;
+                        break;
+                    }
+                }
+            }
+
+            // Calculate Target Date based on Zero Charge Year
+            // If no 0% is found, default to the official maturity date
+            let targetDate = matDate; 
+            if (zeroChargeYear > 0) {
+                targetDate = new Date(startY + zeroChargeYear - 1, commMonth, commDay);
+            }
+
+            if (targetDate > TODAY) {
+                let years = targetDate.getFullYear() - TODAY.getFullYear();
+                let months = targetDate.getMonth() - TODAY.getMonth();
+                if (months < 0) { years--; months += 12; }
+                
+                const yStr = String(Math.max(0, years)).padStart(2, '0');
+                const mStr = String(Math.max(0, months)).padStart(2, '0');
+                premRemainingStr = `${yStr}y${mStr}m`;
+            } else {
+                premRemainingStr = "Vested"; // Charges are already 0
+            }
+        }
     }
 
     const accountValue = Math.round(toNum(p.currentUnitValue || 0));
