@@ -1,12 +1,13 @@
-/* health.js - v1.2.0 - Family Icons & Collapsible */
+/* health.js - v1.3.0 - Visual Icons Only */
 import { autoFmt } from './india.js';
 
 function getOwnerIcon(owner) {
     const name = owner.toLowerCase();
-    if (name.includes('suhail')) return `<span class="material-symbols-outlined text-[14px] align-middle">man</span> HUSBAND`;
-    if (name.includes('saima')) return `<span class="material-symbols-outlined text-[14px] align-middle">woman</span> WIFE`;
-    if (name.includes('sulmas')) return `<span class="material-symbols-outlined text-[14px] align-middle">child_care</span> DAUGHTER`;
-    if (name.includes('family')) return `<span class="material-symbols-outlined text-[14px] align-middle">family_restroom</span> FAMILY`;
+    // Returning just the icon with a specific background for each person
+    if (name.includes('suhail')) return `<span class="material-symbols-outlined text-lg">man</span>`;
+    if (name.includes('saima')) return `<span class="material-symbols-outlined text-lg">woman</span>`;
+    if (name.includes('sulmas')) return `<span class="material-symbols-outlined text-lg">child_care</span>`;
+    if (name.includes('family')) return `<span class="material-symbols-outlined text-lg">family_restroom</span>`;
     return owner;
 }
 
@@ -29,15 +30,17 @@ export function createHealthCard(p) {
         
         <div class="p-8 flex items-center justify-between cursor-pointer group" style="background: ${brandBg}" onclick="toggleCard('${p.id}')">
             <div class="flex items-center gap-8 pl-4">
-                <div class="w-20 h-20 bg-white rounded-3xl shadow-sm p-3 flex items-center justify-center border border-slate-100">
+                <div class="w-20 h-20 bg-white rounded-3xl shadow-sm p-3 flex items-center justify-center border border-slate-100 transition-transform group-hover:scale-105">
                     <img src="${p.logo}" class="max-h-full object-contain">
                 </div>
                 <div>
                     <div class="flex items-center gap-3 mb-2">
-                        <span class="flex items-center gap-1 text-[10px] font-black px-3 py-1 rounded-full bg-slate-800 text-white uppercase tracking-wider">
+                        <div class="flex items-center justify-center w-10 h-10 rounded-full bg-slate-900 text-white shadow-sm">
                             ${getOwnerIcon(p.owner)}
+                        </div>
+                        <span class="text-[10px] font-black px-4 py-2 rounded-full text-white uppercase tracking-wider" style="background: ${brandColor}">
+                            ${p.category}
                         </span>
-                        <span class="text-[10px] font-black px-3 py-1 rounded-full text-white uppercase tracking-wider" style="background: ${brandColor}">${p.category}</span>
                     </div>
                     <h3 class="font-black text-2xl text-slate-900 leading-none">${p.name}</h3>
                     <p class="text-[11px] font-bold text-slate-400 mt-2 tracking-widest uppercase">#${p.id}</p>
