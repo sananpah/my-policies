@@ -11,45 +11,40 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const commMonth = commDate.getMonth();
     const commDay = commDate.getDate();
 
-    // 1. PREMIUM REMAINING CALCULATION
+    // 1. PREMIUM REMAINING CALCULATION (Strict MIP Logic)
     let premRemainingStr = "";
     const isPaidUp = p.dueDate === "PAID UP";
-    const isPruLink = p.name.toUpperCase().includes("PRULINK");
     
-    if (!isPaidUp) {
-        if (isPruLink) {
+    // Default to maturity (-1) if mip is missing from data.js
+    const mip = (p.mip !== undefined) ? p.mip : -1;
+
+    if (isPaidUp) {
+        premRemainingStr = "PAID UP";
+    } else if (mip === 0) {
+        premRemainingStr = "Vested";
+    } else {
+        // Define the Target Date for calculation
+        let targetDate;
+        
+        if (mip === -1) {
+            targetDate = matDate; // Calculate till official Maturity
+        } else {
+            // Calculate till specific year (mip) from Commencement
+            // We use the start year + mip years
+            targetDate = new Date(startY + mip, commMonth, commDay);
+        }
+
+        // Final calculation of the string
+        if (targetDate <= TODAY) {
             premRemainingStr = "Vested";
         } else {
-            // Find the first year where surrender charges hit 0%
-            let zeroChargeYear = 0;
-            if (p.surrenderCharges) {
-                // We check from year 1 up to 20 to find the exit point
-                for (let i = 1; i <= 20; i++) {
-                    if (p.surrenderCharges[i] === 0) {
-                        zeroChargeYear = i;
-                        break;
-                    }
-                }
-            }
-
-            // Calculate Target Date based on Zero Charge Year
-            // If no 0% is found, default to the official maturity date
-            let targetDate = matDate; 
-            if (zeroChargeYear > 0) {
-                targetDate = new Date(startY + zeroChargeYear - 1, commMonth, commDay);
-            }
-
-            if (targetDate > TODAY) {
-                let years = targetDate.getFullYear() - TODAY.getFullYear();
-                let months = targetDate.getMonth() - TODAY.getMonth();
-                if (months < 0) { years--; months += 12; }
-                
-                const yStr = String(Math.max(0, years)).padStart(2, '0');
-                const mStr = String(Math.max(0, months)).padStart(2, '0');
-                premRemainingStr = `${yStr}y${mStr}m`;
-            } else {
-                premRemainingStr = "Vested"; // Charges are already 0
-            }
+            let years = targetDate.getFullYear() - TODAY.getFullYear();
+            let months = targetDate.getMonth() - TODAY.getMonth();
+            if (months < 0) { years--; months += 12; }
+            
+            const yStr = String(Math.max(0, years)).padStart(2, '0');
+            const mStr = String(Math.max(0, months)).padStart(2, '0');
+            premRemainingStr = `${yStr}y${mStr}m`;
         }
     }
 
