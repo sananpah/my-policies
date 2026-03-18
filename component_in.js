@@ -13,14 +13,15 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
     const startY = parseInt(startParts[2]);
     const anniversaryDay = parseInt(startParts[0]);
     const anniversaryMonth = startParts[1];
-    
     const matY = parseInt(p.maturity.split(' ')[2]);
     const premEndYear = parseInt(p.premiumEnds.split(' ')[2]);
-    const isPaidUp = p.dueDate === "PAID UP";
-    
     const currentAnniversary = new Date(`${anniversaryMonth} ${anniversaryDay}, ${CURRENT_YEAR}`);
     const hasPassedThisYear = TODAY > currentAnniversary;
-
+    const nextDueYear = hasPassedThisYear ? CURRENT_YEAR + 1 : CURRENT_YEAR;
+    const nextDueDateStr = `${anniversaryDay} ${anniversaryMonth} ${nextDueYear}`;
+    const isTermOver = CURRENT_YEAR > premEndYear || (CURRENT_YEAR === premEndYear && hasPassedThisYear);
+    const finalDueDate = (p.status === "PAID UP" || isTermOver) ? "PAID UP" : nextDueDateStr;
+    const isPaidUp = finalDueDate === "PAID UP";
     const isULIP = p.isULIP === true;
     const unitValue = Math.round(toNum(p.currentUnitValue || 0));
     const prem = Math.round(toNum(p.premium || 0));
