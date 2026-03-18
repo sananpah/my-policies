@@ -103,5 +103,45 @@ export const healthData = [
         ],
         nominee: "N/A",
         color: "#E60000"
-    }
+    },
+    {
+        id: "2470883269",
+        owner: "Suhail",
+        name:  "Ready Protect Head Start",
+        company: "MANULIFE SINGAPORE",
+        logo: "image_d1e382.png",
+        category: "ACCIDENT",
+        premium: 104.40,
+        currency: "SGD",
+        paymentMode: "ANNUAL",
+        totalPaid: 104.40,
+        sumAssured: 50000 ,
+        expiryDate: "07.Jul.2076",
+        benefits: [
+            "Accidental Death Benefit : $50,000",
+            "Accidental Major Reimbursment(Local/Overseas) : $1,000/$2,000"   
+        ],
+        nominee: "Wife/Daughter",
+        color: "#00a758"
+    },
+   {
+        id: "2470883285",
+        owner: "Sulmas",
+        name:  "Ready Protect Head Start",
+        company: "MANULIFE SINGAPORE",
+        logo: "image_d1e382.png",
+        category: "ACCIDENT",
+        premium: 104.40,
+        currency: "SGD",
+        paymentMode: "ANNUAL",
+        totalPaid: 104.40,
+        sumAssured: 50000 ,
+        expiryDate: "07.Jul.2076",
+        benefits: [
+            "Accidental Death Benefit : $50,000",
+            "Accidental Major Reimbursment(Local/Overseas) : $1,000/$2,000"   
+        ],
+        nominee: "Faher/Mother",
+        color: "#00a758"
+  }
 ];
