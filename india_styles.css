@@ -259,3 +259,20 @@ body {
    overflow: hidden;
    display: inline-block;
 }
+
+/* --- Card Interaction Logic --- */
+.policy-card .content-area, 
+.health-card .content-area { 
+    display: none; 
+}
+
+.policy-card.open .content-area, 
+.health-card.open .content-area { 
+    display: block; 
+    animation: fadeIn 0.3s ease-out; /* Optional: adds a smooth feel */
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
