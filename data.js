@@ -115,7 +115,8 @@ export const POLICY_DATA = {
             color: "#ED1B2E",             
             currentUnitValue: "24671",            
             withdrawals: [9195], 
-            surrenderCharges: { 1: 0 } 
+            surrenderCharges: { 1: 0 },
+            mip: -1 
         },
         { 
             name: "PruLink Protection", 
@@ -130,7 +131,8 @@ export const POLICY_DATA = {
             color: "#ED1B2E",             
             currentUnitValue: "9071",            
             withdrawals: [27481.38, 12072.37], 
-            surrenderCharges: { 1: 0 } 
+            surrenderCharges: { 1: 0 },
+            mip: 0
         },
         { 
             name: "Pro-Achiever 2.0",
@@ -143,7 +145,8 @@ export const POLICY_DATA = {
             maturity: "30 Dec 2077", 
             color: "#d31145",
             surrenderCharges: { 1: 100, 2: 100, 3: 80, 4: 70, 5: 60, 6: 50, 7: 45, 8: 35, 9: 20, 10: 5, 11: 0 },
-            currentUnitValue: "27589"            
+            currentUnitValue: "27589",
+            mip: 10
         },
         { 
             name: "InvestReady III",
@@ -156,7 +159,8 @@ export const POLICY_DATA = {
             maturity: "26 Dec 2076", 
             color: "#00a758",            
             surrenderCharges: { 1: 100, 2: 100, 3: 79, 4: 60, 5: 50, 6: 47, 7: 44, 8: 21, 9: 16, 10: 8, 11: 0 },
-            currentUnitValue: "19460"            
+            currentUnitValue: "19460",
+            mip: 5
         },
         { 
             name: "Pulsar",
@@ -169,7 +173,8 @@ export const POLICY_DATA = {
             maturity: "21 Feb 2076", 
             color: "#db0011",            
             surrenderCharges: { 1: 100, 2: 52, 3: 49, 4: 45, 5: 40, 6: 32, 7: 26, 8: 20, 9: 14, 10: 8, 11: 0 },
-            currentUnitValue: "14742"            
+            currentUnitValue: "14742",
+            mip: 5
         },
         { 
             name: "Savvy Invest II", 
@@ -182,7 +187,8 @@ export const POLICY_DATA = {
             maturity: "02 Jul 2776", 
             color: "#E60000",            
             surrenderCharges: { 1: 100, 2: 100, 3: 80, 4: 60, 5: 50, 6: 45, 7: 40, 8: 20, 9: 15, 10: 10, 11: 0 },
-            currentUnitValue: "16205"
+            currentUnitValue: "16205",
+            mip: 3
         }
     ]
 };
