@@ -31,9 +31,9 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
     const isTermOver = CURRENT_YEAR > premEndYear || (CURRENT_YEAR === premEndYear && hasPassedThisYear);
     const finalDueDate = (p.status === "PAID UP" || isTermOver) ? "PAID UP" : nextDueStr;
     const isPaidUp = finalDueDate === "PAID UP";
-
-    // 3. FINANCIAL VALUES
-    const isULIP = p.isULIP === true;
+   
+    // FINANCIAL VALUES
+    const isULIP = p.type === "ULIP"; ;
     const unitValue = Math.round(toNum(p.currentUnitValue || 0));
     const prem = Math.round(toNum(p.premium || 0));
        
