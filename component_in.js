@@ -9,10 +9,6 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
         return new Date(`${pParts[1]} ${pParts[0]}, ${pParts[2]}`);
     };
 
-    //Get Today's month and day for a clean comparison
-    const todayMonth = TODAY.getMonth();
-    const todayDay = TODAY.getDate();
-
  // 1. Get Today's components for comparison
     const todayMonth = TODAY.getMonth();
     const todayDay = TODAY.getDate();
