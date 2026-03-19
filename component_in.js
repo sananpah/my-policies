@@ -1,9 +1,3 @@
-    
-
-    // 5. Final Status Check (MIP / Premium Term)
-    
-    const finalDueDisplay = (p.status === "PAID UP" || isTermOver) ? "PAID UP" :
-        
 /* component_in.js - Preserving Timeline & Hover Logic */
 import { checkIsDueSoon, getTimeLeft, autoFmt, toNum, raw } from './india.js';
 
