@@ -119,8 +119,7 @@ export const POLICY_DATA = {
             maturity: "28 Sep 2038", 
             color: "#005a9c",
             maturityAmt: "Unit Value",
-            currentUnitValue: "159421",
-            isULIP: true
+            currentUnitValue: "159421"
         },
         { 
             name: "Fast Track Super",
@@ -135,8 +134,7 @@ export const POLICY_DATA = {
             premiumEnds: "04 Feb 2026",
             maturity: "04 Feb 2032", 
             color: "#ae125d", maturityAmt: "Unit Value",
-            currentUnitValue: "277547",
-            isULIP: true
+            currentUnitValue: "277547"
         },
         { 
             name: "Life Assure Goal",
@@ -152,8 +150,7 @@ export const POLICY_DATA = {
             maturity: "05 Nov 2030", 
             color: "#005a9c",
             maturityAmt: "Unit Value",
-            currentUnitValue: "454673",
-            isULIP: true
+            currentUnitValue: "454673"
         },
         { 
             name: "Life Future Gain II",
@@ -170,8 +167,7 @@ export const POLICY_DATA = {
             maturity: "27 Nov 2029", 
             color: "#005a9c",
             maturityAmt: "Unit Value",
-            currentUnitValue: "208508",
-            isULIP: true
+            currentUnitValue: "208508"
         },
         { 
             name: "Signature",
@@ -189,8 +185,7 @@ export const POLICY_DATA = {
             maturity: "29 Nov 2052", 
             color: "#9b2226",
             maturityAmt: "Unit Value",
-            currentUnitValue: "442990",
-            isULIP: true 
+            currentUnitValue: "442990"
         },
         { 
             name: "Smart Privilege Plus",
@@ -208,8 +203,7 @@ export const POLICY_DATA = {
             maturity: "23 Apr 2040", 
             color: "#2563eb",
             maturityAmt: "Unit Value",
-            currentUnitValue: "556047",
-            isULIP: true 
+            currentUnitValue: "556047"
         }
     ],
     singapore: [
