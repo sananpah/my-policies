@@ -124,7 +124,7 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
                         <p class="text-[9px] font-bold text-indigo-500 uppercase leading-none mb-1">Left: <span class="text-slate-700">${premRemainingStr}</span></p>
                         <div class="h-[1px] bg-slate-200/50 w-full mb-1"></div>
                         <p class="text-[9px] font-bold text-slate-400 uppercase leading-none mb-1">Next Due</p>
-                        <div class="font-black text-[11px] ${checkIsDueSoon(${finalDueDate}) ? 'text-red-500 animate-pulse' : 'text-slate-900'}">${finalDueDate}</div>
+                        <div class="font-black text-[11px] ${checkIsDueSoon(finalDueDate) ? 'text-red-500 animate-pulse' : 'text-slate-900'}">${finalDueDate}</div>
                     </div>
                     `
                 }
