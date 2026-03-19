@@ -2,48 +2,41 @@
 import { checkIsDueSoon, getTimeLeft, autoFmt, toNum, raw } from './india.js';
 
 export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
-    // --- HELPER FOR DATE COMPARISON ---
+   // 1. SHARED CONFIG & HELPERS
+    const monthMap = { "Jan":0,"Feb":1,"Mar":2,"Apr":3,"May":4,"Jun":5,"Jul":6,"Aug":7,"Sep":8,"Oct":9,"Nov":10,"Dec":11 };
+    
     const parseDate = (str) => {
         if (!str || str === "PAID UP") return new Date(9999, 0, 1);
         const pParts = str.split(' ');
-        return new Date(`${pParts[1]} ${pParts[0]}, ${pParts[2]}`);
+        return new Date(parseInt(pParts[2]), monthMap[pParts[1]], parseInt(pParts[0]));
     };
 
- // 1. Get Today's components for comparison
+    // 2. DYNAMIC DUE DATE LOGIC
     const todayMonth = TODAY.getMonth();
     const todayDay = TODAY.getDate();
 
-    // 2. Extract Anniversary details from Commencement string
     const startParts = p.commenced.split(' ');
     const anniversaryDay = parseInt(startParts[0]);
-    const anniversaryMonth = startParts[1]; // e.g., "Mar"
-    const startY = parseInt(startParts[2]);
-
-    // 3. Mapping months to numbers for safe comparison (0-11)
-    const monthMap = { "Jan":0,"Feb":1,"Mar":2,"Apr":3,"May":4,"Jun":5,"Jul":6,"Aug":7,"Sep":8,"Oct":9,"Nov":10,"Dec":11 };
+    const anniversaryMonth = startParts[1]; 
     const annMonthNum = monthMap[anniversaryMonth];
     
-    // 4. Extract Year Limits
+    const startY = parseInt(startParts[2]);
     const matY = parseInt(p.maturity.split(' ')[2]);
     const premEndYear = parseInt(p.premiumEnds.split(' ')[2]);
     
-    // 5. Logic: Has the anniversary passed THIS year?
     const hasPassedThisYear = (todayMonth > annMonthNum) || (todayMonth === annMonthNum && todayDay >= anniversaryDay);
-    
-    // 6. Calculate Next Due Year and Date String
     const nextDueYear = hasPassedThisYear ? CURRENT_YEAR + 1 : CURRENT_YEAR;
-    const nextDueStr = `${anniversaryDay} ${anniversaryMonth} ${nextDueYear}`; // <--- Corrected name
+    const nextDueStr = `${anniversaryDay} ${anniversaryMonth} ${nextDueYear}`; 
     
-    // 7. Determine Final Display and Paid Up status
     const isTermOver = CURRENT_YEAR > premEndYear || (CURRENT_YEAR === premEndYear && hasPassedThisYear);
     const finalDueDate = (p.status === "PAID UP" || isTermOver) ? "PAID UP" : nextDueStr;
     const isPaidUp = finalDueDate === "PAID UP";
 
-    // 8. Other values
+    // 3. FINANCIAL VALUES
     const isULIP = p.isULIP === true;
     const unitValue = Math.round(toNum(p.currentUnitValue || 0));
     const prem = Math.round(toNum(p.premium || 0));
-    
+       
     // --- NEW: PREMIUM REMAINING CALCULATION (00y00m) ---
     let premRemainingStr = "";
     if (!isPaidUp) {
