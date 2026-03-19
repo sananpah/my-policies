@@ -16,7 +16,10 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
     const matY = parseInt(p.maturity.split(' ')[2]);
     const premEndYear = parseInt(p.premiumEnds.split(' ')[2]);
     const currentAnniversary = new Date(`${anniversaryMonth} ${anniversaryDay}, ${CURRENT_YEAR}`);
-    const hasPassedThisYear = TODAY > currentAnniversary;
+    currentAnniversary.setHours(0, 0, 0, 0);
+    const comparisonToday = new Date(TODAY);
+    comparisonToday.setHours(0, 0, 0, 0);
+    const hasPassedThisYear = comparisonToday >= currentAnniversary;
     const nextDueYear = hasPassedThisYear ? CURRENT_YEAR + 1 : CURRENT_YEAR;
     const nextDueDateStr = `${anniversaryDay} ${anniversaryMonth} ${nextDueYear}`;
     const isTermOver = CURRENT_YEAR > premEndYear || (CURRENT_YEAR === premEndYear && hasPassedThisYear);
