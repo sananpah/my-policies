@@ -90,6 +90,7 @@ export const POLICY_DATA = {
         { 
             name: "Fortune Maximiser",
             company: "KOTAK",
+            isDaughter: true,
             logo: "image_5d7f80.png",
             id: "79425536",
             uin: "107N124V01",
