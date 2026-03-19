@@ -152,12 +152,29 @@
                 // For Health: Only calculate SGD premiums for the summary bar total
                 const tAnn = healthData.reduce((acc, p) => acc + (p.currency === 'SGD' ? toNum(p.premium) : 0), 0);
                 document.getElementById('total-premium').innerText = "$" + Math.round(tAnn).toLocaleString();
-            } else {
+           } else {
+                // --- 1. CALCULATE TOTALS ---
                 const tSA = list.reduce((acc, p) => acc + (toNum(p.sumAssured) || toNum(p.currentUnitValue || 0)), 0);
-                const tAnn = list.reduce((acc, p) => acc + (p.dueDate !== "PAID UP" ? toNum(p.premium) : 0), 0);
+                const tAnn = list.reduce((acc, p) => acc + (p.status !== "PAID UP" ? toNum(p.premium) : 0), 0);
                 const tUnitValue = list.reduce((acc, p) => acc + toNum(p.currentUnitValue || 0), 0);
                 
-                document.getElementById('total-sa').innerText = sym + Math.round(tSA).toLocaleString();
+                // --- 2. CALCULATE FAMILY BREAKDOWN (Only for India) ---
+                let familyHtml = '';
+                if (cat === 'india') {
+                    const hSA = list.filter(p => !p.isWife && !p.isDaughter).reduce((acc, p) => acc + toNum(p.sumAssured), 0);
+                    const wSA = list.filter(p => p.isWife).reduce((acc, p) => acc + toNum(p.sumAssured), 0);
+                    const dSA = list.filter(p => p.isDaughter).reduce((acc, p) => acc + toNum(p.sumAssured), 0);
+
+                    familyHtml = `
+                        <div class="flex justify-center gap-4 mt-2 pt-2 border-t border-slate-700/50">
+                            <div class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px] text-slate-400">man</span><span class="text-[11px] font-bold text-slate-300">${sym}${Math.round(hSA).toLocaleString()}</span></div>
+                            <div class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px] text-pink-400">woman</span><span class="text-[11px] font-bold text-pink-300">${sym}${Math.round(wSA).toLocaleString()}</span></div>
+                            <div class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px] text-indigo-400">child_care</span><span class="text-[11px] font-bold text-indigo-300">${sym}${Math.round(dSA).toLocaleString()}</span></div>
+                        </div>`;
+                }
+
+                // --- 3. UPDATE UI ---
+                document.getElementById('total-sa').innerHTML = `<span>${sym}${Math.round(tSA).toLocaleString()}</span>${familyHtml}`;
                 document.getElementById('total-premium').innerText = sym + Math.round(tAnn).toLocaleString();
                 document.getElementById('total-unit-value').innerText = sym + Math.round(tUnitValue).toLocaleString();
             }
