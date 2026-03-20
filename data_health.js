@@ -141,7 +141,28 @@ export const healthData = [
             "Accidental Death Benefit : $50,000",
             "Accidental Major Reimbursment(Local/Overseas) : $1,000/$2,000"   
         ],
-        nominee: "Faher/Mother",
+        nominee: "Father/Mother",
         color: "#00a758"
-  }
+  },
+  {
+        id: "93056937",
+        owner: "Sulmas",
+        name:  "Enhanced IncomeShield Preferred",
+        company: "INCOME",
+        logo: "image_2c7d5fk.png",
+        category: "Hospitalisation",
+        premium: 739.57,
+        currency: "SGD",
+        paymentMode: "ANNUAL",
+        totalPaid: 739.57,
+        sumAssured: 0 ,
+        expiryDate: "09.Jul.2076",
+        benefits: [
+            "Hospitalisation: $1,000,000 /year",
+            "Ward: Private - Standard room",
+            "As-Charged Coverage"
+        ],
+        nominee: ""N/A",
+        color: "#FD7E14"
+  }   
 ];
