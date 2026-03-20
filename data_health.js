@@ -162,7 +162,7 @@ export const healthData = [
             "Ward: Private - Standard room",
             "As-Charged Coverage"
         ],
-        nominee: ""N/A",
+        nominee: "N/A",
         color: "#FD7E14"
   }   
 ];
