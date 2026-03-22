@@ -195,8 +195,8 @@ export const healthData = [
         expiryDate: "22 Dec 2027",
         benefits: [
             "Hospitalisation: ₹ 15 lakh  / year",
-            "Pre-Hospitalisation : 60 days"
-            "Post-Hospitalisation : 180 days".
+            "Pre-Hospitalisation : 60 days",
+            "Post-Hospitalisation : 180 days",
             "Renewal every 3 years"
         ],
         nominee: "N/A",
