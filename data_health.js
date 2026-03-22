@@ -164,5 +164,26 @@ export const healthData = [
         ],
         nominee: "N/A",
         color: "#FD7E14"
-  }   
+  },
+  {
+        id: "84779015",
+        owner: "Saima",
+        name: "Great SupremeHealth A +",
+        company: "Great Eastern",
+        logo: "image_4d3e8m.png",
+        category: "Hospitalisation",
+        premium: 883.53, 
+        currency: "SGD",
+        paymentMode: "CPF + ANNUAL",
+        totalPaid: 8885,
+        sumAssured: 1000000, // Hospitalisation limit per year
+        expiryDate: "01 May 2075",
+        benefits: [
+            "Hospitalisation: $1,000,000 /year",
+            "Ward: Restructured Hospital Class A",
+            " Panel/Restructured Hospital 5% co-payment (cap at $3,000 / year )"
+        ],
+        nominee: "N/A",
+        color: "#ED1C24"
+    }
 ];
