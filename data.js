@@ -202,7 +202,7 @@ export const POLICY_DATA = {
             commenced: "23 Apr 2025",
             premiumEnds: "23 Apr 2029",
             maturity: "23 Apr 2040", 
-            color: "#2563eb",
+            color: "#00B4EE",
             maturityAmt: "Unit Value",
             currentUnitValue: "556047"
         }
