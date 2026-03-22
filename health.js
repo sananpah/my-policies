@@ -1,9 +1,28 @@
-/* health.js - v1.4.2 - Integrated Cash/CPF & Family Icons */
+/* health.js - v1.4.3 - Integrated Baseline with Next Due */
 import { autoFmt } from './india.js';
+
+/**
+ * Calculates the next policy anniversary based on the expiry date.
+ * Does not modify existing date logic.
+ */
+function getNextDue(expiryDateStr) {
+    const expiry = new Date(expiryDateStr);
+    const today = new Date();
+    
+    // Anniversary is the same Day/Month as Expiry
+    let nextDue = new Date(today.getFullYear(), expiry.getMonth(), expiry.getDate());
+    
+    // If the anniversary already happened this year, the next one is next year
+    if (nextDue < today) {
+        nextDue.setFullYear(today.getFullYear() + 1);
+    }
+    
+    const options = { day: '2-digit', month: 'short', year: 'numeric' };
+    return nextDue.toLocaleDateString('en-GB', options).toUpperCase();
+}
 
 function getOwnerIcon(owner) {
     const name = owner.toLowerCase();
-    // Mapping your data names to icons
     if (name === 'father') return `<span class="material-symbols-outlined text-lg">man</span>`;
     if (name === 'mother') return `<span class="material-symbols-outlined text-lg">woman</span>`;
     if (name === 'daughter') return `<span class="material-symbols-outlined text-lg">child_care</span>`;
@@ -16,10 +35,13 @@ export function createHealthCard(p) {
     const brandColor = p.color || "#000000";
     const brandBg = `rgba(${parseInt(brandColor.slice(1,3), 16)}, ${parseInt(brandColor.slice(3,5), 16)}, ${parseInt(brandColor.slice(5,7), 16)}, 0.05)`;
 
-    // Calculate Dynamic Premium based on Cash + CPF
+    // Baseline: Calculate Dynamic Premium based on Cash + CPF
     const premium = (parseFloat(p.cashAmount || 0) + parseFloat(p.cpfAmount || 0));
+    
+    // New Feature: Calculate Next Due
+    const nextDue = getNextDue(p.expiryDate);
 
-    // Time Remaining Logic
+    // Baseline: Time Remaining Logic
     const expiryDate = new Date(p.expiryDate);
     const today = new Date();
     let years = expiryDate.getFullYear() - today.getFullYear();
@@ -60,8 +82,14 @@ export function createHealthCard(p) {
                         ${p.cpfAmount > 0 ? `<div class="px-2 py-0.5 rounded bg-blue-100 text-blue-600 text-[9px] font-black uppercase">CPF</div>` : ''}
                     </div>
                 </div>
+
+                <div class="text-right border-l border-slate-200/50 pl-8 min-w-[110px]">
+                    <p class="text-[9px] font-black text-orange-500 uppercase mb-1 tracking-widest">Next Due</p>
+                    <p class="text-lg font-black text-slate-700 leading-none">${nextDue}</p>
+                    <p class="text-[8px] font-bold text-slate-400 mt-1 uppercase">Anniversary</p>
+                </div>
                 
-                <div class="bg-white/80 px-6 py-4 rounded-[24px] border border-white/50 text-center min-w-[120px] shadow-sm">
+                <div class="bg-white/80 px-6 py-4 rounded-[24px] border border-white/50 text-center min-w-[120px] shadow-sm ml-4">
                     <p class="text-[9px] font-black text-emerald-600 uppercase mb-1">Coverage Left</p>
                     <p class="text-lg font-black text-slate-800">${timeRemaining}</p>
                 </div>
