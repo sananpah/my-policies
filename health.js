@@ -1,12 +1,13 @@
-/* health.js - v1.4.0 - High Capacity & Family Icons */
+/* health.js - v1.4.2 - Integrated Cash/CPF & Family Icons */
 import { autoFmt } from './india.js';
 
 function getOwnerIcon(owner) {
     const name = owner.toLowerCase();
-    if (name.includes('suhail')) return `<span class="material-symbols-outlined text-lg">man</span>`;
-    if (name.includes('saima')) return `<span class="material-symbols-outlined text-lg">woman</span>`;
-    if (name.includes('sulmas')) return `<span class="material-symbols-outlined text-lg">child_care</span>`;
-    if (name.includes('family')) return `<span class="material-symbols-outlined text-lg">family_restroom</span>`;
+    // Mapping your data names to icons
+    if (name === 'father') return `<span class="material-symbols-outlined text-lg">man</span>`;
+    if (name === 'mother') return `<span class="material-symbols-outlined text-lg">woman</span>`;
+    if (name === 'daughter') return `<span class="material-symbols-outlined text-lg">child_care</span>`;
+    if (name === 'family') return `<span class="material-symbols-outlined text-lg">family_restroom</span>`;
     return `<span class="material-symbols-outlined text-lg">person</span>`;
 }
 
@@ -15,6 +16,10 @@ export function createHealthCard(p) {
     const brandColor = p.color || "#000000";
     const brandBg = `rgba(${parseInt(brandColor.slice(1,3), 16)}, ${parseInt(brandColor.slice(3,5), 16)}, ${parseInt(brandColor.slice(5,7), 16)}, 0.05)`;
 
+    // Calculate Dynamic Premium based on Cash + CPF
+    const premium = (parseFloat(p.cashAmount || 0) + parseFloat(p.cpfAmount || 0));
+
+    // Time Remaining Logic
     const expiryDate = new Date(p.expiryDate);
     const today = new Date();
     let years = expiryDate.getFullYear() - today.getFullYear();
@@ -48,9 +53,12 @@ export function createHealthCard(p) {
 
             <div class="flex gap-10 items-center pr-4">
                 <div class="text-right">
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Premium</p>
-                    <p class="text-2xl font-black text-slate-800">${autoFmt(p.premium, sym)}</p>
-                    <div class="inline-block px-2 py-0.5 rounded bg-indigo-100 text-indigo-600 text-[9px] font-black mt-1 uppercase">${p.paymentMode}</div>
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Annual Premium</p>
+                    <p class="text-2xl font-black text-slate-800">${autoFmt(premium, sym)}</p>
+                    <div class="flex gap-1 justify-end mt-1">
+                        ${p.cashAmount > 0 ? `<div class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-600 text-[9px] font-black uppercase">CASH</div>` : ''}
+                        ${p.cpfAmount > 0 ? `<div class="px-2 py-0.5 rounded bg-blue-100 text-blue-600 text-[9px] font-black uppercase">CPF</div>` : ''}
+                    </div>
                 </div>
                 
                 <div class="bg-white/80 px-6 py-4 rounded-[24px] border border-white/50 text-center min-w-[120px] shadow-sm">
@@ -71,7 +79,7 @@ export function createHealthCard(p) {
                         </p>
                     </div>
                     <div class="p-6 rounded-[32px] bg-slate-50 border border-slate-100">
-                        <p class="text-[10px] font-black text-slate-400 uppercase mb-1 tracking-widest">Total Invested</p>
+                        <p class="text-[10px] font-black text-slate-400 uppercase mb-1 tracking-widest">Total Invested (To Date)</p>
                         <p class="text-xl font-black text-slate-600">${autoFmt(p.totalPaid, sym)}</p>
                     </div>
                 </div>
@@ -91,8 +99,8 @@ export function createHealthCard(p) {
             
             <div class="mt-8 flex justify-between items-center pt-6 border-t border-slate-100">
                 <div class="flex items-center gap-2 text-slate-400">
-                    <span class="material-symbols-outlined text-sm">event_repeat</span>
-                    <span class="text-[10px] font-black uppercase tracking-tighter">Coverege Till: <span class="text-slate-800 ml-1 font-black">${p.expiryDate}</span></span>
+                    <span class="material-symbols-outlined text-sm text-emerald-500">event_available</span>
+                    <span class="text-[10px] font-black uppercase tracking-tighter">Covered Till: <span class="text-slate-800 ml-1 font-black">${p.expiryDate}</span></span>
                 </div>
                 <div class="text-[10px] font-black text-slate-400 uppercase">
                     Nominee: <span class="text-slate-800 ml-1 font-black">${p.nominee || 'N/A'}</span>
