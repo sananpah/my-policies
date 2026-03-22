@@ -1,10 +1,6 @@
-/* health.js - v1.4.3 - Integrated Baseline with Next Due */
+/* health.js - v1.4.5 - Fixed Date Format & Clean UI */
 import { autoFmt } from './india.js';
 
-/**
- * Calculates the next policy anniversary based on the expiry date.
- * Does not modify existing date logic.
- */
 function getNextDue(expiryDateStr) {
     const expiry = new Date(expiryDateStr);
     const today = new Date();
@@ -17,8 +13,11 @@ function getNextDue(expiryDateStr) {
         nextDue.setFullYear(today.getFullYear() + 1);
     }
     
-    const options = { day: '2-digit', month: 'short', year: 'numeric' };
-    return nextDue.toLocaleDateString('en-GB', options).toUpperCase();
+    const day = String(nextDue.getDate()).padStart(2, '0');
+    const month = nextDue.toLocaleString('en-GB', { month: 'short' });
+    const year = nextDue.getFullYear();
+    
+    return `${day} ${month} ${year}`;
 }
 
 function getOwnerIcon(owner) {
@@ -35,13 +34,9 @@ export function createHealthCard(p) {
     const brandColor = p.color || "#000000";
     const brandBg = `rgba(${parseInt(brandColor.slice(1,3), 16)}, ${parseInt(brandColor.slice(3,5), 16)}, ${parseInt(brandColor.slice(5,7), 16)}, 0.05)`;
 
-    // Baseline: Calculate Dynamic Premium based on Cash + CPF
     const premium = (parseFloat(p.cashAmount || 0) + parseFloat(p.cpfAmount || 0));
-    
-    // New Feature: Calculate Next Due
     const nextDue = getNextDue(p.expiryDate);
 
-    // Baseline: Time Remaining Logic
     const expiryDate = new Date(p.expiryDate);
     const today = new Date();
     let years = expiryDate.getFullYear() - today.getFullYear();
@@ -86,7 +81,6 @@ export function createHealthCard(p) {
                 <div class="text-right border-l border-slate-200/50 pl-8 min-w-[110px]">
                     <p class="text-[9px] font-black text-orange-500 uppercase mb-1 tracking-widest">Next Due</p>
                     <p class="text-lg font-black text-slate-700 leading-none">${nextDue}</p>
-                    <p class="text-[8px] font-bold text-slate-400 mt-1 uppercase">Anniversary</p>
                 </div>
                 
                 <div class="bg-white/80 px-6 py-4 rounded-[24px] border border-white/50 text-center min-w-[120px] shadow-sm ml-4">
