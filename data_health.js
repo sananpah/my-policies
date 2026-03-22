@@ -14,9 +14,10 @@ export const healthData = [
         sumAssured: 1000000, // Hospitalisation limit per year
         expiryDate: "01 Sep 2077",
         benefits: [
-            "Hospitalisation: $1,000,000 /year",
+            "Hospitalisation: $1,000,000 / year",
             "Ward: Private - Standard room",
-            "As-Charged Coverage"
+            "As-Charged Coverage",
+            "MediShield Life Included"
         ],
         nominee: "N/A",
         color: "#d31145"
@@ -158,7 +159,7 @@ export const healthData = [
         sumAssured: 0 ,
         expiryDate: "09.Jul.2076",
         benefits: [
-            "Hospitalisation: $1,000,000 /year",
+            "Hospitalisation: $1,000,000 / year",
             "Ward: Private - Standard room",
             "As-Charged Coverage"
         ],
@@ -179,9 +180,9 @@ export const healthData = [
         sumAssured: 1000000, // Hospitalisation limit per year
         expiryDate: "01 May 2075",
         benefits: [
-            "Hospitalisation: $1,000,000 /year",
+            "Hospitalisation: $1,000,000 / year",
             "Ward: Restructured Hospital Class A",
-            " Panel/Restructured Hospital 5% co-payment (cap at $3,000 / year )"
+            "Panel/Restructured Hospital 5% co-payment (cap at $3,000 / year )"
         ],
         nominee: "N/A",
         color: "#ED1C24"
