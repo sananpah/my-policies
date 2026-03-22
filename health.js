@@ -92,7 +92,7 @@ export function createHealthCard(p) {
             <div class="mt-8 flex justify-between items-center pt-6 border-t border-slate-100">
                 <div class="flex items-center gap-2 text-slate-400">
                     <span class="material-symbols-outlined text-sm">event_repeat</span>
-                    <span class="text-[10px] font-black uppercase tracking-tighter">Next Renewal: <span class="text-slate-800 ml-1 font-black">${p.expiryDate}</span></span>
+                    <span class="text-[10px] font-black uppercase tracking-tighter">Coverege Till: <span class="text-slate-800 ml-1 font-black">${p.expiryDate}</span></span>
                 </div>
                 <div class="text-[10px] font-black text-slate-400 uppercase">
                     Nominee: <span class="text-slate-800 ml-1 font-black">${p.nominee || 'N/A'}</span>
