@@ -201,5 +201,5 @@ export const healthData = [
         ],
         nominee: "N/A",
         color: "#E21F26"
-    },
+    }
 ];
