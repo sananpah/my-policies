@@ -15,7 +15,7 @@ export const POLICY_DATA = {
             commenced: "17 Nov 2025",
             premiumEnds: "17 Nov 2034",
             maturity: "17 Nov 2055", 
-            color: "#8b1d1d",
+            color: "#962524",
             maturityAmt: "₹ 2,626,948",
             payoutSchedule: { 11: 133974, 12: 133974, 13: 133974, 14: 133974, 15: 133974, 16: 160769, 17: 160769, 18: 160769, 19: 160769, 20: 160769, 21: 187564, 22: 187564, 23: 187564, 24: 187564, 25: 187564, 26: 214359, 27: 214359, 28: 214359, 29: 214359, 30: 214359 }
         },
@@ -32,7 +32,7 @@ export const POLICY_DATA = {
             commenced: "30 May 2025",
             premiumEnds: "30 May 2030",
             maturity: "30 May 2077", 
-            color: "#8b1d1d",
+            color: "#962524",
             annualPayout: 89830,
             maturityAmt: "Special Surrender Value",
             defermentYear: 2031
@@ -50,7 +50,7 @@ export const POLICY_DATA = {
             commenced: "10 Jan 2022",
             premiumEnds: "10 Jan 2028",
             maturity: "10 Jan 2050", 
-            color: "#8b1d1d",
+            color: "#962524",
             maturityAmt: "₹ 1,750,854",
             payoutSchedule: { 8: 100000, 9: 100000, 10: 100000, 11: 100000, 12: 100000, 13: 100000, 14: 100000, 15: 100000, 16: 100000, 17: 100000, 18: 100000, 19: 100000, 20: 100000, 21: 100000, 22: 100000, 23: 100000, 24: 100000, 25: 100000, 26: 100000, 27: 100000, 28: 100000 }
         },
@@ -67,7 +67,7 @@ export const POLICY_DATA = {
             commenced: "08 Sep 2017",
             premiumEnds: "08 Sep 2026",
             maturity: "08 Sep 2032", 
-            color: "#8b1d1d",
+            color: "#962524",
             maturityAmt: "Loyalty: ₹ 37,170 + Mat: ₹ 18,591", 
             payoutSchedule: { 11: 18591, 12: 18591, 13: 18591, 14: 18591, 15: 49576 } 
         },
