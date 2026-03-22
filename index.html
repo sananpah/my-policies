@@ -68,7 +68,7 @@
     <div id="container" class="max-w-7xl mx-auto pb-20 px-4"></div>
 
     <script type="module">
-        const APP_VERSION = "4.0.72";
+        const APP_VERSION = "4.0.73";
         document.getElementById('version-tag').innerText = `v${APP_VERSION}`;
 
         // Import all components safely
@@ -149,33 +149,54 @@
 
             // --- SUMMARY CALCULATION ---
             if (cat === 'health') {
-                // 1. Calculate Summary Totals (Assuming data is already annualized)
-                const totalCash = healthData.reduce((acc, p) => acc + (parseFloat(p.cashAmount || 0)), 0);
-                const totalCPF = healthData.reduce((acc, p) => acc + (parseFloat(p.cpfAmount || 0)), 0);
-                const tAnn = totalCash + totalCPF;
-                
-                const activeSym = healthData[0]?.currency === "INR" ? "₹" : "$";
+                // 1. Calculate SGD Totals (Singapore)
+                const sgData = healthData.filter(p => p.currency === "SGD");
+                const sgCash = sgData.reduce((acc, p) => acc + parseFloat(p.cashAmount || 0), 0);
+                const sgCpf = sgData.reduce((acc, p) => acc + parseFloat(p.cpfAmount || 0), 0);
 
-                // 2. Build Breakdown Strip (Dynamic for CPF)
-                const breakdownHtml = `
-                    <div class="flex justify-center gap-6 mt-3 pt-3 border-t border-slate-700/50">
-                        <div class="flex items-center gap-2">
-                            <span class="material-symbols-outlined text-[16px] text-emerald-400">payments</span>
-                            <span class="text-[11px] font-black text-emerald-100">CASH: ${activeSym}${Math.round(totalCash).toLocaleString()}</span>
-                        </div>
-                        ${totalCPF > 0 ? `
-                        <div class="flex items-center gap-2 border-l border-slate-700/50 pl-6">
-                            <span class="material-symbols-outlined text-[16px] text-blue-400">account_balance_wallet</span>
-                            <span class="text-[11px] font-black text-blue-100">CPF: ${activeSym}${Math.round(totalCPF).toLocaleString()}</span>
-                        </div>` : ''}
-                    </div>`;
+                // 2. Calculate INR Totals (India - assumes cashAmount is already annualized)
+                const inData = healthData.filter(p => p.currency === "INR");
+                const inCash = inData.reduce((acc, p) => acc + parseFloat(p.cashAmount || 0), 0);
 
-                document.getElementById('total-premium').innerHTML = `
-                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Annual Premium</p>
-                    <p class="text-4xl font-black text-indigo-400">${activeSym}${Math.round(tAnn).toLocaleString()}</p>
-                    ${breakdownHtml}`;
+                // 3. Build the UI Sections
+                let sectionsHtml = '';
+
+                // Singapore Section
+                if (sgData.length > 0) {
+                    sectionsHtml += `
+                        <div class="mb-3 pb-3 border-b border-slate-700/50">
+                            <div class="flex items-center justify-center gap-2 mb-1">
+                                <img src="https://flagcdn.com/w20/sg.png" class="w-4 h-auto rounded-sm opacity-80">
+                                <span class="text-xl font-black text-indigo-400">$${Math.round(sgCash + sgCpf).toLocaleString()}</span>
+                            </div>
+                            <div class="flex justify-center gap-4 text-[10px] font-bold">
+                                <span class="text-emerald-400">CASH: $${Math.round(sgCash).toLocaleString()}</span>
+                                <span class="text-blue-400">CPF: $${Math.round(sgCpf).toLocaleString()}</span>
+                            </div>
+                        </div>`;
+                }
+
+                // India Section
+                if (inData.length > 0) {
+                    sectionsHtml += `
+                        <div>
+                            <div class="flex items-center justify-center gap-2 mb-1">
+                                <img src="https://flagcdn.com/w20/in.png" class="w-4 h-auto rounded-sm opacity-80">
+                                <span class="text-xl font-black text-orange-400">₹${Math.round(inCash).toLocaleString()}</span>
+                            </div>
+                            <div class="text-[10px] font-bold text-emerald-400 uppercase tracking-tight">
+                                Annual Cash: ₹${Math.round(inCash).toLocaleString()}
+                            </div>
+                        </div>`;
+                }
+
+                // Update the Premium Column
+                const col2 = document.getElementById('total-premium');
+                col2.innerHTML = `
+                    <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-3">Health Premiums (Annual)</p>
+                    ${sectionsHtml}`;
                 
-                // Set UI States
+                // Hide other columns for Health
                 statusBadge.innerHTML = `<span class="material-symbols-outlined text-xs align-middle mr-1">medical_services</span> HEALTH PORTFOLIO`;
                 sortContainer.classList.add('invisible');
                 document.getElementById('sum-col-1').classList.add('opacity-0');
