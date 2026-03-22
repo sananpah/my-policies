@@ -66,27 +66,7 @@ export const healthData = [
         nominee: "N/A",
         color: "#d31145"
     },
-    {
-        id: "L548553200",
-        owner: "Sulmas",
-        name: "Absolute Critical Cover",
-        company: "AIA",
-        logo: "image_4b9b3f.png",
-        category: "Critical Illness",
-        premium: 100.45,
-        currency: "SGD",
-        paymentMode: "MONTHLY",
-        totalPaid: 3796.95,
-        sumAssured: 50000,
-        expiryDate: "04 Apr 2105",
-        benefits: [
-            "Early Critical Illness: $50,000",
-            "ASCC Booster: $50,000"
-        ],
-        nominee: "N/A",
-        color: "#d31145"
-    },
-    {
+   {
         id: "E5664237",
         owner: "Suhail",
         name:  "ElderShield Plus",
@@ -141,6 +121,28 @@ export const healthData = [
         benefits: [
             "Accidental Death Benefit : $50,000",
             "Accidental Major Reimbursment(Local/Overseas) : $1,000/$2,000"   
+        ],
+        nominee: "Father/Mother",
+        color: "#00a758"
+  },
+   {
+        id: "2452234994",
+        owner: "Sulmas",
+        name:  "ManuInvest Duo",
+        company: "MANULIFE SINGAPORE",
+        logo: "image_d1e382.png",
+        category: "Critical Illness",
+        premium: 1800,
+        currency: "SGD",
+        paymentMode: "ANNUAL",
+        totalPaid: 1800,
+        sumAssured: 120000 ,
+        expiryDate: "08.Jul.2103",
+        benefits: [
+            "Terminal Illness to age 99",
+            "Total and Permanent Disability to age 70",
+            "Early Critical Care Rider"
+            
         ],
         nominee: "Father/Mother",
         color: "#00a758"
