@@ -46,6 +46,28 @@ export const healthData = [
         color: "#d31145"
     },
     {
+        id: "33401114",
+        owner: "Father",
+        name: "PruLink Protection",
+        company: "Prudential",
+        logo: "image_7aee9a.png",
+        category: "Critical Illness",
+        cashAmount: 2849.28,
+        currency: "SGD",        
+        totalPaid: 72835.86,
+        sumAssured: 139000,
+        expiryDate: "04 Jul 2086",
+        benefits: [
+            "Total and Permanent Disabilty : $139,000",
+            "Terminal Illness : $139,000",
+            "Critical Illness: S$100,000",
+            "Critical Illness: Premium Waiver",
+            "Lifetime Cover: Protection active until 2086"
+        ],
+        nominee: "Mother/Daughter",
+        color: "#ED1B2E"
+    },
+    {
         id: "P565596237",
         owner: "Father",
         name: "Multistage Cancer Cover",
@@ -101,7 +123,47 @@ export const healthData = [
         nominee: "Mother/Daughter",
         color: "#00a758"
     },
-   {
+    {
+        id: "84779015",
+        owner: "Mother",
+        name: "Great SupremeHealth A +",
+        company: "Great Eastern",
+        logo: "image_4d3e8m.png",
+        category: "Hospitalisation",
+        cpfAmount: 883.53, 
+        currency: "SGD",
+        totalPaid: 8885,
+        sumAssured: 1000000, // Hospitalisation limit per year
+        expiryDate: "01 May 2075",
+        benefits: [
+            "Hospitalisation: $1,000,000 / year",
+            "Ward: Restructured Hospital Class A",
+            "Panel/Restructured Hospital 5% co-payment (cap at $3,000 / year )"
+        ],
+        nominee: "N/A",
+        color: "#ED1C24"
+    },
+    {
+        id: "34874419",
+        owner: "Daughter",
+        name: "PruSave",
+        company: "Prudential",
+        logo: "image_7aee9a.png",
+        category: "Critical Illness",
+        cashAmount: 3557.55,
+        currency: "SGD",        
+        totalPaid: 69176.18,
+        sumAssured: 40000,
+        expiryDate: "31 Jan 2029",
+        benefits: [
+            "Daughter Permanent Disabilty : $40,000",
+            "Father Death/Disability Waiver : Premium Waiver",
+            "Father Critical Illness Waiver: Premium Waiver"
+        ],
+        nominee: "N/A",
+        color: "#ED1B2E"
+    },
+    {
         id: "2470883285",
         owner: "Daughter",
         name:  "Ready Protect Head Start",
@@ -162,26 +224,6 @@ export const healthData = [
         color: "#FD7E14"
   },
   {
-        id: "84779015",
-        owner: "Mother",
-        name: "Great SupremeHealth A +",
-        company: "Great Eastern",
-        logo: "image_4d3e8m.png",
-        category: "Hospitalisation",
-        cpfAmount: 883.53, 
-        currency: "SGD",
-        totalPaid: 8885,
-        sumAssured: 1000000, // Hospitalisation limit per year
-        expiryDate: "01 May 2075",
-        benefits: [
-            "Hospitalisation: $1,000,000 / year",
-            "Ward: Restructured Hospital Class A",
-            "Panel/Restructured Hospital 5% co-payment (cap at $3,000 / year )"
-        ],
-        nominee: "N/A",
-        color: "#ED1C24"
-    },
-    {
         id: "2856207053065200000",
         owner: "Family",
         name: "Optima Secure",
