@@ -1,5 +1,15 @@
 /* india.js - Utility Section */
 
+import { fetchPortfolioData } from './loader.js';
+
+async function init() {
+    const allData = await fetchPortfolioData();
+    // Filter the data for India
+    const indiaPolicies = allData.filter(item => item.Country === "India");
+    render(indiaPolicies); 
+}
+init();
+
 const TODAY = new Date();
 
       export function checkIsDueSoon(dueDateStr) {
