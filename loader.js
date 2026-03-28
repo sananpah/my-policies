@@ -26,30 +26,29 @@ function processCSV(csv) {
     });
 }
 
+/* loader.js */
 function parseInsuranceTab(row) {
-    // 1. Parse "Company : Policy Name"
-    const rawFullName = row["Insurance [Investment].Name of the policy"] || "";
+    // Use the new attribute name from your Google Sheet
+    const rawFullName = row["Policy_Name"] || ""; 
+    
+    // Parse "Company : Policy Name"
     if (rawFullName.includes(":")) {
         const parts = rawFullName.split(":");
         row.company = parts[0].trim();
-        row.name = parts[1].trim();
+        row.name = parts[1].trim(); // This will now be correctly populated
     } else {
         row.company = "Unknown";
         row.name = rawFullName;
     }
 
-    // 2. Detect Country via Premium Currency Symbol
+    // Detect Country via Premium Currency Symbol
     const premiumAttr = row["Premium"] || "";
     if (premiumAttr.includes("₹")) {
         row.detectedCountry = "India";
-        row.currencySymbol = "₹";
     } else if (premiumAttr.includes("$")) {
         row.detectedCountry = "Singapore";
-        row.currencySymbol = "$";
     }
 
-    // 3. Convert Premium to a clean number for logic/math
     row.premiumNumeric = parseFloat(premiumAttr.replace(/[₹$,\s]/g, "")) || 0;
-
     return row;
 }
