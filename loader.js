@@ -1,9 +1,6 @@
 // loader.js
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2UwOfG57DQBOBnJX-9hsRKOQTUgALiM3uxs-VGzD2KN8JoWNAQltH6IkgAGhPTNFEvb/pub?output=csv";
 
-/* loader.js */
-const SHEET_URL = "YOUR_PUBLISHED_CSV_LINK_HERE"; 
-
 export async function fetchPortfolioData() {
     try {
         const response = await fetch(SHEET_URL);
