@@ -49,15 +49,15 @@
 
     <div id="summary-section" class="max-w-7xl mx-auto px-4 mb-10">
         <div id="summary-bar" class="grid grid-cols-3 gap-6 bg-slate-900 p-8 rounded-[40px] text-white shadow-2xl relative overflow-hidden">
-            <div class="border-r border-slate-700 text-center pl-4">
+            <div id="sum-col-1" class="border-r border-slate-700 text-center pl-4">
                 <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Sum Assured</p>
                 <p id="total-sa" class="text-4xl font-black text-emerald-400">₹0</p>
             </div>
-            <div class="border-r border-slate-700 text-center">
+            <div id="sum-col-2" class="border-r border-slate-700 text-center">
                 <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Annual Premium</p>
                 <p id="total-premium" class="text-4xl font-black text-indigo-400">₹0</p>
             </div>
-            <div class="text-center">
+            <div id="sum-col-3" class="text-center">
                 <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Portfolio Value</p>
                 <p id="total-unit-value" class="text-4xl font-black text-pink-500">₹0</p>
             </div>
@@ -67,17 +67,17 @@
     <div id="container" class="max-w-7xl mx-auto pb-20 px-4"></div>
 
     <script type="module">
-        const APP_VERSION = "4.1.10";
+        const APP_VERSION = "4.1.20";
         document.getElementById('version-tag').innerText = `v${APP_VERSION}`;
 
-        // --- AUTH ---
+        // Authentication
         if (sessionStorage.getItem('nami_auth') !== 'true') {
             const entry = prompt("Enter PIN:");
             if (entry === "SuhailNami") sessionStorage.setItem('nami_auth', 'true');
-            else window.location.href = "https://google.com";
+            else { window.location.href = "https://google.com"; throw new Error("Auth"); }
         }
 
-        // --- DYNAMIC IMPORTS ---
+        // --- 1. THE DYNAMIC HANDSHAKE ---
         const [Loader, IndiaComp, SGComp, HealthComp, HealthDataFile, IndiaTools] = await Promise.all([
             import(`./loader.js?v=${APP_VERSION}`),
             import(`./component_in.js?v=${APP_VERSION}`),
@@ -92,22 +92,19 @@
         const { createSGCard } = SGComp;
         const { createHealthCard } = HealthComp;
         const { healthData } = HealthDataFile;
-        const { toNum, autoFmt } = IndiaTools;
+        const { toNum } = IndiaTools;
 
         const TODAY = new Date();
         const CURRENT_YEAR = TODAY.getFullYear();
         window.currentCategory = 'india';
 
-        // --- RESTORED: The Collapsible Logic ---
+        // --- 2. THE UI ENGINE ---
         window.toggleCard = (id) => {
             const card = document.getElementById(`card-${id}`);
             if(!card) return;
-            // Check if it's already open
-            const isOpen = card.classList.contains('open');
-            // Close all others
-            document.querySelectorAll('.policy-card, .health-card').forEach(c => c.classList.remove('open'));
-            // Toggle current
-            if (!isOpen) card.classList.add('open');
+            const wasOpen = card.classList.contains('open');
+            document.querySelectorAll('.policy-card, .health-card, .sg-card').forEach(c => c.classList.remove('open'));
+            if (!wasOpen) card.classList.add('open');
         };
 
         const parseDate = (str) => {
@@ -117,63 +114,67 @@
             return p.length < 3 ? new Date(9999, 0, 1) : new Date(`${p[1]} ${p[0]}, ${p[2]}`);
         };
 
-        // --- RENDER ENGINE ---
         window.render = async function(cat) {
             window.currentCategory = cat;
             const container = document.getElementById('container');
             const statusBadge = document.getElementById('portfolio-status');
+            const summaryBar = document.getElementById('summary-bar');
             const sym = (cat === 'singapore') ? "$" : "₹";
 
-            // Fetch Live Data
             const allData = await fetchPortfolioData();
-            
-            let list = (cat === 'health') ? [...healthData] : allData.filter(p => p.detectedCountry === (cat === 'india' ? "India" : "Singapore"));
 
-            // Re-apply Badge UI
-            const flag = (cat === 'india') ? 'in' : 'sg';
-            statusBadge.innerHTML = cat === 'health' ? 'HEALTH' : `<img src="https://flagcdn.com/w40/${flag}.png" class="w-5 h-auto inline mr-2 rounded-sm">${cat.toUpperCase()} PORTFOLIO`;
-
-            // Sort
-            const sortBy = document.getElementById('sort-trigger').value;
-            if (cat !== 'health') {
-                if (sortBy === 'premium') list.sort((a, b) => toNum(b.premiumNumeric) - toNum(a.premiumNumeric));
-                else if (sortBy === 'due') list.sort((a, b) => parseDate(a["Last Premium Date"]) - parseDate(b["Last Premium Date"]));
+            // --- 3. THE RE-REBUILD OF SECTIONS ---
+            if (cat === 'health') {
+                summaryBar.className = "flex items-center justify-between bg-slate-900 p-6 rounded-[40px] text-white shadow-2xl relative overflow-hidden";
+                statusBadge.innerText = "HEALTH PORTFOLIO";
+                container.innerHTML = healthData.map(p => createHealthCard(p)).join('');
+                updateHealthSummary(healthData, summaryBar);
+                return;
             }
 
-            // Render with Full Mapping
+            // India/Singapore UI
+            summaryBar.className = "grid grid-cols-3 gap-6 bg-slate-900 p-8 rounded-[40px] text-white shadow-2xl relative overflow-hidden";
+            const flag = (cat === 'india') ? 'in' : 'sg';
+            statusBadge.innerHTML = `<img src="https://flagcdn.com/w40/${flag}.png" class="w-5 h-auto inline mr-2 rounded-sm">${cat.toUpperCase()} PORTFOLIO`;
+
+            let list = allData.filter(p => p.detectedCountry === (cat === 'india' ? "India" : "Singapore"));
+            
+            // Sorting
+            const sortBy = document.getElementById('sort-trigger').value;
+            if (sortBy === 'premium') list.sort((a, b) => toNum(b.premiumNumeric) - toNum(a.premiumNumeric));
+            else if (sortBy === 'due') list.sort((a, b) => parseDate(a["Last Premium Date"]) - parseDate(b["Last Premium Date"]));
+
             container.innerHTML = list.map(p => {
-                if (cat === 'health') return createHealthCard(p);
-                
-                // RESTORED: Precise mapping for your high-end UI components
                 const policyData = {
                     ...p,
                     name: p.name || p["Policy_Name"] || "Unnamed",
                     id: p["Policy No."] || "N/A",
-                    sumAssured: p["Sum Assured"] || 0,
                     premium: p.premiumNumeric || 0,
                     commenced: (p["Policy Age"] || p["Commencement Date"] || "01 Jan 2015").toString().replace(/\./g, ' '),
                     maturity: (p["Maturity Date"] || "01 Jan 2030").toString().replace(/\./g, ' '),
                     premiumEnds: (p["Premium Ends"] || p["Maturity Date"] || "01 Jan 2030").toString().replace(/\./g, ' '),
                     color: p["Color_Code"] || "#962524",
-                    logo: p["Logo_Path"] || "image_4e0b3d.png",
-                    isWife: p["Holder"]?.toLowerCase().includes("wife"),
-                    isDaughter: p["Holder"]?.toLowerCase().includes("daughter"),
-                    type: p["Category"] || p["Type"] || "Savings"
+                    logo: p["Logo_Path"] || "image_4e0b3d.png"
                 };
-
                 return cat === 'singapore' ? createSGCard(policyData, sym, TODAY, CURRENT_YEAR) : createPolicyCard(policyData, sym, TODAY, CURRENT_YEAR);
             }).join('');
 
-            // Totals
+            updateTotals(list, sym);
+        };
+
+        function updateTotals(list, sym) {
             const tSA = list.reduce((acc, p) => acc + toNum(p["Sum Assured"] || 0), 0);
             const tAnn = list.reduce((acc, p) => acc + (p["Status"] !== "PAID UP" ? toNum(p.premiumNumeric) : 0), 0);
-            
             document.getElementById('total-sa').innerText = sym + Math.round(tSA).toLocaleString('en-IN');
             document.getElementById('total-premium').innerText = sym + Math.round(tAnn).toLocaleString('en-IN');
             document.getElementById('total-unit-value').innerText = sym + "0";
-        };
+        }
 
-        // Run on load
+        function updateHealthSummary(data, summaryBar) {
+            // Restore your complex Health Pill logic here
+            summaryBar.innerHTML = `<div class="px-4 py-2 font-bold uppercase tracking-widest text-emerald-400">Health Coverage Active</div>`;
+        }
+
         render('india');
     </script>
 </body>
