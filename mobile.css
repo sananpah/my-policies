@@ -1,35 +1,32 @@
-/* mobile.css - Clean Version */
-body { font-family: sans-serif; }
-
+/* mobile.css - Final Pro Version */
 #summary-bar {
     background: #0f172a;
-    border-radius: 20px;
-    padding: 20px;
+    border-radius: 30px;
+    padding: 25px;
     display: flex;
     flex-direction: column;
     gap: 15px;
 }
 
 #summary-bar div {
-    border-bottom: 1px solid #1e293b;
-    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    padding-bottom: 15px;
 }
 
-#summary-bar div:last-child { border: none; }
+#summary-bar div:last-child { 
+    border: none; 
+    padding-bottom: 0;
+}
 
 #total-sa, #total-premium, #total-unit-value {
-    font-size: 1.5rem;
-    font-weight: 900;
+    letter-spacing: -0.5px;
+    text-shadow: 0 0 20px rgba(0,0,0,0.5);
 }
 
-/* Make cards look like the screenshot but stacked */
 .policy-card {
-    background: white;
-    margin-bottom: 12px;
-    border-radius: 15px;
-    border: 1px solid #e2e8f0;
-    padding: 15px;
+    transition: transform 0.2s ease;
 }
 
-.content-area { display: none; }
-.open .content-area { display: block; padding-top: 15px; }
+.policy-card:active {
+    transform: scale(0.98);
+}
