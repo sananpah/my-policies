@@ -1,8 +1,9 @@
-/* component_in.js - Preserving Timeline & Hover Logic */
+/* component_in.js - Updated for Auto-Responsive Layout */
 import { checkIsDueSoon, getTimeLeft, autoFmt, toNum, raw } from './india.js';
 
-export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
-   // 1. SHARED CONFIG & HELPERS
+// ADDED 'isMobile' as the 5th parameter
+export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR, isMobile = false) {
+    // 1. SHARED CONFIG & HELPERS
     const monthMap = { "Jan":0,"Feb":1,"Mar":2,"Apr":3,"May":4,"Jun":5,"Jul":6,"Aug":7,"Sep":8,"Oct":9,"Nov":10,"Dec":11 };
     
     const parseDate = (str) => {
@@ -33,11 +34,11 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
     const isPaidUp = finalDueDate === "PAID UP";
    
     // FINANCIAL VALUES
-    const isULIP = p.type === "ULIP"; ;
+    const isULIP = p.type === "ULIP";
     const unitValue = Math.round(toNum(p.currentUnitValue || 0));
     const prem = Math.round(toNum(p.premium || 0));
-       
-    // --- NEW: PREMIUM REMAINING CALCULATION (00y00m) ---
+        
+    // PREMIUM REMAINING CALCULATION
     let premRemainingStr = "";
     if (!isPaidUp) {
         const premEndDate = parseDate(p.premiumEnds);
@@ -52,7 +53,7 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
     const brandColor = p.color || "#000000";
     const brandBg = `rgba(${parseInt(brandColor.slice(1,3), 16)}, ${parseInt(brandColor.slice(3,5), 16)}, ${parseInt(brandColor.slice(5,7), 16)}, 0.04)`;
 
-    // --- TIMELINE LOGIC (RETAINED EXACTLY) ---
+    // --- TIMELINE LOGIC ---
     let timelineHtml = '';
     for(let yr = startY; yr < matY; yr++) {
         const polY = yr - startY + 1;
@@ -90,41 +91,57 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
 
     timelineHtml += `<div class="mat-star">★<div class="tooltip"><b class="text-orange-400 uppercase tracking-widest">Maturity</b><br><span class="${String(p.maturityAmt || p.sumAssured).length > 15 ? 'text-[10px]' : 'text-lg'} font-black">${raw(p.maturityAmt || p.sumAssured)}</span></div></div>`;
 
+    // --- RESPONSIVE CLASS LOGIC ---
+    const headerClasses = isMobile ? "flex flex-col items-start gap-4 p-6" : "card-header flex items-center";
+    const logoContainerClasses = isMobile ? "w-full flex justify-start mb-2" : "w-32 flex justify-center";
+    const statsContainerClasses = isMobile ? "flex flex-col gap-4 w-full mt-4" : "flex gap-12 items-center mr-6";
+    const textMargin = isMobile ? "ml-0" : "ml-10";
+
     return `
-    <div class="policy-card mb-6" id="card-${p.id}" style="border-left: 16px solid ${brandColor}; border-color: ${brandColor};">
-        <div class="card-header transition-colors" style="background: ${brandBg};" onclick="toggleCard('${p.id}')">
-            <div class="w-32 flex justify-center"><img src="${p.logo}" class="max-h-12"></div>
-            <div class="flex-1 ml-10">
-                <h3 class="font-black text-slate-800 text-xl tracking-tight flex items-center">
+    <div class="policy-card mb-6" id="card-${p.id}" style="border-left: ${isMobile ? '10px' : '16px'} solid ${brandColor}; border-color: ${brandColor};">
+        <div class="${headerClasses} transition-colors" style="background: ${brandBg};" onclick="toggleCard('${p.id}')">
+            
+            <div class="${logoContainerClasses}">
+                <img src="${p.logo}" class="max-h-10 ${isMobile ? '' : 'max-h-12'}">
+            </div>
+
+            <div class="flex-1 ${textMargin}">
+                <h3 class="font-black text-slate-800 ${isMobile ? 'text-lg' : 'text-xl'} tracking-tight flex items-center flex-wrap gap-2">
                     ${p.name}
-                    ${p.isWife ? `<span class="family-marker ml-3" title="Wife's Policy"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#db2777" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm8.94 14c-.46-4.17-3.97-7.41-8.19-7.41s-7.73 3.24-8.19 7.41c-.02.21.11.41.32.41H20.62c.21 0 .34-.2.32-.41z"/></svg></span>` : ''}
-                    ${p.isDaughter ? `<span class="family-marker ml-3" title="Daughter's Policy"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4"/><path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg></span>` : ''}
+                    <div class="flex gap-2">
+                        ${p.isWife ? `<span class="family-marker" title="Wife's Policy"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#db2777" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm8.94 14c-.46-4.17-3.97-7.41-8.19-7.41s-7.73 3.24-8.19 7.41c-.02.21.11.41.32.41H20.62c.21 0 .34-.2.32-.41z"/></svg></span>` : ''}
+                        ${p.isDaughter ? `<span class="family-marker" title="Daughter's Policy"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4"/><path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg></span>` : ''}
+                    </div>
                 </h3>
             </div>
             
-            <div class="flex gap-12 items-center mr-6">
-                <div class="flex items-center w-[260px] -ml-4">
+            <div class="${statsContainerClasses}">
+                <div class="flex items-center ${isMobile ? 'w-full justify-between' : 'w-[260px] -ml-4'}">
                     <div class="funky-badge" style="border-color: ${brandColor}; box-shadow: 0 0 10px ${brandColor}44;">${p.type}</div>
-                    <div class="ml-6">
+                    <div class="${isMobile ? 'text-right' : 'ml-6'}">
                         <p class="text-[9px] font-bold text-slate-400 uppercase">Sum Assured</p>
-                        <p class="text-lg font-black text-slate-700">${autoFmt(p.sumAssured, sym)}</p>
+                        <p class="${isMobile ? 'text-base' : 'text-lg'} font-black text-slate-700">${autoFmt(p.sumAssured, sym)}</p>
                     </div>
                 </div>
-                <div class="text-center border-l-2 border-slate-100 pl-10">
+                <div class="${isMobile ? 'flex justify-between items-center w-full border-t border-slate-100 pt-3' : 'text-center border-l-2 border-slate-100 pl-10'}">
                     <p class="text-[9px] font-bold text-slate-400 uppercase">Annual Premium</p>
-                    <p class="text-lg font-black ${isPaidUp ? 'text-slate-300 line-through' : 'text-emerald-600'}">${autoFmt(prem, sym)}</p>
+                    <p class="${isMobile ? 'text-base' : 'text-lg'} font-black ${isPaidUp ? 'text-slate-300 line-through' : 'text-emerald-600'}">${autoFmt(prem, sym)}</p>
                 </div>
             </div>
 
-            <div class="w-40 text-center flex flex-col justify-center min-h-[60px]">
+            <div class="${isMobile ? 'w-full mt-2' : 'w-40'} text-center flex flex-col justify-center min-h-[60px]">
                 ${isPaidUp ? 
-                    `<img src="paid.jpg" class="paid-logo mx-auto h-12 object-contain">` : 
+                    `<img src="paid.jpg" class="paid-logo ${isMobile ? 'mr-auto ml-0' : 'mx-auto'} h-10 object-contain">` : 
                     `
-                    <div class="bg-white/60 p-2 rounded-xl border border-white/50 shadow-sm">
-                        <p class="text-[9px] font-bold text-indigo-500 uppercase leading-none mb-1">Left: <span class="text-slate-700">${premRemainingStr}</span></p>
-                        <div class="h-[1px] bg-slate-200/50 w-full mb-1"></div>
-                        <p class="text-[9px] font-bold text-slate-400 uppercase leading-none mb-1">Next Due</p>
-                        <div class="font-black text-[11px] ${checkIsDueSoon(finalDueDate) ? 'text-red-500 animate-pulse' : 'text-slate-900'}">${finalDueDate}</div>
+                    <div class="bg-white/60 p-2 rounded-xl border border-white/50 shadow-sm flex ${isMobile ? 'justify-between items-center' : 'flex-col'}">
+                        <div>
+                            <p class="text-[9px] font-bold text-slate-400 uppercase leading-none mb-1">Next Due</p>
+                            <div class="font-black text-[11px] ${checkIsDueSoon(finalDueDate) ? 'text-red-500 animate-pulse' : 'text-slate-900'}">${finalDueDate}</div>
+                        </div>
+                        ${isMobile ? '<div class="w-[1px] h-6 bg-slate-200 mx-2"></div>' : '<div class="h-[1px] bg-slate-200/50 w-full my-1"></div>'}
+                        <div>
+                            <p class="text-[9px] font-bold text-indigo-500 uppercase leading-none mb-1">Left: <span class="text-slate-700">${premRemainingStr}</span></p>
+                        </div>
                     </div>
                     `
                 }
@@ -132,7 +149,7 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
         </div>
 
         <div class="content-area" style="background: linear-gradient(to bottom, ${brandBg}, #ffffff)">
-            <div class="detail-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; padding: 20px;">
+            <div class="detail-grid" style="display: grid; grid-template-columns: ${isMobile ? '1fr' : 'repeat(3, 1fr)'}; gap: ${isMobile ? '12px' : '20px'}; padding: 20px;">
                 <div class="detail-item"><p>Policy Number</p><p>${p.id || 'N/A'}</p></div>
                 <div class="detail-item"><p>UIN Number</p><p>${p.uin || 'N/A'}</p></div>
                 ${isULIP ? `
@@ -145,7 +162,7 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
                 `}
             </div>
 
-            <div class="timeline-track">
+            <div class="timeline-track ${isMobile ? 'scale-90 origin-left overflow-x-auto pb-4' : ''}">
                 <div class="absolute -top-8 left-0 text-[11px] font-black text-slate-400 uppercase">${p.commenced}</div>
                 ${timelineHtml}
                 <div class="absolute -top-8 right-0 text-[11px] font-black text-slate-400 uppercase">${p.maturity}</div>
