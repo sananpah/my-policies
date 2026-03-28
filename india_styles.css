@@ -1,6 +1,5 @@
 /* Consolidated Stylesheet - v5.8.0 Baseline */
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@800;900&family=Inter:wght@400;700;900&display=swap'); 
-@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200');
 
 body { 
     background-color: #f8fafc;
@@ -229,51 +228,4 @@ body {
     justify-content: center;
     margin-left: 14px;
     color: #94a3b8;
-}
-
-.simple-build {
-    position: fixed;
-    top: 15px;
-    right: 20px;
-    font-family: monospace;
-    font-size: 11px;
-    font-weight: bold;
-    color: #6366f1;
-    background: rgba(99, 102, 241, 0.1);
-    padding: 4px 12px;
-    border-radius: 20px;
-    box-shadow: 0 0 10px rgba(99, 102, 241, 0.2);
-    z-index: 1000;
- }
-
-.funky-badge {
-   font-family: 'Orbitron',
-   sans-serif;
-   font-size: 9px;
-   font-weight: 900; 
-   padding: 8px 14px;
-   border-radius: 12px;
-   text-transform: uppercase;
-   background: #0f172a;
-   color: #fff;
-   position: relative;
-   overflow: hidden;
-   display: inline-block;
-}
-
-/* --- Card Interaction Logic --- */
-.policy-card .content-area, 
-.health-card .content-area { 
-    display: none; 
-}
-
-.policy-card.open .content-area, 
-.health-card.open .content-area { 
-    display: block; 
-    animation: fadeIn 0.3s ease-out; /* Optional: adds a smooth feel */
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-5px); }
-    to { opacity: 1; transform: translateY(0); }
 }
