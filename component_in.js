@@ -2,7 +2,7 @@
 import { checkIsDueSoon, autoFmt, toNum, raw } from './india.js';
 
 export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
-    const displayName = p.name || "Unnamed Policy";
+    const displayName = p.name || "Unnamed Policy_2";
     const monthMap = { "Jan":0,"Feb":1,"Mar":2,"Apr":3,"May":4,"Jun":5,"Jul":6,"Aug":7,"Sep":8,"Oct":9,"Nov":10,"Dec":11 };
 
     // Date helper
