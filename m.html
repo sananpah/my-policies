@@ -7,38 +7,38 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="mobile.css">
 </head>
-<body class="bg-slate-50">
+<body class="bg-slate-100">
     <div id="mobile-content" style="display:none;">
-        <div class="p-4">
-            <h1 class="text-2xl font-black text-slate-900 mb-4">Nami Portfolio</h1>
+        <div class="p-4 max-w-md mx-auto">
+            <h1 class="text-2xl font-black text-slate-900 mb-4 tracking-tighter">Nami Portfolio</h1>
             
-            <div class="flex gap-2 mb-6 overflow-x-auto pb-2">
-                <button onclick="render('india')" class="px-4 py-2 bg-slate-800 text-white rounded-full text-xs font-bold">India</button>
-                <button onclick="render('singapore')" class="px-4 py-2 bg-slate-800 text-white rounded-full text-xs font-bold">Singapore</button>
-                <button onclick="render('health')" class="px-4 py-2 bg-emerald-600 text-white rounded-full text-xs font-bold">Health</button>
+            <div class="flex gap-2 mb-6 overflow-x-auto pb-2 no-scrollbar">
+                <button onclick="render('india')" class="px-5 py-2 bg-slate-800 text-white rounded-xl text-xs font-bold shadow-md">India</button>
+                <button onclick="render('singapore')" class="px-5 py-2 bg-slate-800 text-white rounded-xl text-xs font-bold shadow-md">Singapore</button>
+                <button onclick="render('health')" class="px-5 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold shadow-md">Health</button>
             </div>
 
-            <div id="summary-bar" class="mb-6">
+            <div id="summary-bar" class="mb-6 shadow-xl">
                 <div>
-                    <p class="text-[10px] text-slate-400 uppercase font-bold">Sum Assured</p>
+                    <p class="text-[10px] text-slate-400 uppercase font-black tracking-widest">Sum Assured</p>
                     <p id="total-sa" class="text-emerald-400 font-black"></p>
                 </div>
                 <div>
-                    <p class="text-[10px] text-slate-400 uppercase font-bold">Annual Premium</p>
+                    <p class="text-[10px] text-slate-400 uppercase font-black tracking-widest">Annual Premium</p>
                     <p id="total-premium" class="text-indigo-400 font-black"></p>
                 </div>
                 <div>
-                    <p class="text-[10px] text-slate-400 uppercase font-bold">Portfolio Value</p>
+                    <p class="text-[10px] text-slate-400 uppercase font-black tracking-widest">Portfolio Value</p>
                     <p id="total-unit-value" class="text-pink-500 font-black"></p>
                 </div>
             </div>
 
-            <div id="container"></div>
+            <div id="container" class="space-y-4"></div>
         </div>
     </div>
 
     <script type="module">
-        // 1. PIN PROTECTION
+        // PIN PROTECTION
         const PIN = "1977"; 
         if (sessionStorage.getItem('nami_auth') !== 'true') {
             const entry = prompt("Enter PIN:");
@@ -52,20 +52,15 @@
             document.getElementById('mobile-content').style.display = 'block';
         }
 
-        // 2. DATA LOADING
         import { POLICY_DATA } from './data.js';
         import { toNum } from './india.js';
-        import { createPolicyCard } from './component_in.js';
-        import { createSGCard } from './component_sg.js';
-
-        const TODAY = new Date();
 
         window.render = function(cat) {
             const container = document.getElementById('container');
             const sym = (cat === 'singapore') ? "$" : "₹";
             const list = POLICY_DATA[cat] || [];
 
-            // Totals
+            // Totals Calculation
             const tSA = list.reduce((acc, p) => acc + (toNum(p.sumAssured) || 0), 0);
             const tAnn = list.reduce((acc, p) => acc + (p.status !== "PAID UP" ? toNum(p.premium) : 0), 0);
             const tVal = list.reduce((acc, p) => acc + toNum(p.currentUnitValue || 0), 0);
@@ -74,16 +69,37 @@
             document.getElementById('total-premium').innerText = sym + Math.round(tAnn).toLocaleString();
             document.getElementById('total-unit-value').innerText = sym + Math.round(tVal).toLocaleString();
 
-            // Cards
-            container.innerHTML = list.map(p => {
-                if (cat === 'singapore') return createSGCard(p, sym, TODAY, 2026, true);
-                return createPolicyCard(p, sym, TODAY, 2026, true);
-            }).join('');
-        };
-
-        window.toggleCard = (id) => {
-            const card = document.getElementById(`card-${id}`);
-            if(card) card.classList.toggle('open');
+            // Render Simplified Cards (No Timeline)
+            container.innerHTML = list.map(p => `
+                <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+                    <div class="flex justify-between items-start mb-3">
+                        <div>
+                            <p class="text-[10px] font-black text-slate-400 uppercase">${p.category || 'Policy'}</p>
+                            <h3 class="font-black text-slate-800 text-lg leading-tight">${p.policyName}</h3>
+                        </div>
+                        ${p.status === "PAID UP" ? '<span class="bg-emerald-100 text-emerald-700 text-[9px] font-bold px-2 py-1 rounded">PAID UP</span>' : ''}
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4 mt-4 border-t border-slate-50 pt-4">
+                        <div>
+                            <p class="text-[9px] font-bold text-slate-400 uppercase">Sum Assured</p>
+                            <p class="font-bold text-slate-700 text-sm">${sym}${p.sumAssured}</p>
+                        </div>
+                        <div>
+                            <p class="text-[9px] font-bold text-slate-400 uppercase">Premium</p>
+                            <p class="font-bold text-indigo-600 text-sm">${sym}${p.premium}</p>
+                        </div>
+                        <div>
+                            <p class="text-[9px] font-bold text-slate-400 uppercase">Next Due</p>
+                            <p class="font-bold text-slate-700 text-sm">${p.dueDate || 'N/A'}</p>
+                        </div>
+                         <div>
+                            <p class="text-[9px] font-bold text-slate-400 uppercase">Maturity</p>
+                            <p class="font-bold text-slate-700 text-sm">${p.premiumEnds || 'N/A'}</p>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
         };
 
         render('india');
