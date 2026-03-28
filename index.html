@@ -68,7 +68,20 @@
     <div id="container" class="max-w-7xl mx-auto pb-20 px-4"></div>
 
     <script type="module">
-        const APP_VERSION = "4.0.75";
+        // --- ACCESS CONTROL ---
+        const SECRET_PIN = "SuhailNami"; // Change this to your preferred 4-digit PIN
+        if (sessionStorage.getItem('nami_auth') !== 'true') {
+        const entry = prompt("Enter PIN to view Nami Portfolio:");
+        if (entry === SECRET_PIN) {
+            sessionStorage.setItem('nami_auth', 'true');
+        } else {
+            alert("Unauthorized");
+            window.location.href = "https://www.google.com"; 
+            throw new Error("Auth Failed"); // Stops the rest of the script from running
+        }
+    }
+    // --- END ACCESS CONTROL ---
+        const APP_VERSION = "4.0.76";
         document.getElementById('version-tag').innerText = `v${APP_VERSION}`;
 
         // Import all components safely
