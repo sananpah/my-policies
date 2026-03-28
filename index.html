@@ -12,7 +12,7 @@
 
 <body class="bg-slate-50">
 
-    <div id="version-tag" class="fixed top-2 left-2 text-[10px] text-slate-300 font-mono z-50"></div>
+    <div id="version-tag" class="simple-build"></div>
 
     <div class="max-w-7xl mx-auto mb-6 pt-10 px-4">
         <div class="flex justify-between items-end mb-6">
@@ -67,18 +67,18 @@
     <div id="container" class="max-w-7xl mx-auto pb-20 px-4"></div>
 
     <script type="module">
-        const APP_VERSION = "4.1.02";
+        const APP_VERSION = "4.1.05";
         document.getElementById('version-tag').innerText = `v${APP_VERSION}`;
 
-        // --- AUTH ---
+        // Authentication
+        const SECRET_PIN = "SuhailNami";
         if (sessionStorage.getItem('nami_auth') !== 'true') {
             const entry = prompt("Enter PIN:");
-            if (entry === "SuhailNami") sessionStorage.setItem('nami_auth', 'true');
-            else { window.location.href = "https://google.com"; throw new Error("Auth Failed"); }
+            if (entry === SECRET_PIN) sessionStorage.setItem('nami_auth', 'true');
+            else { window.location.href = "https://google.com"; throw new Error("Auth"); }
         }
-        
-        // --- 2. DYNAMIC IMPORTS (Corrected Syntax) ---
-        // We use Promise.all to load everything at once safely
+
+        // --- RESTORED: Dynamic Imports with v=tag ---
         const [Loader, IndiaComp, SGComp, HealthComp, HealthDataFile, IndiaTools] = await Promise.all([
             import(`./loader.js?v=${APP_VERSION}`),
             import(`./component_in.js?v=${APP_VERSION}`),
@@ -87,20 +87,19 @@
             import(`./data_health.js?v=${APP_VERSION}`),
             import(`./india.js?v=${APP_VERSION}`)
         ]);
-        
-        // Extract the functions from the loaded files
+
         const { fetchPortfolioData } = Loader;
         const { createPolicyCard } = IndiaComp;
         const { createSGCard } = SGComp;
         const { createHealthCard } = HealthComp;
         const { healthData } = HealthDataFile;
-        const { toNum, autoFmt } = IndiaTools;
-        
+        const { toNum } = IndiaTools;
+
         const TODAY = new Date();
         const CURRENT_YEAR = TODAY.getFullYear();
         window.currentCategory = 'india';
 
-        // Toggle Function
+        // RESTORED: Collapsible Toggle
         window.toggleCard = (id) => {
             const card = document.getElementById(`card-${id}`);
             if(!card) return;
@@ -116,47 +115,44 @@
             return p.length < 3 ? new Date(9999, 0, 1) : new Date(`${p[1]} ${p[0]}, ${p[2]}`);
         };
 
-        // --- RENDER ENGINE ---
+        // --- THE MASTER RENDERER (Original functionality, Dynamic data) ---
         window.render = async function(cat) {
             window.currentCategory = cat;
             const container = document.getElementById('container');
-            const summaryBar = document.getElementById('summary-bar');
             const statusBadge = document.getElementById('portfolio-status');
             const sortBy = document.getElementById('sort-trigger').value;
             const sym = (cat === 'singapore') ? "$" : "₹";
 
-            // 1. Fetch live data
+            // Fetch from Google Sheet
             const allData = await fetchPortfolioData();
             
-            // 2. Filter & Sort
             let list = (cat === 'health') ? [...healthData] : allData.filter(p => p.detectedCountry === (cat === 'india' ? "India" : "Singapore"));
-            
+
+            // RESTORED: Sorting
             if (cat !== 'health') {
                 if (sortBy === 'premium') list.sort((a, b) => toNum(b.premiumNumeric) - toNum(a.premiumNumeric));
                 else if (sortBy === 'due') list.sort((a, b) => parseDate(a["Last Premium Date"]) - parseDate(b["Last Premium Date"]));
             }
 
-            // 3. Status Badge UI
+            // RESTORED: Dynamic Status Badge
             const flag = (cat === 'india') ? 'in' : 'sg';
-            statusBadge.innerHTML = cat === 'health' ? 'HEALTH' : `<img src="https://flagcdn.com/w40/${flag}.png" class="w-5 h-auto inline mr-2 rounded-sm">${cat.toUpperCase()}`;
+            statusBadge.innerHTML = cat === 'health' ? 'HEALTH' : `<img src="https://flagcdn.com/w40/${flag}.png" class="w-5 h-auto inline mr-2 rounded-sm">${cat.toUpperCase()} PORTFOLIO`;
 
-            // 4. Render Cards using original components
+            // RESTORED: Rich Mapping for Timeline/Expand
             container.innerHTML = list.map(p => {
                 if (cat === 'health') return createHealthCard(p);
                 
-                // Re-mapping the Sheet data to the exact keys your original CSS expects
                 const policyData = {
                     ...p,
                     name: p.name || p["Policy_Name"] || "Unknown",
                     id: p["Policy No."] || "N/A",
                     sumAssured: p["Sum Assured"] || 0,
-                    // Ensuring dates are space-separated for timeline logic
+                    premium: p.premiumNumeric || 0,
                     commenced: (p["Policy Age"] || p["Commencement Date"] || "01 Jan 2015").toString().replace(/\./g, ' '),
                     maturity: (p["Maturity Date"] || "01 Jan 2030").toString().replace(/\./g, ' '),
                     premiumEnds: (p["Premium Ends"] || p["Maturity Date"] || "01 Jan 2030").toString().replace(/\./g, ' '),
                     color: p["Color_Code"] || "#962524",
                     logo: p["Logo_Path"] || "image_4e0b3d.png",
-                    // Family flags
                     isWife: p["Holder"]?.toLowerCase().includes("wife"),
                     isDaughter: p["Holder"]?.toLowerCase().includes("daughter")
                 };
@@ -164,21 +160,14 @@
                 return cat === 'singapore' ? createSGCard(policyData, sym, TODAY, CURRENT_YEAR) : createPolicyCard(policyData, sym, TODAY, CURRENT_YEAR);
             }).join('');
 
-            // 5. Summary Calculations
-            updateSummaryTotals(cat, list, sym);
-        };
-
-        function updateSummaryTotals(cat, list, sym) {
+            // Update Totals
             const tSA = list.reduce((acc, p) => acc + toNum(p["Sum Assured"] || 0), 0);
             const tAnn = list.reduce((acc, p) => acc + (p["Status"] !== "PAID UP" ? toNum(p.premiumNumeric) : 0), 0);
             
-            // Reverting: Portfolio Value is not coming from sheet yet, so keeping it at 0 for now
-            const tValue = 0; 
-
             document.getElementById('total-sa').innerText = sym + Math.round(tSA).toLocaleString('en-IN');
             document.getElementById('total-premium').innerText = sym + Math.round(tAnn).toLocaleString('en-IN');
-            document.getElementById('total-unit-value').innerText = sym + Math.round(tValue).toLocaleString('en-IN');
-        }
+            document.getElementById('total-unit-value').innerText = sym + "0";
+        };
 
         render('india');
     </script>
