@@ -6,7 +6,7 @@
     <title id="main-title">Nami Portfolio</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="india_styles.css">
-  </head>
+</head>
 
 <body class="bg-slate-50">
 
@@ -20,69 +20,47 @@
     </div>
 
     <div class="max-w-7xl mx-auto px-4 flex flex-wrap items-center justify-between gap-4 mb-8">
-    <div class="flex flex-wrap gap-4">
-        <button onclick="render('india')" class="px-8 py-3 bg-slate-800 text-white rounded-full font-bold hover:bg-slate-700 transition shadow-lg flex items-center gap-3">
-            <img src="https://flagcdn.com/w40/in.png" class="w-6 h-auto rounded-sm shadow-sm">
-            <span>India</span>
-        </button>
-    
-        <button onclick="render('singapore')" class="px-8 py-3 bg-slate-800 text-white rounded-full font-bold hover:bg-slate-700 transition shadow-lg flex items-center gap-3">
-            <img src="https://flagcdn.com/w40/sg.png" class="w-6 h-auto rounded-sm shadow-sm">
-            <span>Singapore</span>
-        </button>
-
-        <button onclick="render('health')" class="px-8 py-3 bg-emerald-600 text-white rounded-full font-bold hover:bg-emerald-700 transition shadow-lg flex items-center gap-3">
-            <span class="material-symbols-outlined text-white">medical_services</span>
-            <span>Health</span>
-        </button>
-    </div>
-
-    <div class="flex items-center gap-4">
+        <div class="flex flex-wrap gap-4">
+            <button onclick="render('india')" class="px-8 py-3 bg-slate-800 text-white rounded-full font-bold hover:bg-slate-700 transition shadow-lg flex items-center gap-3">
+                <img src="https://flagcdn.com/w40/in.png" class="w-6 h-auto rounded-sm shadow-sm">
+                <span>India</span>
+            </button>
         
-        <button id="mobile-toggle-btn" 
-                onclick="toggleView()" 
-                style="display: none;" 
-                class="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-full text-[10px] font-black uppercase tracking-widest shadow-md hover:bg-slate-800 transition">
-            <span class="material-symbols-outlined text-sm">smartphone</span>
-            <span id="view-text">Mobile View</span>
-        </button>
+            <button onclick="render('singapore')" class="px-8 py-3 bg-slate-800 text-white rounded-full font-bold hover:bg-slate-700 transition shadow-lg flex items-center gap-3">
+                <img src="https://flagcdn.com/w40/sg.png" class="w-6 h-auto rounded-sm shadow-sm">
+                <span>Singapore</span>
+            </button>
 
-        <div id="sort-container" class="flex items-center gap-3 bg-white p-2 rounded-2xl border border-slate-200 shadow-sm">
-            <span class="text-[10px] font-black uppercase text-slate-400 ml-2">Sort By</span>
-            <select id="sort-trigger" onchange="render(window.currentCategory)" class="bg-transparent text-xs font-bold rounded-lg px-2 py-1 outline-none cursor-pointer">
-                <option value="default">Default Order</option>
-                <option value="premium">Premium: High to Low</option>
-                <option value="time">Maturity: Soonest First</option>
-                <option value="due">Due Date: Earliest First</option>
-            </select>
+            <button onclick="render('health')" class="px-8 py-3 bg-emerald-600 text-white rounded-full font-bold hover:bg-emerald-700 transition shadow-lg flex items-center gap-3">
+                <span class="material-symbols-outlined text-white">medical_services</span>
+                <span>Health</span>
+            </button>
+        </div>
+
+        <div class="flex items-center gap-4">
+            <div id="sort-container" class="flex items-center gap-3 bg-white p-2 rounded-2xl border border-slate-200 shadow-sm">
+                <span class="text-[10px] font-black uppercase text-slate-400 ml-2">Sort By</span>
+                <select id="sort-trigger" onchange="render(window.currentCategory)" class="bg-transparent text-xs font-bold rounded-lg px-2 py-1 outline-none cursor-pointer">
+                    <option value="default">Default Order</option>
+                    <option value="premium">Premium: High to Low</option>
+                    <option value="time">Maturity: Soonest First</option>
+                    <option value="due">Due Date: Earliest First</option>
+                </select>
+            </div>
         </div>
     </div>
-</div>
 
     <div id="summary-section" class="max-w-7xl mx-auto px-4 mb-10">
-        <div id="summary-bar" class="grid grid-cols-3 gap-6 bg-slate-900 p-8 rounded-[40px] text-white shadow-2xl relative overflow-hidden">
-            <div id="sum-col-1" class="border-r border-slate-700 text-center pl-4">
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Sum Assured</p>
-                <p id="total-sa" class="text-4xl font-black text-emerald-400">0</p>
+        <div id="summary-bar" class="">
             </div>
-            <div id="sum-col-2" class="border-r border-slate-700 text-center">
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Annual Premium</p>
-                <p id="total-premium" class="text-4xl font-black text-indigo-400">0</p>
-            </div>
-            <div id="sum-col-3" class="text-center">
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Portfolio Value</p>
-                <p id="total-unit-value" class="text-4xl font-black text-pink-500">0</p>
-            </div>
-        </div>
     </div>
 
     <div id="container" class="max-w-7xl mx-auto pb-20 px-4"></div>
 
     <script type="module">
-        const APP_VERSION = "4.0.76";
+        const APP_VERSION = "4.0.78";
         document.getElementById('version-tag').innerText = `v${APP_VERSION}`;
 
-        // Import all components safely
         const [Data, Tools, IndiaComp, SGComp, HealthComp, HealthDataFile] = await Promise.all([
             import(`./data.js?v=${APP_VERSION}`),
             import(`./india.js?v=${APP_VERSION}`),
@@ -103,25 +81,6 @@
         const CURRENT_YEAR = TODAY.getFullYear();
         window.currentCategory = 'india';
 
-        // --- ADDED: MOBILE VIEW TOGGLE ---
-        window.toggleView = function() {
-            const isMobileActive = document.body.classList.toggle('mobile-view');
-            const btnText = document.getElementById('view-text');
-            const btnIcon = document.querySelector('#mobile-toggle-btn .material-symbols-outlined');
-            
-            if (isMobileActive) {
-                btnText.innerText = "Desktop View";
-                if(btnIcon) btnIcon.innerText = "desktop_windows";
-            } else {
-                btnText.innerText = "Mobile View";
-                if(btnIcon) btnIcon.innerText = "smartphone";
-            }
-            
-            // Re-render current category to apply mobile layout logic in components
-            render(window.currentCategory);
-        };
-
-        // Updated toggle to handle both card types
         window.toggleCard = (id) => {
             const card = document.getElementById(`card-${id}`);
             if(!card) return;
@@ -144,8 +103,9 @@
             const sortContainer = document.getElementById('sort-container');
             const summaryBar = document.getElementById('summary-bar');
 
-            // --- 1. RESET SUMMARY BAR STRUCTURE ---
-            // We rebuild this to switch between Grid (Life) and Flex (Health) layouts
+            // --- AUTO-DETECT MOBILE STATE ---
+            const isMobile = window.innerWidth <= 768;
+
             if (cat === 'health') {
                 summaryBar.className = "flex items-center justify-between bg-slate-900 p-6 rounded-[40px] text-white shadow-2xl relative overflow-hidden transition-all duration-500";
                 summaryBar.innerHTML = `
@@ -173,7 +133,6 @@
                 `;
             }
 
-            // --- 2. DATA & UI STATE ---
             let list = cat === 'health' ? [...healthData] : [...(POLICY_DATA[cat] || [])];
             const sym = (cat === 'singapore') ? "$" : "₹";
 
@@ -186,26 +145,23 @@
                 statusBadge.innerHTML = `<img src="https://flagcdn.com/w40/${flagSrc}.png" class="w-5 h-auto inline-block align-middle mr-2 rounded-sm">${cat.toUpperCase()} PORTFOLIO`;
             }
 
-            // --- 3. SORTING ---
             if (cat !== 'health') {
                 if (sortBy === 'premium') list.sort((a, b) => toNum(b.premium) - toNum(a.premium));
                 else if (sortBy === 'due') list.sort((a, b) => parseDate(a.dueDate) - parseDate(b.dueDate));
                 else if (sortBy === 'time') list.sort((a, b) => parseDate(a.premiumEnds) - parseDate(b.premiumEnds));
             }
 
-            // --- 4. RENDERING CARDS ---
+            // --- PASSING IS_MOBILE TO COMPONENTS ---
             container.innerHTML = list.map(p => {
-                if (cat === 'health') return createHealthCard(p);
-                if (cat === 'singapore') return createSGCard(p, sym, TODAY, CURRENT_YEAR);
-                return createPolicyCard(p, sym, TODAY, CURRENT_YEAR);
+                if (cat === 'health') return createHealthCard(p, isMobile);
+                if (cat === 'singapore') return createSGCard(p, sym, TODAY, CURRENT_YEAR, isMobile);
+                return createPolicyCard(p, sym, TODAY, CURRENT_YEAR, isMobile);
             }).join('');
 
-            // --- 5. SUMMARY CALCULATIONS ---
             if (cat === 'health') {
                 const sgData = healthData.filter(p => p.currency === "SGD");
                 const sgCash = sgData.reduce((acc, p) => acc + parseFloat(p.cashAmount || 0), 0);
                 const sgCpf = sgData.reduce((acc, p) => acc + parseFloat(p.cpfAmount || 0), 0);
-
                 const inData = healthData.filter(p => p.currency === "INR");
                 const inCash = inData.reduce((acc, p) => acc + parseFloat(p.cashAmount || 0), 0);
 
@@ -261,26 +217,11 @@
             }
         }
         
-        // Default Load
-       // --- ADDED: DETECTION & INITIAL LOAD ---
-        document.addEventListener("DOMContentLoaded", function() {
-            const mobileBtn = document.getElementById('mobile-toggle-btn');
-            
-            // Detect Mobile Browser or Touch Device
-            const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) 
-                                   || (navigator.maxTouchPoints > 0);
+        // --- AUTO-RENDER ON RESIZE ---
+        window.addEventListener('resize', () => render(window.currentCategory));
 
-            if (isMobileDevice) {
-                // Show the hidden button
-                mobileBtn.style.display = 'flex'; 
-                
-                // Optional: Uncomment below if you want mobile view to be ON by default on phones
-                // document.body.classList.add('mobile-view'); 
-            }
-
-            // Initial render
-            render('india');
-        });
+        // Initial render
+        render('india');
     </script>
 </body>
 </html>
