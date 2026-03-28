@@ -1,4 +1,4 @@
-/* component_sg.js - v6.5.1 - Restored Desktop & Fixed Timeline Sync */
+/* component_sg.js - v6.5.2 - Fixed Maturity Tooltip & Desktop Sync */
 import { autoFmt, toNum } from './india.js';
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR, isMobile = false) {
@@ -7,7 +7,6 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR, isMobile = false) {
     
     const startY = commDate.getFullYear();
     const endY = matDate.getFullYear();
-    
     const commMonth = commDate.getMonth();
     const commDay = commDate.getDate();
 
@@ -22,7 +21,6 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR, isMobile = false) {
         premRemainingStr = "Vested";
     } else {
         let targetDate = (mip === -1) ? matDate : new Date(startY + mip, commMonth, commDay);
-
         if (targetDate <= TODAY) {
             premRemainingStr = "Vested";
         } else {
@@ -62,7 +60,7 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR, isMobile = false) {
     const surrenderValue = Math.round(Math.max(0, accountValue - surrenderChargeAmount));
     const lockedValue = Math.round(accountValue - surrenderValue);
 
-    // Timeline Generation (Restored fixed-width logic for Desktop)
+    // --- TIMELINE GENERATION ---
     let timelineHtml = '';
     const maxYears = (endY - startY + 1 > 0 && endY - startY + 1 < 50) ? (endY - startY + 1) : 15;
   
@@ -84,7 +82,7 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR, isMobile = false) {
 
         timelineHtml += `
             <div class="segment ${colorClass} h-8 ${isMobile ? 'flex-1' : 'w-full'} border-r border-white/10 first:rounded-l-lg last:rounded-r-lg transition-all relative group/segment">
-                <div class="opacity-0 group-hover/segment:opacity-100 absolute bottom-full mb-3 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-3 py-2 rounded-xl text-[10px] z-[100] whitespace-nowrap pointer-events-none shadow-2xl">
+                <div class="opacity-0 group-hover/segment:opacity-100 absolute bottom-full mb-3 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-3 py-2 rounded-xl text-[10px] z-[100] whitespace-nowrap pointer-events-none shadow-2xl transition-all duration-200">
                     <b class="text-sky-400 uppercase tracking-widest block mb-1 font-black">Year ${polY} (${yr})</b>
                     <span class="text-white font-bold tracking-tight">${statusLabel}</span>
                     <div class="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-slate-900"></div>
@@ -92,18 +90,26 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR, isMobile = false) {
             </div>`;
     }
 
+    // --- RESTORED MATURITY STAR TOOLTIP (India Style) ---
+    const starHtml = `
+        <div class="ml-2 relative group flex items-center justify-center w-12 h-10 bg-white rounded-xl shadow-sm border border-slate-200 cursor-help">
+            <span class="text-xl text-amber-500 transition-transform group-hover:scale-125">★</span>
+            <div class="opacity-0 group-hover:opacity-100 absolute bottom-full mb-4 right-0 bg-slate-900 text-white p-3 rounded-xl z-[100] shadow-2xl border border-white/10 pointer-events-none min-w-[180px] transition-all duration-200">
+                <b class="text-amber-400 uppercase tracking-widest block text-[9px] mb-1">Maturity</b>
+                <span class="text-xs font-black block">Unit Value : ${autoFmt(accountValue, sym)}</span>
+                <div class="absolute top-full right-4 border-8 border-transparent border-t-slate-900"></div>
+            </div>
+        </div>`;
+
     const nextDueYear = hasPassedThisYear ? CURRENT_YEAR + 1 : CURRENT_YEAR;
     const nextDueDisplay = new Date(nextDueYear, commMonth, commDay).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-
-    const headerPadding = isMobile ? "p-5" : "p-8";
-    const headerFlex = isMobile ? "flex-col" : "items-center justify-between";
 
     return `
     <div class="policy-card mb-10 rounded-[40px] bg-white overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.08)] border-2 relative" 
          id="card-${p.id}" 
          style="border-left: 16px solid ${brandColor}; border-color: ${brandColor};">
         
-        <div class="${headerPadding} flex ${headerFlex} cursor-pointer relative" style="background: ${brandBg}" onclick="toggleCard('${p.id}')">
+        <div class="${isMobile ? 'p-5' : 'p-8'} flex ${isMobile ? 'flex-col' : 'items-center justify-between'} cursor-pointer relative" style="background: ${brandBg}" onclick="toggleCard('${p.id}')">
             <div class="flex items-center gap-8 ${isMobile ? 'mb-4' : 'pl-6 pr-4'}">
                 <div class="w-20 h-20 flex-shrink-0 flex items-center justify-center bg-white rounded-[24px] shadow-sm p-3 relative z-20">
                     <img src="${p.logo}" class="max-h-full object-contain">
@@ -149,7 +155,7 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR, isMobile = false) {
             </div>
             <div class="relative flex items-center h-16 bg-slate-100 rounded-[24px] px-2 border border-slate-200/50">
                 <div class="flex-1 flex h-10 items-center gap-1">${timelineHtml}</div>
-                <div class="ml-2 relative group flex items-center justify-center w-12 h-10 bg-white rounded-xl shadow-sm border border-slate-200 cursor-help"><span class="text-xl text-amber-500 transition-transform group-hover:scale-125">★</span></div>
+                ${starHtml}
             </div>
         </div>
     </div>`;
