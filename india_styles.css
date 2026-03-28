@@ -1,4 +1,4 @@
-/* Consolidated Stylesheet - v5.8.1 - Mobile Visibility Fix */
+/* Consolidated Stylesheet - v5.8.0 Baseline - RESTORED */
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@800;900&family=Inter:wght@400;700;900&display=swap'); 
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200');
 
@@ -36,6 +36,15 @@ body {
     position: relative;
     overflow: hidden;
     border: 1px solid #f1f5f9;
+}
+
+.card-header { 
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    padding: 30px 40px;
+    min-height: 120px;
+    transition: background 0.3s ease;
 }
 
 /* --- CONTENT & GRID --- */
@@ -130,22 +139,68 @@ body {
     border: 1px solid #334155;
 }
 
-.segment:hover .tooltip {
+.segment:hover .tooltip, .mat-star:hover .tooltip {
     visibility: visible;
     opacity: 1;
     bottom: 55px;
     transform: translateX(-50%) translateY(0);
 }
 
-/* --- ANIMATIONS --- */
-@keyframes card-pulse {
-  0% { box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
-  50% { box-shadow: 0 0 25px rgba(239, 68, 68, 0.3); border-color: #f87171 !important; }
-  100% { box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+/* --- MATURITY STAR --- */
+.mat-star { 
+    flex: 0 0 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    color: #f59e0b;
+    cursor: help;
+    position: relative;
+    transition: 0.3s;
 }
 
-.animate-card-pulse {
-  animation: card-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+.mat-star:hover {
+    transform: scale(1.4) rotate(15deg);
+    color: #fbbf24;
+}
+
+.mat-star .tooltip {
+    left: auto !important;
+    right: 0 !important; 
+    margin-right: 15px;
+    transform: translateY(10px) rotate(0deg) !important;
+    min-width: 180px;
+}
+
+.mat-star .tooltip span {
+    display: block;
+    transform: skewX(-12deg) rotate(-1deg);
+    font-weight: 900;
+    margin-top: 4px;
+}
+
+/* --- STATUS COLORS --- */
+.bg-prem-past { background: #064e3b; } 
+.bg-prem-future { background: #10b981; }
+.bg-history-brown { background: #78350f; } 
+.bg-future-light-brown { background: #b45309; } 
+.bg-payout-past { background: #d97706; } 
+.bg-payout-future { background: #f59e0b; } 
+.bg-hybrid { background: linear-gradient(to bottom, #10b981 50%, #f59e0b 50%); }
+
+.bg-current { 
+    background: #22c55e;
+    box-shadow: 0 0 20px rgba(34,197,94,0.6);
+    border: 3px solid white;
+    z-index: 10;
+}
+
+/* --- ANIMATIONS & BADGES --- */
+@keyframes alert-glow {
+    0% { box-shadow: 0 0 5px #dc2626; background: #dc2626; }
+    50% { box-shadow: 0 0 20px #ef4444; background: #b91c1c; }
+    100% { box-shadow: 0 0 5px #dc2626; background: #dc2626; }
 }
 
 @keyframes fadeIn {
@@ -153,68 +208,99 @@ body {
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* --- MOBILE RESPONSIVENESS (FIXED) --- */
+.due-blink { 
+    animation: alert-glow 1.5s infinite ease-in-out !important;
+    color: white !important;
+}
+
+.paid-logo { 
+    width: 110px;
+    max-width: 100%;
+    transform: rotate(-5deg);
+    filter: drop-shadow(0 0 8px rgba(34, 197, 94, 0.4));
+}
+
+.funky-badge {
+   font-family: 'Orbitron', sans-serif;
+   font-size: 9px;
+   font-weight: 900; 
+   padding: 8px 14px;
+   border-radius: 12px;
+   text-transform: uppercase;
+   background: #0f172a;
+   color: #fff;
+   display: inline-block;
+}
+
+.simple-build {
+    position: fixed;
+    top: 15px;
+    right: 20px;
+    font-family: monospace;
+    font-size: 11px;
+    background: rgba(99, 102, 241, 0.1);
+    padding: 4px 12px;
+    border-radius: 20px;
+    color: #6366f1;
+    z-index: 1000;
+ }
+
+@keyframes card-pulse {
+  0% { box-shadow: 0 10px 30px rgba(0,0,0,0.05); border-color: transparent; }
+  50% { box-shadow: 0 0 25px rgba(239, 68, 68, 0.2); border-color: #f87171; }
+  100% { box-shadow: 0 10px 30px rgba(0,0,0,0.05); border-color: transparent; }
+}
+
+.animate-card-pulse {
+  animation: card-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* --- AUTOMATIC MOBILE RESPONSIVENESS --- */
 @media (max-width: 768px) {
     body { padding: 15px; }
 
     .brand-header {
-        font-size: 2.2rem;
+        font-size: 2rem;
         margin-bottom: 20px;
     }
 
-    /* --- Summary Bar Mobile Fix --- */
-    #summary-bar {
-        display: grid !important;
-        grid-template-columns: 1fr !important; /* Stack columns vertically */
+    #summary-bar.grid-cols-3 {
+        grid-template-columns: 1fr !important;
         gap: 0 !important;
-        padding: 10px !important;
+        padding: 20px !important;
         border-radius: 25px !important;
-        background: #0f172a !important; /* Dark slate background */
     }
 
     #summary-bar > div {
         border-right: none !important;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
-        padding: 20px 10px !important;
-        text-align: center !important;
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important;
-        justify-content: center !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 15px 0 !important;
+        text-align: center;
     }
 
     #summary-bar > div:last-child {
         border-bottom: none !important;
     }
 
-    /* Mobile Text Sizes for Banner */
-    #summary-bar p.text-2xl, 
-    #summary-bar p.text-3xl {
-        font-size: 1.6rem !important;
-        line-height: 1.2 !important;
-        font-weight: 900 !important;
+    #summary-bar p.text-4xl {
+        font-size: 1.75rem !important;
     }
 
-    #summary-bar p.uppercase {
-        font-size: 10px !important;
-        margin-bottom: 4px !important;
+    .card-header {
+        padding: 20px !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        min-height: auto !important;
     }
 
-    /* --- Policy Card Mobile Adjustments --- */
     .detail-grid {
         grid-template-columns: 1fr !important;
-        gap: 12px;
-        padding: 15px;
+        gap: 15px;
     }
 
     .timeline-track {
         margin-top: 40px;
-        transform: scale(0.9);
+        transform: scale(0.95);
         transform-origin: left;
-    }
-
-    /* Fix image scaling for logos in header */
-    .policy-card img {
-        max-width: 60px !important;
     }
 }
