@@ -278,37 +278,45 @@ body {
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* --- MOBILE TOGGLE OVERRIDES --- */
+/* --- AUTOMATIC MOBILE RESPONSIVENESS (No Button Needed) --- */
 
-/* Force the main container to shrink */
-.mobile-view .max-w-7xl {
-    max-width: 450px !important;
-    margin: 0 auto !important;
-    padding-left: 1rem !important;
-    padding-right: 1rem !important;
-}
+@media (max-width: 768px) {
+    /* 1. Target the main container without needing the .mobile-view class */
+    .max-w-7xl {
+        max-width: 100% !important; 
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }
 
-/* Stack the Summary Bar (The 3 Large Info Boxes) */
-.mobile-view #summary-bar.grid-cols-3 {
-    grid-template-columns: 1fr !important;
-    gap: 1rem !important;
-    padding: 1.5rem !important;
-}
+    /* 2. Automatically stack the Summary Bar */
+    #summary-bar.grid-cols-3 {
+        grid-template-columns: 1fr !important;
+        gap: 1rem !important;
+        padding: 1.5rem !important;
+    }
+    
+    /* Remove the vertical dividers since they are now stacked */
+    #summary-bar .border-r {
+        border-right: none !important;
+        border-bottom: 1px solid rgba(255,255,255,0.1) !important;
+        padding-bottom: 1rem !important;
+        padding-left: 0 !important;
+    }
 
-/* Make the Navigation Buttons stack vertically */
-.mobile-view .nav-container {
-    flex-direction: column !important;
-    width: 100% !important;
-    gap: 0.5rem !important;
-}
+    /* 3. Stack the Navigation Buttons */
+    .flex.flex-wrap.gap-4 {
+        flex-direction: column !important;
+        width: 100% !important;
+    }
 
-.mobile-view .nav-button {
-    width: 100% !important;
-    justify-content: center !important;
-}
+    .flex.flex-wrap.gap-4 button {
+        width: 100% !important;
+        justify-content: center !important;
+    }
 
-/* Card Adjustments */
-.mobile-view .policy-card {
-    border-left-width: 10px !important; /* Thinner border for more screen space */
-    border-radius: 24px !important;   /* Slightly tighter corners */
+    /* 4. Card Adjustments */
+    .policy-card, .health-card {
+        border-left-width: 10px !important;
+        border-radius: 24px !important;
+    }
 }
