@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nami Portfolio (Mobile)</title>
+    <link rel="stylesheet" href="mobile.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <div id="mobile-root"></div>
+
+    <script type="module">
+        async function loadMobileVersion() {
+            // 1. Fetch the "Golden" desktop HTML
+            const response = await fetch('index.html');
+            const htmlText = await response.text();
+            
+            // 2. Parse it so we can grab the content
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlText, 'text/html');
+            
+            // 3. Extract the body content (the buttons, containers, etc.)
+            const desktopBody = doc.body.innerHTML;
+            document.getElementById('mobile-root').innerHTML = desktopBody;
+
+            // 4. Force-run the scripts from index.html to make it interactive
+            const scripts = doc.querySelectorAll('script[type="module"]');
+            scripts.forEach(oldScript => {
+                const newScript = document.createElement('script');
+                newScript.type = 'module';
+                newScript.textContent = oldScript.textContent;
+                document.body.appendChild(newScript);
+            });
+        }
+
+        loadMobileVersion();
+    </script>
+</body>
+</html>
