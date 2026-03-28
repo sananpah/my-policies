@@ -245,6 +245,16 @@ body {
     z-index: 1000;
  }
 
+@keyframes card-pulse {
+  0% { box-shadow: 0 10px 30px rgba(0,0,0,0.05); border-color: transparent; }
+  50% { box-shadow: 0 0 25px rgba(239, 68, 68, 0.2); border-color: #f87171; }
+  100% { box-shadow: 0 10px 30px rgba(0,0,0,0.05); border-color: transparent; }
+}
+
+.animate-card-pulse {
+  animation: card-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
 /* --- AUTOMATIC MOBILE RESPONSIVENESS --- */
 @media (max-width: 768px) {
     body { padding: 15px; }
