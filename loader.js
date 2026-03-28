@@ -3,10 +3,13 @@ const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2
 
 export async function fetchPortfolioData() {
     try {
-        const response = await fetch(SHEET_URL);
+        // Add a timestamp to the URL to force the browser to get fresh data
+        const cacheBuster = `&t=${new Date().getTime()}`;
+        const response = await fetch(SHEET_URL + cacheBuster);
         const buffer = await response.arrayBuffer();
-        const decoder = new TextDecoder('utf-8'); // Forces correct symbol reading
+        const decoder = new TextDecoder('utf-8'); 
         const csvData = decoder.decode(buffer);
+        
         return processCSV(csvData);
     } catch (error) {
         console.error("Error fetching sheet:", error);
