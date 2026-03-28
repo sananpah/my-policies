@@ -1,14 +1,33 @@
 /* india.js - Utility Section */
 
+/* india.js */
 import { fetchPortfolioData } from './loader.js';
 
-async function init() {
+async function initIndia() {
     const allData = await fetchPortfolioData();
-    // Filter the data for India
-    const indiaPolicies = allData.filter(item => item.Country === "India");
-    render(indiaPolicies); 
+    
+    // Filter rows that belong to India Life Insurance
+    const indiaPolicies = allData.filter(row => 
+        row.Country === "India" && row.Category === "Life Insurance"
+    );
+
+    const container = document.getElementById('india-container');
+    container.innerHTML = ''; 
+
+    indiaPolicies.forEach(p => {
+        // Use your existing rendering logic here
+        // Ensure the mapping matches your Google Sheet column names
+        const card = createPolicyCard({
+            policyName: p["Policy Name"],
+            premiumAmount: parseFloat(p["Premium"]),
+            nextDueDate: p["Due Date"]
+            // ... add other fields
+        });
+        container.appendChild(card);
+    });
 }
-init();
+
+initIndia();
 
 const TODAY = new Date();
 
