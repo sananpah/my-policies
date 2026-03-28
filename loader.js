@@ -3,7 +3,6 @@ const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2
 
 export async function fetchPortfolioData() {
     try {
-        console.log("FETCH STARTING...");
         const response = await fetch(SHEET_URL + `&t=${Date.now()}`);
         const buffer = await response.arrayBuffer();
         const decoder = new TextDecoder('utf-8'); 
@@ -19,6 +18,7 @@ function processCSV(csv) {
     const rows = [];
     let currentRow = [''], inQuote = false;
     
+    // Robust CSV parsing
     for (let i = 0; i < csv.length; i++) {
         const char = csv[i];
         if (char === '"' && csv[i+1] === '"') { currentRow[currentRow.length-1] += '"'; i++; }
@@ -29,40 +29,59 @@ function processCSV(csv) {
     }
     rows.push(currentRow);
 
-    // NUCLEAR LOGIC: Ignore headers. Just find rows that have a ":" in the first column
-    const validDataRows = rows.filter(r => r[0] && r[0].includes(":"));
+    // Find the header row (Case-insensitive search)
+    const headerIdx = rows.findIndex(r => 
+        r.some(cell => cell && cell.toLowerCase().includes("policy_name"))
+    );
 
-    // --- EMERGENCY NOTIFICATION ---
-    if (validDataRows.length === 0) {
-        alert("DATA ERROR: Found " + rows.length + " rows but none contain a ':' symbol. Check your Google Sheet data.");
+    if (headerIdx === -1) {
+        console.error("Header 'Policy_Name' not found in CSV.");
+        return [];
     }
 
-    const finalData = validDataRows.map(rowData => {
-        const obj = {
-            rawName: rowData[0],
-            premium: rowData[6] || "", // Based on your debug, Premium was index 6
-            policyNo: rowData[2] || ""
-        };
-        return parseInsuranceTab(obj);
-    });
+    const headers = rows[headerIdx].map(h => h.trim());
+    const dataRows = rows.slice(headerIdx + 1);
 
-    // FORCE DEBUG OVERLAY
+    const finalData = dataRows.map(rowData => {
+        const obj = {};
+        headers.forEach((h, i) => { 
+            if(h) obj[h] = (rowData[i] || "").trim(); 
+        });
+        
+        // Skip empty fragments
+        if (!obj["Policy_Name"] || obj["Policy_Name"] === "EMPTY") return null;
+
+        return parseInsuranceTab(obj);
+    }).filter(r => r !== null);
+
+    // --- FIXED DEBUG OVERLAY ---
     renderTopDebug(finalData.slice(0, 3));
+
     return finalData;
 }
 
 function renderTopDebug(records) {
-    const debugDiv = document.createElement('div');
-    debugDiv.style = "position:fixed; top:0; left:0; width:100%; background:red; color:white; z-index:10000; padding:20px; font-weight:bold; border:5px solid yellow;";
-    debugDiv.innerHTML = "DEBUG DATA DETECTED: " + records.length + " items.<br>";
-    records.forEach(r => {
-        debugDiv.innerHTML += `NAME: ${r.name} | COUNTRY: ${row.detectedCountry}<br>`;
+    // Check if we are in a browser environment
+    if (typeof document === 'undefined') return;
+
+    let debugDiv = document.getElementById('loader-debug-top');
+    if (!debugDiv) {
+        debugDiv = document.createElement('div');
+        debugDiv.id = 'loader-debug-top';
+        debugDiv.style = "position:fixed; top:0; left:0; width:100%; background:black; color:lime; z-index:9999; padding:10px; font-family:monospace; font-size:12px; border-bottom:2px solid lime;";
+        document.body.prepend(debugDiv);
+    }
+    
+    debugDiv.innerHTML = `<b>DEBUG: FOUND ${records.length} VALID RECORDS</b><br>`;
+    records.forEach((r, i) => {
+        // FIXED: Using 'r' instead of 'row'
+        debugDiv.innerHTML += `REC ${i+1}: Name: [${r.name}] | Country: [${r.detectedCountry}]<br>`;
     });
-    document.body.appendChild(debugDiv);
 }
 
 function parseInsuranceTab(row) {
-    const rawFullName = row.rawName || "";
+    // Extract name from "Policy_Name" header
+    const rawFullName = row["Policy_Name"] || "";
     if (rawFullName.includes(":")) {
         const parts = rawFullName.split(":");
         row.company = parts[0].trim();
@@ -72,9 +91,10 @@ function parseInsuranceTab(row) {
         row.name = rawFullName;
     }
 
-    const prem = row.premium || "";
-    // Detection for India (Rupee/INR/Mojibake)
+    const prem = row["Premium"] || "";
+    // Detect Country
     row.detectedCountry = (prem.includes("₹") || prem.includes("â") || prem.includes("INR")) ? "India" : "Singapore";
+    // Clean numeric premium
     row.premiumNumeric = parseFloat(prem.replace(/[^\d.]/g, "")) || 0;
 
     return row;
