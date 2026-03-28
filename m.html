@@ -1,137 +1,95 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Nami Mobile</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="mobile.css">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Inter:wght@400;700;900&display=swap');
-        .font-orbitron { font-family: 'Orbitron', sans-serif; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-    </style>
-</head>
-<body class="bg-slate-50 font-sans">
-    <div id="mobile-content" style="display:none;">
-        <div class="p-4 max-w-md mx-auto">
-            <h1 class="font-orbitron text-2xl font-black text-slate-900 mb-6 tracking-tighter uppercase">Nami Portfolio</h1>
-            
-            <div class="flex gap-2 mb-6 overflow-x-auto pb-2 no-scrollbar">
-                <button onclick="render('india')" class="px-6 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold shadow-lg transition-transform active:scale-95">India</button>
-                <button onclick="render('singapore')" class="px-6 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs font-bold shadow-md transition-transform active:scale-95">Singapore</button>
-                <button onclick="render('health')" class="px-6 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold shadow-md transition-transform active:scale-95">Health</button>
-            </div>
+<script type="module">
+    import { POLICY_DATA } from './data.js';
+    
+    const toNum = (val) => {
+        if (!val) return 0;
+        return typeof val === 'number' ? val : parseFloat(val.toString().replace(/[^0-9.-]+/g, ""));
+    };
 
-            <div id="summary-bar" class="mb-8 shadow-2xl">
-                <div>
-                    <p class="text-[9px] text-slate-500 uppercase font-black tracking-[0.2em] mb-1">Total Sum Assured</p>
-                    <p id="total-sa" class="text-emerald-400 font-orbitron font-black text-xl"></p>
-                </div>
-                <div>
-                    <p class="text-[9px] text-slate-500 uppercase font-black tracking-[0.2em] mb-1">Annual Premium</p>
-                    <p id="total-premium" class="text-indigo-400 font-orbitron font-black text-xl"></p>
-                </div>
-                <div>
-                    <p class="text-[9px] text-slate-500 uppercase font-black tracking-[0.2em] mb-1">Portfolio Value</p>
-                    <p id="total-unit-value" class="text-pink-500 font-orbitron font-black text-xl"></p>
-                </div>
-            </div>
-
-            <div id="container" class="space-y-4 pb-10"></div>
-        </div>
-    </div>
-
-    <script type="module">
-        import { POLICY_DATA } from './data.js';
-        
-        // Helper to clean strings to numbers
-        const toNum = (val) => {
-            if (!val) return 0;
-            return typeof val === 'number' ? val : parseFloat(val.toString().replace(/[^0-9.-]+/g, ""));
-        };
-
-        // PIN PROTECTION
-        const PIN = "1977"; 
-        const authCheck = () => {
-            if (sessionStorage.getItem('nami_auth') !== 'true') {
-                const entry = prompt("Enter PIN:");
-                if (entry === PIN) {
-                    sessionStorage.setItem('nami_auth', 'true');
-                    document.getElementById('mobile-content').style.display = 'block';
-                } else {
-                    window.location.href = "https://google.com";
-                }
-            } else {
+    const authCheck = () => {
+        if (sessionStorage.getItem('nami_auth') !== 'true') {
+            const entry = prompt("Enter PIN:");
+            if (entry === "1977") {
+                sessionStorage.setItem('nami_auth', 'true');
                 document.getElementById('mobile-content').style.display = 'block';
+            } else {
+                window.location.href = "https://google.com";
             }
+        } else {
+            document.getElementById('mobile-content').style.display = 'block';
+        }
+    };
+
+    window.render = function(cat) {
+        const container = document.getElementById('container');
+        const sym = (cat === 'singapore') ? "$" : "₹";
+        const list = POLICY_DATA[cat] || [];
+
+        // 1. CALCULATE TOTALS (Universal Logic)
+        const tSA = list.reduce((acc, p) => acc + (toNum(p.sumAssured || p.coverage) || 0), 0);
+        const tAnn = list.reduce((acc, p) => acc + (p.status !== "PAID UP" ? toNum(p.premium || p.annualPremium) : 0), 0);
+        const tVal = list.reduce((acc, p) => acc + toNum(p.currentUnitValue || 0), 0);
+
+        document.getElementById('total-sa').innerText = sym + Math.round(tSA).toLocaleString();
+        document.getElementById('total-premium').innerText = sym + Math.round(tAnn).toLocaleString();
+        document.getElementById('total-unit-value').innerText = sym + Math.round(tVal).toLocaleString();
+
+        const getIcon = (tag) => {
+            if (tag === 'man') return '👨‍💼';
+            if (tag === 'woman') return '👩‍💼';
+            if (tag === 'child_care') return '👧';
+            return '📄';
         };
 
-        window.render = function(cat) {
-            const container = document.getElementById('container');
-            const sym = (cat === 'singapore') ? "$" : "₹";
-            const list = POLICY_DATA[cat] || [];
+        // 2. RENDER CARDS
+        container.innerHTML = list.map(p => {
+            // Field Mapping for different regions
+            const name = p.name || p.policyName || "Unknown Policy";
+            const sa = p.sumAssured || p.coverage || "0";
+            const prem = p.premium || p.annualPremium || "0";
+            const due = p.dueDate || p.nextPremiumDue || p.nextDue || (p.status === 'PAID UP' ? 'COMPLETED' : 'N/A');
+            const mat = p.premiumEnds || p.maturityDate || p.expiryDate || 'N/A';
 
-            // Calculate Totals
-            const tSA = list.reduce((acc, p) => acc + (toNum(p.sumAssured) || 0), 0);
-            const tAnn = list.reduce((acc, p) => acc + (p.status !== "PAID UP" ? toNum(p.premium) : 0), 0);
-            const tVal = list.reduce((acc, p) => acc + toNum(p.currentUnitValue || 0), 0);
-
-            document.getElementById('total-sa').innerText = sym + Math.round(tSA).toLocaleString();
-            document.getElementById('total-premium').innerText = sym + Math.round(tAnn).toLocaleString();
-            document.getElementById('total-unit-value').innerText = sym + Math.round(tVal).toLocaleString();
-
-            // Mapping family icons
-            const getIcon = (tag) => {
-                if (tag === 'man') return '👨‍💼';
-                if (tag === 'woman') return '👩‍💼';
-                if (tag === 'child_care') return '👧';
-                return '';
-            };
-
-            container.innerHTML = list.map(p => `
-                <div class="bg-white rounded-[24px] p-6 border border-slate-100 shadow-sm relative overflow-hidden">
-                    ${p.status === "PAID UP" ? '<div class="absolute top-0 right-0 bg-emerald-500 text-white text-[8px] font-black px-3 py-1 rounded-bl-lg uppercase tracking-tighter">PAID UP</div>' : ''}
-                    
-                    <div class="flex justify-between items-start mb-4">
-                        <div>
-                            <div class="flex items-center gap-2 mb-1">
-                                <span class="text-xs">${getIcon(p.assignedTo)}</span>
-                                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">${p.type || 'POLICY'}</p>
-                            </div>
-                            <h3 class="font-black text-slate-900 text-lg leading-tight">${p.name}</h3>
-                        </div>
-                    </div>
-                    
-                    <div class="grid grid-cols-2 gap-y-5 gap-x-4 border-t border-slate-50 pt-5">
-                        <div>
-                            <p class="text-[8px] font-black text-slate-400 uppercase tracking-tighter mb-1">Sum Assured</p>
-                            <p class="font-bold text-slate-900 text-sm">${sym}${toNum(p.sumAssured).toLocaleString()}</p>
-                        </div>
-                        <div>
-                            <p class="text-[8px] font-black text-slate-400 uppercase tracking-tighter mb-1">Premium</p>
-                            <p class="font-bold text-indigo-600 text-sm">${sym}${toNum(p.premium).toLocaleString()}</p>
-                        </div>
-                        <div>
-                            <p class="text-[8px] font-black text-slate-400 uppercase tracking-tighter mb-1">Maturity Date</p>
-                            <p class="font-bold text-slate-600 text-[11px]">${p.premiumEnds || 'N/A'}</p>
-                        </div>
-                        <div>
-                            <p class="text-[8px] font-black text-slate-400 uppercase tracking-tighter mb-1">Next Due</p>
-                            <p class="font-bold ${p.status === 'PAID UP' ? 'text-emerald-500' : 'text-slate-600'} text-[11px]">${p.status === 'PAID UP' ? 'COMPLETED' : (p.dueDate || 'N/A')}</p>
-                        </div>
-                        ${p.currentUnitValue ? `
-                        <div class="col-span-2 bg-pink-50 p-3 rounded-xl border border-pink-100 mt-1">
-                             <p class="text-[8px] font-black text-pink-400 uppercase tracking-tighter mb-1">Current Portfolio Value</p>
-                             <p class="font-black text-pink-600 text-md">${sym}${toNum(p.currentUnitValue).toLocaleString()}</p>
-                        </div>` : ''}
+            return `
+            <div class="bg-white rounded-[24px] p-6 border border-slate-100 shadow-sm relative overflow-hidden mb-4">
+                ${p.status === "PAID UP" ? '<div class="absolute top-0 right-0 bg-emerald-500 text-white text-[8px] font-black px-3 py-1 rounded-bl-lg uppercase">PAID UP</div>' : ''}
+                
+                <div class="flex items-start gap-3 mb-4">
+                    <span class="text-xl mt-1">${getIcon(p.assignedTo)}</span>
+                    <div>
+                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">${p.type || p.category || 'POLICY'}</p>
+                        <h3 class="font-black text-slate-900 text-lg leading-tight">${name}</h3>
                     </div>
                 </div>
-            `).join('');
-        };
+                
+                <div class="grid grid-cols-2 gap-y-5 gap-x-4 border-t border-slate-50 pt-5">
+                    <div>
+                        <p class="text-[8px] font-black text-slate-400 uppercase tracking-tighter mb-1">${cat === 'health' ? 'Coverage' : 'Sum Assured'}</p>
+                        <p class="font-bold text-slate-900 text-sm">${sym}${toNum(sa).toLocaleString()}</p>
+                    </div>
+                    <div>
+                        <p class="text-[8px] font-black text-slate-400 uppercase tracking-tighter mb-1">Premium</p>
+                        <p class="font-bold text-indigo-600 text-sm">${sym}${toNum(prem).toLocaleString()}</p>
+                    </div>
+                    <div>
+                        <p class="text-[8px] font-black text-slate-400 uppercase tracking-tighter mb-1">${cat === 'health' ? 'Expiry' : 'Maturity'}</p>
+                        <p class="font-bold text-slate-600 text-[11px]">${mat}</p>
+                    </div>
+                    <div>
+                        <p class="text-[8px] font-black text-slate-400 uppercase tracking-tighter mb-1">Next Due</p>
+                        <p class="font-bold ${due === 'COMPLETED' ? 'text-emerald-500' : 'text-slate-600'} text-[11px]">${due}</p>
+                    </div>
 
-        authCheck();
-        render('india');
-    </script>
-</body>
-</html>
+                    ${p.currentUnitValue ? `
+                    <div class="col-span-2 bg-pink-50 p-3 rounded-xl border border-pink-100 mt-1">
+                         <p class="text-[8px] font-black text-pink-400 uppercase tracking-tighter mb-1">Current Portfolio Value</p>
+                         <p class="font-black text-pink-600 text-md">${sym}${toNum(p.currentUnitValue).toLocaleString()}</p>
+                    </div>` : ''}
+                </div>
+            </div>`;
+        }).join('');
+    };
+
+    authCheck();
+    render('india');
+</script>
