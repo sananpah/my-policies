@@ -1,60 +1,93 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Sheet Debugger</title>
+    <title>Advanced Sheet Debugger</title>
     <style>
-        body { font-family: monospace; padding: 20px; background: #1a1a1a; color: #00ff00; }
-        .row { border-bottom: 1px solid #333; padding: 10px; margin-bottom: 10px; }
-        .header { color: #ff00ff; font-weight: bold; }
-        .error { color: #ff4444; border: 2px solid red; padding: 10px; }
+        body { font-family: 'Segoe UI', monospace; padding: 20px; background: #0f172a; color: #38bdf8; line-height: 1.5; }
+        .card { background: #1e293b; border: 1px solid #334155; padding: 15px; margin-bottom: 15px; border-radius: 8px; }
+        .header-row { color: #f472b6; font-weight: bold; font-size: 1.1em; border-bottom: 2px solid #f472b6; margin-bottom: 10px; }
+        .meta { color: #94a3b8; font-size: 0.85em; }
+        .val { color: #f8fafc; font-weight: bold; }
+        .error { color: #ef4444; border: 2px solid #ef4444; padding: 15px; border-radius: 8px; background: #450a0a; }
+        .highlight { color: #fbbf24; }
     </style>
 </head>
 <body>
-    <h2>🔍 Google Sheet Raw Diagnostic</h2>
-    <div id="status">Connecting to Google...</div>
+    <h2>🔍 Advanced Data Diagnostic</h2>
+    <p class="meta">This tool handles quotes, commas in numbers, and multi-line cells.</p>
+    <div id="status">Connecting...</div>
     <div id="output"></div>
 
     <script type="module">
-        const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2UwOfG57DQBOBnJX-9hsRKOQTUgALiM3uxs-VGzD2KN8JoWNAQltH6IkgAGhPTNFEvb/pub?gid=866869416&single=true&output=csv";
+        const SHEET_URL = "YOUR_PUBLISHED_CSV_LINK_HERE"; // Ensure this is the CSV link
 
-        async function debugSheet() {
+        async function startDebug() {
             const status = document.getElementById('status');
             const output = document.getElementById('output');
 
             try {
-                // 1. Fetch with Cache Buster
                 const response = await fetch(SHEET_URL + `&t=${Date.now()}`);
-                
-                // 2. Decode with UTF-8 to check for the â symbol issue
                 const buffer = await response.arrayBuffer();
                 const decoder = new TextDecoder('utf-8');
                 const rawText = decoder.decode(buffer);
 
-                status.innerHTML = "✅ Connection Successful. Parsing Rows...";
+                // 1. ROBUST CSV PARSING (Handles quotes and commas inside cells)
+                const rows = parseCSV(rawText);
+                
+                // 2. FIND ACTUAL HEADER (Looking for the row containing Policy_Name)
+                const headerIdx = rows.findIndex(r => r.some(cell => cell.includes("Policy_Name")));
+                
+                if (headerIdx === -1) {
+                    throw new Error("Could not find 'Policy_Name' in any row. Check your Sheet headers.");
+                }
 
-                const lines = rawText.split('\n').filter(l => l.trim() !== "");
-                const headers = lines[0].split(',').map(h => h.trim());
+                const headers = rows[headerIdx];
+                const dataRows = rows.slice(headerIdx + 1);
 
-                output.innerHTML += `<div class="row header">HEADERS DETECTED: <br>${headers.join(' | ')}</div>`;
+                status.innerHTML = `✅ Found Headers at Row ${headerIdx + 1}. Total Policies: ${dataRows.filter(r => r[0]).length}`;
 
-                lines.slice(1).forEach((line, index) => {
-                    const values = line.split(',').map(v => v.trim());
-                    let rowHtml = `<div class="row"><strong>Row ${index + 1}:</strong><br>`;
-                    
-                    headers.forEach((h, i) => {
-                        rowHtml += `[${h}]: <span style="color:white">${values[i] || 'EMPTY'}</span><br>`;
+                // 3. DISPLAY CLEANED DATA
+                output.innerHTML = `<div class="card header-row">DETECTED HEADERS:<br>${headers.join(' | ')}</div>`;
+
+                dataRows.forEach((row, i) => {
+                    // Skip empty rows created by merged cells
+                    if (!row[0] || row[0] === "EMPTY") return;
+
+                    let html = `<div class="card">`;
+                    html += `<div class="highlight">Policy Entry #${i + 1}</div>`;
+                    headers.forEach((h, colIdx) => {
+                        if (h) {
+                            html += `<div><span class="meta">${h}:</span> <span class="val">${row[colIdx] || '-'}</span></div>`;
+                        }
                     });
-                    
-                    rowHtml += `</div>`;
-                    output.innerHTML += rowHtml;
+                    html += `</div>`;
+                    output.innerHTML += html;
                 });
 
             } catch (err) {
-                status.innerHTML = `<div class="error">❌ ERROR: ${err.message}<br>Check if the URL is correct and published to web.</div>`;
+                status.innerHTML = `<div class="error">❌ DEBUG ERROR: ${err.message}</div>`;
             }
         }
 
-        debugSheet();
+        // The Magic Logic: Correctly splits CSV even with "Commas, Inside, Quotes"
+        function parseCSV(text) {
+            const p = Array.from(text);
+            const rows = [];
+            let row = [''], inQuote = false, i = 0;
+            
+            p.forEach(char => {
+                if (char === '"' && p[i+1] === '"') { row[row.length-1] += '"'; i++; } // Handle escaped quotes
+                else if (char === '"') { inQuote = !inQuote; }
+                else if (char === ',' && !inQuote) { row.push(''); }
+                else if (char === '\n' && !inQuote) { rows.push(row); row = ['']; }
+                else { row[row.length-1] += char; }
+                i++;
+            });
+            rows.push(row);
+            return rows;
+        }
+
+        startDebug();
     </script>
 </body>
 </html>
