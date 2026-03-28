@@ -8,12 +8,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="india_styles.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
-
-    <style>
-        /* Ensure the cards have space to breathe */
-        #container { min-height: 400px; }
-        .loading-shimmer { color: #94a3b8; font-weight: 800; letter-spacing: -0.025em; }
-    </style>
 </head>
 
 <body class="bg-slate-50">
@@ -23,9 +17,7 @@
     <div class="max-w-7xl mx-auto mb-6 pt-10 px-4">
         <div class="flex justify-between items-end mb-6">
             <h1 class="text-5xl font-black text-slate-900 tracking-tighter">Nami Portfolio</h1>
-            <div id="portfolio-status" class="bg-slate-900 text-white px-4 py-1 rounded-full text-xs font-bold uppercase tracking-widest">
-                Initializing...
-            </div>
+            <div id="portfolio-status" class="funky-badge">Portfolio</div>
         </div>
     </div>
 
@@ -35,12 +27,10 @@
                 <img src="https://flagcdn.com/w40/in.png" class="w-6 h-auto rounded-sm shadow-sm">
                 <span>India</span>
             </button>
-        
             <button onclick="render('singapore')" class="px-8 py-3 bg-slate-800 text-white rounded-full font-bold hover:bg-slate-700 transition shadow-lg flex items-center gap-3">
                 <img src="https://flagcdn.com/w40/sg.png" class="w-6 h-auto rounded-sm shadow-sm">
                 <span>Singapore</span>
             </button>
-
             <button onclick="render('health')" class="px-8 py-3 bg-emerald-600 text-white rounded-full font-bold hover:bg-emerald-700 transition shadow-lg flex items-center gap-3">
                 <span class="material-symbols-outlined text-white">medical_services</span>
                 <span>Health</span>
@@ -58,12 +48,12 @@
     </div>
 
     <div id="summary-section" class="max-w-7xl mx-auto px-4 mb-10">
-        <div id="summary-bar" class="grid grid-cols-3 gap-6 bg-slate-900 p-8 rounded-[40px] text-white shadow-2xl relative overflow-hidden transition-all">
-            <div class="border-r border-slate-700 text-center pl-4">
+        <div id="summary-bar" class="grid grid-cols-3 gap-6 bg-slate-900 p-8 rounded-[40px] text-white shadow-2xl relative overflow-hidden">
+            <div id="sum-col-1" class="border-r border-slate-700 text-center pl-4">
                 <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Sum Assured</p>
                 <p id="total-sa" class="text-4xl font-black text-emerald-400">0</p>
             </div>
-            <div class="border-r border-slate-700 text-center">
+            <div id="sum-col-2" class="border-r border-slate-700 text-center">
                 <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Annual Premium</p>
                 <p id="total-premium" class="text-4xl font-black text-indigo-400">0</p>
             </div>
@@ -77,35 +67,29 @@
     <div id="container" class="max-w-7xl mx-auto pb-20 px-4"></div>
 
     <script type="module">
-        const APP_VERSION = "4.0.99";
+        const APP_VERSION = "4.1.01";
         document.getElementById('version-tag').innerText = `v${APP_VERSION}`;
 
-        // --- 1. ACCESS CONTROL ---
-        const SECRET_PIN = "SuhailNami";
+        // --- AUTH ---
         if (sessionStorage.getItem('nami_auth') !== 'true') {
-            const entry = prompt("Enter PIN to view Nami Portfolio:");
-            if (entry === SECRET_PIN) {
-                sessionStorage.setItem('nami_auth', 'true');
-            } else {
-                window.location.href = "https://www.google.com"; 
-                throw new Error("Auth Failed");
-            }
+            const entry = prompt("Enter PIN:");
+            if (entry === "SuhailNami") sessionStorage.setItem('nami_auth', 'true');
+            else { window.location.href = "https://google.com"; throw new Error("Auth Failed"); }
         }
 
-        // --- 2. DYNAMIC IMPORTS ---
-        // Importing functions from your individual files
-        const { fetchPortfolioData } = await import(`./loader.js?v=${APP_VERSION}`);
-        const { createPolicyCard } = await import(`./component_in.js?v=${APP_VERSION}`);
-        const { createSGCard } = await import(`./component_sg.js?v=${APP_VERSION}`);
-        const { createHealthCard } = await import(`./health.js?v=${APP_VERSION}`);
-        const { healthData } = await import(`./data_health.js?v=${APP_VERSION}`);
-        const { toNum, autoFmt } = await import(`./india.js?v=${APP_VERSION}`);
+        // --- IMPORTS ---
+        import { fetchPortfolioData } from `./loader.js?v=${APP_VERSION}`;
+        import { createPolicyCard } from `./component_in.js?v=${APP_VERSION}`;
+        import { createSGCard } from `./component_sg.js?v=${APP_VERSION}`;
+        import { createHealthCard } from `./health.js?v=${APP_VERSION}`;
+        import { healthData } from `./data_health.js?v=${APP_VERSION}`;
+        import { toNum, autoFmt } from `./india.js?v=${APP_VERSION}`;
 
         const TODAY = new Date();
         const CURRENT_YEAR = TODAY.getFullYear();
         window.currentCategory = 'india';
 
-        // Toggle Card Visibility
+        // Toggle Function
         window.toggleCard = (id) => {
             const card = document.getElementById(`card-${id}`);
             if(!card) return;
@@ -114,7 +98,6 @@
             if (!wasOpen) card.classList.add('open');
         };
 
-        // Date Parser
         const parseDate = (str) => {
             if (!str || str === "PAID UP" || str === "N/A") return new Date(9999, 0, 1);
             const clean = str.toString().replace(/\./g, ' ');
@@ -122,71 +105,70 @@
             return p.length < 3 ? new Date(9999, 0, 1) : new Date(`${p[1]} ${p[0]}, ${p[2]}`);
         };
 
-        // --- 3. THE RENDER ENGINE ---
+        // --- RENDER ENGINE ---
         window.render = async function(cat) {
             window.currentCategory = cat;
-            const sortBy = document.getElementById('sort-trigger').value;
             const container = document.getElementById('container');
             const summaryBar = document.getElementById('summary-bar');
             const statusBadge = document.getElementById('portfolio-status');
-            const sortContainer = document.getElementById('sort-container');
-
-            // Show Loading State
-            container.innerHTML = `<div class="py-20 text-center loading-shimmer animate-pulse text-2xl uppercase">Fetching Data...</div>`;
-
-            // Fetch Data from Google Sheets
-            const allData = await fetchPortfolioData();
-            
-            let list = [];
+            const sortBy = document.getElementById('sort-trigger').value;
             const sym = (cat === 'singapore') ? "$" : "₹";
 
-            if (cat === 'health') {
-                list = [...healthData];
-                statusBadge.innerText = "HEALTH PORTFOLIO";
-                sortContainer.classList.add('invisible');
-            } else {
-                const countryKey = (cat === 'india') ? "India" : "Singapore";
-                list = allData.filter(p => p.detectedCountry === countryKey);
-                statusBadge.innerText = `${cat.toUpperCase()} PORTFOLIO`;
-                sortContainer.classList.remove('invisible');
-            }
-
-            // Sorting Logic
+            // 1. Fetch live data
+            const allData = await fetchPortfolioData();
+            
+            // 2. Filter & Sort
+            let list = (cat === 'health') ? [...healthData] : allData.filter(p => p.detectedCountry === (cat === 'india' ? "India" : "Singapore"));
+            
             if (cat !== 'health') {
                 if (sortBy === 'premium') list.sort((a, b) => toNum(b.premiumNumeric) - toNum(a.premiumNumeric));
                 else if (sortBy === 'due') list.sort((a, b) => parseDate(a["Last Premium Date"]) - parseDate(b["Last Premium Date"]));
             }
 
-            // Render Cards to Container
+            // 3. Status Badge UI
+            const flag = (cat === 'india') ? 'in' : 'sg';
+            statusBadge.innerHTML = cat === 'health' ? 'HEALTH' : `<img src="https://flagcdn.com/w40/${flag}.png" class="w-5 h-auto inline mr-2 rounded-sm">${cat.toUpperCase()}`;
+
+            // 4. Render Cards using original components
             container.innerHTML = list.map(p => {
                 if (cat === 'health') return createHealthCard(p);
                 
-                // Construct the Clean Object for Components
+                // Re-mapping the Sheet data to the exact keys your original CSS expects
                 const policyData = {
                     ...p,
-                    name: p.name || p["Policy_Name"] || "Unnamed Policy",
+                    name: p.name || p["Policy_Name"] || "Unknown",
                     id: p["Policy No."] || "N/A",
                     sumAssured: p["Sum Assured"] || 0,
-                    commenced: (p["Policy Age"] || "01 Jan 2010").toString().replace(/\./g, ' '),
+                    // Ensuring dates are space-separated for timeline logic
+                    commenced: (p["Policy Age"] || p["Commencement Date"] || "01 Jan 2015").toString().replace(/\./g, ' '),
                     maturity: (p["Maturity Date"] || "01 Jan 2030").toString().replace(/\./g, ' '),
+                    premiumEnds: (p["Premium Ends"] || p["Maturity Date"] || "01 Jan 2030").toString().replace(/\./g, ' '),
                     color: p["Color_Code"] || "#962524",
-                    logo: p["Logo_Path"] || "image_4e0b3d.png"
+                    logo: p["Logo_Path"] || "image_4e0b3d.png",
+                    // Family flags
+                    isWife: p["Holder"]?.toLowerCase().includes("wife"),
+                    isDaughter: p["Holder"]?.toLowerCase().includes("daughter")
                 };
 
-                return (cat === 'singapore') ? createSGCard(policyData, sym, TODAY, CURRENT_YEAR) : createPolicyCard(policyData, sym, TODAY, CURRENT_YEAR);
+                return cat === 'singapore' ? createSGCard(policyData, sym, TODAY, CURRENT_YEAR) : createPolicyCard(policyData, sym, TODAY, CURRENT_YEAR);
             }).join('');
 
-            // Update Summary Bar
-            const tSA = list.reduce((acc, p) => acc + toNum(p["Sum Assured"] || 0), 0);
-            const tAnn = list.reduce((acc, p) => acc + (p["Status"] !== "PAID UP" ? toNum(p.premiumNumeric) : 0), 0);
-            const tVal = list.reduce((acc, p) => acc + toNum(p["currentUnitValue"] || 0), 0);
-
-            document.getElementById('total-sa').innerText = sym + Math.round(tSA).toLocaleString();
-            document.getElementById('total-premium').innerText = sym + Math.round(tAnn).toLocaleString();
-            document.getElementById('total-unit-value').innerText = sym + Math.round(tVal).toLocaleString();
+            // 5. Summary Calculations
+            updateSummaryTotals(cat, list, sym);
         };
 
-        // Initial Start
+        function updateSummaryTotals(cat, list, sym) {
+            const tSA = list.reduce((acc, p) => acc + toNum(p["Sum Assured"] || 0), 0);
+            const tAnn = list.reduce((acc, p) => acc + (p["Status"] !== "PAID UP" ? toNum(p.premiumNumeric) : 0), 0);
+            
+            // Reverting: Portfolio Value is not coming from sheet yet, so keeping it at 0 for now
+            const tValue = 0; 
+
+            document.getElementById('total-sa').innerText = sym + Math.round(tSA).toLocaleString('en-IN');
+            document.getElementById('total-premium').innerText = sym + Math.round(tAnn).toLocaleString('en-IN');
+            document.getElementById('total-unit-value').innerText = sym + Math.round(tValue).toLocaleString('en-IN');
+        }
+
         render('india');
     </script>
 </body>
