@@ -1,111 +1,169 @@
-<script type="module">
-    import { POLICY_DATA } from './data.js';
-    
-    const PIN = "1977"; 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Nami Mobile Portfolio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="mobile.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Inter:wght@400;700;900&display=swap');
+        .font-orbitron { font-family: 'Orbitron', sans-serif; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        body { -webkit-tap-highlight-color: transparent; background-color: #f8fafc; }
+    </style>
+</head>
+<body class="font-sans">
+    <div id="mobile-content" style="display:none;">
+        <div class="p-4 max-w-md mx-auto">
+            <h1 class="font-orbitron text-2xl font-black text-slate-900 mb-6 tracking-tighter uppercase">Nami Portfolio</h1>
+            
+            <div class="flex gap-2 mb-6 overflow-x-auto pb-2 no-scrollbar">
+                <button onclick="render('india')" class="px-6 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold shadow-lg transition-all active:scale-95">India</button>
+                <button onclick="render('singapore')" class="px-6 py-2 bg-slate-800 text-slate-200 rounded-xl text-xs font-bold shadow-md transition-all active:scale-95">Singapore</button>
+                <button onclick="render('health')" class="px-6 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold shadow-md transition-all active:scale-95">Health</button>
+            </div>
 
-    const toNum = (val) => {
-        if (!val) return 0;
-        if (typeof val === 'number') return val;
-        // Handle cases where premium might be an object or string
-        return parseFloat(val.toString().replace(/[^0-9.-]+/g, "")) || 0;
-    };
+            <div id="summary-bar" class="mb-8 shadow-2xl bg-slate-900 rounded-[30px] p-6 text-white flex flex-col gap-4">
+                <div>
+                    <p class="text-[9px] text-slate-500 uppercase font-black tracking-[0.2em] mb-1">Total Sum Assured</p>
+                    <p id="total-sa" class="text-emerald-400 font-orbitron font-black text-xl">₹0</p>
+                </div>
+                <div>
+                    <p class="text-[9px] text-slate-500 uppercase font-black tracking-[0.2em] mb-1">Annual Premium</p>
+                    <p id="total-premium" class="text-indigo-400 font-orbitron font-black text-xl">₹0</p>
+                </div>
+                <div>
+                    <p class="text-[9px] text-slate-500 uppercase font-black tracking-[0.2em] mb-1">Portfolio Value</p>
+                    <p id="total-unit-value" class="text-pink-500 font-orbitron font-black text-xl">₹0</p>
+                </div>
+            </div>
 
-    window.render = function(cat) {
-        const container = document.getElementById('container');
-        const list = POLICY_DATA[cat] || [];
+            <div id="container" class="space-y-4 pb-10"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { POLICY_DATA } from './data.js';
         
-        // 1. DYNAMIC CALCULATIONS
-        let tSA = 0, tAnn = 0, tVal = 0;
-        let sym = (cat === 'singapore') ? "$" : "₹";
+        const PIN = "1977"; 
 
-        list.forEach(p => {
-            tSA += toNum(p.sumAssured || p.coverage || 0);
-            tVal += toNum(p.currentUnitValue || 0);
-            
-            // Health specific premium logic (Cash + CPF)
-            if (cat === 'health') {
-                tAnn += (toNum(p.cashAmount) + (p.cpfAmount ? toNum(p.cpfAmount) : 0));
-            } else {
-                tAnn += (p.status !== "PAID UP" ? toNum(p.premium || p.annualPremium || p.amt) : 0);
-            }
-        });
+        const toNum = (val) => {
+            if (!val) return 0;
+            if (typeof val === 'number') return val;
+            return parseFloat(val.toString().replace(/[^0-9.-]+/g, "")) || 0;
+        };
 
-        document.getElementById('total-sa').innerText = sym + Math.round(tSA).toLocaleString();
-        document.getElementById('total-premium').innerText = sym + Math.round(tAnn).toLocaleString();
-        document.getElementById('total-unit-value').innerText = sym + Math.round(tVal).toLocaleString();
+        window.render = function(cat) {
+            const container = document.getElementById('container');
+            const list = POLICY_DATA[cat] || [];
+            let sym = (cat === 'singapore') ? "$" : "₹";
 
-        // 2. RENDER CARDS
-        container.innerHTML = list.map(p => {
-            const name = p.name || p.policyName || "Policy";
-            const sa = p.sumAssured || p.coverage || "0";
-            
-            // Logic to determine Premium display
-            let premiumDisplay = "";
-            if (cat === 'health') {
-                const totalHealthPrem = toNum(p.cashAmount) + (p.cpfAmount ? toNum(p.cpfAmount) : 0);
-                premiumDisplay = `${sym}${totalHealthPrem.toLocaleString()}`;
-            } else {
-                premiumDisplay = `${sym}${toNum(p.premium || p.annualPremium || p.amt).toLocaleString()}`;
-            }
+            // 1. Calculate Totals (Handling Health specific fields)
+            let tSA = 0, tAnn = 0, tVal = 0;
 
-            // Date mapping
-            const due = p.expiryDate || p.dueDate || p.nextPremiumDue || (p.status === 'PAID UP' ? 'COMPLETED' : 'N/A');
-            const mat = p.maturityDate || p.premiumEnds || p.expiryDate || 'N/A';
-            
-            // Owner/Assigned mapping (Family icons)
-            const owner = p.owner || p.assignedTo || "";
-            const icon = owner.toLowerCase().includes('man') || owner.toLowerCase().includes('father') ? '👨‍💼' : 
-                         owner.toLowerCase().includes('woman') || owner.toLowerCase().includes('mother') ? '👩‍💼' : 
-                         owner.toLowerCase().includes('daughter') ? '👧' : '🏥';
-
-            return `
-            <div class="bg-white rounded-[24px] p-6 border border-slate-100 shadow-sm relative overflow-hidden mb-4">
-                <div class="flex items-start gap-3 mb-4">
-                    <span class="text-xl mt-1">${icon}</span>
-                    <div>
-                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">${p.category || p.type || 'HEALTH'}</p>
-                        <h3 class="font-black text-slate-900 text-lg leading-tight">${name}</h3>
-                        <p class="text-[10px] text-slate-500 font-bold">${p.company || ''}</p>
-                    </div>
-                </div>
+            list.forEach(p => {
+                tSA += toNum(p.sumAssured || p.coverage || p.sum_assured || 0);
+                tVal += toNum(p.currentUnitValue || 0);
                 
-                <div class="grid grid-cols-2 gap-y-5 gap-x-4 border-t border-slate-50 pt-5">
-                    <div>
-                        <p class="text-[8px] font-black text-slate-400 uppercase tracking-tighter mb-1">Coverage</p>
-                        <p class="font-bold text-slate-900 text-sm">${sym}${toNum(sa).toLocaleString()}</p>
-                    </div>
-                    <div>
-                        <p class="text-[8px] font-black text-slate-400 uppercase tracking-tighter mb-1">Premium</p>
-                        <p class="font-bold text-indigo-600 text-sm">${premiumDisplay}</p>
-                    </div>
-                    <div>
-                        <p class="text-[8px] font-black text-slate-400 uppercase tracking-tighter mb-1">Expiry Date</p>
-                        <p class="font-bold text-slate-600 text-[11px]">${due}</p>
-                    </div>
-                    <div>
-                        <p class="text-[8px] font-black text-slate-400 uppercase tracking-tighter mb-1">Company</p>
-                        <p class="font-bold text-slate-600 text-[11px] truncate">${p.company || 'N/A'}</p>
-                    </div>
-                </div>
-            </div>`;
-        }).join('');
-    };
+                if (cat === 'health') {
+                    // Health Total = Cash + CPF (if exists)
+                    tAnn += (toNum(p.cashAmount) + (p.cpfAmount ? toNum(p.cpfAmount) : 0));
+                } else {
+                    tAnn += (p.status !== "PAID UP" ? toNum(p.premium || p.annualPremium || p.amt) : 0);
+                }
+            });
 
-    // Auth and Init
-    document.addEventListener('DOMContentLoaded', () => {
-        const contentDiv = document.getElementById('mobile-content');
-        if (sessionStorage.getItem('nami_auth') === 'true') {
-            contentDiv.style.display = 'block';
-            render('india');
-        } else {
-            const entry = prompt("Enter PIN:");
-            if (entry === PIN) {
-                sessionStorage.setItem('nami_auth', 'true');
+            document.getElementById('total-sa').innerText = sym + Math.round(tSA).toLocaleString();
+            document.getElementById('total-premium').innerText = sym + Math.round(tAnn).toLocaleString();
+            document.getElementById('total-unit-value').innerText = sym + Math.round(tVal).toLocaleString();
+
+            // 2. Map Family Icons
+            const getIcon = (item) => {
+                const identifier = (item.owner || item.assignedTo || "").toLowerCase();
+                if (identifier.includes('father') || identifier.includes('man')) return '👨‍💼';
+                if (identifier.includes('mother') || identifier.includes('woman')) return '👩‍💼';
+                if (identifier.includes('daughter')) return '👧';
+                if (identifier.includes('family')) return '👨‍👩‍👧';
+                return '📄';
+            };
+
+            // 3. Render Cards
+            container.innerHTML = list.map(p => {
+                const name = p.name || p.policyName || "Policy";
+                const sa = p.sumAssured || p.coverage || p.sum_assured || "0";
+                
+                // Flexible Premium Display
+                let premVal = (cat === 'health') ? 
+                    (toNum(p.cashAmount) + (p.cpfAmount ? toNum(p.cpfAmount) : 0)) : 
+                    toNum(p.premium || p.annualPremium || p.amt);
+
+                // Date mapping
+                const due = p.expiryDate || p.dueDate || p.nextPremiumDue || (p.status === 'PAID UP' ? 'COMPLETED' : 'N/A');
+                const mat = p.maturityDate || p.premiumEnds || p.expiryDate || 'N/A';
+
+                return `
+                <div class="bg-white rounded-[24px] p-6 border border-slate-100 shadow-sm relative overflow-hidden mb-4">
+                    ${p.status === "PAID UP" ? '<div class="absolute top-0 right-0 bg-emerald-500 text-white text-[8px] font-black px-3 py-1 rounded-bl-lg uppercase">PAID UP</div>' : ''}
+                    
+                    <div class="flex items-start gap-3 mb-4">
+                        <span class="text-xl mt-1">${getIcon(p)}</span>
+                        <div>
+                            <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">${p.type || p.category || 'PLAN'}</p>
+                            <h3 class="font-black text-slate-900 text-lg leading-tight">${name}</h3>
+                            <p class="text-[10px] text-slate-500 font-bold">${p.company || ''}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-y-5 gap-x-4 border-t border-slate-50 pt-5">
+                        <div>
+                            <p class="text-[8px] font-black text-slate-400 uppercase tracking-tighter mb-1">${cat === 'health' ? 'Coverage' : 'Sum Assured'}</p>
+                            <p class="font-bold text-slate-900 text-sm">${sym}${toNum(sa).toLocaleString()}</p>
+                        </div>
+                        <div>
+                            <p class="text-[8px] font-black text-slate-400 uppercase tracking-tighter mb-1">Premium</p>
+                            <p class="font-bold text-indigo-600 text-sm">${sym}${premVal.toLocaleString()}</p>
+                        </div>
+                        <div>
+                            <p class="text-[8px] font-black text-slate-400 uppercase tracking-tighter mb-1">${cat === 'health' ? 'Expiry' : 'Maturity'}</p>
+                            <p class="font-bold text-slate-600 text-[11px]">${mat}</p>
+                        </div>
+                        <div>
+                            <p class="text-[8px] font-black text-slate-400 uppercase tracking-tighter mb-1">Next Due</p>
+                            <p class="font-bold ${due === 'COMPLETED' ? 'text-emerald-500' : 'text-slate-600'} text-[11px]">${due}</p>
+                        </div>
+
+                        ${p.currentUnitValue ? `
+                        <div class="col-span-2 bg-pink-50 p-3 rounded-xl border border-pink-100 mt-1">
+                             <p class="text-[8px] font-black text-pink-400 uppercase tracking-tighter mb-1">Portfolio Value</p>
+                             <p class="font-black text-pink-600 text-md">${sym}${toNum(p.currentUnitValue).toLocaleString()}</p>
+                        </div>` : ''}
+                    </div>
+                </div>`;
+            }).join('');
+        };
+
+        // --- AUTH & INIT ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const contentDiv = document.getElementById('mobile-content');
+            
+            const init = () => {
                 contentDiv.style.display = 'block';
                 render('india');
+            };
+
+            if (sessionStorage.getItem('nami_auth') === 'true') {
+                init();
             } else {
-                window.location.href = "https://google.com";
+                const entry = prompt("Enter PIN:");
+                if (entry === PIN) {
+                    sessionStorage.setItem('nami_auth', 'true');
+                    init();
+                } else {
+                    window.location.href = "https://google.com";
+                }
             }
-        }
-    });
-</script>
+        });
+    </script>
+</body>
+</html>
