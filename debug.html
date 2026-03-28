@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sheet Debugger</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #1a1a1a; color: #00ff00; }
+        .row { border-bottom: 1px solid #333; padding: 10px; margin-bottom: 10px; }
+        .header { color: #ff00ff; font-weight: bold; }
+        .error { color: #ff4444; border: 2px solid red; padding: 10px; }
+    </style>
+</head>
+<body>
+    <h2>🔍 Google Sheet Raw Diagnostic</h2>
+    <div id="status">Connecting to Google...</div>
+    <div id="output"></div>
+
+    <script type="module">
+        const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2UwOfG57DQBOBnJX-9hsRKOQTUgALiM3uxs-VGzD2KN8JoWNAQltH6IkgAGhPTNFEvb/pub?gid=866869416&single=true&output=csv";
+
+        async function debugSheet() {
+            const status = document.getElementById('status');
+            const output = document.getElementById('output');
+
+            try {
+                // 1. Fetch with Cache Buster
+                const response = await fetch(SHEET_URL + `&t=${Date.now()}`);
+                
+                // 2. Decode with UTF-8 to check for the â symbol issue
+                const buffer = await response.arrayBuffer();
+                const decoder = new TextDecoder('utf-8');
+                const rawText = decoder.decode(buffer);
+
+                status.innerHTML = "✅ Connection Successful. Parsing Rows...";
+
+                const lines = rawText.split('\n').filter(l => l.trim() !== "");
+                const headers = lines[0].split(',').map(h => h.trim());
+
+                output.innerHTML += `<div class="row header">HEADERS DETECTED: <br>${headers.join(' | ')}</div>`;
+
+                lines.slice(1).forEach((line, index) => {
+                    const values = line.split(',').map(v => v.trim());
+                    let rowHtml = `<div class="row"><strong>Row ${index + 1}:</strong><br>`;
+                    
+                    headers.forEach((h, i) => {
+                        rowHtml += `[${h}]: <span style="color:white">${values[i] || 'EMPTY'}</span><br>`;
+                    });
+                    
+                    rowHtml += `</div>`;
+                    output.innerHTML += rowHtml;
+                });
+
+            } catch (err) {
+                status.innerHTML = `<div class="error">❌ ERROR: ${err.message}<br>Check if the URL is correct and published to web.</div>`;
+            }
+        }
+
+        debugSheet();
+    </script>
+</body>
+</html>
