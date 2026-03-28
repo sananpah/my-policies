@@ -10,56 +10,39 @@ const CURRENT_YEAR = TODAY.getFullYear();
  * Main initializer for the India Portfolio
  */
 async function initIndia() {
-    // 1. Fetch all rows from Google Sheets via loader.js
     const allData = await fetchPortfolioData();
     
-    // 2. Filter for Indian Policies 
-    // Logic: loader.js detects 'India' if the Premium attribute contains '₹'
-    const indiaPolicies = allData.filter(row => row.detectedCountry === "India");
+    // Filter for India (identified by the currency check in loader)
+    const indiaPolicies = allData.filter(p => p.detectedCountry === "India");
 
     const container = document.getElementById('india-container');
     if (!container) return;
-    
-    // Clear existing static content
     container.innerHTML = ''; 
 
-    // 3. Render each policy card using the parsed data from the Sheet
     indiaPolicies.forEach(p => {
-        /**
-         * Mapping the Sheet data to the format expected by component_in.js
-         * Uses the 'p.name' and 'p.company' that were parsed from 
-         * "Insurance [Investment].Name of the policy" in loader.js
-         */
         const policyData = {
             ...p,
-            name: p.name || p["Policy_Name"] || "Unnamed Policy", 
-            company: p.company || "Insurance",
-            premium: p.premiumNumeric,   // Numeric value for calculations
+            // These come from the parseInsuranceTab logic in loader.js
+            name: p.name,      
+            company: p.company, 
+            premium: p.premiumNumeric,
             
-            // Explicitly mapping Excel headers to component attributes
-            id: p["Policy Number"],
-            sumAssured: p["Sum Assured"],
-            commenced: p["Commencement Date"],
-            premiumEnds: p["Premium End Date"],
-            maturity: p["Maturity Date"],
-            nextDueDate: p["Next Due Date"],
+            // MAP YOUR SPECIFIC SHEET HEADERS HERE
+            id: p["Policy No."] || "N/A",
+            sumAssured: p["Sum Assured"] || 0,
+            commenced: p["Policy Age"] || "N/A", // Or your commencement column
+            maturity: p["Maturity Date"] || "N/A",
+            nextDueDate: p["Last Premium Date"] || "N/A",
             status: p["Status"] || "Active",
-            color: p["Color Code"] || "#962524",
-            logo: p["Logo Path"] || "default-logo.png"
+            color: p["Color_Code"] || "#962524",
+            logo: p["Logo_Path"] || "image_4e0b3d.png"
         };
 
-        // Generate the HTML using the existing component logic
-        // Passing "₹" as the currency symbol
         const cardHtml = createPolicyCard(policyData, "₹", TODAY, CURRENT_YEAR);
-        
-        // Inject into the container
         const wrapper = document.createElement('div');
         wrapper.innerHTML = cardHtml;
         container.appendChild(wrapper.firstElementChild);
     });
-
-    // Update Top Summary
-    updateSummary(indiaPolicies, "₹");
 }
 
 /**
