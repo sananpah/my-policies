@@ -277,3 +277,38 @@ body {
     from { opacity: 0; transform: translateY(-5px); }
     to { opacity: 1; transform: translateY(0); }
 }
+
+/* --- MOBILE TOGGLE OVERRIDES --- */
+
+/* Force the main container to shrink */
+.mobile-view .max-w-7xl {
+    max-width: 450px !important;
+    margin: 0 auto !important;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+}
+
+/* Stack the Summary Bar (The 3 Large Info Boxes) */
+.mobile-view #summary-bar.grid-cols-3 {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+    padding: 1.5rem !important;
+}
+
+/* Make the Navigation Buttons stack vertically */
+.mobile-view .nav-container {
+    flex-direction: column !important;
+    width: 100% !important;
+    gap: 0.5rem !important;
+}
+
+.mobile-view .nav-button {
+    width: 100% !important;
+    justify-content: center !important;
+}
+
+/* Card Adjustments */
+.mobile-view .policy-card {
+    border-left-width: 10px !important; /* Thinner border for more screen space */
+    border-radius: 24px !important;   /* Slightly tighter corners */
+}
