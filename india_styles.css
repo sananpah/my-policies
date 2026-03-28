@@ -229,3 +229,9 @@ body {
     margin-left: 14px;
     color: #94a3b8;
 }
+
+.funky-badge-v2 {
+    box-shadow: 2px 2px 0px rgba(0,0,0,0.05);
+    transform: skewX(-10deg); /* This makes it look really funky */
+    display: inline-block;
+}
