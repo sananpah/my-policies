@@ -1,4 +1,4 @@
-/* component_in.js - v1.5.1 - Restored Desktop View & Sync */
+/* component_in.js - v1.5.3 - Full Card Blink for Due Soon */
 import { checkIsDueSoon, autoFmt, toNum, raw } from './india.js';
 
 export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR, isMobile = false) {
@@ -50,7 +50,11 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR, isMobile = false) 
     const brandColor = p.color || "#000000";
     const brandBg = `rgba(${parseInt(brandColor.slice(1,3), 16)}, ${parseInt(brandColor.slice(3,5), 16)}, ${parseInt(brandColor.slice(5,7), 16)}, 0.04)`;
 
-    // --- RESTORED TIMELINE LOGIC ---
+    // DUE SOON LOGIC FOR FULL CARD BLINK
+    const isDueSoon = !isPaidUp && checkIsDueSoon(finalDueDate);
+    const blinkClass = isDueSoon ? "animate-card-pulse border-red-400" : "";
+
+    // --- TIMELINE LOGIC ---
     let timelineHtml = '';
     for(let yr = startY; yr < matY; yr++) {
         const polY = yr - startY + 1;
@@ -80,20 +84,18 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR, isMobile = false) 
                 detail = "Accumulating Value";
             }
         }
-        // Restored Tooltip Class to original structure
         timelineHtml += `<div class="segment ${color}"><div class="tooltip"><b class="text-emerald-400 uppercase tracking-tighter">${phase}</b><br>${detail}<br><span class="opacity-40 text-[9px]">Year ${polY} (${yr})</span></div></div>`;
     }
 
     timelineHtml += `<div class="mat-star">★<div class="tooltip"><b class="text-orange-400 uppercase tracking-widest">Maturity</b><br><span class="${String(p.maturityAmt || p.sumAssured).length > 15 ? 'text-[10px]' : 'text-lg'} font-black">${raw(p.maturityAmt || p.sumAssured)}</span></div></div>`;
 
-    // --- RESTORED HEADER & STATS CLASSES ---
     const headerClasses = isMobile ? "flex flex-col items-start gap-4 p-6" : "card-header flex items-center";
     const logoContainerClasses = isMobile ? "w-full flex justify-start mb-2" : "w-32 flex justify-center";
     const statsContainerClasses = isMobile ? "flex flex-col gap-4 w-full mt-4" : "flex gap-12 items-center mr-6";
     const textMargin = isMobile ? "ml-0" : "ml-10";
 
     return `
-    <div class="policy-card mb-6" id="card-${p.id}" style="border-left: ${isMobile ? '10px' : '16px'} solid ${brandColor};">
+    <div class="policy-card mb-6 transition-all duration-500 ${blinkClass}" id="card-${p.id}" style="border-left: ${isMobile ? '10px' : '16px'} solid ${brandColor};">
         <div class="${headerClasses} transition-colors" style="background: ${brandBg};" onclick="toggleCard('${p.id}')">
             <div class="${logoContainerClasses}">
                 <img src="${p.logo}" class="max-h-10 ${isMobile ? '' : 'max-h-12'}">
@@ -130,7 +132,7 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR, isMobile = false) 
                     <div class="bg-white/60 p-2 rounded-xl border border-white/50 shadow-sm flex ${isMobile ? 'justify-between items-center' : 'flex-col'}">
                         <div>
                             <p class="text-[9px] font-bold text-slate-400 uppercase leading-none mb-1">Next Due</p>
-                            <div class="font-black text-[11px] ${checkIsDueSoon(finalDueDate) ? 'text-red-500 animate-pulse' : 'text-slate-900'}">${finalDueDate}</div>
+                            <div class="font-black text-[11px] ${isDueSoon ? 'text-red-600' : 'text-slate-900'}">${finalDueDate}</div>
                         </div>
                         ${isMobile ? '<div class="w-[1px] h-6 bg-slate-200 mx-2"></div>' : '<div class="h-[1px] bg-slate-200/50 w-full my-1"></div>'}
                         <div>
