@@ -3,13 +3,10 @@ const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2
 
 export async function fetchPortfolioData() {
     try {
-        // Add a timestamp to the URL to force the browser to get fresh data
-        const cacheBuster = `&t=${new Date().getTime()}`;
-        const response = await fetch(SHEET_URL + cacheBuster);
+        const response = await fetch(SHEET_URL + `&t=${Date.now()}`);
         const buffer = await response.arrayBuffer();
         const decoder = new TextDecoder('utf-8'); 
         const csvData = decoder.decode(buffer);
-        
         return processCSV(csvData);
     } catch (error) {
         console.error("Error fetching sheet:", error);
@@ -17,25 +14,43 @@ export async function fetchPortfolioData() {
     }
 }
 
-/* loader.js */
 function processCSV(csv) {
-    const lines = csv.split("\n").filter(line => line.trim() !== "");
-    const headers = lines[0].split(",").map(h => h.trim().replace(/^"|"$/g, ''));
-    
-    return lines.slice(1).map(line => {
-        const values = line.split(",").map(v => v.trim().replace(/^"|"$/g, ''));
-        const row = {};
-        headers.forEach((header, i) => { row[header] = values[i]; });
+    // 1. Advanced Parse (Handles quotes, commas in numbers, and multi-line cells)
+    const rows = [];
+    let row = [''], inQuote = false;
+    for (let i = 0; i < csv.length; i++) {
+        const char = csv[i];
+        if (char === '"' && csv[i+1] === '"') { row[row.length-1] += '"'; i++; }
+        else if (char === '"') { inQuote = !inQuote; }
+        else if (char === ',' && !inQuote) { row.push(''); }
+        else if (char === '\n' && !inQuote) { rows.push(row); row = ['']; }
+        else { row[row.length-1] += char; }
+    }
+    rows.push(row);
+
+    // 2. Identify the Header Row (Looking for Policy_Name)
+    const headerIdx = rows.findIndex(r => r.some(cell => cell && cell.includes("Policy_Name")));
+    if (headerIdx === -1) return [];
+
+    const headers = rows[headerIdx].map(h => h.trim());
+    const dataRows = rows.slice(headerIdx + 1);
+
+    // 3. Map Data and Filter out empty fragments
+    return dataRows.map(rowData => {
+        const obj = {};
+        headers.forEach((h, i) => { if(h) obj[h] = (rowData[i] || "").trim(); });
         
-        // EXCLUSIVE: Pass the row to the parser
-        return parseInsuranceTab(row);
-    });
+        // Skip if Policy_Name is missing (fragment/empty row)
+        if (!obj["Policy_Name"] || obj["Policy_Name"] === "EMPTY") return null;
+
+        return parseInsuranceTab(obj);
+    }).filter(r => r !== null);
 }
 
 function parseInsuranceTab(row) {
-    const rawFullName = row["Policy_Name"] || ""; 
+    const rawFullName = row["Policy_Name"] || "";
 
-    // 1. Split logic
+    // Split "Company : Name"
     if (rawFullName.includes(":")) {
         const parts = rawFullName.split(":");
         row.company = parts[0].trim();
@@ -45,24 +60,12 @@ function parseInsuranceTab(row) {
         row.name = rawFullName;
     }
 
-    // 2. SMART COUNTRY DETECTION (Handles broken encoding)
-    const premiumAttr = row["Premium"] || "";
+    // Country Detection (Handles symbols and the 'â' mojibake)
+    const prem = row["Premium"] || "";
+    row.detectedCountry = (prem.includes("₹") || prem.includes("â")) ? "India" : "Singapore";
     
-    // Check for ₹ OR the broken 'â' sequence
-    const isIndia = premiumAttr.includes("₹") || premiumAttr.includes("â");
-    const isSingapore = premiumAttr.includes("$");
-
-    if (isIndia) {
-        row.detectedCountry = "India";
-    } else if (isSingapore) {
-        row.detectedCountry = "Singapore";
-    } else {
-        row.detectedCountry = "Other";
-    }
-
-    // 3. CLEAN NUMERIC VALUE
-    // We remove ALL non-numeric characters (including the broken â symbols)
-    row.premiumNumeric = parseFloat(premiumAttr.replace(/[^\d.]/g, "")) || 0;
+    // Clean Numeric Value (Removes symbols, commas, and spaces)
+    row.premiumNumeric = parseFloat(prem.replace(/[^\d.]/g, "")) || 0;
 
     return row;
 }
