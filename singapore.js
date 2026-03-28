@@ -15,7 +15,6 @@ window.renderSingapore = function() {
                 const year = startYear + i;
                 const polY = i + 1;
                 
-                // DYNAMIC CHECKS: No more hardcoding 2026
                 const isPast = year < window.CURRENT_YEAR; 
                 const isCurrent = year === window.CURRENT_YEAR;
                 
@@ -25,7 +24,6 @@ window.renderSingapore = function() {
                                ? p.surrenderCharges[polY] 
                                : 0;
 
-                // Visual Logic: Highlighting the actual current year
                 let colorClass = isCurrent 
                     ? "bg-red-600 shadow-[0_0_15px_rgba(211,17,69,0.6)] scale-110 z-10" 
                     : (isPast ? "bg-slate-400" : "bg-red-200");
@@ -41,11 +39,21 @@ window.renderSingapore = function() {
                     </div>`;
             }
 
+            // --- STAR LOGIC INTEGRATION ---
+            // Checking status for maturity star matching India look & feel
+            const isMatured = p.status === "Matured" || p.isMatured;
+            const starHtml = isMatured 
+                ? `<span class="maturity-star cursor-help ml-2 transition-transform duration-300 hover:scale-125 inline-block" title="Matured on: ${p.maturityDate || 'N/A'}">⭐</span>` 
+                : '';
+
             container.innerHTML += `
                 <div class="policy-card bg-white rounded-3xl shadow-xl overflow-hidden mb-8 border-l-[16px]" style="border-color: ${p.color}">
                     <div class="p-8 flex items-center justify-between">
                         <div>
-                            <h3 class="text-2xl font-black text-slate-800">${p.name}</h3>
+                            <div class="flex items-center">
+                                <h3 class="text-2xl font-black text-slate-800">${p.name}</h3>
+                                ${starHtml}
+                            </div>
                             <div class="flex gap-2 mt-1">
                                 <span class="text-[10px] bg-slate-100 px-2 py-1 rounded font-bold text-slate-500 uppercase">${p.company}</span>
                                 <span class="text-[10px] bg-red-600 px-2 py-1 rounded font-bold text-white uppercase">${p.type}</span>
@@ -73,8 +81,6 @@ window.renderSingapore = function() {
                             </div>
                         </div>
 
-                        
-
                         <div class="relative pt-6">
                             <div class="flex gap-1 items-end h-10">
                                 ${timelineHtml}
@@ -93,10 +99,13 @@ window.renderSingapore = function() {
     updateSummary(list, "$");
 };
 
-// Simple summary updater to avoid duplication
 function updateSummary(list, sym) {
     const totalPrem = list.reduce((sum, pol) => sum + pol.premium, 0);
-    document.getElementById('total-sa').innerText = "Market Value";
-    document.getElementById('total-sa-label').innerText = "Portfolio Basis";
-    document.getElementById('total-premium').innerText = sym + totalPrem.toLocaleString();
+    const saElem = document.getElementById('total-sa');
+    const saLabel = document.getElementById('total-sa-label');
+    const premElem = document.getElementById('total-premium');
+    
+    if(saElem) saElem.innerText = "Market Value";
+    if(saLabel) saLabel.innerText = "Portfolio Basis";
+    if(premElem) premElem.innerText = sym + totalPrem.toLocaleString();
 }
