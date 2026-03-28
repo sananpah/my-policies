@@ -19,25 +19,27 @@ async function initIndia() {
     if (!container) return;
     container.innerHTML = ''; 
 
+    /* india.js - Inside the loop */
     indiaPolicies.forEach(p => {
         const policyData = {
             ...p,
-            // These come from the parseInsuranceTab logic in loader.js
-            name: p.name,      
-            company: p.company, 
-            premium: p.premiumNumeric,
+            // CRITICAL: This must match what parseInsuranceTab creates
+            name: p.name || "N/A",      
+            company: p.company || "N/A", 
+            premium: p.premiumNumeric || 0,
             
-            // MAP YOUR SPECIFIC SHEET HEADERS HERE
+            // Use the exact headers seen in your Debug Bar
             id: p["Policy No."] || "N/A",
             sumAssured: p["Sum Assured"] || 0,
-            commenced: p["Policy Age"] || "N/A", // Or your commencement column
-            maturity: p["Maturity Date"] || "N/A",
+            commenced: p["Policy Age"] || "01 Jan 2015", 
+            maturity: p["Maturity Date"] || "01 Jan 2030",
             nextDueDate: p["Last Premium Date"] || "N/A",
             status: p["Status"] || "Active",
             color: p["Color_Code"] || "#962524",
             logo: p["Logo_Path"] || "image_4e0b3d.png"
         };
-
+    
+        // This calls the function that actually builds the HTML
         const cardHtml = createPolicyCard(policyData, "₹", TODAY, CURRENT_YEAR);
         const wrapper = document.createElement('div');
         wrapper.innerHTML = cardHtml;
