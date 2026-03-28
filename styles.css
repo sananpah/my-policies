@@ -79,7 +79,34 @@ h2.region-title { margin: 40px 0 20px; padding-left: 10px; border-left: 4px soli
     100% { box-shadow: 0 0 5px var(--neon-green); transform: scale(1); }
 }
 
-.status-due { font-size: 12px; color: var(--text-muted); font-weight: 600; }
+.status-due { 
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 600;
+}
 
-.stat { display: flex; justify-content: space-between; margin: 8px 0; font-size: 14px; }
-.income-highlight { color: #2c3e50; font-weight: bold; background: #f8fafc; padding: 5px; border-radius: 4px; }
+.stat { 
+    display: flex;
+    justify-content: space-between;
+    margin: 8px 0;
+    font-size: 14px;
+}
+
+.income-highlight { 
+    color: #2c3e50;
+    font-weight: bold;
+    background: #f8fafc;
+    padding: 5px;
+    border-radius: 4px;
+}
+
+.maturity-star {
+    display: inline-block;
+    cursor: help;
+    transition: all 0.3s ease-in-out;
+}
+
+.maturity-star:hover {
+    transform: scale(1.3) rotate(15deg);
+    filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.7));
+}
