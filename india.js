@@ -6,59 +6,51 @@ const TODAY = new Date();
 const CURRENT_YEAR = TODAY.getFullYear();
 
 async function initIndia() {
+    console.log("1. initIndia started...");
     const allData = await fetchPortfolioData();
     
-    // Filter for India
-    const indiaPolicies = allData.filter(p => p.detectedCountry === "India");
+    console.log("2. Total rows received from loader:", allData.length);
+    if (allData.length === 0) {
+        alert("DIAGNOSTIC: Loader returned 0 records. Check your Google Sheet URL.");
+        return;
+    }
+
+    // --- TEMPORARY: REMOVE FILTER TO SEE EVERYTHING ---
+    const indiaPolicies = allData; 
+    console.log("3. Showing ALL records (Filter temporarily disabled)");
 
     const container = document.getElementById('india-container');
-    if (!container) return;
+    if (!container) {
+        console.error("4. ERROR: Could not find 'india-container' in your HTML.");
+        return;
+    }
     container.innerHTML = ''; 
 
-    indiaPolicies.forEach(p => {
-        // --- DEBUG: Open your F12 Console to see this ---
-        console.log("Raw row from loader:", p);
+    indiaPolicies.forEach((p, index) => {
+        console.log(`5. Processing Record #${index + 1}:`, p);
 
         const policyData = {
-            // 1. Copy everything from the loader first
-            ...p, 
-            
-            // 2. DEEP SCAN for the Name. 
-            // We check: parsed name, then raw column name, then first value in object.
-            name: p.name || p["Policy_Name"] || p["Policy Name"] || Object.values(p)[0] || "Name Error",
-            
-            // 3. Mapping other fields with fallbacks
-            id: p["Policy No."] || p["Policy No"] || "N/A",
+            ...p,
+            // Grab name from literally anywhere in the object if p.name is missing
+            name: p.name || p["Policy_Name"] || Object.values(p)[0] || "Unknown",
+            id: p["Policy No."] || "N/A",
             sumAssured: p["Sum Assured"] || 0,
-            
-            // Convert dots to spaces (e.g., 31.Jan.2024 -> 31 Jan 2024)
-            commenced: (p["Policy Age"] || p["Commencement Date"] || "01 Jan 2010").toString().replace(/\./g, ' '),
+            commenced: (p["Policy Age"] || "01 Jan 2010").toString().replace(/\./g, ' '),
             maturity: (p["Maturity Date"] || "01 Jan 2030").toString().replace(/\./g, ' '),
-            premiumEnds: (p["Premium Ends"] || p["Maturity Date"] || "01 Jan 2030").toString().replace(/\./g, ' '),
-            nextDueDate: (p["Last Premium Date"] || "N/A").toString().replace(/\./g, ' '),
-            
-            type: p["Category"] || p["Type"] || "Insurance",
+            type: p["Category"] || "Insurance",
             color: p["Color_Code"] || "#962524",
             logo: p["Logo_Path"] || "image_4e0b3d.png"
         };
 
         try {
-            // Pass the newly built policyData
             const cardHtml = createPolicyCard(policyData, "₹", TODAY, CURRENT_YEAR);
             const wrapper = document.createElement('div');
             wrapper.innerHTML = cardHtml;
-            
-            if (wrapper.firstElementChild) {
-                container.appendChild(wrapper.firstElementChild);
-            }
+            container.appendChild(wrapper.firstElementChild);
         } catch (e) { 
-            console.error("Card Crash for policy:", policyData.name, e); 
+            console.error("6. Card Rendering Failed:", e); 
         }
     });
-    
-    if (typeof updateSummary === "function") {
-        updateSummary(indiaPolicies, "₹");
-    }
 }
 
 function updateSummary(list, sym) {
