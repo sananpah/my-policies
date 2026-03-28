@@ -67,7 +67,7 @@
     <div id="container" class="max-w-7xl mx-auto pb-20 px-4"></div>
 
     <script type="module">
-        const APP_VERSION = "4.1.01";
+        const APP_VERSION = "4.1.02";
         document.getElementById('version-tag').innerText = `v${APP_VERSION}`;
 
         // --- AUTH ---
@@ -76,15 +76,26 @@
             if (entry === "SuhailNami") sessionStorage.setItem('nami_auth', 'true');
             else { window.location.href = "https://google.com"; throw new Error("Auth Failed"); }
         }
-
-        // --- IMPORTS ---
-        import { fetchPortfolioData } from `./loader.js?v=${APP_VERSION}`;
-        import { createPolicyCard } from `./component_in.js?v=${APP_VERSION}`;
-        import { createSGCard } from `./component_sg.js?v=${APP_VERSION}`;
-        import { createHealthCard } from `./health.js?v=${APP_VERSION}`;
-        import { healthData } from `./data_health.js?v=${APP_VERSION}`;
-        import { toNum, autoFmt } from `./india.js?v=${APP_VERSION}`;
-
+        
+        // --- 2. DYNAMIC IMPORTS (Corrected Syntax) ---
+        // We use Promise.all to load everything at once safely
+        const [Loader, IndiaComp, SGComp, HealthComp, HealthDataFile, IndiaTools] = await Promise.all([
+            import(`./loader.js?v=${APP_VERSION}`),
+            import(`./component_in.js?v=${APP_VERSION}`),
+            import(`./component_sg.js?v=${APP_VERSION}`),
+            import(`./health.js?v=${APP_VERSION}`),
+            import(`./data_health.js?v=${APP_VERSION}`),
+            import(`./india.js?v=${APP_VERSION}`)
+        ]);
+        
+        // Extract the functions from the loaded files
+        const { fetchPortfolioData } = Loader;
+        const { createPolicyCard } = IndiaComp;
+        const { createSGCard } = SGComp;
+        const { createHealthCard } = HealthComp;
+        const { healthData } = HealthDataFile;
+        const { toNum, autoFmt } = IndiaTools;
+        
         const TODAY = new Date();
         const CURRENT_YEAR = TODAY.getFullYear();
         window.currentCategory = 'india';
