@@ -45,6 +45,8 @@
 
     <script type="module">
         import { POLICY_DATA } from './data.js';
+        // IMPORT HEALTH DATA FROM THE SECOND FILE
+        import { healthData } from './data_health.js';
         
         const PIN = "1977"; 
 
@@ -56,21 +58,28 @@
 
         window.render = function(cat) {
             const container = document.getElementById('container');
-            const list = POLICY_DATA[cat] || [];
-            let sym = (cat === 'singapore') ? "$" : "₹";
+            
+            // LOGIC TO SELECT DATA SOURCE
+            let list = [];
+            if (cat === 'health') {
+                list = healthData; // Use the healthData array directly
+            } else {
+                list = POLICY_DATA[cat] || [];
+            }
 
-            // 1. Calculate Totals (Handling Health specific fields)
+            let sym = (cat === 'singapore' || (cat === 'health' && list.length > 0 && list[0].currency === 'SGD')) ? "$" : "₹";
+
             let tSA = 0, tAnn = 0, tVal = 0;
 
             list.forEach(p => {
-                tSA += toNum(p.sumAssured || p.coverage || p.sum_assured || 0);
+                tSA += toNum(p.sumAssured || p.coverage || 0);
                 tVal += toNum(p.currentUnitValue || 0);
                 
                 if (cat === 'health') {
-                    // Health Total = Cash + CPF (if exists)
+                    // Combine Cash + CPF for Health
                     tAnn += (toNum(p.cashAmount) + (p.cpfAmount ? toNum(p.cpfAmount) : 0));
                 } else {
-                    tAnn += (p.status !== "PAID UP" ? toNum(p.premium || p.annualPremium || p.amt) : 0);
+                    tAnn += (p.status !== "PAID UP" ? toNum(p.premium || p.annualPremium) : 0);
                 }
             });
 
@@ -78,87 +87,65 @@
             document.getElementById('total-premium').innerText = sym + Math.round(tAnn).toLocaleString();
             document.getElementById('total-unit-value').innerText = sym + Math.round(tVal).toLocaleString();
 
-            // 2. Map Family Icons
             const getIcon = (item) => {
-                const identifier = (item.owner || item.assignedTo || "").toLowerCase();
-                if (identifier.includes('father') || identifier.includes('man')) return '👨‍💼';
-                if (identifier.includes('mother') || identifier.includes('woman')) return '👩‍💼';
-                if (identifier.includes('daughter')) return '👧';
-                if (identifier.includes('family')) return '👨‍👩‍👧';
-                return '📄';
+                const id = (item.owner || item.assignedTo || "").toLowerCase();
+                if (id.includes('father') || id.includes('man')) return '👨‍💼';
+                if (id.includes('mother') || id.includes('woman')) return '👩‍💼';
+                if (id.includes('daughter')) return '👧';
+                return '🏥';
             };
 
-            // 3. Render Cards
             container.innerHTML = list.map(p => {
                 const name = p.name || p.policyName || "Policy";
-                const sa = p.sumAssured || p.coverage || p.sum_assured || "0";
-                
-                // Flexible Premium Display
-                let premVal = (cat === 'health') ? 
+                const prem = (cat === 'health') ? 
                     (toNum(p.cashAmount) + (p.cpfAmount ? toNum(p.cpfAmount) : 0)) : 
-                    toNum(p.premium || p.annualPremium || p.amt);
+                    toNum(p.premium || p.annualPremium);
 
-                // Date mapping
                 const due = p.expiryDate || p.dueDate || p.nextPremiumDue || (p.status === 'PAID UP' ? 'COMPLETED' : 'N/A');
-                const mat = p.maturityDate || p.premiumEnds || p.expiryDate || 'N/A';
 
                 return `
-                <div class="bg-white rounded-[24px] p-6 border border-slate-100 shadow-sm relative overflow-hidden mb-4">
-                    ${p.status === "PAID UP" ? '<div class="absolute top-0 right-0 bg-emerald-500 text-white text-[8px] font-black px-3 py-1 rounded-bl-lg uppercase">PAID UP</div>' : ''}
-                    
+                <div class="bg-white rounded-[24px] p-6 border border-slate-100 shadow-sm relative mb-4">
                     <div class="flex items-start gap-3 mb-4">
                         <span class="text-xl mt-1">${getIcon(p)}</span>
                         <div>
-                            <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">${p.type || p.category || 'PLAN'}</p>
+                            <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">${p.category || p.type || 'PLAN'}</p>
                             <h3 class="font-black text-slate-900 text-lg leading-tight">${name}</h3>
                             <p class="text-[10px] text-slate-500 font-bold">${p.company || ''}</p>
                         </div>
                     </div>
-                    
-                    <div class="grid grid-cols-2 gap-y-5 gap-x-4 border-t border-slate-50 pt-5">
+                    <div class="grid grid-cols-2 gap-y-5 border-t border-slate-50 pt-5">
                         <div>
-                            <p class="text-[8px] font-black text-slate-400 uppercase tracking-tighter mb-1">${cat === 'health' ? 'Coverage' : 'Sum Assured'}</p>
-                            <p class="font-bold text-slate-900 text-sm">${sym}${toNum(sa).toLocaleString()}</p>
+                            <p class="text-[8px] font-black text-slate-400 uppercase tracking-tighter mb-1">Coverage</p>
+                            <p class="font-bold text-slate-900 text-sm">${sym}${toNum(p.sumAssured || p.coverage).toLocaleString()}</p>
                         </div>
                         <div>
                             <p class="text-[8px] font-black text-slate-400 uppercase tracking-tighter mb-1">Premium</p>
-                            <p class="font-bold text-indigo-600 text-sm">${sym}${premVal.toLocaleString()}</p>
+                            <p class="font-bold text-indigo-600 text-sm">${sym}${prem.toLocaleString()}</p>
                         </div>
                         <div>
-                            <p class="text-[8px] font-black text-slate-400 uppercase tracking-tighter mb-1">${cat === 'health' ? 'Expiry' : 'Maturity'}</p>
-                            <p class="font-bold text-slate-600 text-[11px]">${mat}</p>
+                            <p class="text-[8px] font-black text-slate-400 uppercase tracking-tighter mb-1">Expiry/Due</p>
+                            <p class="font-bold text-slate-600 text-[11px]">${due}</p>
                         </div>
                         <div>
-                            <p class="text-[8px] font-black text-slate-400 uppercase tracking-tighter mb-1">Next Due</p>
-                            <p class="font-bold ${due === 'COMPLETED' ? 'text-emerald-500' : 'text-slate-600'} text-[11px]">${due}</p>
+                            <p class="text-[8px] font-black text-slate-400 uppercase tracking-tighter mb-1">Status</p>
+                            <p class="font-bold text-slate-600 text-[11px] uppercase">${p.status || 'Active'}</p>
                         </div>
-
-                        ${p.currentUnitValue ? `
-                        <div class="col-span-2 bg-pink-50 p-3 rounded-xl border border-pink-100 mt-1">
-                             <p class="text-[8px] font-black text-pink-400 uppercase tracking-tighter mb-1">Portfolio Value</p>
-                             <p class="font-black text-pink-600 text-md">${sym}${toNum(p.currentUnitValue).toLocaleString()}</p>
-                        </div>` : ''}
                     </div>
                 </div>`;
             }).join('');
         };
 
-        // --- AUTH & INIT ---
         document.addEventListener('DOMContentLoaded', () => {
             const contentDiv = document.getElementById('mobile-content');
-            
-            const init = () => {
+            if (sessionStorage.getItem('nami_auth') === 'true') {
                 contentDiv.style.display = 'block';
                 render('india');
-            };
-
-            if (sessionStorage.getItem('nami_auth') === 'true') {
-                init();
             } else {
                 const entry = prompt("Enter PIN:");
                 if (entry === PIN) {
                     sessionStorage.setItem('nami_auth', 'true');
-                    init();
+                    contentDiv.style.display = 'block';
+                    render('india');
                 } else {
                     window.location.href = "https://google.com";
                 }
