@@ -4,14 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title id="main-title">Nami Portfolio</title>
-    
-        <script src="https://cdn.tailwindcss.com"></script>
-        <script type="module" src="loader.js"></script>
-        <script type="module" src="india.js"></script>
-        <script type="module" src="singapore.js"></script>
-    
-        <link rel="stylesheet" href="india_styles.css">
-    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="india_styles.css">
   </head>
 
 <body class="bg-slate-50">
@@ -74,20 +68,7 @@
     <div id="container" class="max-w-7xl mx-auto pb-20 px-4"></div>
 
     <script type="module">
-        // --- ACCESS CONTROL ---
-        const SECRET_PIN = "SuhailNami"; // Change this to your preferred 4-digit PIN
-        if (sessionStorage.getItem('nami_auth') !== 'true') {
-        const entry = prompt("Enter PIN to view Nami Portfolio:");
-        if (entry === SECRET_PIN) {
-            sessionStorage.setItem('nami_auth', 'true');
-        } else {
-            alert("Unauthorized");
-            window.location.href = "https://www.google.com"; 
-            throw new Error("Auth Failed"); // Stops the rest of the script from running
-        }
-    }
-    // --- END ACCESS CONTROL ---
-        const APP_VERSION = "4.0.94";
+        const APP_VERSION = "4.0.75";
         document.getElementById('version-tag').innerText = `v${APP_VERSION}`;
 
         // Import all components safely
