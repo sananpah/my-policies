@@ -49,17 +49,17 @@
 
     <div id="summary-section" class="max-w-7xl mx-auto px-4 mb-10">
         <div id="summary-bar" class="grid grid-cols-3 gap-6 bg-slate-900 p-8 rounded-[40px] text-white shadow-2xl relative overflow-hidden">
-            <div id="sum-col-1" class="border-r border-slate-700 text-center pl-4">
+            <div class="border-r border-slate-700 text-center pl-4">
                 <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Sum Assured</p>
-                <p id="total-sa" class="text-4xl font-black text-emerald-400">0</p>
+                <p id="total-sa" class="text-4xl font-black text-emerald-400">₹0</p>
             </div>
-            <div id="sum-col-2" class="border-r border-slate-700 text-center">
+            <div class="border-r border-slate-700 text-center">
                 <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Annual Premium</p>
-                <p id="total-premium" class="text-4xl font-black text-indigo-400">0</p>
+                <p id="total-premium" class="text-4xl font-black text-indigo-400">₹0</p>
             </div>
-            <div id="sum-col-3" class="text-center">
+            <div class="text-center">
                 <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Portfolio Value</p>
-                <p id="total-unit-value" class="text-4xl font-black text-pink-500">0</p>
+                <p id="total-unit-value" class="text-4xl font-black text-pink-500">₹0</p>
             </div>
         </div>
     </div>
@@ -67,18 +67,17 @@
     <div id="container" class="max-w-7xl mx-auto pb-20 px-4"></div>
 
     <script type="module">
-        const APP_VERSION = "4.1.05";
+        const APP_VERSION = "4.1.10";
         document.getElementById('version-tag').innerText = `v${APP_VERSION}`;
 
-        // Authentication
-        const SECRET_PIN = "SuhailNami";
+        // --- AUTH ---
         if (sessionStorage.getItem('nami_auth') !== 'true') {
             const entry = prompt("Enter PIN:");
-            if (entry === SECRET_PIN) sessionStorage.setItem('nami_auth', 'true');
-            else { window.location.href = "https://google.com"; throw new Error("Auth"); }
+            if (entry === "SuhailNami") sessionStorage.setItem('nami_auth', 'true');
+            else window.location.href = "https://google.com";
         }
 
-        // --- RESTORED: Dynamic Imports with v=tag ---
+        // --- DYNAMIC IMPORTS ---
         const [Loader, IndiaComp, SGComp, HealthComp, HealthDataFile, IndiaTools] = await Promise.all([
             import(`./loader.js?v=${APP_VERSION}`),
             import(`./component_in.js?v=${APP_VERSION}`),
@@ -93,19 +92,22 @@
         const { createSGCard } = SGComp;
         const { createHealthCard } = HealthComp;
         const { healthData } = HealthDataFile;
-        const { toNum } = IndiaTools;
+        const { toNum, autoFmt } = IndiaTools;
 
         const TODAY = new Date();
         const CURRENT_YEAR = TODAY.getFullYear();
         window.currentCategory = 'india';
 
-        // RESTORED: Collapsible Toggle
+        // --- RESTORED: The Collapsible Logic ---
         window.toggleCard = (id) => {
             const card = document.getElementById(`card-${id}`);
             if(!card) return;
-            const wasOpen = card.classList.contains('open');
+            // Check if it's already open
+            const isOpen = card.classList.contains('open');
+            // Close all others
             document.querySelectorAll('.policy-card, .health-card').forEach(c => c.classList.remove('open'));
-            if (!wasOpen) card.classList.add('open');
+            // Toggle current
+            if (!isOpen) card.classList.add('open');
         };
 
         const parseDate = (str) => {
@@ -115,36 +117,37 @@
             return p.length < 3 ? new Date(9999, 0, 1) : new Date(`${p[1]} ${p[0]}, ${p[2]}`);
         };
 
-        // --- THE MASTER RENDERER (Original functionality, Dynamic data) ---
+        // --- RENDER ENGINE ---
         window.render = async function(cat) {
             window.currentCategory = cat;
             const container = document.getElementById('container');
             const statusBadge = document.getElementById('portfolio-status');
-            const sortBy = document.getElementById('sort-trigger').value;
             const sym = (cat === 'singapore') ? "$" : "₹";
 
-            // Fetch from Google Sheet
+            // Fetch Live Data
             const allData = await fetchPortfolioData();
             
             let list = (cat === 'health') ? [...healthData] : allData.filter(p => p.detectedCountry === (cat === 'india' ? "India" : "Singapore"));
 
-            // RESTORED: Sorting
+            // Re-apply Badge UI
+            const flag = (cat === 'india') ? 'in' : 'sg';
+            statusBadge.innerHTML = cat === 'health' ? 'HEALTH' : `<img src="https://flagcdn.com/w40/${flag}.png" class="w-5 h-auto inline mr-2 rounded-sm">${cat.toUpperCase()} PORTFOLIO`;
+
+            // Sort
+            const sortBy = document.getElementById('sort-trigger').value;
             if (cat !== 'health') {
                 if (sortBy === 'premium') list.sort((a, b) => toNum(b.premiumNumeric) - toNum(a.premiumNumeric));
                 else if (sortBy === 'due') list.sort((a, b) => parseDate(a["Last Premium Date"]) - parseDate(b["Last Premium Date"]));
             }
 
-            // RESTORED: Dynamic Status Badge
-            const flag = (cat === 'india') ? 'in' : 'sg';
-            statusBadge.innerHTML = cat === 'health' ? 'HEALTH' : `<img src="https://flagcdn.com/w40/${flag}.png" class="w-5 h-auto inline mr-2 rounded-sm">${cat.toUpperCase()} PORTFOLIO`;
-
-            // RESTORED: Rich Mapping for Timeline/Expand
+            // Render with Full Mapping
             container.innerHTML = list.map(p => {
                 if (cat === 'health') return createHealthCard(p);
                 
+                // RESTORED: Precise mapping for your high-end UI components
                 const policyData = {
                     ...p,
-                    name: p.name || p["Policy_Name"] || "Unknown",
+                    name: p.name || p["Policy_Name"] || "Unnamed",
                     id: p["Policy No."] || "N/A",
                     sumAssured: p["Sum Assured"] || 0,
                     premium: p.premiumNumeric || 0,
@@ -154,13 +157,14 @@
                     color: p["Color_Code"] || "#962524",
                     logo: p["Logo_Path"] || "image_4e0b3d.png",
                     isWife: p["Holder"]?.toLowerCase().includes("wife"),
-                    isDaughter: p["Holder"]?.toLowerCase().includes("daughter")
+                    isDaughter: p["Holder"]?.toLowerCase().includes("daughter"),
+                    type: p["Category"] || p["Type"] || "Savings"
                 };
 
                 return cat === 'singapore' ? createSGCard(policyData, sym, TODAY, CURRENT_YEAR) : createPolicyCard(policyData, sym, TODAY, CURRENT_YEAR);
             }).join('');
 
-            // Update Totals
+            // Totals
             const tSA = list.reduce((acc, p) => acc + toNum(p["Sum Assured"] || 0), 0);
             const tAnn = list.reduce((acc, p) => acc + (p["Status"] !== "PAID UP" ? toNum(p.premiumNumeric) : 0), 0);
             
@@ -169,6 +173,7 @@
             document.getElementById('total-unit-value').innerText = sym + "0";
         };
 
+        // Run on load
         render('india');
     </script>
 </body>
