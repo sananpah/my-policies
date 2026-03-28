@@ -2,8 +2,6 @@
 export const POLICY_DATA = {
     india: [
         { 
-            name: "Nishchit Ace",
-            company: "IndusInd Nippon Life",
             isDaughter: true,
             logo: "image_4e0b3d.png",
             id: "54751949",
@@ -72,8 +70,6 @@ export const POLICY_DATA = {
             payoutSchedule: { 11: 18591, 12: 18591, 13: 18591, 14: 18591, 15: 49576 } 
         },
         { 
-            name: "Confident Retirement Savings",
-            company: "KOTAK",
             logo: "image_5d7f80.png",
             id: "79079094",
             uin: "107N105V02",
@@ -171,8 +167,6 @@ export const POLICY_DATA = {
             currentUnitValue: "208508"
         },
         { 
-            name: "Signature",
-            company: "ICICI PRUDENTIAL",
             isWife: true,
             logo: "image_d82175.png",
             id: "K7639543",
