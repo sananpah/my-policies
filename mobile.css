@@ -1,4 +1,4 @@
-/* Nami Portfolio - Dedicated Mobile Stylesheet */
+/* Nami Portfolio - Dedicated Mobile Stylesheet - v1.1 */
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@800;900&family=Inter:wght@400;700;900&display=swap');
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -6,7 +6,7 @@
 body { 
     background-color: #f8fafc;
     font-family: 'Inter', sans-serif;
-    padding: 15px; /* Reduced for mobile */
+    padding: 15px;
     color: #1e293b;
 }
 
@@ -16,7 +16,7 @@ body {
     background: linear-gradient(90deg, #6366f1, #ec4899, #f59e0b);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    font-size: 1.8rem; /* Scaled down */
+    font-size: 1.8rem;
     font-weight: 900;
     text-transform: uppercase;
     margin-bottom: 15px;
@@ -24,27 +24,37 @@ body {
 }
 
 /* --- VERTICAL SUMMARY BAR --- */
+/* We use !important to override the 'grid' class in index.html */
 #summary-bar {
-    display: flex;
-    flex-direction: column; /* Stacked for vertical scrolling */
-    background: #0f172a;
-    border-radius: 25px;
-    padding: 20px;
-    gap: 15px;
+    display: flex !important; 
+    flex-direction: column !important; 
+    grid-template-columns: none !important;
+    background: #0f172a !important;
+    border-radius: 30px !important;
+    padding: 25px !important;
+    gap: 20px !important;
+    width: 100%;
 }
 
 #summary-bar > div {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-right: none !important; /* Remove the desktop divider lines */
+    padding: 0 0 15px 0 !important;
     text-align: center;
+    width: 100%;
 }
 
-#summary-bar > div:last-child { border-bottom: none; }
+#summary-bar > div:last-child { 
+    border-bottom: none !important; 
+}
 
-#summary-bar p[id^="total-"] {
-    font-size: 1.75rem;
-    font-weight: 900;
-    font-family: 'Orbitron', sans-serif;
+/* Target the specific IDs for the large numbers */
+#total-sa, #total-premium, #total-unit-value {
+    font-size: 1.8rem !important;
+    font-weight: 900 !important;
+    font-family: 'Orbitron', sans-serif !important;
+    margin-top: 5px;
+    display: block;
 }
 
 /* --- CONDENSED CARDS --- */
@@ -57,30 +67,37 @@ body {
 }
 
 .card-header { 
-    padding: 15px;
-    display: flex;
-    flex-direction: column; /* Stack logo and text */
-    gap: 10px;
+    padding: 20px 15px !important;
+    display: flex !important;
+    flex-direction: column !important; 
+    align-items: center !important;
+    text-align: center;
+    gap: 12px;
 }
 
+/* Ensure detail items stack vertically */
 .detail-grid { 
-    display: grid;
-    grid-template-columns: 1fr; /* Single column for clarity */
-    gap: 10px;
-    padding: 15px;
-    background: #f1f5f9;
-    border-radius: 15px;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+    padding: 20px !important;
+    background: #f8fafc !important;
+    border-radius: 20px;
 }
 
 /* --- UTILITIES --- */
 .funky-badge {
-   font-size: 8px;
-   padding: 4px 10px;
-   border-radius: 8px;
+   font-size: 9px;
+   padding: 6px 12px;
+   border-radius: 10px;
    background: #0f172a;
    color: #fff;
 }
 
-.bg-emerald-400 { color: #34d399; }
-.bg-indigo-400 { color: #818cf8; }
-.bg-pink-500 { color: #ec4899; }
+/* Color Overrides to match your specific colors */
+.text-emerald-400 { color: #34d399 !important; }
+.text-indigo-400 { color: #818cf8 !important; }
+.text-pink-500 { color: #ec4899 !important; }
+
+/* Hide the PC version tag on mobile for a cleaner look */
+.simple-build { display: none; }
