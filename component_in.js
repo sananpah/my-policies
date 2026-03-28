@@ -104,11 +104,12 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
             
             <div class="flex gap-12 items-center mr-6">
                 <div class="flex items-center w-[260px] -ml-4">
-                    <div class="funky-badge" style="border-color: ${brandColor}; box-shadow: 0 0 10px ${brandColor}44;">${p.type}</div>
-                    <div class="ml-6">
+                <div class="funky-badge-v2" style="border-color: ${brandColor}; color: ${brandColor}; background: ${brandBg}; font-size: 10px; font-weight: 900; letter-spacing: 0.1em; padding: 2px 8px; border-radius: 6px; border: 1.5px solid; text-transform: uppercase;">
+    ${p.type}</div>
+               <div class="ml-6">
                         <p class="text-[9px] font-bold text-slate-400 uppercase">Sum Assured</p>
                         <p class="text-lg font-black text-slate-700">${autoFmt(p.sumAssured, sym)}</p>
-                    </div>
+                </div>
                 </div>
                 <div class="text-center border-l-2 border-slate-100 pl-10">
                     <p class="text-[9px] font-bold text-slate-400 uppercase">Annual Premium</p>
