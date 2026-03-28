@@ -1,5 +1,5 @@
-/* component_sg.js - v6.5.2 - Fixed Maturity Tooltip & Desktop Sync */
-import { autoFmt, toNum } from './india.js';
+/* component_sg.js - v6.5.3 - Full Card Blink for Due Soon */
+import { autoFmt, toNum, checkIsDueSoon } from './india.js';
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR, isMobile = false) {
     const commDate = new Date(p.commenced);
@@ -55,10 +55,12 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR, isMobile = false) {
     const brandColor = p.color || "#000000";
     const brandBg = `rgba(${parseInt(brandColor.slice(1,3), 16)}, ${parseInt(brandColor.slice(3,5), 16)}, ${parseInt(brandColor.slice(5,7), 16)}, 0.04)`;
     
-    const chargePct = (p.surrenderCharges && p.surrenderCharges[policyYearIdx]) || 0;
-    let surrenderChargeAmount = (isSinglife || isFlexiBrand) ? totalPremiumsPaid * (chargePct / 100) : accountValue * (chargePct / 100);
-    const surrenderValue = Math.round(Math.max(0, accountValue - surrenderChargeAmount));
-    const lockedValue = Math.round(accountValue - surrenderValue);
+    // --- DUE SOON LOGIC ---
+    const nextDueYear = hasPassedThisYear ? CURRENT_YEAR + 1 : CURRENT_YEAR;
+    const nextDueDisplay = new Date(nextDueYear, commMonth, commDay).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    
+    const isDueSoon = !isPaidUp && (premRemainingStr !== "Vested") && checkIsDueSoon(nextDueDisplay);
+    const blinkClass = isDueSoon ? "animate-card-pulse" : "";
 
     // --- TIMELINE GENERATION ---
     let timelineHtml = '';
@@ -90,7 +92,6 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR, isMobile = false) {
             </div>`;
     }
 
-    // --- RESTORED MATURITY STAR TOOLTIP (India Style) ---
     const starHtml = `
         <div class="ml-2 relative group flex items-center justify-center w-12 h-10 bg-white rounded-xl shadow-sm border border-slate-200 cursor-help">
             <span class="text-xl text-amber-500 transition-transform group-hover:scale-125">★</span>
@@ -101,13 +102,10 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR, isMobile = false) {
             </div>
         </div>`;
 
-    const nextDueYear = hasPassedThisYear ? CURRENT_YEAR + 1 : CURRENT_YEAR;
-    const nextDueDisplay = new Date(nextDueYear, commMonth, commDay).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-
     return `
-    <div class="policy-card mb-10 rounded-[40px] bg-white overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.08)] border-2 relative" 
+    <div class="policy-card mb-10 rounded-[40px] bg-white overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.08)] border-2 relative transition-all duration-500 ${blinkClass}" 
          id="card-${p.id}" 
-         style="border-left: 16px solid ${brandColor}; border-color: ${brandColor};">
+         style="border-left: 16px solid ${brandColor}; border-color: ${isDueSoon ? '#f87171' : brandColor};">
         
         <div class="${isMobile ? 'p-5' : 'p-8'} flex ${isMobile ? 'flex-col' : 'items-center justify-between'} cursor-pointer relative" style="background: ${brandBg}" onclick="toggleCard('${p.id}')">
             <div class="flex items-center gap-8 ${isMobile ? 'mb-4' : 'pl-6 pr-4'}">
@@ -134,8 +132,8 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR, isMobile = false) {
                     ` : `
                         <p class="text-[9px] font-black text-indigo-500 uppercase text-center">Left: <span class="text-slate-700">${premRemainingStr}</span></p>
                         <div class="h-[1px] bg-slate-200/40 w-full my-1"></div>
-                        <p class="text-[9px] font-black text-sky-500 uppercase text-center">Next Due</p>
-                        <p class="text-sm font-black text-slate-700 text-center tracking-tight">${nextDueDisplay}</p>
+                        <p class="text-[9px] font-black ${isDueSoon ? 'text-red-500' : 'text-sky-500'} uppercase text-center">Next Due</p>
+                        <p class="text-sm font-black ${isDueSoon ? 'text-red-700' : 'text-slate-700'} text-center tracking-tight">${nextDueDisplay}</p>
                     `}
                 </div>
             </div>
