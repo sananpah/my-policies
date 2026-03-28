@@ -12,6 +12,7 @@ export async function fetchPortfolioData() {
     }
 }
 
+/* loader.js */
 function processCSV(csv) {
     const lines = csv.split("\n").filter(line => line.trim() !== "");
     const headers = lines[0].split(",").map(h => h.trim().replace(/^"|"$/g, ''));
@@ -21,26 +22,26 @@ function processCSV(csv) {
         const row = {};
         headers.forEach((header, i) => { row[header] = values[i]; });
         
-        // No logic here. Just pass the raw row to the specific parser.
+        // EXCLUSIVE: Pass the row to the parser
         return parseInsuranceTab(row);
     });
 }
 
 function parseInsuranceTab(row) {
-    // 1. Get the raw value from your new header name
+    // 1. Capture the raw policy name from your specific header
     const rawFullName = row["Policy_Name"] || ""; 
 
-    // 2. Perform the Split Logic EXCLUSIVELY here
+    // 2. Perform the Split Logic
     if (rawFullName.includes(":")) {
         const parts = rawFullName.split(":");
         row.company = parts[0].trim();
-        row.name = parts[1].trim();
+        row.name = parts[1].trim(); // This maps to the card title
     } else {
         row.company = "Insurance";
         row.name = rawFullName; // Fallback if no colon exists
     }
 
-    // 3. Detect Country and Clean Numbers
+    // 3. Detect Country and Numeric Values
     const premiumAttr = row["Premium"] || "";
     row.detectedCountry = premiumAttr.includes("₹") ? "India" : (premiumAttr.includes("$") ? "Singapore" : "Other");
     row.premiumNumeric = parseFloat(premiumAttr.replace(/[₹$,\s]/g, "")) || 0;
