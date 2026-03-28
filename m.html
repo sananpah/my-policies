@@ -3,39 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nami Portfolio (Mobile)</title>
-    <link rel="stylesheet" href="mobile.css">
+    <title>Nami Mobile</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="mobile.css">
 </head>
-<body>
-    <div id="mobile-root"></div>
+<body class="bg-slate-50">
+    <div id="mobile-content" style="display:none;">
+        <div class="p-4">
+            <h1 class="text-2xl font-black text-slate-900 mb-4">Nami Portfolio</h1>
+            
+            <div class="flex gap-2 mb-6 overflow-x-auto pb-2">
+                <button onclick="render('india')" class="px-4 py-2 bg-slate-800 text-white rounded-full text-xs font-bold">India</button>
+                <button onclick="render('singapore')" class="px-4 py-2 bg-slate-800 text-white rounded-full text-xs font-bold">Singapore</button>
+                <button onclick="render('health')" class="px-4 py-2 bg-emerald-600 text-white rounded-full text-xs font-bold">Health</button>
+            </div>
+
+            <div id="summary-bar" class="mb-6">
+                <div>
+                    <p class="text-[10px] text-slate-400 uppercase font-bold">Sum Assured</p>
+                    <p id="total-sa" class="text-emerald-400 font-black"></p>
+                </div>
+                <div>
+                    <p class="text-[10px] text-slate-400 uppercase font-bold">Annual Premium</p>
+                    <p id="total-premium" class="text-indigo-400 font-black"></p>
+                </div>
+                <div>
+                    <p class="text-[10px] text-slate-400 uppercase font-bold">Portfolio Value</p>
+                    <p id="total-unit-value" class="text-pink-500 font-black"></p>
+                </div>
+            </div>
+
+            <div id="container"></div>
+        </div>
+    </div>
 
     <script type="module">
-        async function loadMobileVersion() {
-        // ... (Your PIN code remains the same) ...
+        // 1. PIN PROTECTION
+        const PIN = "1977"; 
+        if (sessionStorage.getItem('nami_auth') !== 'true') {
+            const entry = prompt("Enter PIN:");
+            if (entry === PIN) {
+                sessionStorage.setItem('nami_auth', 'true');
+                document.getElementById('mobile-content').style.display = 'block';
+            } else {
+                window.location.href = "https://google.com";
+            }
+        } else {
+            document.getElementById('mobile-content').style.display = 'block';
+        }
 
-        const response = await fetch('index.html');
-        const htmlText = await response.text();
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(htmlText, 'text/html');
-        
-        // CLEAR the root before adding new content
-        const root = document.getElementById('mobile-root');
-        root.innerHTML = ''; 
-        
-        const desktopBody = doc.body.innerHTML;
-        root.innerHTML = desktopBody;
+        // 2. DATA LOADING
+        import { POLICY_DATA } from './data.js';
+        import { toNum } from './india.js';
+        import { createPolicyCard } from './component_in.js';
+        import { createSGCard } from './component_sg.js';
 
-        // Run scripts
-        const scripts = doc.querySelectorAll('script[type="module"]');
-        scripts.forEach(oldScript => {
-            const newScript = document.createElement('script');
-            newScript.type = 'module';
-            newScript.textContent = oldScript.textContent;
-            document.body.appendChild(newScript);
-        });
-    }
-        loadMobileVersion();
+        const TODAY = new Date();
+
+        window.render = function(cat) {
+            const container = document.getElementById('container');
+            const sym = (cat === 'singapore') ? "$" : "₹";
+            const list = POLICY_DATA[cat] || [];
+
+            // Totals
+            const tSA = list.reduce((acc, p) => acc + (toNum(p.sumAssured) || 0), 0);
+            const tAnn = list.reduce((acc, p) => acc + (p.status !== "PAID UP" ? toNum(p.premium) : 0), 0);
+            const tVal = list.reduce((acc, p) => acc + toNum(p.currentUnitValue || 0), 0);
+
+            document.getElementById('total-sa').innerText = sym + Math.round(tSA).toLocaleString();
+            document.getElementById('total-premium').innerText = sym + Math.round(tAnn).toLocaleString();
+            document.getElementById('total-unit-value').innerText = sym + Math.round(tVal).toLocaleString();
+
+            // Cards
+            container.innerHTML = list.map(p => {
+                if (cat === 'singapore') return createSGCard(p, sym, TODAY, 2026, true);
+                return createPolicyCard(p, sym, TODAY, 2026, true);
+            }).join('');
+        };
+
+        window.toggleCard = (id) => {
+            const card = document.getElementById(`card-${id}`);
+            if(card) card.classList.toggle('open');
+        };
+
+        render('india');
     </script>
 </body>
 </html>
