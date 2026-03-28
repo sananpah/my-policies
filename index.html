@@ -79,7 +79,7 @@
     <div id="container" class="max-w-7xl mx-auto pb-20 px-4"></div>
 
     <script type="module">
-        const APP_VERSION = "4.0.75";
+        const APP_VERSION = "4.0.76";
         document.getElementById('version-tag').innerText = `v${APP_VERSION}`;
 
         // Import all components safely
@@ -102,6 +102,24 @@
         const TODAY = new Date();
         const CURRENT_YEAR = TODAY.getFullYear();
         window.currentCategory = 'india';
+
+        // --- ADDED: MOBILE VIEW TOGGLE ---
+        window.toggleView = function() {
+            const isMobileActive = document.body.classList.toggle('mobile-view');
+            const btnText = document.getElementById('view-text');
+            const btnIcon = document.querySelector('#mobile-toggle-btn .material-symbols-outlined');
+            
+            if (isMobileActive) {
+                btnText.innerText = "Desktop View";
+                if(btnIcon) btnIcon.innerText = "desktop_windows";
+            } else {
+                btnText.innerText = "Mobile View";
+                if(btnIcon) btnIcon.innerText = "smartphone";
+            }
+            
+            // Re-render current category to apply mobile layout logic in components
+            render(window.currentCategory);
+        };
 
         // Updated toggle to handle both card types
         window.toggleCard = (id) => {
@@ -244,7 +262,25 @@
         }
         
         // Default Load
-        render('india');
+       // --- ADDED: DETECTION & INITIAL LOAD ---
+        document.addEventListener("DOMContentLoaded", function() {
+            const mobileBtn = document.getElementById('mobile-toggle-btn');
+            
+            // Detect Mobile Browser or Touch Device
+            const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) 
+                                   || (navigator.maxTouchPoints > 0);
+
+            if (isMobileDevice) {
+                // Show the hidden button
+                mobileBtn.style.display = 'flex'; 
+                
+                // Optional: Uncomment below if you want mobile view to be ON by default on phones
+                // document.body.classList.add('mobile-view'); 
+            }
+
+            // Initial render
+            render('india');
+        });
     </script>
 </body>
 </html>
