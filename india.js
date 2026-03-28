@@ -7,6 +7,8 @@ const CURRENT_YEAR = TODAY.getFullYear();
 
 async function initIndia() {
     const allData = await fetchPortfolioData();
+    
+    // Filter for India
     const indiaPolicies = allData.filter(p => p.detectedCountry === "India");
 
     const container = document.getElementById('india-container');
@@ -14,29 +16,49 @@ async function initIndia() {
     container.innerHTML = ''; 
 
     indiaPolicies.forEach(p => {
+        // --- DEBUG: Open your F12 Console to see this ---
+        console.log("Raw row from loader:", p);
+
         const policyData = {
-            ...p,
-            name: p.name || "Unnamed Policy",
-            id: p["Policy No."] || "N/A",
+            // 1. Copy everything from the loader first
+            ...p, 
+            
+            // 2. DEEP SCAN for the Name. 
+            // We check: parsed name, then raw column name, then first value in object.
+            name: p.name || p["Policy_Name"] || p["Policy Name"] || Object.values(p)[0] || "Name Error",
+            
+            // 3. Mapping other fields with fallbacks
+            id: p["Policy No."] || p["Policy No"] || "N/A",
             sumAssured: p["Sum Assured"] || 0,
-            // Convert dots to spaces for the component parser
-            commenced: (p["Policy Age"] || "01 Jan 2010").replace(/\./g, ' '),
-            maturity: (p["Maturity Date"] || "01 Jan 2030").replace(/\./g, ' '),
-            premiumEnds: (p["Maturity Date"] || "01 Jan 2030").replace(/\./g, ' '),
-            nextDueDate: (p["Last Premium Date"] || "N/A").replace(/\./g, ' '),
-            type: p["Category"] || "Insurance",
+            
+            // Convert dots to spaces (e.g., 31.Jan.2024 -> 31 Jan 2024)
+            commenced: (p["Policy Age"] || p["Commencement Date"] || "01 Jan 2010").toString().replace(/\./g, ' '),
+            maturity: (p["Maturity Date"] || "01 Jan 2030").toString().replace(/\./g, ' '),
+            premiumEnds: (p["Premium Ends"] || p["Maturity Date"] || "01 Jan 2030").toString().replace(/\./g, ' '),
+            nextDueDate: (p["Last Premium Date"] || "N/A").toString().replace(/\./g, ' '),
+            
+            type: p["Category"] || p["Type"] || "Insurance",
             color: p["Color_Code"] || "#962524",
             logo: p["Logo_Path"] || "image_4e0b3d.png"
         };
 
         try {
+            // Pass the newly built policyData
             const cardHtml = createPolicyCard(policyData, "₹", TODAY, CURRENT_YEAR);
             const wrapper = document.createElement('div');
             wrapper.innerHTML = cardHtml;
-            container.appendChild(wrapper.firstElementChild);
-        } catch (e) { console.error("Card Crash:", e); }
+            
+            if (wrapper.firstElementChild) {
+                container.appendChild(wrapper.firstElementChild);
+            }
+        } catch (e) { 
+            console.error("Card Crash for policy:", policyData.name, e); 
+        }
     });
-    updateSummary(indiaPolicies, "₹");
+    
+    if (typeof updateSummary === "function") {
+        updateSummary(indiaPolicies, "₹");
+    }
 }
 
 function updateSummary(list, sym) {
