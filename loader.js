@@ -13,14 +13,32 @@ export async function fetchPortfolioData() {
 }
 
 function parseCSV(csv) {
-    const lines = csv.split("\n");
-    const headers = lines[0].split(",");
-    
+    const lines = csv.split("\n").filter(line => line.trim() !== "");
+    const headers = lines[0].split(",").map(h => h.trim());
+
     return lines.slice(1).map(line => {
-        const values = line.split(",");
-        return headers.reduce((obj, header, i) => {
-            obj[header.trim()] = values[i]?.trim();
-            return obj;
-        }, {});
+        const values = line.split(",").map(v => v.trim());
+        const row = {};
+        headers.forEach((header, i) => {
+            row[header] = values[i];
+    });
+
+        // Step-by-step Parsing Logic requested:
+        const fullName = row["Insurance [Investment].Name of the policy"] || "";
+        if (fullName.includes(":")) {
+            const parts = fullName.split(":");
+            row.parsedCompany = parts[0].trim();
+            row.parsedName = parts[1].trim();
+        } else {
+            row.parsedCompany = "Unknown";
+            row.parsedName = fullName;
+        }
+
+        // Determine Country by Currency
+        const curr = row["Premium Currency"] || ""; // Adjust header name to match your sheet
+        row.detectedCountry = curr.includes("₹") ? "India" : (curr.includes("$") ? "Singapore" : "Other");
+
+        return row;
     });
 }
+
