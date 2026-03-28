@@ -5,10 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title id="main-title">Nami Portfolio</title>
     
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="india_styles.css">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
-</head>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script type="module" src="loader.js"></script>
+        <script type="module" src="india.js"></script>
+        <script type="module" src="singapore.js"></script>
+    
+        <link rel="stylesheet" href="india_styles.css">
+    
+  </head>
 
 <body class="bg-slate-50">
 
@@ -27,10 +31,12 @@
                 <img src="https://flagcdn.com/w40/in.png" class="w-6 h-auto rounded-sm shadow-sm">
                 <span>India</span>
             </button>
+        
             <button onclick="render('singapore')" class="px-8 py-3 bg-slate-800 text-white rounded-full font-bold hover:bg-slate-700 transition shadow-lg flex items-center gap-3">
                 <img src="https://flagcdn.com/w40/sg.png" class="w-6 h-auto rounded-sm shadow-sm">
                 <span>Singapore</span>
             </button>
+
             <button onclick="render('health')" class="px-8 py-3 bg-emerald-600 text-white rounded-full font-bold hover:bg-emerald-700 transition shadow-lg flex items-center gap-3">
                 <span class="material-symbols-outlined text-white">medical_services</span>
                 <span>Health</span>
@@ -42,7 +48,8 @@
             <select id="sort-trigger" onchange="render(window.currentCategory)" class="bg-transparent text-xs font-bold rounded-lg px-2 py-1 outline-none cursor-pointer">
                 <option value="default">Default Order</option>
                 <option value="premium">Premium: High to Low</option>
-                <option value="due">Due Date: Soonest</option>
+                <option value="time">Maturity: Soonest First</option>
+                <option value="due">Due Date: Earliest First</option>
             </select>
         </div>
     </div>
@@ -51,15 +58,15 @@
         <div id="summary-bar" class="grid grid-cols-3 gap-6 bg-slate-900 p-8 rounded-[40px] text-white shadow-2xl relative overflow-hidden">
             <div id="sum-col-1" class="border-r border-slate-700 text-center pl-4">
                 <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Sum Assured</p>
-                <p id="total-sa" class="text-4xl font-black text-emerald-400">₹0</p>
+                <p id="total-sa" class="text-4xl font-black text-emerald-400">0</p>
             </div>
             <div id="sum-col-2" class="border-r border-slate-700 text-center">
                 <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Annual Premium</p>
-                <p id="total-premium" class="text-4xl font-black text-indigo-400">₹0</p>
+                <p id="total-premium" class="text-4xl font-black text-indigo-400">0</p>
             </div>
             <div id="sum-col-3" class="text-center">
                 <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Portfolio Value</p>
-                <p id="total-unit-value" class="text-4xl font-black text-pink-500">₹0</p>
+                <p id="total-unit-value" class="text-4xl font-black text-pink-500">0</p>
             </div>
         </div>
     </div>
@@ -67,114 +74,184 @@
     <div id="container" class="max-w-7xl mx-auto pb-20 px-4"></div>
 
     <script type="module">
-        const APP_VERSION = "4.1.20";
+        // --- ACCESS CONTROL ---
+        const SECRET_PIN = "SuhailNami"; // Change this to your preferred 4-digit PIN
+        if (sessionStorage.getItem('nami_auth') !== 'true') {
+        const entry = prompt("Enter PIN to view Nami Portfolio:");
+        if (entry === SECRET_PIN) {
+            sessionStorage.setItem('nami_auth', 'true');
+        } else {
+            alert("Unauthorized");
+            window.location.href = "https://www.google.com"; 
+            throw new Error("Auth Failed"); // Stops the rest of the script from running
+        }
+    }
+    // --- END ACCESS CONTROL ---
+        const APP_VERSION = "4.0.96";
         document.getElementById('version-tag').innerText = `v${APP_VERSION}`;
 
-        // Authentication
-        if (sessionStorage.getItem('nami_auth') !== 'true') {
-            const entry = prompt("Enter PIN:");
-            if (entry === "SuhailNami") sessionStorage.setItem('nami_auth', 'true');
-            else { window.location.href = "https://google.com"; throw new Error("Auth"); }
-        }
-
-        // --- 1. THE DYNAMIC HANDSHAKE ---
-        const [Loader, IndiaComp, SGComp, HealthComp, HealthDataFile, IndiaTools] = await Promise.all([
-            import(`./loader.js?v=${APP_VERSION}`),
+        // Import all components safely
+        const [Data, Tools, IndiaComp, SGComp, HealthComp, HealthDataFile] = await Promise.all([
+            import(`./data.js?v=${APP_VERSION}`),
+            import(`./india.js?v=${APP_VERSION}`),
             import(`./component_in.js?v=${APP_VERSION}`),
             import(`./component_sg.js?v=${APP_VERSION}`),
             import(`./health.js?v=${APP_VERSION}`),
-            import(`./data_health.js?v=${APP_VERSION}`),
-            import(`./india.js?v=${APP_VERSION}`)
+            import(`./data_health.js?v=${APP_VERSION}`)
         ]);
 
-        const { fetchPortfolioData } = Loader;
+        const { POLICY_DATA } = Data;
+        const { toNum } = Tools;
         const { createPolicyCard } = IndiaComp;
         const { createSGCard } = SGComp;
         const { createHealthCard } = HealthComp;
         const { healthData } = HealthDataFile;
-        const { toNum } = IndiaTools;
 
         const TODAY = new Date();
         const CURRENT_YEAR = TODAY.getFullYear();
         window.currentCategory = 'india';
 
-        // --- 2. THE UI ENGINE ---
+        // Updated toggle to handle both card types
         window.toggleCard = (id) => {
             const card = document.getElementById(`card-${id}`);
             if(!card) return;
             const wasOpen = card.classList.contains('open');
-            document.querySelectorAll('.policy-card, .health-card, .sg-card').forEach(c => c.classList.remove('open'));
+            document.querySelectorAll('.policy-card, .health-card').forEach(c => c.classList.remove('open'));
             if (!wasOpen) card.classList.add('open');
         };
 
         const parseDate = (str) => {
-            if (!str || str === "PAID UP" || str === "N/A") return new Date(9999, 0, 1);
-            const clean = str.toString().replace(/\./g, ' ');
-            const p = clean.split(' ');
-            return p.length < 3 ? new Date(9999, 0, 1) : new Date(`${p[1]} ${p[0]}, ${p[2]}`);
+            if (!str || str === "PAID UP") return new Date(9999, 0, 1);
+            const p = str.split(' ');
+            return new Date(`${p[1]} ${p[0]}, ${p[2]}`);
         };
 
-        window.render = async function(cat) {
+        window.render = function(cat) {
             window.currentCategory = cat;
+            const sortBy = document.getElementById('sort-trigger').value;
             const container = document.getElementById('container');
             const statusBadge = document.getElementById('portfolio-status');
+            const sortContainer = document.getElementById('sort-container');
             const summaryBar = document.getElementById('summary-bar');
-            const sym = (cat === 'singapore') ? "$" : "₹";
 
-            const allData = await fetchPortfolioData();
-
-            // --- 3. THE RE-REBUILD OF SECTIONS ---
+            // --- 1. RESET SUMMARY BAR STRUCTURE ---
+            // We rebuild this to switch between Grid (Life) and Flex (Health) layouts
             if (cat === 'health') {
-                summaryBar.className = "flex items-center justify-between bg-slate-900 p-6 rounded-[40px] text-white shadow-2xl relative overflow-hidden";
-                statusBadge.innerText = "HEALTH PORTFOLIO";
-                container.innerHTML = healthData.map(p => createHealthCard(p)).join('');
-                updateHealthSummary(healthData, summaryBar);
-                return;
+                summaryBar.className = "flex items-center justify-between bg-slate-900 p-6 rounded-[40px] text-white shadow-2xl relative overflow-hidden transition-all duration-500";
+                summaryBar.innerHTML = `
+                    <div class="flex items-center gap-2 pl-4">
+                        <span class="material-symbols-outlined text-emerald-500 text-3xl">medical_services</span>
+                        <span class="text-sm font-black uppercase tracking-widest ml-2">Health Portfolio</span>
+                    </div>
+                    <div id="health-pills-container" class="flex gap-6 pr-4"></div>
+                `;
+            } else {
+                summaryBar.className = "grid grid-cols-3 gap-6 bg-slate-900 p-8 rounded-[40px] text-white shadow-2xl relative overflow-hidden transition-all duration-500";
+                summaryBar.innerHTML = `
+                    <div id="sum-col-1" class="border-r border-slate-700 text-center pl-4">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Sum Assured</p>
+                        <p id="total-sa" class="text-4xl font-black text-emerald-400">0</p>
+                    </div>
+                    <div id="sum-col-2" class="border-r border-slate-700 text-center">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Annual Premium</p>
+                        <p id="total-premium" class="text-4xl font-black text-indigo-400">0</p>
+                    </div>
+                    <div id="sum-col-3" class="text-center">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Portfolio Value</p>
+                        <p id="total-unit-value" class="text-4xl font-black text-pink-500">0</p>
+                    </div>
+                `;
             }
 
-            // India/Singapore UI
-            summaryBar.className = "grid grid-cols-3 gap-6 bg-slate-900 p-8 rounded-[40px] text-white shadow-2xl relative overflow-hidden";
-            const flag = (cat === 'india') ? 'in' : 'sg';
-            statusBadge.innerHTML = `<img src="https://flagcdn.com/w40/${flag}.png" class="w-5 h-auto inline mr-2 rounded-sm">${cat.toUpperCase()} PORTFOLIO`;
+            // --- 2. DATA & UI STATE ---
+            let list = cat === 'health' ? [...healthData] : [...(POLICY_DATA[cat] || [])];
+            const sym = (cat === 'singapore') ? "$" : "₹";
 
-            let list = allData.filter(p => p.detectedCountry === (cat === 'india' ? "India" : "Singapore"));
-            
-            // Sorting
-            const sortBy = document.getElementById('sort-trigger').value;
-            if (sortBy === 'premium') list.sort((a, b) => toNum(b.premiumNumeric) - toNum(a.premiumNumeric));
-            else if (sortBy === 'due') list.sort((a, b) => parseDate(a["Last Premium Date"]) - parseDate(b["Last Premium Date"]));
+            if (cat === 'health') {
+                statusBadge.innerHTML = `<span class="material-symbols-outlined text-xs align-middle mr-1">medical_services</span> HEALTH PORTFOLIO`;
+                sortContainer.classList.add('invisible');
+            } else {
+                sortContainer.classList.remove('invisible');
+                const flagSrc = (cat === 'india') ? 'in' : 'sg';
+                statusBadge.innerHTML = `<img src="https://flagcdn.com/w40/${flagSrc}.png" class="w-5 h-auto inline-block align-middle mr-2 rounded-sm">${cat.toUpperCase()} PORTFOLIO`;
+            }
 
+            // --- 3. SORTING ---
+            if (cat !== 'health') {
+                if (sortBy === 'premium') list.sort((a, b) => toNum(b.premium) - toNum(a.premium));
+                else if (sortBy === 'due') list.sort((a, b) => parseDate(a.dueDate) - parseDate(b.dueDate));
+                else if (sortBy === 'time') list.sort((a, b) => parseDate(a.premiumEnds) - parseDate(b.premiumEnds));
+            }
+
+            // --- 4. RENDERING CARDS ---
             container.innerHTML = list.map(p => {
-                const policyData = {
-                    ...p,
-                    name: p.name || p["Policy_Name"] || "Unnamed",
-                    id: p["Policy No."] || "N/A",
-                    premium: p.premiumNumeric || 0,
-                    commenced: (p["Policy Age"] || p["Commencement Date"] || "01 Jan 2015").toString().replace(/\./g, ' '),
-                    maturity: (p["Maturity Date"] || "01 Jan 2030").toString().replace(/\./g, ' '),
-                    premiumEnds: (p["Premium Ends"] || p["Maturity Date"] || "01 Jan 2030").toString().replace(/\./g, ' '),
-                    color: p["Color_Code"] || "#962524",
-                    logo: p["Logo_Path"] || "image_4e0b3d.png"
-                };
-                return cat === 'singapore' ? createSGCard(policyData, sym, TODAY, CURRENT_YEAR) : createPolicyCard(policyData, sym, TODAY, CURRENT_YEAR);
+                if (cat === 'health') return createHealthCard(p);
+                if (cat === 'singapore') return createSGCard(p, sym, TODAY, CURRENT_YEAR);
+                return createPolicyCard(p, sym, TODAY, CURRENT_YEAR);
             }).join('');
 
-            updateTotals(list, sym);
-        };
+            // --- 5. SUMMARY CALCULATIONS ---
+            if (cat === 'health') {
+                const sgData = healthData.filter(p => p.currency === "SGD");
+                const sgCash = sgData.reduce((acc, p) => acc + parseFloat(p.cashAmount || 0), 0);
+                const sgCpf = sgData.reduce((acc, p) => acc + parseFloat(p.cpfAmount || 0), 0);
 
-        function updateTotals(list, sym) {
-            const tSA = list.reduce((acc, p) => acc + toNum(p["Sum Assured"] || 0), 0);
-            const tAnn = list.reduce((acc, p) => acc + (p["Status"] !== "PAID UP" ? toNum(p.premiumNumeric) : 0), 0);
-            document.getElementById('total-sa').innerText = sym + Math.round(tSA).toLocaleString('en-IN');
-            document.getElementById('total-premium').innerText = sym + Math.round(tAnn).toLocaleString('en-IN');
-            document.getElementById('total-unit-value').innerText = sym + "0";
+                const inData = healthData.filter(p => p.currency === "INR");
+                const inCash = inData.reduce((acc, p) => acc + parseFloat(p.cashAmount || 0), 0);
+
+                let pillsHtml = '';
+                if (sgData.length > 0) {
+                    pillsHtml += `
+                        <div class="flex items-center gap-4 bg-slate-800/40 px-6 py-3 rounded-3xl border border-slate-700/50">
+                            <img src="https://flagcdn.com/w40/sg.png" class="w-6 h-auto rounded-sm shadow-sm">
+                            <div>
+                                <p class="text-[10px] font-black text-slate-500 uppercase leading-none mb-1">Singapore</p>
+                                <span class="text-2xl font-black text-white">$${Math.round(sgCash + sgCpf).toLocaleString()}</span>
+                                <div class="flex gap-3 text-[10px] font-bold mt-1">
+                                    <span class="text-emerald-400">CASH: $${Math.round(sgCash).toLocaleString()}</span>
+                                    <span class="text-blue-400">CPF: $${Math.round(sgCpf).toLocaleString()}</span>
+                                </div>
+                            </div>
+                        </div>`;
+                }
+                if (inData.length > 0) {
+                    pillsHtml += `
+                        <div class="flex items-center gap-4 bg-slate-800/40 px-6 py-3 rounded-3xl border border-slate-700/50">
+                            <img src="https://flagcdn.com/w40/in.png" class="w-6 h-auto rounded-sm shadow-sm">
+                            <div>
+                                <p class="text-[10px] font-black text-slate-500 uppercase leading-none mb-1">India</p>
+                                <span class="text-2xl font-black text-white">₹${Math.round(inCash).toLocaleString()}</span>
+                                <p class="text-[10px] font-bold text-orange-400 mt-1 uppercase tracking-tighter">Annual Cash</p>
+                            </div>
+                        </div>`;
+                }
+                document.getElementById('health-pills-container').innerHTML = pillsHtml;
+
+            } else {
+                const tSA = list.reduce((acc, p) => acc + (toNum(p.sumAssured) || toNum(p.currentUnitValue || 0)), 0);
+                const tAnn = list.reduce((acc, p) => acc + (p.status !== "PAID UP" ? toNum(p.premium) : 0), 0);
+                const tUnitValue = list.reduce((acc, p) => acc + toNum(p.currentUnitValue || 0), 0);
+                
+                let familyHtml = '';
+                if (cat === 'india') {
+                    const hSA = list.filter(p => !p.isWife && !p.isDaughter).reduce((acc, p) => acc + toNum(p.sumAssured), 0);
+                    const wSA = list.filter(p => p.isWife).reduce((acc, p) => acc + toNum(p.sumAssured), 0);
+                    const dSA = list.filter(p => p.isDaughter).reduce((acc, p) => acc + toNum(p.sumAssured), 0);
+                    familyHtml = `
+                        <div class="flex justify-center gap-4 mt-2 pt-2 border-t border-slate-700/50">
+                            <div class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px] text-slate-400">man</span><span class="text-[11px] font-bold text-slate-300">${sym}${Math.round(hSA).toLocaleString()}</span></div>
+                            <div class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px] text-pink-400">woman</span><span class="text-[11px] font-bold text-pink-300">${sym}${Math.round(wSA).toLocaleString()}</span></div>
+                            <div class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px] text-indigo-400">child_care</span><span class="text-[11px] font-bold text-indigo-300">${sym}${Math.round(dSA).toLocaleString()}</span></div>
+                        </div>`;
+                }
+
+                document.getElementById('total-sa').innerHTML = `<span>${sym}${Math.round(tSA).toLocaleString()}</span>${familyHtml}`;
+                document.getElementById('total-premium').innerText = sym + Math.round(tAnn).toLocaleString();
+                document.getElementById('total-unit-value').innerText = sym + Math.round(tUnitValue).toLocaleString();
+            }
         }
-
-        function updateHealthSummary(data, summaryBar) {
-            // Restore your complex Health Pill logic here
-            summaryBar.innerHTML = `<div class="px-4 py-2 font-bold uppercase tracking-widest text-emerald-400">Health Coverage Active</div>`;
-        }
-
+        
+        // Default Load
         render('india');
     </script>
 </body>
