@@ -1,4 +1,4 @@
-/* component_sg.js - v6.5.0 - Responsive & Mobile Optimized */
+/* component_sg.js - v6.5.1 - Restored Desktop & Fixed Timeline Sync */
 import { autoFmt, toNum } from './india.js';
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR, isMobile = false) {
@@ -62,7 +62,7 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR, isMobile = false) {
     const surrenderValue = Math.round(Math.max(0, accountValue - surrenderChargeAmount));
     const lockedValue = Math.round(accountValue - surrenderValue);
 
-    // Timeline Logic
+    // Timeline Generation (Restored fixed-width logic for Desktop)
     let timelineHtml = '';
     const maxYears = (endY - startY + 1 > 0 && endY - startY + 1 < 50) ? (endY - startY + 1) : 15;
   
@@ -83,83 +83,73 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR, isMobile = false) {
         }
 
         timelineHtml += `
-            <div class="segment ${colorClass} h-6 md:h-8 flex-1 border-r border-white/10 first:rounded-l-lg last:rounded-r-lg transition-all relative group/segment">
+            <div class="segment ${colorClass} h-8 ${isMobile ? 'flex-1' : 'w-full'} border-r border-white/10 first:rounded-l-lg last:rounded-r-lg transition-all relative group/segment">
                 <div class="opacity-0 group-hover/segment:opacity-100 absolute bottom-full mb-3 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-3 py-2 rounded-xl text-[10px] z-[100] whitespace-nowrap pointer-events-none shadow-2xl">
-                    <b class="text-sky-400 block mb-1">Year ${polY} (${yr})</b>
-                    <span>${statusLabel}</span>
+                    <b class="text-sky-400 uppercase tracking-widest block mb-1 font-black">Year ${polY} (${yr})</b>
+                    <span class="text-white font-bold tracking-tight">${statusLabel}</span>
+                    <div class="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-slate-900"></div>
                 </div>
             </div>`;
     }
 
     const nextDueYear = hasPassedThisYear ? CURRENT_YEAR + 1 : CURRENT_YEAR;
-    const nextDueDisplay = new Date(nextDueYear, commMonth, commDay).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+    const nextDueDisplay = new Date(nextDueYear, commMonth, commDay).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+
+    const headerPadding = isMobile ? "p-5" : "p-8";
+    const headerFlex = isMobile ? "flex-col" : "items-center justify-between";
 
     return `
-    <div class="policy-card mb-8 rounded-[30px] md:rounded-[40px] bg-white overflow-hidden shadow-lg border-2 relative" 
+    <div class="policy-card mb-10 rounded-[40px] bg-white overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.08)] border-2 relative" 
          id="card-${p.id}" 
-         style="border-left: ${isMobile ? '10px' : '16px'} solid ${brandColor}; border-color: ${brandColor};">
+         style="border-left: 16px solid ${brandColor}; border-color: ${brandColor};">
         
-        <div class="p-5 md:p-8 flex flex-col md:flex-row md:items-center justify-between cursor-pointer relative" style="background: ${brandBg}" onclick="toggleCard('${p.id}')">
-            <div class="flex items-center gap-4 md:gap-8 mb-4 md:mb-0">
-                <div class="w-14 h-14 md:w-20 md:h-20 flex-shrink-0 flex items-center justify-center bg-white rounded-2xl shadow-sm p-2">
+        <div class="${headerPadding} flex ${headerFlex} cursor-pointer relative" style="background: ${brandBg}" onclick="toggleCard('${p.id}')">
+            <div class="flex items-center gap-8 ${isMobile ? 'mb-4' : 'pl-6 pr-4'}">
+                <div class="w-20 h-20 flex-shrink-0 flex items-center justify-center bg-white rounded-[24px] shadow-sm p-3 relative z-20">
                     <img src="${p.logo}" class="max-h-full object-contain">
                 </div>
-                <div>
-                    <h3 class="font-black text-xl md:text-3xl text-slate-900 tracking-tight">${p.name}</h3>
-                    <div class="flex items-center gap-2">
-                        <span class="px-2 py-0.5 rounded text-[9px] font-bold text-white uppercase" style="background: ${brandColor}">${p.company}</span>
-                        <span class="font-mono text-[10px] font-bold text-slate-400">#${p.id}</span>
+                <div class="relative z-20">
+                    <h3 class="font-black text-3xl text-slate-900 mb-2 tracking-tight">${p.name}</h3>
+                    <div class="flex items-center gap-3">
+                        <span class="px-3 py-1 rounded-md text-[10px] font-bold text-white uppercase" style="background: ${brandColor}">${p.company}</span>
+                        <span class="font-mono text-xs font-bold text-slate-400">#${p.id}</span>
                     </div>
                 </div>
             </div>
 
-            <div class="flex items-center justify-between md:justify-end gap-4 md:gap-10 border-t md:border-0 pt-4 md:pt-0">
-                <div class="text-left md:text-right">
-                    <p class="text-[9px] font-black text-slate-300 uppercase">Valuation</p>
-                    <p class="text-lg md:text-2xl font-black text-slate-900">${autoFmt(accountValue, sym)}</p>
-                </div>
+            <div class="flex items-center ${isMobile ? 'justify-between w-full' : 'gap-10 text-right px-4'} relative z-20">
+                <div><p class="text-[10px] font-black text-slate-300 uppercase mb-1">Premium</p><p class="text-2xl font-black text-slate-800">${autoFmt(p.premium, sym)}</p></div>
+                <div><p class="text-[10px] font-black text-slate-300 uppercase mb-1">Valuation</p><p class="text-2xl font-black text-slate-900">${autoFmt(accountValue, sym)}</p></div>
                 
-                <div class="bg-white/70 px-4 py-2 rounded-2xl border border-white/50 flex flex-col justify-center min-w-[110px]">
+                <div class="bg-white/60 px-6 py-3 rounded-[20px] border border-white/50 flex flex-col justify-center min-w-[125px] h-[64px]">
                     ${isPaidUp ? `
-                        <p class="text-[9px] font-black text-emerald-500 uppercase text-center">PAID UP</p>
+                        <p class="text-[10px] font-black text-emerald-500 uppercase text-center">Status</p>
+                        <p class="text-sm font-black text-emerald-700 text-center uppercase tracking-tighter">FULLY PAID</p>
                     ` : `
-                        <p class="text-[8px] font-black text-indigo-500 uppercase text-center">Due: ${nextDueDisplay}</p>
-                        <p class="text-[10px] font-black text-slate-700 text-center tracking-tight">Left: ${premRemainingStr}</p>
+                        <p class="text-[9px] font-black text-indigo-500 uppercase text-center">Left: <span class="text-slate-700">${premRemainingStr}</span></p>
+                        <div class="h-[1px] bg-slate-200/40 w-full my-1"></div>
+                        <p class="text-[9px] font-black text-sky-500 uppercase text-center">Next Due</p>
+                        <p class="text-sm font-black text-slate-700 text-center tracking-tight">${nextDueDisplay}</p>
                     `}
                 </div>
             </div>
         </div>
 
-        <div class="content-area px-5 md:px-10 pb-8 md:pb-10 pt-2" style="background: linear-gradient(to bottom, ${brandBg}, #ffffff)">
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-6">
-                <div class="p-4 rounded-2xl md:rounded-[32px] bg-white border border-slate-100 shadow-sm">
-                    <p class="text-[9px] font-black text-slate-400 mb-1 uppercase">Sum Assured</p>
-                    <p class="text-sm md:text-xl font-black text-slate-800">${autoFmt(displaySumAssured, sym)}</p>
-                </div>
-                <div class="p-4 rounded-2xl md:rounded-[32px] bg-white border border-slate-100 shadow-sm">
-                    <p class="text-[9px] font-black text-slate-400 mb-1 uppercase">Net Invested</p>
-                    <p class="text-sm md:text-xl font-black text-slate-800">${autoFmt(netInvestmentBase, sym)}</p>
-                </div>
-                <div class="p-4 rounded-2xl md:rounded-[32px] bg-emerald-50 border border-emerald-100">
-                    <p class="text-[9px] font-black text-emerald-600 mb-1 uppercase">Surrender</p>
-                    <p class="text-lg md:text-2xl font-black text-emerald-700">${autoFmt(surrenderValue, sym)}</p>
-                </div>
-                <div class="p-4 rounded-2xl md:rounded-[32px] bg-red-50 border border-red-100">
-                    <p class="text-[9px] font-black text-red-400 mb-1 uppercase">Locked</p>
-                    <p class="text-lg md:text-2xl font-black text-red-600">-${autoFmt(lockedValue, sym)}</p>
-                </div>
-            </div>
-
-            <div class="flex justify-between items-end mb-3 px-1">
-                <p class="text-[9px] font-black text-slate-400 uppercase">${startY} Start</p>
-                <p class="text-[9px] font-black text-slate-400 uppercase">${endY} Maturity</p>
+        <div class="content-area px-10 pb-10 pt-2 relative z-20" style="background: linear-gradient(to bottom, ${brandBg}, #ffffff)">
+            <div class="grid ${isMobile ? 'grid-cols-2' : 'grid-cols-4'} gap-6 mb-8">
+                <div class="p-6 rounded-[32px] bg-white border border-slate-100 relative shadow-sm"><p class="text-[10px] font-black text-slate-400 mb-2 uppercase">Sum Assured</p><p class="text-2xl font-black text-slate-800">${autoFmt(displaySumAssured, sym)}</p></div>
+                <div class="p-6 rounded-[32px] bg-white border border-slate-100 relative shadow-sm"><p class="text-[10px] font-black text-slate-400 mb-2 uppercase">Invested</p><p class="text-2xl font-black text-slate-800">${autoFmt(netInvestmentBase, sym)}</p></div>
+                <div class="p-6 rounded-[32px] bg-emerald-50 border border-emerald-100 shadow-sm"><p class="text-[10px] font-black text-emerald-600 mb-2 uppercase text-center">Surrender</p><p class="text-3xl font-black text-emerald-700 text-center">${autoFmt(surrenderValue, sym)}</p></div>
+                <div class="p-6 rounded-[32px] bg-red-50 border border-red-100 shadow-sm"><p class="text-[10px] font-black text-red-400 mb-2 uppercase text-center">Locked</p><p class="text-3xl font-black text-red-600 text-center">-${autoFmt(lockedValue, sym)}</p></div>
             </div>
             
-            <div class="overflow-x-auto pb-2">
-                <div class="flex items-center min-w-[500px] h-12 bg-slate-100 rounded-2xl px-2 border border-slate-200/50">
-                    <div class="flex-1 flex h-8 items-center gap-1">${timelineHtml}</div>
-                    <div class="ml-2 text-amber-500 font-bold text-lg">★</div>
-                </div>
+            <div class="flex justify-between items-end mb-4 px-2">
+                <div><p class="text-[10px] font-black text-slate-400 uppercase mb-1">Commencement</p><p class="text-sm font-bold text-slate-700 underline decoration-sky-300 decoration-2 underline-offset-4">${p.commenced}</p></div>
+                <div class="text-right"><p class="text-[10px] font-black text-slate-400 uppercase mb-1">Maturity</p><p class="text-sm font-bold text-slate-700 underline decoration-amber-300 decoration-2 underline-offset-4">${p.maturity}</p></div>
+            </div>
+            <div class="relative flex items-center h-16 bg-slate-100 rounded-[24px] px-2 border border-slate-200/50">
+                <div class="flex-1 flex h-10 items-center gap-1">${timelineHtml}</div>
+                <div class="ml-2 relative group flex items-center justify-center w-12 h-10 bg-white rounded-xl shadow-sm border border-slate-200 cursor-help"><span class="text-xl text-amber-500 transition-transform group-hover:scale-125">★</span></div>
             </div>
         </div>
     </div>`;
