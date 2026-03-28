@@ -32,7 +32,7 @@ async function initIndia() {
          */
         const policyData = {
             ...p,
-            name: p.name || p.Policy_Name || "Unknown Policy", 
+            name: p.name || p["Policy_Name"] || "Unnamed Policy", 
             company: p.company || "Insurance",
             premium: p.premiumNumeric,   // Numeric value for calculations
             
