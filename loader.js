@@ -28,23 +28,36 @@ function processCSV(csv) {
 }
 
 function parseInsuranceTab(row) {
-    // 1. Capture the raw policy name from your specific header
     const rawFullName = row["Policy_Name"] || ""; 
 
-    // 2. Perform the Split Logic
+    // 1. Split logic
     if (rawFullName.includes(":")) {
         const parts = rawFullName.split(":");
         row.company = parts[0].trim();
-        row.name = parts[1].trim(); // This maps to the card title
+        row.name = parts[1].trim();
     } else {
         row.company = "Insurance";
-        row.name = rawFullName; // Fallback if no colon exists
+        row.name = rawFullName;
     }
 
-    // 3. Detect Country and Numeric Values
+    // 2. SMART COUNTRY DETECTION (Handles broken encoding)
     const premiumAttr = row["Premium"] || "";
-    row.detectedCountry = premiumAttr.includes("₹") ? "India" : (premiumAttr.includes("$") ? "Singapore" : "Other");
-    row.premiumNumeric = parseFloat(premiumAttr.replace(/[₹$,\s]/g, "")) || 0;
+    
+    // Check for ₹ OR the broken 'â' sequence
+    const isIndia = premiumAttr.includes("₹") || premiumAttr.includes("â");
+    const isSingapore = premiumAttr.includes("$");
+
+    if (isIndia) {
+        row.detectedCountry = "India";
+    } else if (isSingapore) {
+        row.detectedCountry = "Singapore";
+    } else {
+        row.detectedCountry = "Other";
+    }
+
+    // 3. CLEAN NUMERIC VALUE
+    // We remove ALL non-numeric characters (including the broken â symbols)
+    row.premiumNumeric = parseFloat(premiumAttr.replace(/[^\d.]/g, "")) || 0;
 
     return row;
 }
