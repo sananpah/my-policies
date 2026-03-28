@@ -1,5 +1,5 @@
-/* health.js - v1.5.0 - Responsive & Family-Centric UI */
-import { autoFmt } from './india.js';
+/* health.js - v1.5.1 - Full Card Blink for Due Soon */
+import { autoFmt, checkIsDueSoon } from './india.js';
 
 function getNextDue(expiryDateStr) {
     const expiry = new Date(expiryDateStr);
@@ -13,8 +13,9 @@ function getNextDue(expiryDateStr) {
     
     const day = String(nextDue.getDate()).padStart(2, '0');
     const month = nextDue.toLocaleString('en-GB', { month: 'short' });
+    const year = nextDue.getFullYear();
     
-    return `${day} ${month}`;
+    return `${day} ${month} ${year}`;
 }
 
 function getOwnerIcon(owner) {
@@ -34,6 +35,10 @@ export function createHealthCard(p, isMobile = false) {
     const premium = (parseFloat(p.cashAmount || 0) + parseFloat(p.cpfAmount || 0));
     const nextDue = getNextDue(p.expiryDate);
 
+    // --- DUE SOON LOGIC ---
+    const isDueSoon = checkIsDueSoon(nextDue);
+    const blinkClass = isDueSoon ? "animate-card-pulse" : "";
+
     const expiryDate = new Date(p.expiryDate);
     const today = new Date();
     let years = expiryDate.getFullYear() - today.getFullYear();
@@ -42,9 +47,9 @@ export function createHealthCard(p, isMobile = false) {
     const timeRemaining = `${String(Math.max(0, years)).padStart(2, '0')}y${String(Math.max(0, months)).padStart(2, '0')}m`;
 
     return `
-    <div class="health-card policy-card mb-6 rounded-[30px] md:rounded-[40px] bg-white border-2 relative overflow-hidden transition-all" 
+    <div class="health-card policy-card mb-6 rounded-[30px] md:rounded-[40px] bg-white border-2 relative overflow-hidden transition-all duration-500 ${blinkClass}" 
          id="card-${p.id}"
-         style="border-left: ${isMobile ? '10px' : '16px'} solid ${brandColor}; border-color: ${brandColor};">
+         style="border-left: ${isMobile ? '10px' : '16px'} solid ${brandColor}; border-color: ${isDueSoon ? '#f87171' : brandColor};">
         
         <div class="p-5 md:p-8 flex flex-col md:flex-row md:items-center justify-between cursor-pointer group" style="background: ${brandBg}" onclick="toggleCard('${p.id}')">
             <div class="flex items-center gap-4 md:gap-8 mb-4 md:mb-0">
@@ -76,8 +81,8 @@ export function createHealthCard(p, isMobile = false) {
                 </div>
 
                 <div class="bg-white/80 px-4 py-3 rounded-2xl border border-white/50 text-center min-w-[100px] shadow-sm">
-                    <p class="text-[8px] font-black text-orange-500 uppercase mb-0.5">Due: ${nextDue}</p>
-                    <p class="text-[11px] font-black text-slate-700 leading-none">Left: ${timeRemaining}</p>
+                    <p class="text-[8px] font-black ${isDueSoon ? 'text-red-500' : 'text-orange-500'} uppercase mb-0.5">Due: ${nextDue.split(' ').slice(0,2).join(' ')}</p>
+                    <p class="text-[11px] font-black ${isDueSoon ? 'text-red-700' : 'text-slate-700'} leading-none">Left: ${timeRemaining}</p>
                 </div>
                 <span class="material-symbols-outlined text-slate-300 hidden md:block group-[.open]:rotate-180 transition-transform">expand_more</span>
             </div>
