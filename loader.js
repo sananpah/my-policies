@@ -5,40 +5,51 @@ export async function fetchPortfolioData() {
     try {
         const response = await fetch(SHEET_URL);
         const csvData = await response.text();
-        return parseCSV(csvData);
+        return processCSV(csvData);
     } catch (error) {
         console.error("Error fetching sheet:", error);
         return [];
     }
 }
 
-function parseCSV(csv) {
+function processCSV(csv) {
     const lines = csv.split("\n").filter(line => line.trim() !== "");
     const headers = lines[0].split(",").map(h => h.trim());
-
+    
     return lines.slice(1).map(line => {
         const values = line.split(",").map(v => v.trim());
         const row = {};
-        headers.forEach((header, i) => {
-            row[header] = values[i];
-    });
-
-        // Step-by-step Parsing Logic requested:
-        const fullName = row["Insurance [Investment].Name of the policy"] || "";
-        if (fullName.includes(":")) {
-            const parts = fullName.split(":");
-            row.parsedCompany = parts[0].trim();
-            row.parsedName = parts[1].trim();
-        } else {
-            row.parsedCompany = "Unknown";
-            row.parsedName = fullName;
-        }
-
-        // Determine Country by Currency
-        const curr = row["Premium Currency"] || ""; // Adjust header name to match your sheet
-        row.detectedCountry = curr.includes("₹") ? "India" : (curr.includes("$") ? "Singapore" : "Other");
-
-        return row;
+        headers.forEach((header, i) => { row[header] = values[i]; });
+        
+        // Directly call the parser for every row
+        return parseInsuranceTab(row);
     });
 }
 
+function parseInsuranceTab(row) {
+    // 1. Parse "Company : Policy Name"
+    const rawFullName = row["Insurance [Investment].Name of the policy"] || "";
+    if (rawFullName.includes(":")) {
+        const parts = rawFullName.split(":");
+        row.company = parts[0].trim();
+        row.name = parts[1].trim();
+    } else {
+        row.company = "Unknown";
+        row.name = rawFullName;
+    }
+
+    // 2. Detect Country via Premium Currency Symbol
+    const premiumAttr = row["Premium"] || "";
+    if (premiumAttr.includes("₹")) {
+        row.detectedCountry = "India";
+        row.currencySymbol = "₹";
+    } else if (premiumAttr.includes("$")) {
+        row.detectedCountry = "Singapore";
+        row.currencySymbol = "$";
+    }
+
+    // 3. Convert Premium to a clean number for logic/math
+    row.premiumNumeric = parseFloat(premiumAttr.replace(/[₹$,\s]/g, "")) || 0;
+
+    return row;
+}
