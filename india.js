@@ -32,8 +32,8 @@ async function initIndia() {
          */
         const policyData = {
             ...p,
-            name: p.name,                // Cleaned Name (after the :)
-            company: p.company,          // Cleaned Company (before the :)
+            name: p.name || p.Policy_Name || "Unknown Policy", 
+            company: p.company || "Insurance",
             premium: p.premiumNumeric,   // Numeric value for calculations
             
             // Explicitly mapping Excel headers to component attributes
