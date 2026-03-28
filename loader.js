@@ -14,10 +14,13 @@ export async function fetchPortfolioData() {
     }
 }
 
+/* loader.js - Force-Show All 19 Records */
+
 function processCSV(csv) {
     const rows = [];
     let currentRow = [''], inQuote = false;
     
+    // Robust CSV parsing
     for (let i = 0; i < csv.length; i++) {
         const char = csv[i];
         if (char === '"' && csv[i+1] === '"') { currentRow[currentRow.length-1] += '"'; i++; }
@@ -28,30 +31,31 @@ function processCSV(csv) {
     }
     rows.push(currentRow);
 
+    // Find Header
     const headerIdx = rows.findIndex(r => 
         r.some(cell => cell && cell.toLowerCase().includes("policy_name"))
     );
 
-    if (headerIdx === -1) return [];
+    if (headerIdx === -1) {
+        alert("CRITICAL: Header 'Policy_Name' not found. Check debug console.");
+        return [];
+    }
 
     const headers = rows[headerIdx].map(h => h.trim());
     const dataRows = rows.slice(headerIdx + 1);
 
-    const finalData = dataRows.map(rowData => {
+    // MAPPING ALL DATA (No filtering yet so we can see what's wrong)
+    const allParsedData = dataRows.map(rowData => {
         const obj = {};
-        headers.forEach((h, i) => { 
-            if(h) obj[h] = (rowData[i] || "").trim(); 
-        });
-        
-        if (!obj["Policy_Name"] || obj["Policy_Name"] === "EMPTY") return null;
-
+        headers.forEach((h, i) => { if(h) obj[h] = (rowData[i] || "").trim(); });
         return parseInsuranceTab(obj);
-    }).filter(r => r !== null);
+    });
 
-    // --- CHANGE: Showing all records (up to 20) ---
-    renderTopDebug(finalData.slice(0, 20));
+    // --- DEBUG: Show EVERY row found (Limit set to 50 just in case) ---
+    renderTopDebug(allParsedData.slice(0, 50));
 
-    return finalData;
+    // Return only valid ones for the actual website
+    return allParsedData.filter(r => r["Policy_Name"] && r["Policy_Name"] !== "EMPTY");
 }
 
 function renderTopDebug(records) {
@@ -61,24 +65,26 @@ function renderTopDebug(records) {
     if (!debugDiv) {
         debugDiv = document.createElement('div');
         debugDiv.id = 'loader-debug-top';
-        // Style updated for scrolling through many records
-        debugDiv.style = "position:fixed; top:0; left:0; width:100%; background:rgba(0,0,0,0.9); color:lime; z-index:10000; padding:15px; font-family:monospace; font-size:11px; border-bottom:3px solid #00ff00; max-height:40vh; overflow-y:auto; box-shadow: 0 4px 20px rgba(0,0,0,0.5);";
+        debugDiv.style = "position:fixed; top:0; left:0; width:100%; background:rgba(0,0,0,0.95); color:#00ff00; z-index:10001; padding:20px; font-family:monospace; font-size:11px; border-bottom:4px solid #00ff00; max-height:50vh; overflow-y:auto; width:98vw;";
         document.body.prepend(debugDiv);
     }
     
-    debugDiv.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-        <b style="font-size:14px;">🔍 RAW DATA DIAGNOSTIC: ${records.length} TOTAL RECORDS</b>
-        <button onclick="this.parentElement.parentElement.remove()" style="background:red; color:white; border:none; padding:2px 8px; cursor:pointer;">CLOSE DEBUG</button>
-    </div>`;
+    debugDiv.innerHTML = `
+        <div style="display:flex; justify-content:space-between; margin-bottom:15px; border-bottom:1px solid lime;">
+            <b style="font-size:16px; color:white;">🚩 DEBUGGER: SHOWING ALL ${records.length} ROWS FOUND</b>
+            <button onclick="location.reload(true)" style="background:yellow; color:black; font-weight:bold; padding:5px;">FORCE REFRESH PAGE</button>
+        </div>`;
 
-    records.forEach((record, index) => {
-        const color = record.detectedCountry === "India" ? "#ff9933" : "#38bdf8";
+    records.forEach((r, i) => {
+        const isPolicy = r["Policy_Name"] && r["Policy_Name"].includes(":");
+        const color = isPolicy ? "#00ff00" : "#ff4444"; // Green for real policies, Red for garbage/empty
+        
         debugDiv.innerHTML += `
-            <div style="border-bottom:1px solid #333; padding:4px 0;">
-                <span style="color:#888;">#${index+1}</span> | 
-                <span style="color:${color}; font-weight:bold;">[${record.detectedCountry}]</span> | 
-                <b>${record.company}</b> : ${record.name} | 
-                <span style="color:#aaa;">Prem: ${record.premiumNumeric}</span>
+            <div style="margin-bottom:5px; border-bottom:1px solid #222;">
+                <span style="color:#888;">#${i+1}</span> | 
+                <span style="color:${color}; font-weight:bold;">Name: [${r.name || '---'}]</span> | 
+                <span style="color:#aaa;">Raw: ${r["Policy_Name"] || 'EMPTY'}</span> | 
+                <span style="color:cyan;">Country: ${r.detectedCountry}</span>
             </div>`;
     });
 }
