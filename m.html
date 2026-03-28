@@ -12,28 +12,29 @@
 
     <script type="module">
         async function loadMobileVersion() {
-            // 1. Fetch the "Golden" desktop HTML
-            const response = await fetch('index.html');
-            const htmlText = await response.text();
-            
-            // 2. Parse it so we can grab the content
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(htmlText, 'text/html');
-            
-            // 3. Extract the body content (the buttons, containers, etc.)
-            const desktopBody = doc.body.innerHTML;
-            document.getElementById('mobile-root').innerHTML = desktopBody;
+        // ... (Your PIN code remains the same) ...
 
-            // 4. Force-run the scripts from index.html to make it interactive
-            const scripts = doc.querySelectorAll('script[type="module"]');
-            scripts.forEach(oldScript => {
-                const newScript = document.createElement('script');
-                newScript.type = 'module';
-                newScript.textContent = oldScript.textContent;
-                document.body.appendChild(newScript);
-            });
-        }
+        const response = await fetch('index.html');
+        const htmlText = await response.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlText, 'text/html');
+        
+        // CLEAR the root before adding new content
+        const root = document.getElementById('mobile-root');
+        root.innerHTML = ''; 
+        
+        const desktopBody = doc.body.innerHTML;
+        root.innerHTML = desktopBody;
 
+        // Run scripts
+        const scripts = doc.querySelectorAll('script[type="module"]');
+        scripts.forEach(oldScript => {
+            const newScript = document.createElement('script');
+            newScript.type = 'module';
+            newScript.textContent = oldScript.textContent;
+            document.body.appendChild(newScript);
+        });
+    }
         loadMobileVersion();
     </script>
 </body>
