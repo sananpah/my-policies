@@ -14,33 +14,43 @@ export async function fetchPortfolioData() {
     }
 }
 
+/* loader.js */
 function processCSV(csv) {
-    // 1. Advanced Parse (Handles quotes, commas in numbers, and multi-line cells)
     const rows = [];
-    let row = [''], inQuote = false;
+    let currentRow = [''], inQuote = false;
+    
+    // Robust parsing (Same as debug.html)
     for (let i = 0; i < csv.length; i++) {
         const char = csv[i];
-        if (char === '"' && csv[i+1] === '"') { row[row.length-1] += '"'; i++; }
+        if (char === '"' && csv[i+1] === '"') { currentRow[currentRow.length-1] += '"'; i++; }
         else if (char === '"') { inQuote = !inQuote; }
-        else if (char === ',' && !inQuote) { row.push(''); }
-        else if (char === '\n' && !inQuote) { rows.push(row); row = ['']; }
-        else { row[row.length-1] += char; }
+        else if (char === ',' && !inQuote) { currentRow.push(''); }
+        else if (char === '\n' && !inQuote) { rows.push(currentRow); currentRow = ['']; }
+        else { currentRow[currentRow.length-1] += char; }
     }
-    rows.push(row);
+    rows.push(currentRow);
 
-    // 2. Identify the Header Row (Looking for Policy_Name)
+    // Find the header row
     const headerIdx = rows.findIndex(r => r.some(cell => cell && cell.includes("Policy_Name")));
     if (headerIdx === -1) return [];
 
     const headers = rows[headerIdx].map(h => h.trim());
     const dataRows = rows.slice(headerIdx + 1);
 
-    // 3. Map Data and Filter out empty fragments
     return dataRows.map(rowData => {
         const obj = {};
-        headers.forEach((h, i) => { if(h) obj[h] = (rowData[i] || "").trim(); });
+        headers.forEach((h, i) => { 
+            if(h) obj[h] = (rowData[i] || "").trim(); 
+        });
         
-        // Skip if Policy_Name is missing (fragment/empty row)
+        // --- BRUTE FORCE FIX ---
+        // If the first column has a ":" (like Prudential : PruSave), 
+        // we force it to be the Policy_Name regardless of what the header says.
+        const firstCell = (rowData[0] || "").trim();
+        if (firstCell.includes(":") || (firstCell.length > 5 && !obj["Policy_Name"])) {
+            obj["Policy_Name"] = firstCell;
+        }
+
         if (!obj["Policy_Name"] || obj["Policy_Name"] === "EMPTY") return null;
 
         return parseInsuranceTab(obj);
