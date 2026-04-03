@@ -90,16 +90,23 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
 
     timelineHtml += `<div class="mat-star">★<div class="tooltip"><b class="text-orange-400 uppercase tracking-widest">Maturity</b><br><span class="${String(p.maturityAmt || p.sumAssured).length > 15 ? 'text-[10px]' : 'text-lg'} font-black">${raw(p.maturityAmt || p.sumAssured)}</span></div></div>`;
 
-    return `
+   return `
     <div class="policy-card mb-6" id="card-${p.id}" style="border-left: 16px solid ${brandColor}; border-color: ${brandColor};">
         <div class="card-header transition-colors" style="background: ${brandBg};" onclick="toggleCard('${p.id}')">
             <div class="w-32 flex justify-center"><img src="${p.logo}" class="max-h-12"></div>
             <div class="flex-1 ml-10">
-                <h3 class="font-black text-slate-800 text-xl tracking-tight flex items-center">
+                <h3 class="font-black text-slate-800 text-xl tracking-tight flex items-center gap-3">
                     ${p.name}
-                    ${p.isWife ? `<span class="family-marker ml-3" title="Wife's Policy"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#db2777" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm8.94 14c-.46-4.17-3.97-7.41-8.19-7.41s-7.73 3.24-8.19 7.41c-.02.21.11.41.32.41H20.62c.21 0 .34-.2.32-.41z"/></svg></span>` : ''}
-                    ${p.isDaughter ? `<span class="family-marker ml-3" title="Daughter's Policy"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4"/><path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg></span>` : ''}
+                    ${p.avatarPath ? `
+                        <div class="flex items-center ml-2">
+                            <img src="${p.avatarPath}" 
+                                 alt="${p.holderType || 'Insured'}" 
+                                 title="${p.holderType || 'Insured'}"
+                                 class="w-8 h-8 rounded-full border-2 border-white shadow-sm object-cover ring-1 ring-slate-200">
+                        </div>
+                    ` : ''}
                 </h3>
+                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">${p.company}</p>
             </div>
             
             <div class="flex gap-12 items-center mr-6">
