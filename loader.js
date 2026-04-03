@@ -5,46 +5,47 @@ const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2
  * MASTER SYNC FUNCTION:
  * Merges Google Sheet data into your static POLICY_DATA.
  */
+/* loader.js - Update only the sync logic */
+
 export async function syncWithGoogleSheets(masterList) {
-    try {
-        const response = await fetch(`${SHEET_URL}&t=${Date.now()}`);
-        const buffer = await response.arrayBuffer();
-        const decoder = new TextDecoder('utf-8'); 
-        const csvData = decoder.decode(buffer);
-        
-        const sheetRecords = processCSV(csvData);
+    // ... your existing fetch and processCSV code ...
 
-        ["india", "singapore"].forEach(country => {
-            if (!masterList[country]) return;
+    // 1. Private mapping - names are hidden inside this function
+    const insuredMap = {
+        "Suhail Nami": { type: "Self", img: "avatar_self.png" },
+        "Saima Suhail": { type: "Wife", img: "avatar_wife.png" },
+        "Sulmas Nami": { type: "Daughter", img: "avatar_daughter.png" }
+    };
 
-            masterList[country] = masterList[country].map(staticPolicy => {
-                const match = sheetRecords.find(row => row["Policy No."] === staticPolicy.id);
+    ["india", "singapore"].forEach(country => {
+        if (!masterList[country]) return;
 
-                if (match) {
-                    // Update Name and Company
-                    staticPolicy.name = match.name;
-                    staticPolicy.company = match.company;
+        masterList[country] = masterList[country].map(policy => {
+            const match = sheetRecords.find(row => row["Policy No."] === policy.id);
+
+            if (match) {
+                policy.name = match.name;
+                policy.company = match.company;
+                policy.type = match.type;
+
+                // 2. Only apply avatars for India
+                if (country === "india") {
+                    const insuredName = match["Insured"];
+                    const identity = insuredMap[insuredName];
                     
-                    // NEW: Update Type from the "Category" column in Excel
-                    staticPolicy.type = match.type; 
-                } else {
-                    if (!staticPolicy.name || staticPolicy.name.trim() === "") {
-                        staticPolicy.name = "Unknown";
+                    if (identity) {
+                        policy.avatarPath = identity.img;
+                        policy.holderType = identity.type; // For alt text/tooltips
+                    } else {
+                        policy.avatarPath = "avatar_unknown.png";
                     }
-                    // Fallback for type if not found in Excel
-                    if (!staticPolicy.type) staticPolicy.type = "Savings";
                 }
-                return staticPolicy;
-            });
+            }
+            return policy;
         });
+    });
 
-        console.log("✅ Silent Sync: Name & Type updated from Sheets.");
-        return masterList;
-
-    } catch (error) {
-        console.warn("⚠️ Sync Failed: Using static fallback data.", error);
-        return masterList;
-    }
+    return masterList;
 }
 
 function processCSV(csv) {
