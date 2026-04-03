@@ -70,14 +70,9 @@
     <div id="container" class="max-w-7xl mx-auto pb-20 px-4"></div>
 
     <script type="module">
-        const APP_VERSION = "4.0.84";
+        const APP_VERSION = "4.0.85";
         document.getElementById('version-tag').innerText = `v${APP_VERSION}`;
 
-        // Import all components safely
-        // --- OLD ---
-// const [Data, Tools, IndiaComp, SGComp, HealthComp, HealthDataFile] = await Promise.all([ ... ]);
-
-        // --- NEW (Update the Loader import to specifically grab the sync function) ---
         const [Data, Tools, IndiaComp, SGComp, HealthComp, HealthDataFile, { syncWithGoogleSheets }] = await Promise.all([
             import(`./data.js?v=${APP_VERSION}`),
             import(`./india.js?v=${APP_VERSION}`),
@@ -85,7 +80,7 @@
             import(`./component_sg.js?v=${APP_VERSION}`),
             import(`./health.js?v=${APP_VERSION}`),
             import(`./data_health.js?v=${APP_VERSION}`),
-            import(`./loader.js?v=${APP_VERSION}`) // Added this to the array
+            import(`./loader.js?v=${APP_VERSION}`)
         ]);
 
         const { POLICY_DATA } = Data;
@@ -186,10 +181,10 @@
                             <img src="https://flagcdn.com/w40/sg.png" class="w-6 h-auto rounded-sm shadow-sm">
                             <div>
                                 <p class="text-[10px] font-black text-slate-500 uppercase leading-none mb-1">Singapore</p>
-                                <span class="text-2xl font-black text-white">$${Math.round(sgCash + sgCpf).toLocaleString()}</span>
+                                <span class="text-2xl font-black text-white">$${Math.round(sgCash + sgCpf).toLocaleString('en-IN')}</span>
                                 <div class="flex gap-3 text-[10px] font-bold mt-1">
-                                    <span class="text-emerald-400">CASH: $${Math.round(sgCash).toLocaleString()}</span>
-                                    <span class="text-blue-400">CPF: $${Math.round(sgCpf).toLocaleString()}</span>
+                                    <span class="text-emerald-400">CASH: $${Math.round(sgCash).toLocaleString('en-IN')}</span>
+                                    <span class="text-blue-400">CPF: $${Math.round(sgCpf).toLocaleString('en-IN')}</span>
                                 </div>
                             </div>
                         </div>`;
@@ -200,7 +195,7 @@
                             <img src="https://flagcdn.com/w40/in.png" class="w-6 h-auto rounded-sm shadow-sm">
                             <div>
                                 <p class="text-[10px] font-black text-slate-500 uppercase leading-none mb-1">India</p>
-                                <span class="text-2xl font-black text-white">₹${Math.round(inCash).toLocaleString()}</span>
+                                <span class="text-2xl font-black text-white">₹${Math.round(inCash).toLocaleString('en-IN')}</span>
                                 <p class="text-[10px] font-bold text-orange-400 mt-1 uppercase tracking-tighter">Annual Cash</p>
                             </div>
                         </div>`;
@@ -208,44 +203,41 @@
                 document.getElementById('health-pills-container').innerHTML = pillsHtml;
 
             } else {
-                const tSA = list.reduce((acc, p) => acc + (toNum(p.sumAssured) || toNum(p.currentUnitValue || 0)), 0);
+                const tSA = list.reduce((acc, p) => acc + toNum(p.sumAssured), 0);
                 const tAnn = list.reduce((acc, p) => acc + (p.status !== "PAID UP" ? toNum(p.premium) : 0), 0);
                 const tUnitValue = list.reduce((acc, p) => acc + toNum(p.currentUnitValue || 0), 0);
                 
                 let familyHtml = '';
                 if (cat === 'india') {
-                    const hSA = list.filter(p => !p.isWife && !p.isDaughter).reduce((acc, p) => acc + toNum(p.sumAssured), 0);
-                    const wSA = list.filter(p => p.isWife).reduce((acc, p) => acc + toNum(p.sumAssured), 0);
-                    const dSA = list.filter(p => p.isDaughter).reduce((acc, p) => acc + toNum(p.sumAssured), 0);
+                    // Split logic based on holderType assigned in loader.js
+                    const hSA = list.filter(p => !p.avatarPath || p.holderType === "Self").reduce((acc, p) => acc + toNum(p.sumAssured), 0);
+                    const wSA = list.filter(p => p.holderType === "Wife").reduce((acc, p) => acc + toNum(p.sumAssured), 0);
+                    const dSA = list.filter(p => p.holderType === "Daughter").reduce((acc, p) => acc + toNum(p.sumAssured), 0);
                     
-                    // 3. CONSOLIDATED ICONS: WRAPPED IN MATERIAL SPAN
                     familyHtml = `
-                        <div class="flex justify-center gap-4 mt-2 pt-2 border-t border-slate-700/50">
-                            <div class="flex items-center gap-1">
-                                <span class="material-symbols-outlined text-[14px] text-slate-400">man</span>
-                                <span class="text-[11px] font-bold text-slate-300">${sym}${Math.round(hSA).toLocaleString()}</span>
+                        <div class="flex justify-center gap-6 mt-4 pt-3 border-t border-slate-800/50">
+                            <div class="flex items-center gap-2 bg-slate-800/30 px-3 py-1.5 rounded-full border border-slate-700/30">
+                                <img src="avatar_self.png" class="w-5 h-5 rounded-full object-cover border border-slate-500">
+                                <span class="text-[11px] font-black text-slate-200">${sym}${Math.round(hSA).toLocaleString('en-IN')}</span>
                             </div>
-                            <div class="flex items-center gap-1">
-                                <span class="material-symbols-outlined text-[14px] text-pink-400">woman</span>
-                                <span class="text-[11px] font-bold text-pink-300">${sym}${Math.round(wSA).toLocaleString()}</span>
+                            <div class="flex items-center gap-2 bg-pink-900/20 px-3 py-1.5 rounded-full border border-pink-700/30">
+                                <img src="avatar_wife.png" class="w-5 h-5 rounded-full object-cover border border-pink-500">
+                                <span class="text-[11px] font-black text-pink-200">${sym}${Math.round(wSA).toLocaleString('en-IN')}</span>
                             </div>
-                            <div class="flex items-center gap-1">
-                                <span class="material-symbols-outlined text-[14px] text-indigo-400">child_care</span>
-                                <span class="text-[11px] font-bold text-indigo-300">${sym}${Math.round(dSA).toLocaleString()}</span>
+                            <div class="flex items-center gap-2 bg-indigo-900/20 px-3 py-1.5 rounded-full border border-indigo-700/30">
+                                <img src="avatar_daughter.png" class="w-5 h-5 rounded-full object-cover border border-indigo-500">
+                                <span class="text-[11px] font-black text-indigo-200">${sym}${Math.round(dSA).toLocaleString('en-IN')}</span>
                             </div>
                         </div>`;
                 }
 
-                document.getElementById('total-sa').innerHTML = `<span>${sym}${Math.round(tSA).toLocaleString()}</span>${familyHtml}`;
-                document.getElementById('total-premium').innerText = sym + Math.round(tAnn).toLocaleString();
-                document.getElementById('total-unit-value').innerText = sym + Math.round(tUnitValue).toLocaleString();
+                document.getElementById('total-sa').innerHTML = `<span>${sym}${Math.round(tSA).toLocaleString('en-IN')}</span>${familyHtml}`;
+                document.getElementById('total-premium').innerText = sym + Math.round(tAnn).toLocaleString('en-IN');
+                document.getElementById('total-unit-value').innerText = sym + Math.round(tUnitValue).toLocaleString('en-IN');
             }
         }
         
-      // 1. First, update the static POLICY_DATA with fresh names from Google Sheets
         await syncWithGoogleSheets(POLICY_DATA);
-
-    // 2. Now call your original render function
         render('india');
         
     </script>
