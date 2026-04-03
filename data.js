@@ -18,8 +18,6 @@ export const POLICY_DATA = {
             payoutSchedule: { 11: 133974, 12: 133974, 13: 133974, 14: 133974, 15: 133974, 16: 160769, 17: 160769, 18: 160769, 19: 160769, 20: 160769, 21: 187564, 22: 187564, 23: 187564, 24: 187564, 25: 187564, 26: 214359, 27: 214359, 28: 214359, 29: 214359, 30: 214359 }
         },
         { 
-            name: "Nishchit Pension SL",
-            company: "IndusInd Nippon Life",
             logo: "image_4e0b3d.png",
             id: "54679062",
             uin: "128N161V04",
@@ -36,8 +34,6 @@ export const POLICY_DATA = {
             defermentYear: 2031
         },
         { 
-            name: "Nishchit Samrudhi IL",
-            company: "IndusInd Nippon Life",
             logo: "image_4e0b3d.png",
             id: "54040166",
             uin: "128N154V02",
@@ -53,8 +49,6 @@ export const POLICY_DATA = {
             payoutSchedule: { 8: 100000, 9: 100000, 10: 100000, 11: 100000, 12: 100000, 13: 100000, 14: 100000, 15: 100000, 16: 100000, 17: 100000, 18: 100000, 19: 100000, 20: 100000, 21: 100000, 22: 100000, 23: 100000, 24: 100000, 25: 100000, 26: 100000, 27: 100000, 28: 100000 }
         },
         { 
-            name: "Guaranteed Moneyback",
-            company: "IndusInd Nippon Life",
             logo: "image_4e0b3d.png",
             id: "53044042",
             uin: "128N053V02",
@@ -70,8 +64,6 @@ export const POLICY_DATA = {
             payoutSchedule: { 11: 18591, 12: 18591, 13: 18591, 14: 18591, 15: 49576 } 
         },
         { 
-            name: "Confident Retirement Savings",
-            company: "KOTAK",
             logo: "image_5d7f80.png",
             id: "79079094",
             uin: "107N105V02",
@@ -86,8 +78,6 @@ export const POLICY_DATA = {
             maturityAmt: "₹ 3,23,695 + Bonus"
         },
         { 
-            name: "Fortune Maximiser",
-            company: "KOTAK",
             isDaughter: true,
             logo: "image_5d7f80.png",
             id: "79425536",
@@ -105,8 +95,6 @@ export const POLICY_DATA = {
             income: "Est. Yearly: ₹ 23,140", maturityAmt: "₹ 7,11,994 + Bonus" 
         },
         { 
-            name: "Wealth Pro",
-            company: "BHARTI AXA",
             logo: "image_86c684.png",
             id: "503-9562771",
             uin: "130A012V02",
@@ -121,8 +109,6 @@ export const POLICY_DATA = {
             currentUnitValue: "159421"
         },
         { 
-            name: "Fast Track Super",
-            company: "Axis Max Life",
             logo: "image_7a80d9.png",
             id: "608480927",
             uin: "104L082V02",
@@ -136,8 +122,6 @@ export const POLICY_DATA = {
             currentUnitValue: "277547"
         },
         { 
-            name: "Life Assure Goal",
-            company: "BAJAJ LIFE",
             logo: "image_349b41.png",
             id: "425335400",
             uin: "116L153V02",
@@ -152,8 +136,6 @@ export const POLICY_DATA = {
             currentUnitValue: "454673"
         },
         { 
-            name: "Life Future Gain II",
-            company: "BAJAJ LIFE",
             isDaughter: true,
             logo: "image_349b41.png",
             id: "378816898",
@@ -169,8 +151,6 @@ export const POLICY_DATA = {
             currentUnitValue: "208508"
         },
         { 
-            name: "Signature",
-            company: "ICICI PRUDENTIAL",
             isWife: true,
             logo: "image_d82175.png",
             id: "K7639543",
@@ -187,8 +167,6 @@ export const POLICY_DATA = {
             currentUnitValue: "442990"
         },
         { 
-            name: "Smart Privilege Plus",
-            company: "SBI LIFE",
             isWife: true,
             logo: "image_cda45c.png",
             id: "3N307267702",
@@ -207,8 +185,6 @@ export const POLICY_DATA = {
     ],
     singapore: [
          { 
-            name: "PruSave", 
-            company: "Prudential",
             logo: "image_7aee9a.png", 
             id: "34874419", 
             premium: 3557.55, 
@@ -223,8 +199,6 @@ export const POLICY_DATA = {
             mip: -1 
         },
         { 
-            name: "PruLink Protection", 
-            company: "Prudential",
             logo: "image_7aee9a.png", 
             id: "33401114", 
             premium: 2849.28, 
@@ -239,8 +213,6 @@ export const POLICY_DATA = {
             mip: 0
         },
         { 
-            name: "Pro-Achiever 2.0",
-            company: "AIA SINGAPORE",
             logo: "image_4b9b3f.png",
             id: "U126327913",
             premium: 5000,
@@ -253,8 +225,6 @@ export const POLICY_DATA = {
             mip: 10
         },
         { 
-            name: "InvestReady III",
-            company: "MANULIFE SINGAPORE",
             logo: "image_d1e382.png",
             id: "2451556041",
             premium: 6000,
@@ -267,8 +237,6 @@ export const POLICY_DATA = {
             mip: 5
         },
         { 
-            name: "Pulsar",
-            company: "HSBC Life",
             logo: "image_8bcf5a.png",
             id: "104-1315514",
             premium: 3600,
@@ -281,8 +249,6 @@ export const POLICY_DATA = {
             mip: 5
         },
         { 
-            name: "Savvy Invest II", 
-            company: "Singlife",
             logo: "image_89093e.png",
             id: "P4172398", 
             premium: 15000, 
