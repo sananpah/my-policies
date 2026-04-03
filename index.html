@@ -70,17 +70,22 @@
     <div id="container" class="max-w-7xl mx-auto pb-20 px-4"></div>
 
     <script type="module">
-        const APP_VERSION = "4.0.77";
+        const APP_VERSION = "4.0.78";
         document.getElementById('version-tag').innerText = `v${APP_VERSION}`;
 
         // Import all components safely
-        const [Data, Tools, IndiaComp, SGComp, HealthComp, HealthDataFile] = await Promise.all([
+        // --- OLD ---
+// const [Data, Tools, IndiaComp, SGComp, HealthComp, HealthDataFile] = await Promise.all([ ... ]);
+
+        // --- NEW (Update the Loader import to specifically grab the sync function) ---
+        const [Data, Tools, IndiaComp, SGComp, HealthComp, HealthDataFile, { syncWithGoogleSheets }] = await Promise.all([
             import(`./data.js?v=${APP_VERSION}`),
             import(`./india.js?v=${APP_VERSION}`),
             import(`./component_in.js?v=${APP_VERSION}`),
             import(`./component_sg.js?v=${APP_VERSION}`),
             import(`./health.js?v=${APP_VERSION}`),
-            import(`./data_health.js?v=${APP_VERSION}`)
+            import(`./data_health.js?v=${APP_VERSION}`),
+            import(`./loader.js?v=${APP_VERSION}`) // Added this to the array
         ]);
 
         const { POLICY_DATA } = Data;
@@ -237,7 +242,12 @@
             }
         }
         
+      // 1. First, update the static POLICY_DATA with fresh names from Google Sheets
+        await syncWithGoogleSheets(POLICY_DATA);
+
+    // 2. Now call your original render function
         render('india');
+        
     </script>
 </body>
 </html>
