@@ -3,7 +3,7 @@ const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2
 
 /**
  * MASTER SYNC FUNCTION:
- * Merges Google Sheet data into your static POLICY_DATA without breaking the UI.
+ * Merges Google Sheet data into your static POLICY_DATA.
  */
 export async function syncWithGoogleSheets(masterList) {
     try {
@@ -12,33 +12,33 @@ export async function syncWithGoogleSheets(masterList) {
         const decoder = new TextDecoder('utf-8'); 
         const csvData = decoder.decode(buffer);
         
-        // Use your existing processCSV logic to get clean JSON objects from the sheet
         const sheetRecords = processCSV(csvData);
 
-        // Loop through your categories in POLICY_DATA
         ["india", "singapore"].forEach(country => {
             if (!masterList[country]) return;
 
             masterList[country] = masterList[country].map(staticPolicy => {
-                // Match ID from POLICY_DATA to "Policy No." in Google Sheet
                 const match = sheetRecords.find(row => row["Policy No."] === staticPolicy.id);
 
                 if (match) {
-                    // Update Name and Company from the Sheet's "Policy_Name" attribute
-                    // Your parseInsuranceTab already handles the "Company : Policy Name" split
+                    // Update Name and Company
                     staticPolicy.name = match.name;
                     staticPolicy.company = match.company;
+                    
+                    // NEW: Update Type from the "Category" column in Excel
+                    staticPolicy.type = match.type; 
                 } else {
-                    // If name attribute was removed from data.js and not found in Excel
                     if (!staticPolicy.name || staticPolicy.name.trim() === "") {
                         staticPolicy.name = "Unknown";
                     }
+                    // Fallback for type if not found in Excel
+                    if (!staticPolicy.type) staticPolicy.type = "Savings";
                 }
                 return staticPolicy;
             });
         });
 
-        console.log("✅ Silent Sync: POLICY_DATA updated from Google Sheets.");
+        console.log("✅ Silent Sync: Name & Type updated from Sheets.");
         return masterList;
 
     } catch (error) {
@@ -47,9 +47,6 @@ export async function syncWithGoogleSheets(masterList) {
     }
 }
 
-/**
- * Your original CSV Processor
- */
 function processCSV(csv) {
     const rows = [];
     let currentRow = [''], inQuote = false;
@@ -78,10 +75,8 @@ function processCSV(csv) {
     }).filter(item => item !== null);
 }
 
-/**
- * Your original Tab Parser
- */
 function parseInsuranceTab(item) {
+    // 1. Handle Policy Name (e.g., "LIC : Jeevan Anand")
     const rawFullName = item["Policy_Name"] || "";
     if (rawFullName.includes(":")) {
         const parts = rawFullName.split(":");
@@ -90,6 +85,14 @@ function parseInsuranceTab(item) {
     } else {
         item.company = "Insurance";
         item.name = rawFullName;
+    }
+
+    // 2. NEW: Handle Category (e.g., "Insurance : Savings")
+    const rawCategory = item["Category"] || "";
+    if (rawCategory.includes(":")) {
+        item.type = rawCategory.split(":")[1].trim();
+    } else {
+        item.type = rawCategory || "Savings";
     }
 
     const prem = item["Premium"] || "";
