@@ -1,4 +1,4 @@
-/* component_sg.js - v6.4.2 - Fixed Reference Error & Brand Borders */
+/* component_sg.js - v6.4.3 - Refined ID Placement & Header Cleanup */
 import { autoFmt, toNum } from './india.js';
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -146,7 +146,7 @@ return `
                 <div class="relative z-20">
                     <h3 class="font-black text-3xl text-slate-900 mb-2 tracking-tight">${p.name}</h3>
                     <div class="flex items-center gap-3">
-                        <span class="font-mono text-xs font-bold text-slate-400">#${p.id}</span>
+                         <span class="px-3 py-1 rounded-md text-[10px] font-black bg-slate-900 text-white uppercase tracking-tighter">Singapore Portfolio</span>
                     </div>
                 </div>
             </div>
@@ -170,11 +170,27 @@ return `
         </div>
 
         <div class="content-area px-10 pb-10 pt-2 relative z-20" style="background: linear-gradient(to bottom, ${brandBg}, #ffffff)">
-            <div class="grid grid-cols-4 gap-6 mb-8">
-                <div class="p-6 rounded-[32px] bg-white border border-slate-100 relative shadow-sm"><p class="text-[10px] font-black text-slate-400 mb-2 uppercase">Sum Assured</p><p class="text-2xl font-black text-slate-800">${autoFmt(displaySumAssured, sym)}</p></div>
-                <div class="p-6 rounded-[32px] bg-white border border-slate-100 relative shadow-sm"><p class="text-[10px] font-black text-slate-400 mb-2 uppercase">Invested</p><p class="text-2xl font-black text-slate-800">${autoFmt(netInvestmentBase, sym)}</p></div>
-                <div class="p-6 rounded-[32px] bg-emerald-50 border border-emerald-100 shadow-sm"><p class="text-[10px] font-black text-emerald-600 mb-2 uppercase text-center">Surrender</p><p class="text-3xl font-black text-emerald-700 text-center">${autoFmt(surrenderValue, sym)}</p></div>
-                <div class="p-6 rounded-[32px] bg-red-50 border border-red-100 shadow-sm"><p class="text-[10px] font-black text-red-400 mb-2 uppercase text-center">Locked</p><p class="text-3xl font-black text-red-600 text-center">-${autoFmt(lockedValue, sym)}</p></div>
+            <div class="grid grid-cols-5 gap-4 mb-8">
+                <div class="p-6 rounded-[32px] bg-slate-50 border border-slate-100 relative shadow-sm">
+                    <p class="text-[10px] font-black text-slate-400 mb-2 uppercase">Policy No.</p>
+                    <p class="text-lg font-mono font-bold text-slate-700">#${p.id}</p>
+                </div>
+                <div class="p-6 rounded-[32px] bg-white border border-slate-100 relative shadow-sm">
+                    <p class="text-[10px] font-black text-slate-400 mb-2 uppercase">Sum Assured</p>
+                    <p class="text-xl font-black text-slate-800">${autoFmt(displaySumAssured, sym)}</p>
+                </div>
+                <div class="p-6 rounded-[32px] bg-white border border-slate-100 relative shadow-sm">
+                    <p class="text-[10px] font-black text-slate-400 mb-2 uppercase">Invested</p>
+                    <p class="text-xl font-black text-slate-800">${autoFmt(netInvestmentBase, sym)}</p>
+                </div>
+                <div class="p-6 rounded-[32px] bg-emerald-50 border border-emerald-100 shadow-sm">
+                    <p class="text-[10px] font-black text-emerald-600 mb-2 uppercase text-center">Surrender</p>
+                    <p class="text-2xl font-black text-emerald-700 text-center">${autoFmt(surrenderValue, sym)}</p>
+                </div>
+                <div class="p-6 rounded-[32px] bg-red-50 border border-red-100 shadow-sm">
+                    <p class="text-[10px] font-black text-red-400 mb-2 uppercase text-center">Locked</p>
+                    <p class="text-2xl font-black text-red-600 text-center">-${autoFmt(lockedValue, sym)}</p>
+                </div>
             </div>
             ${capHtml}
             <div class="flex justify-between items-end mb-4 px-2">
