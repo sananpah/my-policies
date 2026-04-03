@@ -106,8 +106,7 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
                         </div>
                     ` : ''}
                 </h3>
-                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">${p.company}</p>
-            </div>
+             </div>
             
             <div class="flex gap-12 items-center mr-6">
                 <div class="flex items-center w-[260px] -ml-4">
