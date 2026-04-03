@@ -146,7 +146,6 @@ return `
                 <div class="relative z-20">
                     <h3 class="font-black text-3xl text-slate-900 mb-2 tracking-tight">${p.name}</h3>
                     <div class="flex items-center gap-3">
-                        <span class="px-3 py-1 rounded-md text-[10px] font-bold text-white uppercase" style="background: ${brandColor}">${p.company}</span>
                         <span class="font-mono text-xs font-bold text-slate-400">#${p.id}</span>
                     </div>
                 </div>
