@@ -2,7 +2,6 @@
 export const POLICY_DATA = {
     india: [
         { 
-            isDaughter: true,
             logo: "image_4e0b3d.png",
             id: "54751949",
             uin: "128N171V01",
@@ -73,7 +72,6 @@ export const POLICY_DATA = {
             maturityAmt: "₹ 3,23,695 + Bonus"
         },
         { 
-            isDaughter: true,
             logo: "image_5d7f80.png",
             id: "79425536",
             uin: "107N124V01",
@@ -128,7 +126,6 @@ export const POLICY_DATA = {
             currentUnitValue: "454673"
         },
         { 
-            isDaughter: true,
             logo: "image_349b41.png",
             id: "378816898",
             uin: "116L181V01",
@@ -142,7 +139,6 @@ export const POLICY_DATA = {
             currentUnitValue: "208508"
         },
         { 
-            isWife: true,
             logo: "image_d82175.png",
             id: "K7639543",
             uin: "N/A",
@@ -157,7 +153,6 @@ export const POLICY_DATA = {
             currentUnitValue: "442990"
         },
         { 
-            isWife: true,
             logo: "image_cda45c.png",
             id: "3N307267702",
             uin: "N/A",
