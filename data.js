@@ -2,8 +2,6 @@
 export const POLICY_DATA = {
     india: [
         { 
-            name: "Nishchit Ace",
-            company: "IndusInd Nippon Life",
             isDaughter: true,
             logo: "image_4e0b3d.png",
             id: "54751949",
