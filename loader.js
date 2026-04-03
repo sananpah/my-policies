@@ -1,53 +1,63 @@
-/* loader.js */
+/* loader.js - Silent Bridge v4.0.82 */
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2UwOfG57DQBOBnJX-9hsRKOQTUgALiM3uxs-VGzD2KN8JoWNAQltH6IkgAGhPTNFEvb/pub?gid=866869416&single=true&output=csv";
 
-/**
- * MASTER SYNC FUNCTION:
- * Merges Google Sheet data into your static POLICY_DATA.
- */
-/* loader.js - Update only the sync logic */
-
 export async function syncWithGoogleSheets(masterList) {
-    // ... your existing fetch and processCSV code ...
+    try {
+        const response = await fetch(`${SHEET_URL}&t=${Date.now()}`);
+        const buffer = await response.arrayBuffer();
+        const decoder = new TextDecoder('utf-8'); 
+        const csvData = decoder.decode(buffer);
+        
+        // 1. Define sheetRecords correctly by processing the CSV
+        const sheetRecords = processCSV(csvData);
 
-    // 1. Private mapping - names are hidden inside this function
-    const insuredMap = {
-        "Suhail Nami": { type: "Self", img: "avatar_self.png" },
-        "Saima Suhail": { type: "Wife", img: "avatar_wife.png" },
-        "Sulmas Nami": { type: "Daughter", img: "avatar_daughter.png" }
-    };
+        // 2. Private mapping for avatars (Names are hidden here)
+        const insuredMap = {
+            "Suhail Nami": { type: "Self", img: "avatar_self.png" },
+            "Saima Suhail": { type: "Wife", img: "avatar_wife.png" },
+            "Sulmas Nami": { type: "Daughter", img: "avatar_daughter.png" }
+        };
 
-    ["india", "singapore"].forEach(country => {
-        if (!masterList[country]) return;
+        // 3. Perform the Silent Update
+        ["india", "singapore"].forEach(country => {
+            if (!masterList[country]) return;
 
-        masterList[country] = masterList[country].map(policy => {
-            const match = sheetRecords.find(row => row["Policy No."] === policy.id);
+            masterList[country] = masterList[country].map(staticPolicy => {
+                // Look for the ID in the Google Sheet records
+                const match = sheetRecords.find(row => row["Policy No."] === staticPolicy.id);
 
-            if (match) {
-                policy.name = match.name;
-                policy.company = match.company;
-                policy.type = match.type;
+                if (match) {
+                    staticPolicy.name = match.name;
+                    staticPolicy.company = match.company;
+                    staticPolicy.type = match.type;
 
-                // 2. Only apply avatars for India
-                if (country === "india") {
-                    const insuredName = match["Insured"];
-                    const identity = insuredMap[insuredName];
-                    
-                    if (identity) {
-                        policy.avatarPath = identity.img;
-                        policy.holderType = identity.type; // For alt text/tooltips
-                    } else {
-                        policy.avatarPath = "avatar_unknown.png";
+                    // Apply Avatar logic for India only
+                    if (country === "india") {
+                        const identity = insuredMap[match["Insured"]];
+                        if (identity) {
+                            staticPolicy.avatarPath = identity.img;
+                            staticPolicy.holderType = identity.type;
+                        }
                     }
+                } else if (!staticPolicy.name || staticPolicy.name === "") {
+                    staticPolicy.name = "Unknown";
                 }
-            }
-            return policy;
+                return staticPolicy;
+            });
         });
-    });
 
-    return masterList;
+        console.log("✅ Silent Sync: Data & Avatars updated successfully.");
+        return masterList;
+
+    } catch (error) {
+        console.warn("⚠️ Sync Failed: Falling back to static data.", error);
+        return masterList;
+    }
 }
 
+/**
+ * Your original CSV Processor (Do not change)
+ */
 function processCSV(csv) {
     const rows = [];
     let currentRow = [''], inQuote = false;
@@ -76,8 +86,10 @@ function processCSV(csv) {
     }).filter(item => item !== null);
 }
 
+/**
+ * Your original Tab Parser
+ */
 function parseInsuranceTab(item) {
-    // 1. Handle Policy Name (e.g., "LIC : Jeevan Anand")
     const rawFullName = item["Policy_Name"] || "";
     if (rawFullName.includes(":")) {
         const parts = rawFullName.split(":");
@@ -88,16 +100,11 @@ function parseInsuranceTab(item) {
         item.name = rawFullName;
     }
 
-    // 2. NEW: Handle Category (e.g., "Insurance : Savings")
     const rawCategory = item["Category"] || "";
-    if (rawCategory.includes(":")) {
-        item.type = rawCategory.split(":")[1].trim();
-    } else {
-        item.type = rawCategory || "Savings";
-    }
+    item.type = rawCategory.includes(":") ? rawCategory.split(":")[1].trim() : (rawCategory || "Savings");
 
     const prem = item["Premium"] || "";
-    item.detectedCountry = (prem.includes("₹") || prem.includes("â") || prem.includes("INR")) ? "India" : "Singapore";
+    item.detectedCountry = (prem.includes("₹") || prem.includes("INR")) ? "India" : "Singapore";
     item.premiumNumeric = parseFloat(prem.replace(/[^\d.]/g, "")) || 0;
     return item;
 }
