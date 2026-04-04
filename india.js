@@ -1,4 +1,4 @@
-/* india.js - v4.0.98 - Centralized Safety Utilities */
+/* india.js - v4.1.02 - Centralized Safety Utilities */
 
 const TODAY = new Date();
 
@@ -7,11 +7,12 @@ export const monthMap = {
     "Jul":6,"Aug":7,"Sep":8,"Oct":9,"Nov":10,"Dec":11 
 };
 
-// --- NEW: SAFETY DATE HELPERS ---
+/**
+ * Safely parses "DD MMM YYYY" or returns a far-future date if invalid.
+ */
 export function safeParseDate(dateStr) {
-    if (!dateStr || typeof dateStr !== 'string' || !dateStr.includes(' ')) {
-        return new Date(9999, 0, 1); // Fallback to avoid crashes
-    }
+    const fallback = new Date(9999, 0, 1);
+    if (!dateStr || typeof dateStr !== 'string' || !dateStr.includes(' ')) return fallback;
     const parts = dateStr.split(' ');
     const day = parseInt(parts[0]);
     const month = monthMap[parts[1]] || 0;
@@ -19,13 +20,15 @@ export function safeParseDate(dateStr) {
     return new Date(year, month, day);
 }
 
+/**
+ * Gets just the year from a "DD MMM YYYY" string safely.
+ */
 export function safeGetYear(dateStr) {
     if (!dateStr || typeof dateStr !== 'string' || !dateStr.includes(' ')) return 2000;
     const parts = dateStr.split(' ');
-    return parseInt(parts[parts.length - 1]);
+    return parseInt(parts[parts.length - 1]) || 2000;
 }
 
-// --- UPDATED UTILITIES ---
 export function checkIsDueSoon(dueDateStr) {
     if (!dueDateStr || dueDateStr === "PAID UP") return false;
     const due = safeParseDate(dueDateStr);
@@ -46,7 +49,7 @@ export function getTimeLeft(endDateStr) {
 export function autoFmt(val, sym) {
     if (val === undefined || val === null) return sym + "0";
     const num = toNum(val);
-    return sym + num.toLocaleString('en-IN'); // Standard Indian formatting
+    return sym + num.toLocaleString('en-IN'); 
 }
 
 export function raw(val) { return (val === undefined || val === null) ? "" : val; }
