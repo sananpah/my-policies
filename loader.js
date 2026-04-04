@@ -1,4 +1,4 @@
-/* loader.js - v4.0.97 - Maturity Handshake & Junk-Safe Sync */
+/* loader.js - v4.1.02 - Maturity & Date Lock Sync */
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2UwOfG57DQBOBnJX-9hsRKOQTUgALiM3uxs-VGzD2KN8JoWNAQltH6IkgAGhPTNFEvb/pub?gid=866869416&single=true&output=csv";
 
 export async function syncWithGoogleSheets(masterList) {
@@ -16,14 +16,11 @@ export async function syncWithGoogleSheets(masterList) {
             "Sulmas Nami": { type: "Daughter", img: "avatar_daughter.png" }
         };
 
-        // Internal Helper: The Digit-Only Fortress (Fixed v4.0.96 logic)
         const cleanNumeric = (raw) => {
             if (!raw) return 0;
-            let str = String(raw).trim();
-            str = str.replace(/[^\x00-\x7F]/g, ""); // Remove Non-ASCII Junk
-            const digitsOnly = str.replace(/\D/g, ""); // Strip all non-digits
-            const num = parseFloat(digitsOnly);
-            return isNaN(num) ? 0 : num;
+            let str = String(raw).trim().replace(/[^\x00-\x7F]/g, ""); 
+            const digitsOnly = str.replace(/\D/g, ""); 
+            return parseInt(digitsOnly, 10) || 0;
         };
 
         ["india", "singapore"].forEach(country => {
@@ -33,44 +30,35 @@ export async function syncWithGoogleSheets(masterList) {
                 const match = sheetRecords.find(row => row["Policy No."] === staticPolicy.id);
 
                 if (match) {
-                    staticPolicy.name = match.name;
-                    staticPolicy.company = match.company;
-                    staticPolicy.type = match.type;
+                    staticPolicy.name = match.name || staticPolicy.name;
+                    staticPolicy.company = match.company || staticPolicy.company;
+                    staticPolicy.type = match.type || staticPolicy.type;
 
-                    // 1. Live Premium & Sum Assured
-                    staticPolicy.premium = cleanNumeric(match["Premium"]);
-                    const rawSA = String(match["Sum Assured"] || "").toLowerCase();
-                    staticPolicy.sumAssured = (rawSA.includes("not")) ? 0 : cleanNumeric(match["Sum Assured"]);
-
-                    // 2. Commenced Date & Maturity Calculation
-                    const rawDate = String(match["Commenced Date"] || "");
-                    const dateMatch = rawDate.match(/(\d{1,2})[./\s-](\d{1,2})[./\s-](\d{4})/);
-                    
+                    // 1. DATE LOCK: Handle "Commenced Date"
+                    const rawCommenced = match["Commenced Date"] || "";
+                    const dateMatch = rawCommenced.match(/(\d{1,2})[./\s-](\d{1,2})[./\s-](\d{4})/);
                     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
                     if (dateMatch) {
-                        const commDay = dateMatch[1].padStart(2, '0');
-                        const commMonthIdx = parseInt(dateMatch[2], 10) - 1;
-                        const commYear = parseInt(dateMatch[3], 10);
-                        
-                        // Set Commenced Date (dd MMM yyyy)
-                        staticPolicy.commenced = `${commDay} ${months[commMonthIdx]} ${commYear}`;
+                        const d = dateMatch[1].padStart(2, '0');
+                        const m = months[parseInt(dateMatch[2]) - 1];
+                        const y = dateMatch[3];
+                        staticPolicy.commenced = `${d} ${m} ${y}`;
 
-                        // --- NEW: Maturity Calculation (PPT:MaturityYears:MIP) ---
+                        // 2. MATURITY CALCULATION (Term = PPT:MAT:MIP)
                         const rawTerm = String(match["Term"] || "");
                         if (rawTerm.includes(":")) {
-                            const termParts = rawTerm.split(":");
-                            // Extract middle value (Maturity Years)
-                            const matYears = parseInt(termParts[1]?.trim(), 10);
-                            
+                            const matYears = parseInt(rawTerm.split(":")[1], 10);
                             if (!isNaN(matYears)) {
-                                const matYear = commYear + matYears;
-                                staticPolicy.maturity = `${commDay} ${months[commMonthIdx]} ${matYear}`;
+                                staticPolicy.maturity = `${d} ${m} ${parseInt(y) + matYears}`;
                             }
                         }
                     }
 
-                    // 3. Avatar Mapping (India Only)
+                    staticPolicy.premium = cleanNumeric(match["Premium"]);
+                    const rawSA = String(match["Sum Assured"] || "").toLowerCase();
+                    staticPolicy.sumAssured = (rawSA.includes("not")) ? 0 : cleanNumeric(match["Sum Assured"]);
+
                     if (country === "india") {
                         const identity = insuredMap[match["Insured"]];
                         if (identity) {
@@ -83,12 +71,9 @@ export async function syncWithGoogleSheets(masterList) {
             });
         });
 
-        console.log("✅ v4.0.97: Maturity Handshake Active.");
+        console.log("✅ v4.1.02: Data Sync Complete.");
         return masterList;
-    } catch (e) { 
-        console.warn("⚠️ Sync failed:", e);
-        return masterList; 
-    }
+    } catch (e) { return masterList; }
 }
 
 function processCSV(csv) {
@@ -110,8 +95,7 @@ function processCSV(csv) {
         const obj = {};
         headers.forEach((h, i) => { if (h) obj[h] = (rowData[i] || "").trim(); });
         if (!obj["Policy_Name"] && rowData[0]?.includes(":")) obj["Policy_Name"] = rowData[0];
-        if (!obj["Policy_Name"] || obj["Policy_Name"] === "EMPTY") return null;
-        return parseInsuranceTab(obj);
+        return (obj["Policy_Name"] && obj["Policy_Name"] !== "EMPTY") ? parseInsuranceTab(obj) : null;
     }).filter(item => item !== null);
 }
 
@@ -121,9 +105,6 @@ function parseInsuranceTab(item) {
         const parts = rawFullName.split(":");
         item.company = parts[0].trim();
         item.name = parts[1].trim(); 
-    } else {
-        item.company = "Insurance";
-        item.name = rawFullName;
     }
     const rawCategory = item["Category"] || "";
     item.type = rawCategory.includes(":") ? rawCategory.split(":")[1].trim() : (rawCategory || "Savings");
