@@ -41,3 +41,15 @@ const TODAY = new Date();
           "Jan": 0, "Feb": 1, "Mar": 2, "Apr": 3, "May": 4, "Jun": 5,
           "Jul": 6, "Aug": 7, "Sep": 8, "Oct": 9, "Nov": 10, "Dec": 11
       };
+
+      export function safeGetYear(dateStr) {
+          if (!dateStr) return new Date().getFullYear();
+          // Handles formats like "01 Jan 2024"
+          const parts = dateStr.split(' ');
+          if (parts.length === 3) {
+              return parseInt(parts[2], 10);
+          }
+          // Fallback for standard date strings
+          const d = new Date(dateStr);
+          return isNaN(d.getFullYear()) ? new Date().getFullYear() : d.getFullYear();
+      }
