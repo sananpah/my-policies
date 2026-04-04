@@ -1,4 +1,4 @@
-/* loader.js - v4.0.93 - Extraction-Based Sync */
+/* loader.js - v4.0.95 - Junk-Safe Encoding Sync */
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2UwOfG57DQBOBnJX-9hsRKOQTUgALiM3uxs-VGzD2KN8JoWNAQltH6IkgAGhPTNFEvb/pub?gid=866869416&single=true&output=csv";
 
 export async function syncWithGoogleSheets(masterList) {
@@ -16,6 +16,34 @@ export async function syncWithGoogleSheets(masterList) {
             "Sulmas Nami": { type: "Daughter", img: "avatar_daughter.png" }
         };
 
+        // Internal Helper: The Final Boss of Data Cleaners
+        const cleanNumeric = (raw) => {
+            if (!raw) return 0;
+            let str = String(raw).trim();
+            
+            // Step A: Remove all Non-ASCII "Junk" characters (Encoding Fix)
+            // This deletes â‚¹, Â, and other hidden symbols from Excel
+            str = str.replace(/[^\x00-\x7F]/g, "");
+
+            // Step B: Remove commas and letters (Rs, RS, rs)
+            str = str.replace(/[,rs]/gi, "");
+
+            // Step C: Decimal Point logic (Ensure only the LAST dot is treated as a decimal)
+            // This stops "Rs. 2.03.400" from becoming "2.03"
+            const parts = str.split('.');
+            if (parts.length > 1) {
+                const decimal = parts.pop();
+                const integer = parts.join("");
+                str = integer + "." + decimal;
+            }
+
+            // Step D: Final sweep - remove anything that isn't a digit or a dot
+            str = str.replace(/[^\d.]/g, "");
+
+            const num = parseFloat(str);
+            return isNaN(num) ? 0 : num;
+        };
+
         ["india", "singapore"].forEach(country => {
             if (!masterList[country]) return;
 
@@ -27,35 +55,13 @@ export async function syncWithGoogleSheets(masterList) {
                     staticPolicy.company = match.company;
                     staticPolicy.type = match.type;
 
-                    // 1. SMART PREMIUM EXTRACTION (FIXED: Ignores "Rs." dots)
-                    const rawPrem = String(match["Premium"] || "0");
-                    const matchPrem = rawPrem.match(/[\d,.]+/); 
-                    if (matchPrem) {
-                        let cleanStr = matchPrem[0].replace(/,/g, "");
-                        if (cleanStr.startsWith(".")) cleanStr = cleanStr.substring(1);
-                        if (cleanStr.endsWith(".")) cleanStr = cleanStr.slice(0, -1);
-                        staticPolicy.premium = parseFloat(cleanStr) || 0;
-                    } else {
-                        staticPolicy.premium = 0;
-                    }
+                    // Apply the Junk-Safe Cleaner to Premium and Sum Assured
+                    staticPolicy.premium = cleanNumeric(match["Premium"]);
+                    
+                    const rawSA = String(match["Sum Assured"] || "").toLowerCase();
+                    staticPolicy.sumAssured = (rawSA.includes("not")) ? 0 : cleanNumeric(match["Sum Assured"]);
 
-                    // 2. SMART SUM ASSURED EXTRACTION
-                    const rawSA = String(match["Sum Assured"] || "0").toLowerCase();
-                    if (rawSA.includes("not") || rawSA.trim() === "") {
-                        staticPolicy.sumAssured = 0;
-                    } else {
-                        const matchSA = rawSA.match(/[\d,.]+/);
-                        if (matchSA) {
-                            let cleanSAStr = matchSA[0].replace(/,/g, "");
-                            if (cleanSAStr.startsWith(".")) cleanSAStr = cleanSAStr.substring(1);
-                            if (cleanSAStr.endsWith(".")) cleanSAStr = cleanSAStr.slice(0, -1);
-                            staticPolicy.sumAssured = parseFloat(cleanSAStr) || 0;
-                        } else {
-                            staticPolicy.sumAssured = 0;
-                        }
-                    }
-
-                    // 3. DATE FIX: (dd.mm.yyyy -> dd MMM yyyy)
+                    // 2. DATE FIX: (dd.mm.yyyy -> dd MMM yyyy)
                     const rawDate = String(match["Commenced Date"] || "");
                     const dateMatch = rawDate.match(/(\d{1,2})[./\s-](\d{1,2})[./\s-](\d{4})/);
                     
@@ -64,13 +70,12 @@ export async function syncWithGoogleSheets(masterList) {
                         const day = dateMatch[1].padStart(2, '0');
                         const monthIdx = parseInt(dateMatch[2], 10) - 1;
                         const monthName = months[monthIdx] || "Jan";
-                        const year = dateMatch[3];
-                        staticPolicy.commenced = `${day} ${monthName} ${year}`;
+                        staticPolicy.commenced = `${day} ${monthName} ${dateMatch[3]}`;
                     } else {
                         staticPolicy.commenced = rawDate.replace(/[^\w\s]/g, " "); 
                     }
 
-                    // 4. AVATAR MAPPING (India Only)
+                    // 3. AVATAR MAPPING (India Only)
                     if (country === "india") {
                         const identity = insuredMap[match["Insured"]];
                         if (identity) {
@@ -83,7 +88,7 @@ export async function syncWithGoogleSheets(masterList) {
             });
         });
 
-        console.log("✅ v4.0.93: Extraction-based sync active.");
+        console.log("✅ v4.0.95: Junk-safe sync successful.");
         return masterList;
     } catch (e) { 
         console.warn("⚠️ Sync failed:", e);
