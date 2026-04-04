@@ -1,39 +1,91 @@
-<div id="india-grid" class="container">
-    </div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Insurance Matrix Dashboard</title>
+    
+    <link rel="stylesheet" href="styles.css">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
 
-<script type="module">
-    import { syncWithGoogleSheets } from './loader.js';
-    import { POLICY_DATA } from './data.js';
-    import { createPolicyCard } from './component_in.js';
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@800;900&family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+</head>
+<body class="bg-slate-50">
 
-    async function init() {
-        console.log("🚀 Initializing Dashboard...");
+    <header class="dashboard-header">
+        <div class="build-info">STABLE BUILD: v6.2.1.FINAL</div>
+        <h1 class="brand-header">INSURANCE MATRIX</h1>
+        <p class="text-[10px] font-black text-slate-400 tracking-[0.3em] uppercase mt-2">Active Portfolio & Maturity Tracker</p>
+    </header>
+
+    <main class="container mx-auto px-4">
         
-        const liveData = await syncWithGoogleSheets(POLICY_DATA);
-        console.log("📊 Data Sync Complete:", liveData);
+        <div class="flex items-center justify-between mb-8">
+            <h2 class="region-title text-slate-800">INDIA PORTFOLIO</h2>
+            <div class="flex items-center gap-2">
+                <span class="relative flex h-3 w-3">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                </span>
+                <span class="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Live Sync Active</span>
+            </div>
+        </div>
 
-        // THE FIX: Try to find the grid. If it fails, alert the console.
-        const container = document.getElementById('india-grid');
-        
-        if (!container) {
-            console.error("❌ ERROR: Could not find <div id='india-grid'> in your HTML!");
-            return;
+        <div id="india-grid" class="flex flex-col gap-4">
+            <div class="flex flex-col items-center justify-center py-32 bg-white rounded-[40px] shadow-sm border border-slate-100">
+                <div class="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                <p class="mt-6 font-black text-slate-400 text-xs tracking-widest uppercase">Initializing Secure Sync...</p>
+            </div>
+        </div>
+
+    </main>
+
+    <script type="module">
+        import { syncWithGoogleSheets } from './loader.js';
+        import { POLICY_DATA } from './data.js';
+        import { createPolicyCard } from './component_in.js';
+
+        async function init() {
+            try {
+                console.log("🚀 Initializing Dashboard...");
+                
+                // 1. Fetch live data from Google Sheets
+                const liveData = await syncWithGoogleSheets(POLICY_DATA);
+                console.log("📊 Data Sync Complete:", liveData);
+
+                // 2. Locate the grid container
+                const container = document.getElementById('india-grid');
+                if (!container) throw new Error("Missing #india-grid element in HTML");
+
+                // 3. Clear Loader
+                container.innerHTML = "";
+
+                // 4. Set constants for rendering
+                const TODAY = new Date();
+                const CURRENT_YEAR = TODAY.getFullYear();
+
+                // 5. Render India Cards
+                if (liveData && liveData.india) {
+                    liveData.india.forEach(p => {
+                        // sym is set to ₹ for India
+                        container.innerHTML += createPolicyCard(p, "₹", TODAY, CURRENT_YEAR);
+                    });
+                }
+
+                console.log("✅ Rendering Finished.");
+            } catch (err) {
+                console.error("❌ System Error:", err);
+                document.getElementById('india-grid').innerHTML = `
+                    <div class="p-12 bg-red-50 rounded-[40px] border-2 border-red-100 text-center">
+                        <h3 class="text-red-600 font-black text-xl mb-2">SYNC ERROR</h3>
+                        <p class="text-red-400 text-sm font-bold uppercase tracking-tighter">${err.message}</p>
+                    </div>`;
+            }
         }
 
-        container.innerHTML = ""; // Clear loader/spinner
-
-        const TODAY = new Date();
-        const CURRENT_YEAR = TODAY.getFullYear();
-
-        // Safety check to ensure liveData.india exists
-        if (liveData && liveData.india) {
-            liveData.india.forEach(p => {
-                container.innerHTML += createPolicyCard(p, "₹", TODAY, CURRENT_YEAR);
-            });
-        }
-
-        console.log("✅ Rendering Finished.");
-    }
-
-    init();
-</script>
+        // Run the engine
+        init();
+    </script>
+</body>
+</html>
