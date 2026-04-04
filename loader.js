@@ -1,4 +1,4 @@
-/* loader.js - v4.0.95 - Junk-Safe Encoding Sync */
+/* loader.js - v4.1.2 - Junk-Safe + Dot-Master + Term Logic */
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2UwOfG57DQBOBnJX-9hsRKOQTUgALiM3uxs-VGzD2KN8JoWNAQltH6IkgAGhPTNFEvb/pub?gid=866869416&single=true&output=csv";
 
 export async function syncWithGoogleSheets(masterList) {
@@ -16,30 +16,18 @@ export async function syncWithGoogleSheets(masterList) {
             "Sulmas Nami": { type: "Daughter", img: "avatar_daughter.png" }
         };
 
-        // Internal Helper: The Final Boss of Data Cleaners
         const cleanNumeric = (raw) => {
             if (!raw) return 0;
             let str = String(raw).trim();
-            
-            // Step A: Remove all Non-ASCII "Junk" characters (Encoding Fix)
-            // This deletes â‚¹, Â, and other hidden symbols from Excel
-            str = str.replace(/[^\x00-\x7F]/g, "");
-
-            // Step B: Remove commas and letters (Rs, RS, rs)
+            str = str.replace(/[^\x00-\x7F]/g, ""); // Junk Fix
             str = str.replace(/[,rs]/gi, "");
-
-            // Step C: Decimal Point logic (Ensure only the LAST dot is treated as a decimal)
-            // This stops "Rs. 2.03.400" from becoming "2.03"
             const parts = str.split('.');
             if (parts.length > 1) {
                 const decimal = parts.pop();
                 const integer = parts.join("");
                 str = integer + "." + decimal;
             }
-
-            // Step D: Final sweep - remove anything that isn't a digit or a dot
             str = str.replace(/[^\d.]/g, "");
-
             const num = parseFloat(str);
             return isNaN(num) ? 0 : num;
         };
@@ -47,54 +35,63 @@ export async function syncWithGoogleSheets(masterList) {
         ["india", "singapore"].forEach(country => {
             if (!masterList[country]) return;
 
-            masterList[country] = masterList[country].map(staticPolicy => {
-                const match = sheetRecords.find(row => row["Policy No."] === staticPolicy.id);
+            masterList[country] = masterList[country].map(p => {
+                const match = sheetRecords.find(row => String(row["Policy No."]).trim() === String(p.id).trim());
 
                 if (match) {
-                    staticPolicy.name = match.name;
-                    staticPolicy.company = match.company;
-                    staticPolicy.type = match.type;
+                    p.name = match.name || p.name;
+                    p.company = match.company || p.company;
+                    p.type = match.type || p.type;
 
-                    // Apply the Junk-Safe Cleaner to Premium and Sum Assured
-                    staticPolicy.premium = cleanNumeric(match["Premium"]);
-                    
-                    const rawSA = String(match["Sum Assured"] || "").toLowerCase();
-                    staticPolicy.sumAssured = (rawSA.includes("not")) ? 0 : cleanNumeric(match["Sum Assured"]);
+                    // --- STEP 1: DOT-TO-SPACE & COMMENCED DATE ---
+                    // Changes "29.Nov.2025" -> "29 Nov 2025"
+                    let rawDate = String(match["Commenced Date"] || "").trim();
+                    p.commenced = rawDate.replace(/\./g, ' '); 
 
-                    // 2. DATE FIX: (dd.mm.yyyy -> dd MMM yyyy)
-                    const rawDate = String(match["Commenced Date"] || "");
-                    const dateMatch = rawDate.match(/(\d{1,2})[./\s-](\d{1,2})[./\s-](\d{4})/);
-                    
-                    if (dateMatch) {
-                        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-                        const day = dateMatch[1].padStart(2, '0');
-                        const monthIdx = parseInt(dateMatch[2], 10) - 1;
-                        const monthName = months[monthIdx] || "Jan";
-                        staticPolicy.commenced = `${day} ${monthName} ${dateMatch[3]}`;
-                    } else {
-                        staticPolicy.commenced = rawDate.replace(/[^\w\s]/g, " "); 
+                    // --- STEP 2: PPT:MAT TERM CALCULATION ---
+                    const rawTerm = String(match["Term"] || ""); 
+                    if (rawTerm.includes(":") && p.commenced.includes(" ")) {
+                        const termParts = rawTerm.split(":");
+                        const ppt = parseInt(termParts[0], 10); // Premium Paying Term
+                        const mat = parseInt(termParts[1], 10); // Maturity Term
+                        
+                        const startParts = p.commenced.split(" ");
+                        const startYear = parseInt(startParts[2], 10);
+                        
+                        // Dynamically calculate and update dates
+                        if (!isNaN(startYear)) {
+                            p.premiumEnds = `${startParts[0]} ${startParts[1]} ${startYear + ppt}`;
+                            p.maturity = `${startParts[0]} ${startParts[1]} ${startYear + mat}`;
+                        }
                     }
 
-                    // 3. AVATAR MAPPING (India Only)
+                    // --- STEP 3: FINANCIAL CLEANING ---
+                    p.premium = cleanNumeric(match["Premium"]);
+                    const rawSA = String(match["Sum Assured"] || "").toLowerCase();
+                    p.sumAssured = (rawSA.includes("not")) ? 0 : cleanNumeric(match["Sum Assured"]);
+
+                    // --- STEP 4: AVATAR MAPPING ---
                     if (country === "india") {
                         const identity = insuredMap[match["Insured"]];
                         if (identity) {
-                            staticPolicy.avatarPath = identity.img;
-                            staticPolicy.holderType = identity.type;
+                            p.avatarPath = identity.img;
+                            p.holderType = identity.type;
                         }
                     }
                 }
-                return staticPolicy;
+                return p;
             });
         });
 
-        console.log("✅ v4.0.95: Junk-safe sync successful.");
+        console.log("✅ v4.1.2: Junk-safe sync + Term Math Successful.");
         return masterList;
     } catch (e) { 
         console.warn("⚠️ Sync failed:", e);
         return masterList; 
     }
 }
+
+// ... (processCSV and parseInsuranceTab remain the same as your provided code)
 
 function processCSV(csv) {
     const rows = [];
