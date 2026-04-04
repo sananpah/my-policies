@@ -1,4 +1,4 @@
-/* loader.js - v4.0.91 - Decimal-Safe Nuclear Sync */
+/* loader.js - v4.0.92 - Final Multi-Currency & Date Sync */
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2UwOfG57DQBOBnJX-9hsRKOQTUgALiM3uxs-VGzD2KN8JoWNAQltH6IkgAGhPTNFEvb/pub?gid=866869416&single=true&output=csv";
 
 export async function syncWithGoogleSheets(masterList) {
@@ -27,24 +27,27 @@ export async function syncWithGoogleSheets(masterList) {
                     staticPolicy.company = match.company;
                     staticPolicy.type = match.type;
 
-                    // 1. PREMIUM FIX: Keep dots for decimals, remove symbols/commas
-                    // [^\d.] matches anything that is NOT a digit or a decimal point
+                    // 1. SMART PREMIUM CLEANER: Handles "Rs. 2,03,400" and "$1,234.50"
                     const rawPrem = String(match["Premium"] || "0");
-                    const cleanPremStr = rawPrem.replace(/[^\d.]/g, ""); 
+                    let cleanPremStr = rawPrem.replace(/,/g, ""); // Remove commas first
+                    cleanPremStr = cleanPremStr.replace(/[^\d.]/g, ""); // Remove non-digits/non-dots
+                    if (cleanPremStr.endsWith(".")) cleanPremStr = cleanPremStr.slice(0, -1); // Remove trailing dot from "Rs."
+                    
                     const cleanPrem = parseFloat(cleanPremStr);
                     staticPolicy.premium = isNaN(cleanPrem) ? 0 : cleanPrem;
 
-                    // 2. SUM ASSURED FIX: Same decimal-safe logic
+                    // 2. SMART SUM ASSURED CLEANER
                     const rawSA = String(match["Sum Assured"] || "0").toLowerCase();
                     if (rawSA.includes("not") || rawSA.trim() === "") {
                         staticPolicy.sumAssured = 0;
                     } else {
-                        const cleanSAStr = rawSA.replace(/[^\d.]/g, "");
+                        let cleanSAStr = rawSA.replace(/,/g, "").replace(/[^\d.]/g, "");
+                        if (cleanSAStr.endsWith(".")) cleanSAStr = cleanSAStr.slice(0, -1);
                         const cleanSA = parseFloat(cleanSAStr);
                         staticPolicy.sumAssured = isNaN(cleanSA) ? 0 : cleanSA;
                     }
 
-                    // 3. DATE FIX: The "Nuclear" Date Formatter (Preserved from v4.0.90)
+                    // 3. DATE FIX: The "Nuclear" Date Formatter (dd.mm.yyyy -> dd MMM yyyy)
                     const rawDate = String(match["Commenced Date"] || "");
                     const dateMatch = rawDate.match(/(\d{1,2})[./\s-](\d{1,2})[./\s-](\d{4})/);
                     
@@ -71,7 +74,7 @@ export async function syncWithGoogleSheets(masterList) {
             });
         });
 
-        console.log("✅ v4.0.91: Decimal-safe sync complete.");
+        console.log("✅ v4.0.92: Smart Currency & Date Sync Complete.");
         return masterList;
     } catch (e) { 
         console.warn("⚠️ Sync failed:", e);
