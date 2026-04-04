@@ -1,4 +1,4 @@
-/* loader.js - v4.0.89 - Final Data Sync Bridge */
+/* loader.js - v4.0.90 - Nuclear Clean Sync */
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2UwOfG57DQBOBnJX-9hsRKOQTUgALiM3uxs-VGzD2KN8JoWNAQltH6IkgAGhPTNFEvb/pub?gid=866869416&single=true&output=csv";
 
 export async function syncWithGoogleSheets(masterList) {
@@ -27,38 +27,35 @@ export async function syncWithGoogleSheets(masterList) {
                     staticPolicy.company = match.company;
                     staticPolicy.type = match.type;
 
-                    // 1. SYNC & CLEAN: Sum Assured
-                    const rawSA = (match["Sum Assured"] || "").toString().toLowerCase();
+                    // 1. PREMIUM FIX: Strip EVERYTHING that is not a number
+                    // This handles "Rs. 2,03,400", "₹ 50,000", "$1,200"
+                    const rawPrem = String(match["Premium"] || "0");
+                    const digitsOnly = rawPrem.replace(/\D/g, ""); // \D removes all non-digits
+                    staticPolicy.premium = parseFloat(digitsOnly) || 0;
+
+                    // 2. SUM ASSURED FIX
+                    const rawSA = String(match["Sum Assured"] || "0").toLowerCase();
                     if (rawSA.includes("not") || rawSA.trim() === "") {
                         staticPolicy.sumAssured = 0;
                     } else {
-                        // Strip all characters EXCEPT digits and dots
-                        const cleanSA = parseFloat(rawSA.replace(/[^\d.]/g, ""));
-                        staticPolicy.sumAssured = isNaN(cleanSA) ? 0 : cleanSA;
+                        staticPolicy.sumAssured = parseFloat(rawSA.replace(/\D/g, "")) || 0;
                     }
 
-                    // 2. SYNC & CLEAN: Premium (FIXED: Handles "Rs." prefix correctly)
-                    const rawPrem = (match["Premium"] || "0").toString();
-                    // Regex: [^\d.] matches anything that isn't a digit or a decimal point
-                    const cleanPremStr = rawPrem.replace(/[^\d.]/g, "");
-                    const cleanPrem = parseFloat(cleanPremStr);
-                    staticPolicy.premium = isNaN(cleanPrem) ? 0 : cleanPrem;
-
-                    // 3. SYNC & CLEAN: Commenced Date (FIXED: Month Mapping)
-                    const rawDate = match["Commenced Date"] || "";
-                    if (rawDate.includes(".")) {
-                        const parts = rawDate.split("."); // [dd, mm, yyyy]
+                    // 3. DATE FIX: The "Nuclear" Date Formatter
+                    const rawDate = String(match["Commenced Date"] || "");
+                    // This regex finds 3 groups of numbers separated by anything (dot, slash, space)
+                    const dateMatch = rawDate.match(/(\d{1,2})[./\s-](\d{1,2})[./\s-](\d{4})/);
+                    
+                    if (dateMatch) {
                         const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-                        
-                        const day = parts[0].padStart(2, '0');
-                        // Use Number() to ensure "08" becomes 8, then subtract 1 for array index
-                        const monthIdx = Number(parts[1]) - 1; 
+                        const day = dateMatch[1].padStart(2, '0');
+                        const monthIdx = parseInt(dateMatch[2], 10) - 1;
                         const monthName = months[monthIdx] || "Jan";
-                        const year = parts[2];
-                        
+                        const year = dateMatch[3];
                         staticPolicy.commenced = `${day} ${monthName} ${year}`;
                     } else {
-                        staticPolicy.commenced = rawDate;
+                        // Fallback: If no dots found, just remove any trailing garbage
+                        staticPolicy.commenced = rawDate.replace(/[^\w\s]/g, " "); 
                     }
 
                     if (country === "india") {
@@ -66,9 +63,6 @@ export async function syncWithGoogleSheets(masterList) {
                         if (identity) {
                             staticPolicy.avatarPath = identity.img;
                             staticPolicy.holderType = identity.type;
-                        } else {
-                            staticPolicy.avatarPath = "avatar_unknown.png";
-                            staticPolicy.holderType = "Unknown";
                         }
                     }
                 }
@@ -76,15 +70,11 @@ export async function syncWithGoogleSheets(masterList) {
             });
         });
 
-        console.log("✅ v4.0.89: Premium and Date logic strictly fixed.");
         return masterList;
-
-    } catch (error) {
-        console.warn("⚠️ Sync Failed.", error);
-        return masterList;
-    }
+    } catch (e) { return masterList; }
 }
 
+// Keep your processCSV and parseInsuranceTab exactly as they were below
 function processCSV(csv) {
     const rows = [];
     let currentRow = [''], inQuote = false;
@@ -97,10 +87,8 @@ function processCSV(csv) {
         else { currentRow[currentRow.length-1] += char; }
     }
     rows.push(currentRow);
-
     const headerIdx = rows.findIndex(r => r.some(c => c && c.toLowerCase().includes("policy_name")));
     if (headerIdx === -1) return [];
-
     const headers = rows[headerIdx].map(h => h.trim());
     return rows.slice(headerIdx + 1).map(rowData => {
         const obj = {};
