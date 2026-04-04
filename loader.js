@@ -1,4 +1,4 @@
-/* loader.js - v4.1.02 - Maturity & Date Lock Sync */
+/* loader.js - v4.1.03 - Strict Header Mapping */
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2UwOfG57DQBOBnJX-9hsRKOQTUgALiM3uxs-VGzD2KN8JoWNAQltH6IkgAGhPTNFEvb/pub?gid=866869416&single=true&output=csv";
 
 export async function syncWithGoogleSheets(masterList) {
@@ -7,20 +7,12 @@ export async function syncWithGoogleSheets(masterList) {
         const buffer = await response.arrayBuffer();
         const decoder = new TextDecoder('utf-8'); 
         const csvData = decoder.decode(buffer);
-        
         const sheetRecords = processCSV(csvData);
-
-        const insuredMap = {
-            "Suhail Nami": { type: "Self", img: "avatar_self.png" },
-            "Saima Suhail": { type: "Wife", img: "avatar_wife.png" },
-            "Sulmas Nami": { type: "Daughter", img: "avatar_daughter.png" }
-        };
 
         const cleanNumeric = (raw) => {
             if (!raw) return 0;
             let str = String(raw).trim().replace(/[^\x00-\x7F]/g, ""); 
-            const digitsOnly = str.replace(/\D/g, ""); 
-            return parseInt(digitsOnly, 10) || 0;
+            return parseInt(str.replace(/\D/g, ""), 10) || 0;
         };
 
         ["india", "singapore"].forEach(country => {
@@ -30,13 +22,13 @@ export async function syncWithGoogleSheets(masterList) {
                 const match = sheetRecords.find(row => row["Policy No."] === staticPolicy.id);
 
                 if (match) {
-                    staticPolicy.name = match.name || staticPolicy.name;
-                    staticPolicy.company = match.company || staticPolicy.company;
-                    staticPolicy.type = match.type || staticPolicy.type;
-
-                    // 1. DATE LOCK: Handle "Commenced Date"
-                    const rawCommenced = match["Commenced Date"] || "";
-                    const dateMatch = rawCommenced.match(/(\d{1,2})[./\s-](\d{1,2})[./\s-](\d{4})/);
+                    // Update CORE attributes
+                    staticPolicy.name = match["Policy_Name"]?.split(':')[1]?.trim() || match.name;
+                    staticPolicy.company = match["Policy_Name"]?.split(':')[0]?.trim() || match.company;
+                    
+                    // DATE MAPPING
+                    const rawComm = match["Commenced Date"] || "";
+                    const dateMatch = rawComm.match(/(\d{1,2})[./\s-](\d{1,2})[./\s-](\d{4})/);
                     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
                     if (dateMatch) {
@@ -45,7 +37,7 @@ export async function syncWithGoogleSheets(masterList) {
                         const y = dateMatch[3];
                         staticPolicy.commenced = `${d} ${m} ${y}`;
 
-                        // 2. MATURITY CALCULATION (Term = PPT:MAT:MIP)
+                        // MATURITY CALCULATION
                         const rawTerm = String(match["Term"] || "");
                         if (rawTerm.includes(":")) {
                             const matYears = parseInt(rawTerm.split(":")[1], 10);
@@ -56,10 +48,14 @@ export async function syncWithGoogleSheets(masterList) {
                     }
 
                     staticPolicy.premium = cleanNumeric(match["Premium"]);
-                    const rawSA = String(match["Sum Assured"] || "").toLowerCase();
-                    staticPolicy.sumAssured = (rawSA.includes("not")) ? 0 : cleanNumeric(match["Sum Assured"]);
-
-                    if (country === "india") {
+                    staticPolicy.sumAssured = cleanNumeric(match["Sum Assured"]);
+                    
+                    if (country === "india" && match["Insured"]) {
+                        const insuredMap = {
+                            "Suhail Nami": { type: "Self", img: "avatar_self.png" },
+                            "Saima Suhail": { type: "Wife", img: "avatar_wife.png" },
+                            "Sulmas Nami": { type: "Daughter", img: "avatar_daughter.png" }
+                        };
                         const identity = insuredMap[match["Insured"]];
                         if (identity) {
                             staticPolicy.avatarPath = identity.img;
@@ -70,8 +66,6 @@ export async function syncWithGoogleSheets(masterList) {
                 return staticPolicy;
             });
         });
-
-        console.log("✅ v4.1.02: Data Sync Complete.");
         return masterList;
     } catch (e) { return masterList; }
 }
@@ -94,19 +88,6 @@ function processCSV(csv) {
     return rows.slice(headerIdx + 1).map(rowData => {
         const obj = {};
         headers.forEach((h, i) => { if (h) obj[h] = (rowData[i] || "").trim(); });
-        if (!obj["Policy_Name"] && rowData[0]?.includes(":")) obj["Policy_Name"] = rowData[0];
-        return (obj["Policy_Name"] && obj["Policy_Name"] !== "EMPTY") ? parseInsuranceTab(obj) : null;
-    }).filter(item => item !== null);
-}
-
-function parseInsuranceTab(item) {
-    const rawFullName = item["Policy_Name"] || "";
-    if (rawFullName.includes(":")) {
-        const parts = rawFullName.split(":");
-        item.company = parts[0].trim();
-        item.name = parts[1].trim(); 
-    }
-    const rawCategory = item["Category"] || "";
-    item.type = rawCategory.includes(":") ? rawCategory.split(":")[1].trim() : (rawCategory || "Savings");
-    return item;
+        return obj;
+    });
 }
