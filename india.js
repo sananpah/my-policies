@@ -2,6 +2,20 @@
 
 const TODAY = new Date();
 
+      export function safeParseDate(dateStr) {
+          if (!dateStr) return new Date();
+          // Handles "01 Jan 2024"
+          const parts = dateStr.split(' ');
+          if (parts.length === 3) {
+              const day = parseInt(parts[0], 10);
+              const month = monthMap[parts[1]] || 0;
+              const year = parseInt(parts[2], 10);
+              return new Date(year, month, day);
+          }
+          const d = new Date(dateStr);
+          return isNaN(d.getTime()) ? new Date() : d;
+      }
+
       export function checkIsDueSoon(dueDateStr) {
             if (!dueDateStr || dueDateStr === "PAID UP") return false;
             const parts = dueDateStr.split(' '); 
