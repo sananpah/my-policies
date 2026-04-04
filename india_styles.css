@@ -235,3 +235,17 @@ body {
     transform: skewX(-10deg); /* This makes it look really funky */
     display: inline-block;
 }
+
+/* Ensure these exist in your style block */
+.content-area {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: all 0.5s ease-in-out;
+}
+
+.policy-card.active .content-area {
+    max-height: 1000px; /* Large enough for content */
+    opacity: 1;
+    padding-bottom: 20px;
+}
