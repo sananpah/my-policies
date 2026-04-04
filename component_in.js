@@ -1,40 +1,59 @@
-/* component_in.js - v4.1.13 - The Nuclear Option */
-import { autoFmt } from './india.js';
+/* component_in.js - v4.1.15 - Restoration */
+import { autoFmt, safeGetYear, monthMap } from './india.js';
 
 export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
+    const commStr = p.commenced || "01 Jan 2024";
+    const matStr = p.maturity || "01 Jan 2050";
+    const startY = safeGetYear(commStr);
+    const matY = safeGetYear(matStr);
     const brandColor = p.color || "#6366f1";
-    
+    const brandBg = `rgba(${parseInt(brandColor.slice(1,3), 16)}, ${parseInt(brandColor.slice(3,5), 16)}, ${parseInt(brandColor.slice(5,7), 16)}, 0.04)`;
+
+    // Simple Timeline Segments
+    let timelineHtml = '';
+    for(let yr = startY; yr < matY; yr++) {
+        const color = yr < CURRENT_YEAR ? "bg-prem-past" : "bg-prem-future";
+        timelineHtml += `<div class="segment ${color}"><div class="tooltip">Year ${yr}</div></div>`;
+    }
+
     return `
-    <div class="policy-card" id="card-${p.id}" style="border-left: 15px solid ${brandColor}; margin-bottom: 20px; background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); font-family: sans-serif;">
-        
-        <div class="card-header" 
-             onclick="const c = this.parentElement.querySelector('.content-area'); c.style.display = (c.style.display === 'none' ? 'block' : 'none');" 
-             style="padding: 25px; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
-            
-            <div style="display: flex; align-items: center; gap: 20px;">
-                <img src="${p.logo}" style="max-height: 40px; width: 100px; object-fit: contain;">
-                <span style="font-weight: 900; font-size: 1.2rem; color: #1e293b;">${p.name}</span>
+    <div class="policy-card" id="card-${p.id}" style="border-left: 16px solid ${brandColor};">
+        <div class="card-header" style="background: ${brandBg};" 
+             onclick="const c = this.parentElement.querySelector('.content-area'); c.style.display = (c.style.display === 'none' ? 'block' : 'none'); c.style.opacity = '1';">
+            <div class="w-24 flex justify-center"><img src="${p.logo}" class="max-h-10 object-contain"></div>
+            <div class="flex-1 ml-10 text-left">
+                <h3 class="font-black text-slate-800 text-xl flex items-center gap-3">
+                    ${p.name}
+                    ${p.avatarPath ? `<img src="${p.avatarPath}" class="w-8 h-8 rounded-full border-2 border-white shadow-sm">` : ''}
+                </h3>
             </div>
-            
-            <div style="text-align: right;">
-                <div style="font-size: 10px; color: #94a3b8; font-weight: bold;">ANNUAL PREMIUM</div>
-                <div style="font-weight: 900; color: #059669; font-size: 1.1rem;">${autoFmt(p.premium, sym)}</div>
+            <div class="flex gap-12 items-center mr-6">
+                <div class="flex items-center w-[250px]">
+                    <div class="funky-badge-v2" style="border-color: ${brandColor}; color: ${brandColor}; background: white;">
+                        ${p.type || 'Savings'}
+                    </div>
+                    <div class="ml-6 text-left">
+                        <p class="text-[9px] font-bold text-slate-400 uppercase leading-none">Sum Assured</p>
+                        <p class="text-lg font-black text-slate-700">${autoFmt(p.sumAssured, sym)}</p>
+                    </div>
+                </div>
+                <div class="text-center border-l-2 border-slate-100 pl-10">
+                    <p class="text-[9px] font-bold text-slate-400 uppercase leading-none">Premium</p>
+                    <p class="text-lg font-black text-emerald-600">${autoFmt(p.premium, sym)}</p>
+                </div>
             </div>
         </div>
 
-        <div class="content-area" style="display: none; padding: 30px; border-top: 1px solid #f1f5f9; background: #fafafa;">
-            <div style="background: white; padding: 20px; border-radius: 15px; border: 1px solid #e2e8f0;">
-                <p style="margin: 5px 0;"><strong>Policy Number:</strong> ${p.id}</p>
-                <p style="margin: 5px 0;"><strong>Commenced:</strong> ${p.commenced || 'N/A'}</p>
-                <p style="margin: 5px 0;"><strong>Maturity:</strong> ${p.maturity || 'N/A'}</p>
-                <p style="margin: 5px 0;"><strong>Type:</strong> ${p.type || 'Insurance'}</p>
+        <div class="content-area">
+            <div class="detail-grid">
+                <div class="detail-item"><p>Policy Number</p><p>${p.id}</p></div>
+                <div class="detail-item"><p>UIN Number</p><p>${p.uin || 'N/A'}</p></div>
+                <div class="detail-item"><p>Customer ID</p><p>${p.clientId || 'N/A'}</p></div>
             </div>
-            
-            <div style="margin-top: 25px;">
-                <div style="font-size: 10px; font-weight: bold; color: #64748b; margin-bottom: 8px; text-transform: uppercase;">Policy Timeline</div>
-                <div style="height: 12px; background: #e2e8f0; border-radius: 10px; width: 100%; overflow: hidden;">
-                    <div style="width: 40%; height: 100%; background: ${brandColor};"></div>
-                </div>
+            <div class="timeline-track">
+                <div class="absolute -top-10 left-0 text-[11px] font-black text-slate-400 uppercase">${commStr}</div>
+                ${timelineHtml}
+                <div class="absolute -top-10 right-0 text-[11px] font-black text-slate-400 uppercase">${matStr}</div>
             </div>
         </div>
     </div>`;
