@@ -14,14 +14,14 @@
 <body class="bg-slate-50">
 
     <header class="dashboard-header">
-        <div class="build-info">STABLE BUILD: v6.2.1.FINAL</div>
+        <div class="build-info">STABLE BUILD: v6.2.6.FINAL</div>
         <h1 class="brand-header">INSURANCE MATRIX</h1>
         <p class="text-[10px] font-black text-slate-400 tracking-[0.3em] uppercase mt-2">Active Portfolio & Maturity Tracker</p>
     </header>
 
-    <main class="container mx-auto px-4">
+    <main class="container mx-auto px-4 pb-20">
         
-        <div class="flex items-center justify-between mb-8">
+        <div class="flex items-center justify-between mb-6 mt-10">
             <h2 class="region-title text-slate-800">INDIA PORTFOLIO</h2>
             <div class="flex items-center gap-2">
                 <span class="relative flex h-3 w-3">
@@ -31,48 +31,71 @@
                 <span class="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Live Sync Active</span>
             </div>
         </div>
+        <div id="india-grid" class="flex flex-col gap-4 mb-16">
+            <div class="py-10 text-center text-slate-400 text-xs font-bold uppercase">Syncing India...</div>
+        </div>
 
-        <div id="india-grid" class="flex flex-col gap-4">
-            <div class="flex flex-col items-center justify-center py-32 bg-white rounded-[40px] shadow-sm border border-slate-100">
-                <div class="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-                <p class="mt-6 font-black text-slate-400 text-xs tracking-widest uppercase">Initializing Secure Sync...</p>
-            </div>
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="region-title text-slate-800" style="border-left-color: #ec4899;">SINGAPORE PORTFOLIO</h2>
+        </div>
+        <div id="singapore-grid" class="flex flex-col gap-4 mb-16">
+            <div class="py-10 text-center text-slate-400 text-xs font-bold uppercase">Syncing Singapore...</div>
+        </div>
+
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="region-title text-slate-800" style="border-left-color: #f59e0b;">HEALTH PORTFOLIO</h2>
+        </div>
+        <div id="health-grid" class="flex flex-col gap-4">
+            <div class="py-10 text-center text-slate-400 text-xs font-bold uppercase">Syncing Health...</div>
         </div>
 
     </main>
 
-/* index.html Script Section - v6.2.5 - Portfolio Restoration */
-<script type="module">
-    import { syncWithGoogleSheets } from './loader.js';
-    import { POLICY_DATA } from './data.js';
-    import { createPolicyCard } from './component_in.js';
+    <script type="module">
+        import { syncWithGoogleSheets } from './loader.js';
+        import { POLICY_DATA } from './data.js';
+        import { createPolicyCard } from './component_in.js';
 
-    async function init() {
-        const liveData = await syncWithGoogleSheets(POLICY_DATA);
-        const TODAY = new Date();
-        const CURRENT_YEAR = TODAY.getFullYear();
+        async function init() {
+            try {
+                console.log("🚀 Initializing Matrix...");
+                
+                // 1. Fetch live data
+                const liveData = await syncWithGoogleSheets(POLICY_DATA);
+                console.log("📊 Data Sync Complete:", liveData);
 
-        // RENDER FUNCTION
-        const renderRegion = (regionKey, gridId, currency) => {
-            const container = document.getElementById(gridId);
-            if (!container || !liveData[regionKey]) return;
-            container.innerHTML = "";
-            liveData[regionKey].forEach(p => {
-                container.innerHTML += createPolicyCard(p, currency, TODAY, CURRENT_YEAR);
-            });
-        };
+                const TODAY = new Date();
+                const CURRENT_YEAR = TODAY.getFullYear();
 
-        // 1. Render India
-        renderRegion('india', 'india-grid', '₹');
+                // 2. RENDER HELPER
+                const renderRegion = (regionKey, gridId, currency) => {
+                    const container = document.getElementById(gridId);
+                    if (!container) return;
+                    
+                    // Clear the individual loader
+                    container.innerHTML = "";
 
-        // 2. Render Singapore
-        renderRegion('singapore', 'singapore-grid', 'S$');
+                    if (liveData && liveData[regionKey] && liveData[regionKey].length > 0) {
+                        liveData[regionKey].forEach(p => {
+                            container.innerHTML += createPolicyCard(p, currency, TODAY, CURRENT_YEAR);
+                        });
+                    } else {
+                        container.innerHTML = `<div class="p-8 text-center text-slate-300 font-bold uppercase text-[10px] border-2 border-dashed border-slate-100 rounded-[30px]">No Data in ${regionKey}</div>`;
+                    }
+                };
 
-        // 3. Render Health (If you have a separate grid or key)
-        renderRegion('health', 'health-grid', '₹');
-    }
-    init();
-</script>
-    
+                // 3. EXECUTE RENDERS
+                renderRegion('india', 'india-grid', '₹');
+                renderRegion('singapore', 'singapore-grid', 'S$');
+                renderRegion('health', 'health-grid', '₹');
+
+                console.log("✅ Rendering Finished.");
+            } catch (err) {
+                console.error("❌ System Error:", err);
+            }
+        }
+
+        init();
+    </script>
 </body>
 </html>
