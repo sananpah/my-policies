@@ -1,34 +1,16 @@
-/* component_in.js - v4.1.10 - Global Scope Fix */
+/* component_in.js - v4.1.11 - Simplified Trigger */
 import { checkIsDueSoon, autoFmt, toNum, raw, safeParseDate, safeGetYear, monthMap } from './india.js';
 
-// --- THE CRITICAL FIX: Explicit Global Binding ---
+// Define the function globally IMMEDIATELY
 window.toggleCard = function(id) {
-    console.log("Toggle clicked for ID:", id); // Check your F12 console
     const card = document.getElementById(`card-${id}`);
-    if (!card) return;
-
-    const content = card.querySelector('.content-area');
-    const isActive = card.classList.contains('active');
-
-    if (!isActive) {
-        // CLOSE ALL OTHER CARDS FIRST
-        document.querySelectorAll('.policy-card.active').forEach(other => {
-            other.classList.remove('active');
-            other.querySelector('.content-area').style.maxHeight = "0px";
-        });
-
-        // OPEN THIS CARD
-        card.classList.add('active');
-        content.style.maxHeight = content.scrollHeight + "px";
-    } else {
-        // CLOSE THIS CARD
-        card.classList.remove('active');
-        content.style.maxHeight = "0px";
+    if (card) {
+        card.classList.toggle('active');
     }
 };
 
 export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
-    // 1. DATA PREP
+    // 1. DATA SHIELD
     const commStr = p.commenced || "01 Jan 2000";
     const matStr = p.maturity || "01 Jan 2050";
     const premEndStr = p.premiumEnds || "01 Jan 2030";
@@ -70,12 +52,12 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
         timelineHtml += `<div class="segment ${colorClass}"><div class="tooltip">Year ${polY} (${yr})</div></div>`;
     }
 
-    // 3. HTML STRUCTURE
+    // 3. HTML OUTPUT
     return `
     <div class="policy-card mb-6" id="card-${p.id}" style="border-left: 16px solid ${brandColor};">
-        <div class="card-header" style="background: ${brandBg};" onclick="window.toggleCard('${p.id}')">
+        <div class="card-header" style="background: ${brandBg}; cursor: pointer;" onclick="window.toggleCard('${p.id}')">
             <div class="w-32 flex justify-center"><img src="${p.logo}" class="max-h-12 object-contain"></div>
-            <div class="flex-1 ml-10">
+            <div class="flex-1 ml-10 text-left">
                 <h3 class="font-black text-slate-800 text-xl flex items-center gap-3">
                     ${p.name}
                     ${p.avatarPath ? `<img src="${p.avatarPath}" class="w-8 h-8 rounded-full border-2 border-white shadow-sm ring-1 ring-slate-200">` : ''}
@@ -87,7 +69,7 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
                     <div class="funky-badge-v2" style="border-color: ${brandColor}; color: ${brandColor}; background: white;">
                         ${p.type || 'Insurance'}
                     </div>
-                    <div class="ml-6">
+                    <div class="ml-6 text-left">
                         <p class="text-[9px] font-bold text-slate-400 uppercase leading-none">Sum Assured</p>
                         <p class="text-lg font-black text-slate-700">${autoFmt(p.sumAssured, sym)}</p>
                     </div>
@@ -106,19 +88,17 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
             </div>
         </div>
 
-        <div class="content-area" style="display: block; max-height: 0; opacity: 0; overflow: hidden; transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); background: white;">
-            <div style="padding: 40px;">
-                <div class="detail-grid">
-                    <div class="detail-item"><p>Policy Number</p><p>${p.id}</p></div>
-                    <div class="detail-item"><p>UIN Number</p><p>${p.uin || 'N/A'}</p></div>
-                    <div class="detail-item"><p>Customer ID</p><p>${p.clientId || 'N/A'}</p></div>
-                </div>
+        <div class="content-area">
+            <div class="detail-grid" style="margin: 30px;">
+                <div class="detail-item"><p>Policy Number</p><p>${p.id}</p></div>
+                <div class="detail-item"><p>UIN Number</p><p>${p.uin || 'N/A'}</p></div>
+                <div class="detail-item"><p>Customer ID</p><p>${p.clientId || 'N/A'}</p></div>
+            </div>
 
-                <div class="timeline-track" style="margin-top: 40px; margin-bottom: 20px;">
-                    <div class="absolute -top-10 left-0 text-[11px] font-black text-slate-400 uppercase">${commStr}</div>
-                    ${timelineHtml}
-                    <div class="absolute -top-10 right-0 text-[11px] font-black text-slate-400 uppercase">${matStr}</div>
-                </div>
+            <div class="timeline-track" style="margin: 40px;">
+                <div class="absolute -top-10 left-0 text-[11px] font-black text-slate-400 uppercase">${commStr}</div>
+                ${timelineHtml}
+                <div class="absolute -top-10 right-0 text-[11px] font-black text-slate-400 uppercase">${matStr}</div>
             </div>
         </div>
     </div>`;
