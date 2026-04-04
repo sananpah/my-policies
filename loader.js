@@ -1,4 +1,4 @@
-/* loader.js - v4.0.95 - Junk-Safe Encoding Sync */
+/* loader.js - v4.0.97 - Maturity Handshake & Junk-Safe Sync */
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2UwOfG57DQBOBnJX-9hsRKOQTUgALiM3uxs-VGzD2KN8JoWNAQltH6IkgAGhPTNFEvb/pub?gid=866869416&single=true&output=csv";
 
 export async function syncWithGoogleSheets(masterList) {
@@ -16,31 +16,13 @@ export async function syncWithGoogleSheets(masterList) {
             "Sulmas Nami": { type: "Daughter", img: "avatar_daughter.png" }
         };
 
-        // Internal Helper: The Final Boss of Data Cleaners
+        // Internal Helper: The Digit-Only Fortress (Fixed v4.0.96 logic)
         const cleanNumeric = (raw) => {
             if (!raw) return 0;
             let str = String(raw).trim();
-            
-            // Step A: Remove all Non-ASCII "Junk" characters (Encoding Fix)
-            // This deletes â‚¹, Â, and other hidden symbols from Excel
-            str = str.replace(/[^\x00-\x7F]/g, "");
-
-            // Step B: Remove commas and letters (Rs, RS, rs)
-            str = str.replace(/[,rs]/gi, "");
-
-            // Step C: Decimal Point logic (Ensure only the LAST dot is treated as a decimal)
-            // This stops "Rs. 2.03.400" from becoming "2.03"
-            const parts = str.split('.');
-            if (parts.length > 1) {
-                const decimal = parts.pop();
-                const integer = parts.join("");
-                str = integer + "." + decimal;
-            }
-
-            // Step D: Final sweep - remove anything that isn't a digit or a dot
-            str = str.replace(/[^\d.]/g, "");
-
-            const num = parseFloat(str);
+            str = str.replace(/[^\x00-\x7F]/g, ""); // Remove Non-ASCII Junk
+            const digitsOnly = str.replace(/\D/g, ""); // Strip all non-digits
+            const num = parseFloat(digitsOnly);
             return isNaN(num) ? 0 : num;
         };
 
@@ -55,27 +37,40 @@ export async function syncWithGoogleSheets(masterList) {
                     staticPolicy.company = match.company;
                     staticPolicy.type = match.type;
 
-                    // Apply the Junk-Safe Cleaner to Premium and Sum Assured
+                    // 1. Live Premium & Sum Assured
                     staticPolicy.premium = cleanNumeric(match["Premium"]);
-                    
                     const rawSA = String(match["Sum Assured"] || "").toLowerCase();
                     staticPolicy.sumAssured = (rawSA.includes("not")) ? 0 : cleanNumeric(match["Sum Assured"]);
 
-                    // 2. DATE FIX: (dd.mm.yyyy -> dd MMM yyyy)
+                    // 2. Commenced Date & Maturity Calculation
                     const rawDate = String(match["Commenced Date"] || "");
                     const dateMatch = rawDate.match(/(\d{1,2})[./\s-](\d{1,2})[./\s-](\d{4})/);
                     
+                    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
                     if (dateMatch) {
-                        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-                        const day = dateMatch[1].padStart(2, '0');
-                        const monthIdx = parseInt(dateMatch[2], 10) - 1;
-                        const monthName = months[monthIdx] || "Jan";
-                        staticPolicy.commenced = `${day} ${monthName} ${dateMatch[3]}`;
-                    } else {
-                        staticPolicy.commenced = rawDate.replace(/[^\w\s]/g, " "); 
+                        const commDay = dateMatch[1].padStart(2, '0');
+                        const commMonthIdx = parseInt(dateMatch[2], 10) - 1;
+                        const commYear = parseInt(dateMatch[3], 10);
+                        
+                        // Set Commenced Date (dd MMM yyyy)
+                        staticPolicy.commenced = `${commDay} ${months[commMonthIdx]} ${commYear}`;
+
+                        // --- NEW: Maturity Calculation (PPT:MaturityYears:MIP) ---
+                        const rawTerm = String(match["Term"] || "");
+                        if (rawTerm.includes(":")) {
+                            const termParts = rawTerm.split(":");
+                            // Extract middle value (Maturity Years)
+                            const matYears = parseInt(termParts[1]?.trim(), 10);
+                            
+                            if (!isNaN(matYears)) {
+                                const matYear = commYear + matYears;
+                                staticPolicy.maturity = `${commDay} ${months[commMonthIdx]} ${matYear}`;
+                            }
+                        }
                     }
 
-                    // 3. AVATAR MAPPING (India Only)
+                    // 3. Avatar Mapping (India Only)
                     if (country === "india") {
                         const identity = insuredMap[match["Insured"]];
                         if (identity) {
@@ -88,7 +83,7 @@ export async function syncWithGoogleSheets(masterList) {
             });
         });
 
-        console.log("✅ v4.0.95: Junk-safe sync successful.");
+        console.log("✅ v4.0.97: Maturity Handshake Active.");
         return masterList;
     } catch (e) { 
         console.warn("⚠️ Sync failed:", e);
