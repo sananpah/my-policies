@@ -1,4 +1,4 @@
-/* loader.js - v4.0.90 - Nuclear Clean Sync */
+/* loader.js - v4.0.91 - Decimal-Safe Nuclear Sync */
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2UwOfG57DQBOBnJX-9hsRKOQTUgALiM3uxs-VGzD2KN8JoWNAQltH6IkgAGhPTNFEvb/pub?gid=866869416&single=true&output=csv";
 
 export async function syncWithGoogleSheets(masterList) {
@@ -27,23 +27,25 @@ export async function syncWithGoogleSheets(masterList) {
                     staticPolicy.company = match.company;
                     staticPolicy.type = match.type;
 
-                    // 1. PREMIUM FIX: Strip EVERYTHING that is not a number
-                    // This handles "Rs. 2,03,400", "₹ 50,000", "$1,200"
+                    // 1. PREMIUM FIX: Keep dots for decimals, remove symbols/commas
+                    // [^\d.] matches anything that is NOT a digit or a decimal point
                     const rawPrem = String(match["Premium"] || "0");
-                    const digitsOnly = rawPrem.replace(/\D/g, ""); // \D removes all non-digits
-                    staticPolicy.premium = parseFloat(digitsOnly) || 0;
+                    const cleanPremStr = rawPrem.replace(/[^\d.]/g, ""); 
+                    const cleanPrem = parseFloat(cleanPremStr);
+                    staticPolicy.premium = isNaN(cleanPrem) ? 0 : cleanPrem;
 
-                    // 2. SUM ASSURED FIX
+                    // 2. SUM ASSURED FIX: Same decimal-safe logic
                     const rawSA = String(match["Sum Assured"] || "0").toLowerCase();
                     if (rawSA.includes("not") || rawSA.trim() === "") {
                         staticPolicy.sumAssured = 0;
                     } else {
-                        staticPolicy.sumAssured = parseFloat(rawSA.replace(/\D/g, "")) || 0;
+                        const cleanSAStr = rawSA.replace(/[^\d.]/g, "");
+                        const cleanSA = parseFloat(cleanSAStr);
+                        staticPolicy.sumAssured = isNaN(cleanSA) ? 0 : cleanSA;
                     }
 
-                    // 3. DATE FIX: The "Nuclear" Date Formatter
+                    // 3. DATE FIX: The "Nuclear" Date Formatter (Preserved from v4.0.90)
                     const rawDate = String(match["Commenced Date"] || "");
-                    // This regex finds 3 groups of numbers separated by anything (dot, slash, space)
                     const dateMatch = rawDate.match(/(\d{1,2})[./\s-](\d{1,2})[./\s-](\d{4})/);
                     
                     if (dateMatch) {
@@ -54,7 +56,6 @@ export async function syncWithGoogleSheets(masterList) {
                         const year = dateMatch[3];
                         staticPolicy.commenced = `${day} ${monthName} ${year}`;
                     } else {
-                        // Fallback: If no dots found, just remove any trailing garbage
                         staticPolicy.commenced = rawDate.replace(/[^\w\s]/g, " "); 
                     }
 
@@ -70,11 +71,14 @@ export async function syncWithGoogleSheets(masterList) {
             });
         });
 
+        console.log("✅ v4.0.91: Decimal-safe sync complete.");
         return masterList;
-    } catch (e) { return masterList; }
+    } catch (e) { 
+        console.warn("⚠️ Sync failed:", e);
+        return masterList; 
+    }
 }
 
-// Keep your processCSV and parseInsuranceTab exactly as they were below
 function processCSV(csv) {
     const rows = [];
     let currentRow = [''], inQuote = false;
