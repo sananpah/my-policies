@@ -1,8 +1,9 @@
-/* component_in.js - v4.1.09 - Zero-Fail Toggle */
+/* component_in.js - v4.1.10 - Global Scope Fix */
 import { checkIsDueSoon, autoFmt, toNum, raw, safeParseDate, safeGetYear, monthMap } from './india.js';
 
-// Global Toggle Function - Forces display:block to override CSS display:none
+// --- THE CRITICAL FIX: Explicit Global Binding ---
 window.toggleCard = function(id) {
+    console.log("Toggle clicked for ID:", id); // Check your F12 console
     const card = document.getElementById(`card-${id}`);
     if (!card) return;
 
@@ -10,30 +11,24 @@ window.toggleCard = function(id) {
     const isActive = card.classList.contains('active');
 
     if (!isActive) {
-        // OPENING
+        // CLOSE ALL OTHER CARDS FIRST
+        document.querySelectorAll('.policy-card.active').forEach(other => {
+            other.classList.remove('active');
+            other.querySelector('.content-area').style.maxHeight = "0px";
+        });
+
+        // OPEN THIS CARD
         card.classList.add('active');
-        content.style.display = 'block'; // Force override display:none
-        // Delay slightly to allow the transition to trigger
-        setTimeout(() => {
-            content.style.maxHeight = '1200px';
-            content.style.opacity = '1';
-        }, 10);
+        content.style.maxHeight = content.scrollHeight + "px";
     } else {
-        // CLOSING
-        content.style.maxHeight = '0';
-        content.style.opacity = '0';
+        // CLOSE THIS CARD
         card.classList.remove('active');
-        // Hide completely after animation finishes
-        setTimeout(() => {
-            if (!card.classList.contains('active')) {
-                content.style.display = 'none';
-            }
-        }, 500);
+        content.style.maxHeight = "0px";
     }
 };
 
 export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
-    // 1. DATA SHIELD
+    // 1. DATA PREP
     const commStr = p.commenced || "01 Jan 2000";
     const matStr = p.maturity || "01 Jan 2050";
     const premEndStr = p.premiumEnds || "01 Jan 2030";
@@ -52,9 +47,8 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
     const hasPassedThisYear = (todayMonth > annMonthNum) || (todayMonth === annMonthNum && todayDay >= anniversaryDay);
     
     const nextDueYear = hasPassedThisYear ? CURRENT_YEAR + 1 : CURRENT_YEAR;
-    const nextDueStr = `${anniversaryDay} ${anniversaryMonth} ${nextDueYear}`; 
     const isPaidUp = p.status === "PAID UP" || (CURRENT_YEAR > premEndYear || (CURRENT_YEAR === premEndYear && hasPassedThisYear));
-    const finalDueDate = isPaidUp ? "PAID UP" : nextDueStr;
+    const finalDueDate = isPaidUp ? "PAID UP" : `${anniversaryDay} ${anniversaryMonth} ${nextDueYear}`;
 
     const brandColor = p.color || "#6366f1";
     const brandBg = `rgba(${parseInt(brandColor.slice(1,3), 16)}, ${parseInt(brandColor.slice(3,5), 16)}, ${parseInt(brandColor.slice(5,7), 16)}, 0.04)`;
@@ -76,10 +70,10 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
         timelineHtml += `<div class="segment ${colorClass}"><div class="tooltip">Year ${polY} (${yr})</div></div>`;
     }
 
-    // 3. HTML RETURN
+    // 3. HTML STRUCTURE
     return `
     <div class="policy-card mb-6" id="card-${p.id}" style="border-left: 16px solid ${brandColor};">
-        <div class="card-header" style="background: ${brandBg};" onclick="toggleCard('${p.id}')">
+        <div class="card-header" style="background: ${brandBg};" onclick="window.toggleCard('${p.id}')">
             <div class="w-32 flex justify-center"><img src="${p.logo}" class="max-h-12 object-contain"></div>
             <div class="flex-1 ml-10">
                 <h3 class="font-black text-slate-800 text-xl flex items-center gap-3">
@@ -112,17 +106,19 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
             </div>
         </div>
 
-        <div class="content-area" style="display: none; overflow: hidden; transition: all 0.5s ease;">
-            <div class="detail-grid">
-                <div class="detail-item"><p>Policy Number</p><p>${p.id}</p></div>
-                <div class="detail-item"><p>UIN Number</p><p>${p.uin || 'N/A'}</p></div>
-                <div class="detail-item"><p>Customer ID</p><p>${p.clientId || 'N/A'}</p></div>
-            </div>
+        <div class="content-area" style="display: block; max-height: 0; opacity: 0; overflow: hidden; transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); background: white;">
+            <div style="padding: 40px;">
+                <div class="detail-grid">
+                    <div class="detail-item"><p>Policy Number</p><p>${p.id}</p></div>
+                    <div class="detail-item"><p>UIN Number</p><p>${p.uin || 'N/A'}</p></div>
+                    <div class="detail-item"><p>Customer ID</p><p>${p.clientId || 'N/A'}</p></div>
+                </div>
 
-            <div class="timeline-track" style="margin-top: 40px; margin-bottom: 20px;">
-                <div class="absolute -top-10 left-0 text-[11px] font-black text-slate-400 uppercase">${commStr}</div>
-                ${timelineHtml}
-                <div class="absolute -top-10 right-0 text-[11px] font-black text-slate-400 uppercase">${matStr}</div>
+                <div class="timeline-track" style="margin-top: 40px; margin-bottom: 20px;">
+                    <div class="absolute -top-10 left-0 text-[11px] font-black text-slate-400 uppercase">${commStr}</div>
+                    ${timelineHtml}
+                    <div class="absolute -top-10 right-0 text-[11px] font-black text-slate-400 uppercase">${matStr}</div>
+                </div>
             </div>
         </div>
     </div>`;
