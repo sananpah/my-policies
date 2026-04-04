@@ -1,8 +1,22 @@
-/* component_in.js - v4.1.03 - Visual & Safety Restoration */
+/* component_in.js - v4.1.04 - Total Restoration & Toggle Fix */
 import { checkIsDueSoon, autoFmt, toNum, raw, safeParseDate, safeGetYear, monthMap } from './india.js';
 
+// Global Toggle Function (Attached to window so HTML onclick can find it)
+window.toggleCard = function(id) {
+    const card = document.getElementById(`card-${id}`);
+    const allCards = document.querySelectorAll('.policy-card');
+    
+    // Close others (Optional: Remove if you want multiple open at once)
+    allCards.forEach(c => {
+        if (c.id !== `card-${id}`) c.classList.remove('active');
+    });
+
+    // Toggle current
+    card.classList.toggle('active');
+};
+
 export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
-    // 1. DATA SHIELD: Ensure we never split "undefined"
+    // 1. DATA SHIELD
     const commStr = p.commenced || "01 Jan 2000";
     const matStr = p.maturity || "01 Jan 2050";
     const premEndStr = p.premiumEnds || "01 Jan 2030";
@@ -66,7 +80,7 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
 
     // THE CARD HTML
     return `
-    <div class="policy-card mb-6" style="border-left: 16px solid ${brandColor};">
+    <div class="policy-card mb-6" id="card-${p.id}" style="border-left: 16px solid ${brandColor}; cursor: pointer; transition: all 0.3s ease;">
         <div class="card-header" style="background: ${brandBg}; padding: 16px; display: flex; align-items: center;" onclick="toggleCard('${p.id}')">
             <div class="w-32 flex justify-center"><img src="${p.logo}" class="max-h-12"></div>
             <div class="flex-1 ml-10">
@@ -94,17 +108,28 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
                 ${isPaidUp ? `<img src="paid.jpg" class="h-12 mx-auto">` : `
                     <div class="bg-white/60 p-2 rounded-xl border border-white/50">
                         <p class="text-[9px] font-bold text-indigo-500">Left: ${premRemainingStr}</p>
-                        <p class="text-[9px] font-bold text-slate-400 uppercase">Next Due</p>
+                        <p class="text-[9px] font-bold text-slate-400 uppercase leading-none mt-1">Next Due</p>
                         <div class="font-black text-[11px]">${finalDueDate}</div>
                     </div>
                 `}
             </div>
         </div>
-        <div class="content-area p-6" style="background: linear-gradient(to bottom, ${brandBg}, #ffffff)">
-            <div class="timeline-track mt-10">
-                <div class="absolute -top-8 left-0 text-[11px] font-black text-slate-400">${commStr}</div>
-                ${timelineHtml}
-                <div class="absolute -top-8 right-0 text-[11px] font-black text-slate-400">${matStr}</div>
+        
+        <div class="content-area overflow-hidden transition-all duration-500 max-h-0" style="background: linear-gradient(to bottom, ${brandBg}, #ffffff)">
+            <div class="p-6">
+                <div class="detail-grid grid grid-cols-3 gap-5 mb-10">
+                    <div class="detail-item"><p class="text-[10px] text-slate-400 uppercase font-bold">Policy Number</p><p class="font-bold">${p.id || 'N/A'}</p></div>
+                    <div class="detail-item"><p class="text-[10px] text-slate-400 uppercase font-bold">UIN Number</p><p class="font-bold">${p.uin || 'N/A'}</p></div>
+                    <div class="detail-item"><p class="text-[10px] text-slate-400 uppercase font-bold">Customer ID</p><p class="font-bold">${p.clientId || 'N/A'}</p></div>
+                </div>
+                
+                <div class="timeline-track relative pt-10 pb-4">
+                    <div class="absolute -top-4 left-0 text-[11px] font-black text-slate-400 uppercase">${commStr}</div>
+                    <div class="flex h-4 gap-1 w-full bg-slate-100 rounded-full overflow-visible">
+                        ${timelineHtml}
+                    </div>
+                    <div class="absolute -top-4 right-0 text-[11px] font-black text-slate-400 uppercase">${matStr}</div>
+                </div>
             </div>
         </div>
     </div>`;
