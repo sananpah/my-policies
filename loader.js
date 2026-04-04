@@ -1,4 +1,4 @@
-/* loader.js - v4.0.92 - Final Multi-Currency & Date Sync */
+/* loader.js - v4.0.93 - Extraction-Based Sync */
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2UwOfG57DQBOBnJX-9hsRKOQTUgALiM3uxs-VGzD2KN8JoWNAQltH6IkgAGhPTNFEvb/pub?gid=866869416&single=true&output=csv";
 
 export async function syncWithGoogleSheets(masterList) {
@@ -27,27 +27,35 @@ export async function syncWithGoogleSheets(masterList) {
                     staticPolicy.company = match.company;
                     staticPolicy.type = match.type;
 
-                    // 1. SMART PREMIUM CLEANER: Handles "Rs. 2,03,400" and "$1,234.50"
+                    // 1. SMART PREMIUM EXTRACTION (FIXED: Ignores "Rs." dots)
                     const rawPrem = String(match["Premium"] || "0");
-                    let cleanPremStr = rawPrem.replace(/,/g, ""); // Remove commas first
-                    cleanPremStr = cleanPremStr.replace(/[^\d.]/g, ""); // Remove non-digits/non-dots
-                    if (cleanPremStr.endsWith(".")) cleanPremStr = cleanPremStr.slice(0, -1); // Remove trailing dot from "Rs."
-                    
-                    const cleanPrem = parseFloat(cleanPremStr);
-                    staticPolicy.premium = isNaN(cleanPrem) ? 0 : cleanPrem;
+                    const matchPrem = rawPrem.match(/[\d,.]+/); 
+                    if (matchPrem) {
+                        let cleanStr = matchPrem[0].replace(/,/g, "");
+                        if (cleanStr.startsWith(".")) cleanStr = cleanStr.substring(1);
+                        if (cleanStr.endsWith(".")) cleanStr = cleanStr.slice(0, -1);
+                        staticPolicy.premium = parseFloat(cleanStr) || 0;
+                    } else {
+                        staticPolicy.premium = 0;
+                    }
 
-                    // 2. SMART SUM ASSURED CLEANER
+                    // 2. SMART SUM ASSURED EXTRACTION
                     const rawSA = String(match["Sum Assured"] || "0").toLowerCase();
                     if (rawSA.includes("not") || rawSA.trim() === "") {
                         staticPolicy.sumAssured = 0;
                     } else {
-                        let cleanSAStr = rawSA.replace(/,/g, "").replace(/[^\d.]/g, "");
-                        if (cleanSAStr.endsWith(".")) cleanSAStr = cleanSAStr.slice(0, -1);
-                        const cleanSA = parseFloat(cleanSAStr);
-                        staticPolicy.sumAssured = isNaN(cleanSA) ? 0 : cleanSA;
+                        const matchSA = rawSA.match(/[\d,.]+/);
+                        if (matchSA) {
+                            let cleanSAStr = matchSA[0].replace(/,/g, "");
+                            if (cleanSAStr.startsWith(".")) cleanSAStr = cleanSAStr.substring(1);
+                            if (cleanSAStr.endsWith(".")) cleanSAStr = cleanSAStr.slice(0, -1);
+                            staticPolicy.sumAssured = parseFloat(cleanSAStr) || 0;
+                        } else {
+                            staticPolicy.sumAssured = 0;
+                        }
                     }
 
-                    // 3. DATE FIX: The "Nuclear" Date Formatter (dd.mm.yyyy -> dd MMM yyyy)
+                    // 3. DATE FIX: (dd.mm.yyyy -> dd MMM yyyy)
                     const rawDate = String(match["Commenced Date"] || "");
                     const dateMatch = rawDate.match(/(\d{1,2})[./\s-](\d{1,2})[./\s-](\d{4})/);
                     
@@ -62,6 +70,7 @@ export async function syncWithGoogleSheets(masterList) {
                         staticPolicy.commenced = rawDate.replace(/[^\w\s]/g, " "); 
                     }
 
+                    // 4. AVATAR MAPPING (India Only)
                     if (country === "india") {
                         const identity = insuredMap[match["Insured"]];
                         if (identity) {
@@ -74,7 +83,7 @@ export async function syncWithGoogleSheets(masterList) {
             });
         });
 
-        console.log("✅ v4.0.92: Smart Currency & Date Sync Complete.");
+        console.log("✅ v4.0.93: Extraction-based sync active.");
         return masterList;
     } catch (e) { 
         console.warn("⚠️ Sync failed:", e);
