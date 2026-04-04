@@ -5,19 +5,12 @@
     --bg-color: #f4f7f6;
     --card-bg: #ffffff;
     --text-main: #1a202c;
-    --text-muted: #718096;
     --neon-green: #2ecc71;
-    --neon-glow: #27ae60;
 }
 
-body { 
-    background-color: var(--bg-color); 
-    font-family: 'Inter', sans-serif; 
-    margin: 0; 
-    padding-bottom: 100px;
-}
+body { background-color: var(--bg-color); font-family: 'Inter', sans-serif; margin: 0; padding-bottom: 100px; }
 
-/* --- HEADER & BUILD INFO --- */
+/* --- HEADER --- */
 .dashboard-header {
     position: relative;
     text-align: center;
@@ -53,7 +46,7 @@ body {
 .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
 h2.region-title { margin: 40px 0 20px; padding-left: 15px; border-left: 5px solid #4a5568; font-family: 'Orbitron'; font-size: 1.2rem; }
 
-/* --- THE POLICY CARD ENGINE --- */
+/* --- THE POLICY CARD --- */
 .policy-card { 
     background: white;
     border-radius: 30px;
@@ -64,66 +57,26 @@ h2.region-title { margin: 40px 0 20px; padding-left: 15px; border-left: 5px soli
     border: 1px solid #f1f5f9;
 }
 
-.card-header { 
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    padding: 25px 35px;
-    min-height: 100px;
-}
+.card-header { cursor: pointer; display: flex; align-items: center; padding: 25px 35px; min-height: 100px; }
 
 /* --- THE EXPANSION LOGIC --- */
 .content-area {
-    display: none; /* Controlled by JS window.toggleCard */
+    display: none; /* This is the key! JS will toggle this */
     opacity: 0;
-    overflow: hidden;
     background: white;
     border-top: 1px solid #f1f5f9;
     padding: 40px;
     transition: opacity 0.4s ease;
 }
 
-.policy-card.active .content-area {
-    display: block;
-    opacity: 1;
-}
-
-/* --- SHARED COMPONENTS --- */
-.detail-grid { 
-    display: grid; 
-    grid-template-columns: repeat(3, 1fr); 
-    gap: 20px; 
-    background: #f8fafc; 
-    padding: 20px; 
-    border-radius: 20px; 
-}
-
+/* --- GRID & TIMELINE --- */
+.detail-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; background: #f8fafc; padding: 20px; border-radius: 20px; }
 .detail-item p:first-child { font-size: 9px; font-weight: 900; text-transform: uppercase; color: #94a3b8; margin: 0; }
 .detail-item p:last-child { font-family: 'Orbitron', sans-serif; font-size: 14px; margin: 4px 0 0; }
 
-.funky-badge-v2 {
-    transform: skewX(-10deg);
-    display: inline-block;
-    padding: 4px 12px;
-    border-radius: 8px;
-    font-weight: 900;
-    text-transform: uppercase;
-    font-size: 10px;
-    border: 2px solid;
-}
+.funky-badge-v2 { transform: skewX(-10deg); display: inline-block; padding: 4px 12px; border-radius: 8px; font-weight: 900; text-transform: uppercase; font-size: 10px; border: 2px solid; }
 
-/* --- TIMELINE --- */
-.timeline-track { 
-    position: relative;
-    height: 40px;
-    background: #e2e8f0; 
-    border-radius: 20px;
-    display: flex;
-    padding: 0 5px;
-    align-items: center;
-    margin-top: 50px;
-}
-
+.timeline-track { position: relative; height: 40px; background: #e2e8f0; border-radius: 20px; display: flex; padding: 0 5px; align-items: center; margin-top: 50px; overflow: visible; }
 .segment { height: 30px; flex: 1; margin: 0 1px; border-radius: 4px; position: relative; cursor: help; }
 .segment:hover .tooltip { visibility: visible; opacity: 1; }
 
