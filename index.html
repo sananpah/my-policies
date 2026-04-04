@@ -41,51 +41,38 @@
 
     </main>
 
-    <script type="module">
-        import { syncWithGoogleSheets } from './loader.js';
-        import { POLICY_DATA } from './data.js';
-        import { createPolicyCard } from './component_in.js';
+/* index.html Script Section - v6.2.5 - Portfolio Restoration */
+<script type="module">
+    import { syncWithGoogleSheets } from './loader.js';
+    import { POLICY_DATA } from './data.js';
+    import { createPolicyCard } from './component_in.js';
 
-        async function init() {
-            try {
-                console.log("🚀 Initializing Dashboard...");
-                
-                // 1. Fetch live data from Google Sheets
-                const liveData = await syncWithGoogleSheets(POLICY_DATA);
-                console.log("📊 Data Sync Complete:", liveData);
+    async function init() {
+        const liveData = await syncWithGoogleSheets(POLICY_DATA);
+        const TODAY = new Date();
+        const CURRENT_YEAR = TODAY.getFullYear();
 
-                // 2. Locate the grid container
-                const container = document.getElementById('india-grid');
-                if (!container) throw new Error("Missing #india-grid element in HTML");
+        // RENDER FUNCTION
+        const renderRegion = (regionKey, gridId, currency) => {
+            const container = document.getElementById(gridId);
+            if (!container || !liveData[regionKey]) return;
+            container.innerHTML = "";
+            liveData[regionKey].forEach(p => {
+                container.innerHTML += createPolicyCard(p, currency, TODAY, CURRENT_YEAR);
+            });
+        };
 
-                // 3. Clear Loader
-                container.innerHTML = "";
+        // 1. Render India
+        renderRegion('india', 'india-grid', '₹');
 
-                // 4. Set constants for rendering
-                const TODAY = new Date();
-                const CURRENT_YEAR = TODAY.getFullYear();
+        // 2. Render Singapore
+        renderRegion('singapore', 'singapore-grid', 'S$');
 
-                // 5. Render India Cards
-                if (liveData && liveData.india) {
-                    liveData.india.forEach(p => {
-                        // sym is set to ₹ for India
-                        container.innerHTML += createPolicyCard(p, "₹", TODAY, CURRENT_YEAR);
-                    });
-                }
-
-                console.log("✅ Rendering Finished.");
-            } catch (err) {
-                console.error("❌ System Error:", err);
-                document.getElementById('india-grid').innerHTML = `
-                    <div class="p-12 bg-red-50 rounded-[40px] border-2 border-red-100 text-center">
-                        <h3 class="text-red-600 font-black text-xl mb-2">SYNC ERROR</h3>
-                        <p class="text-red-400 text-sm font-bold uppercase tracking-tighter">${err.message}</p>
-                    </div>`;
-            }
-        }
-
-        // Run the engine
-        init();
-    </script>
+        // 3. Render Health (If you have a separate grid or key)
+        renderRegion('health', 'health-grid', '₹');
+    }
+    init();
+</script>
+    
 </body>
 </html>
