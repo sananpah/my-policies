@@ -1,10 +1,11 @@
-/* india_styles.css - v5.8.1 - Synchronized Baseline */
+/* india_styles.css - v5.8.2 - Deep Review Baseline */
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@800;900&family=Inter:wght@400;700;900&display=swap'); 
 
 body { 
     background-color: #f8fafc;
     font-family: 'Inter', sans-serif;
     padding: 40px;
+    position: relative;
 }
 
 /* --- HEADERS --- */
@@ -25,14 +26,15 @@ body {
     border-radius: 40px;
     margin-bottom: 24px;
     box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden; 
     border: 1px solid #f1f5f9;
 }
 
-.policy-card:hover {
+.policy-card.active {
     box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
 }
 
 .card-header { 
@@ -41,31 +43,31 @@ body {
     align-items: center;
     padding: 30px 40px;
     min-height: 120px;
+    transition: background 0.3s ease;
 }
 
-/* --- CONTENT EXPANSION (FIXED) --- */
+/* --- CONTENT AREA (EXPANSION FIX) --- */
 .content-area { 
+    /* We use display: block to allow height animations */
+    display: block !important; 
     max-height: 0;
     opacity: 0;
     overflow: hidden;
-    padding: 0 40px; /* Vertical padding handled by .active */
-    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    background: white;
     border-top: 1px solid rgba(0,0,0,0.05);
+    transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease;
 }
 
-/* JS adds .active class on click */
+/* Logic: JavaScript handles the specific pixel height, CSS handles the fade */
 .policy-card.active .content-area {
-    max-height: 1200px;
     opacity: 1;
-    padding: 40px;
 }
 
-/* --- GRID --- */
+/* --- GRID & ITEMS --- */
 .detail-grid { 
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 20px;
-    margin-bottom: 30px;
     background: rgba(255, 255, 255, 0.5);
     backdrop-filter: blur(8px);
     padding: 20px 25px;
@@ -85,6 +87,7 @@ body {
     font-family: 'Orbitron', sans-serif;
     font-size: 14px;
     color: #1e293b;
+    letter-spacing: 0.5px;
 }
 
 /* --- TIMELINE TRACK --- */
@@ -97,15 +100,17 @@ body {
     padding: 0 6px;
     align-items: center;
     margin-top: 60px;
+    overflow: visible !important;
 }
 
 .segment { 
-     height: 36px;
+     height: 38px;
+     flex: 1;
      margin: 0 1px;
      border-radius: 6px;
      position: relative;
      cursor: help;
-     transition: transform 0.2s ease;
+     transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .segment:hover { 
@@ -118,25 +123,27 @@ body {
     visibility: hidden;
     opacity: 0;
     position: absolute;
-    bottom: 55px;
+    bottom: 65px;
     left: 50%;
     transform: translateX(-50%) translateY(10px); 
     background: #0f172a; 
     color: white;
-    padding: 12px;
+    padding: 14px;
     border-radius: 12px;
     width: max-content;
+    min-width: 140px;
     text-align: center;
     font-size: 11px;
     z-index: 1000;
-    transition: all 0.3s ease;
+    transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
     pointer-events: none;
-    box-shadow: 0 10px 15px rgba(0,0,0,0.3);
+    box-shadow: 0 20px 25px -5px rgba(0,0,0,0.4);
 }
 
 .segment:hover .tooltip {
     visibility: visible;
     opacity: 1;
+    bottom: 55px;
     transform: translateX(-50%) translateY(0);
 }
 
@@ -151,9 +158,13 @@ body {
     color: #f59e0b;
     cursor: help;
     position: relative;
+    transition: 0.3s;
 }
 
-.mat-star:hover { transform: scale(1.4) rotate(15deg); }
+.mat-star:hover {
+    transform: scale(1.4) rotate(15deg);
+    color: #fbbf24;
+}
 
 /* --- STATUS COLORS --- */
 .bg-prem-past { background: #064e3b; } 
@@ -166,12 +177,14 @@ body {
 
 .bg-current { 
     background: #22c55e;
-    box-shadow: 0 0 15px rgba(34,197,94,0.6);
-    border: 2px solid white;
+    box-shadow: 0 0 20px rgba(34,197,94,0.6);
+    border: 3px solid white;
+    z-index: 10;
 }
 
 /* --- BADGES --- */
 .funky-badge-v2 {
+    box-shadow: 2px 2px 0px rgba(0,0,0,0.05);
     transform: skewX(-10deg);
     display: inline-block;
     padding: 4px 12px;
@@ -180,4 +193,10 @@ body {
     text-transform: uppercase;
     font-size: 10px;
     border: 2px solid;
+}
+
+.paid-logo { 
+    width: 110px;
+    transform: rotate(-5deg);
+    filter: drop-shadow(0 0 8px rgba(34, 197, 94, 0.4));
 }
