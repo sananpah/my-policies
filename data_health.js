@@ -208,7 +208,7 @@ export const healthData = [
         owner: "Daughter",
         name:  "Enhanced IncomeShield Preferred",
         company: "INCOME",
-        logo: "logo_NTUC",
+        logo: "logo_NTUC.png",
         category: "Hospitalisation",
         cashAmount: 739.57,
         currency: "SGD",
