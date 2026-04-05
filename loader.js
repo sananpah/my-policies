@@ -1,4 +1,4 @@
-/* loader.js - v4.1.3 - Symbol-Aware + Term Logic + SG Robustness */
+/* loader.js - v4.1.4 - Multi-Currency + MIP Extraction + Term Logic */
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2UwOfG57DQBOBnJX-9hsRKOQTUgALiM3uxs-VGzD2KN8JoWNAQltH6IkgAGhPTNFEvb/pub?gid=866869416&single=true&output=csv";
 
 export async function syncWithGoogleSheets(masterList) {
@@ -16,13 +16,12 @@ export async function syncWithGoogleSheets(masterList) {
             "Sulmas Nami": { type: "Daughter", img: "avatar_daughter.png" }
         };
 
-        // Internal cleaner for basic numbers
+        // Internal cleaner for basic numbers (handles symbols, commas, and spaces)
         const cleanNumeric = (raw) => {
             if (!raw || raw === "No Value") return 0;
             let str = String(raw).trim();
             str = str.replace(/[^\x00-\x7F]/g, ""); // Junk Fix
-            // Strips all symbols, spaces, and currency markers
-            str = str.replace(/[^\d.]/g, "");
+            str = str.replace(/[^\d.]/g, "");       // Strip all but digits and dots
             const num = parseFloat(str);
             return isNaN(num) ? 0 : num;
         };
@@ -42,33 +41,41 @@ export async function syncWithGoogleSheets(masterList) {
                     let rawDate = String(match["Commenced Date"] || "").trim();
                     p.commenced = rawDate.replace(/\./g, ' '); 
 
-                    // --- STEP 2: PPT:MAT TERM CALCULATION (Mainly India) ---
+                    // --- STEP 2: PPT:MAT:MIP TERM CALCULATION ---
                     const rawTerm = String(match["Term"] || ""); 
-                    if (rawTerm.includes(":") && p.commenced.includes(" ")) {
+                    if (rawTerm.includes(":")) {
                         const termParts = rawTerm.split(":");
                         const ppt = parseInt(termParts[0], 10);
                         const mat = parseInt(termParts[1], 10);
-                        
-                        const startParts = p.commenced.split(" ");
-                        const startYear = parseInt(startParts[2], 10);
-                        
-                        if (!isNaN(startYear)) {
-                            p.premiumEnds = `${startParts[0]} ${startParts[1]} ${startYear + ppt}`;
-                            p.maturity = `${startParts[0]} ${startParts[1]} ${startYear + mat}`;
+                        const mipValue = parseInt(termParts[2], 10); // Extract 3rd value
+
+                        // Singapore-specific MIP mapping
+                        if (country === "singapore") {
+                            p.mip = isNaN(mipValue) ? -1 : mipValue;
+                        }
+
+                        // Date Calculation
+                        if (p.commenced.includes(" ")) {
+                            const startParts = p.commenced.split(" ");
+                            const startYear = parseInt(startParts[2], 10);
+                            
+                            if (!isNaN(startYear)) {
+                                p.premiumEnds = `${startParts[0]} ${startParts[1]} ${startYear + ppt}`;
+                                p.maturity = `${startParts[0]} ${startParts[1]} ${startYear + mat}`;
+                            }
                         }
                     }
 
-                    // --- STEP 3: FINANCIAL CLEANING (New Column Logic) ---
+                    // --- STEP 3: FINANCIAL CLEANING ---
                     p.premium = cleanNumeric(match["Premium"]);
                     
-                    // Sum Assured "Assigned" check
                     const rawSA = String(match["Sum Assured"] || "").toLowerCase();
                     p.sumAssured = (rawSA.includes("not") || cleanNumeric(match["Sum Assured"]) === 0) ? 0 : cleanNumeric(match["Sum Assured"]);
 
-                    // NEW: Robust "Current Value" Extraction for ULIP/SG
+                    // Current Value logic: Original string for card, clean number for header math
                     const rawCV = match["Current Value"] || "No Value";
-                    p.currentUnitValue = rawCV; // Keep the string (₹/$ symbol) for Card UI
-                    p.unitValueNumeric = cleanNumeric(rawCV); // Clean number for Header Math
+                    p.currentUnitValue = rawCV; 
+                    p.unitValueNumeric = cleanNumeric(rawCV);
 
                     // --- STEP 4: AVATAR MAPPING ---
                     if (country === "india") {
@@ -83,7 +90,7 @@ export async function syncWithGoogleSheets(masterList) {
             });
         });
 
-        console.log("✅ v4.1.3: Multi-Currency + Term Math Successful.");
+        console.log("✅ v4.1.4: Multi-Currency + MIP Term Math Successful.");
         return masterList;
     } catch (e) { 
         console.warn("⚠️ Sync failed:", e);
@@ -91,7 +98,6 @@ export async function syncWithGoogleSheets(masterList) {
     }
 }
 
-// Keep your existing processCSV and parseInsuranceTab exactly as they are below
 function processCSV(csv) {
     const rows = [];
     let currentRow = [''], inQuote = false;
