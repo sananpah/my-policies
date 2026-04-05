@@ -1,4 +1,4 @@
-/* component_sg.js - v6.4.3 - Refined ID Placement & Header Cleanup */
+/* component_sg.js - v6.4.4 - Multi-Currency Robustness & MIP Logic */
 import { autoFmt, toNum } from './india.js';
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -23,18 +23,13 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     } else if (mip === 0) {
         premRemainingStr = "Vested";
     } else {
-        // Define the Target Date for calculation
         let targetDate;
-        
         if (mip === -1) {
-            targetDate = matDate; // Calculate till official Maturity
+            targetDate = matDate; 
         } else {
-            // Calculate till specific year (mip) from Commencement
-            // We use the start year + mip years
             targetDate = new Date(startY + mip, commMonth, commDay);
         }
 
-        // Final calculation of the string
         if (targetDate <= TODAY) {
             premRemainingStr = "Vested";
         } else {
@@ -48,6 +43,8 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
         }
     }
 
+    // --- 2. ROBUST VALUATION EXTRACTION ---
+    // Use the raw string for the big header display, but toNum for math
     const accountValue = Math.round(toNum(p.currentUnitValue || 0));
     const annualPremium = toNum(p.premium || 0);
     const displaySumAssured = (toNum(p.sumAssured) === 0) ? accountValue : toNum(p.sumAssured);
@@ -55,7 +52,6 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const company = p.company.toUpperCase();
     const isSinglife = company.includes("SINGLIFE");
     const isFlexiBrand = company.includes("MANULIFE") || company.includes("HSBC");
-    const isAIA = company.includes("AIA") || company.includes("PRUDENTIAL");
 
     const thisYearAnniversary = new Date(CURRENT_YEAR, commMonth, commDay);
     const hasPassedThisYear = TODAY >= thisYearAnniversary;
@@ -72,7 +68,6 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const brandColor = p.color || "#000000";
     const brandBg = `rgba(${parseInt(brandColor.slice(1,3), 16)}, ${parseInt(brandColor.slice(3,5), 16)}, ${parseInt(brandColor.slice(5,7), 16)}, 0.04)`;
     
-    // Fixed: Ensure Surrender & Locked values are calculated before the return
     const chargePct = (p.surrenderCharges && p.surrenderCharges[policyYearIdx]) || 0;
     let surrenderChargeAmount = (isSinglife || isFlexiBrand) ? totalPremiumsPaid * (chargePct / 100) : accountValue * (chargePct / 100);
     const surrenderValue = Math.round(Math.max(0, accountValue - surrenderChargeAmount));
@@ -80,7 +75,7 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
 
     // Timeline Generation
     let timelineHtml = '';
-    const maxYears = (endY - startY + 1 > 0 && endY - startY + 1 < 50) ? (endY - startY + 1) : (isAIA ? 30 : 15);
+    const maxYears = (endY - startY + 1 > 0 && endY - startY + 1 < 50) ? (endY - startY + 1) : 15;
   
     for (let polY = 1; polY <= maxYears; polY++) {
         const yr = startY + polY - 1;
@@ -115,7 +110,7 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
             </div>`;
     }
 
-    const starHtml = `<div class="ml-2 relative group flex items-center justify-center w-12 h-10 bg-white rounded-xl shadow-sm border border-slate-200 cursor-help"><span class="text-xl text-amber-500 transition-transform group-hover:scale-125">★</span><div class="opacity-0 group-hover:opacity-100 absolute bottom-full mb-4 right-0 bg-slate-900 text-white p-3 rounded-xl z-[100] shadow-2xl border border-white/10 pointer-events-none min-w-[180px]"><b class="text-amber-400 uppercase tracking-widest block text-[9px] mb-1">Maturity</b><span class="text-xs font-black block">Unit Value : ${autoFmt(accountValue, sym)}</span><div class="absolute top-full right-4 border-8 border-transparent border-t-slate-900"></div></div></div>`;
+    const starHtml = `<div class="ml-2 relative group flex items-center justify-center w-12 h-10 bg-white rounded-xl shadow-sm border border-slate-200 cursor-help"><span class="text-xl text-amber-500 transition-transform group-hover:scale-125">★</span><div class="opacity-0 group-hover:opacity-100 absolute bottom-full mb-4 right-0 bg-slate-900 text-white p-3 rounded-xl z-[100] shadow-2xl border border-white/10 pointer-events-none min-w-[180px]"><b class="text-amber-400 uppercase tracking-widest block text-[9px] mb-1">Maturity</b><span class="text-xs font-black block">Unit Value : ${p.currentUnitValue}</span><div class="absolute top-full right-4 border-8 border-transparent border-t-slate-900"></div></div></div>`;
 
     const capHtml = (p.totalPremiumPaid || totalWithdrawn > 0) ? `
         <div class="mb-8 p-6 rounded-[32px] bg-white border border-slate-100 shadow-sm">
@@ -145,14 +140,12 @@ return `
                 </div>
                 <div class="relative z-20">
                     <h3 class="font-black text-3xl text-slate-900 mb-2 tracking-tight">${p.name}</h3>
-                    <div class="flex items-center gap-3">                         
-                    </div>
                 </div>
             </div>
 
             <div class="flex items-center gap-10 text-right px-4 relative z-20">
                 <div><p class="text-[10px] font-black text-slate-300 uppercase mb-1">Premium</p><p class="text-2xl font-black text-slate-800">${autoFmt(p.premium, sym)}</p></div>
-                <div><p class="text-[10px] font-black text-slate-300 uppercase mb-1">Valuation</p><p class="text-2xl font-black text-slate-900">${autoFmt(accountValue, sym)}</p></div>
+                <div><p class="text-[10px] font-black text-slate-300 uppercase mb-1">Valuation</p><p class="text-2xl font-black text-slate-900">${p.currentUnitValue}</p></div>
                 
                 <div class="bg-white/60 px-6 py-3 rounded-[20px] border border-white/50 flex flex-col justify-center min-w-[125px] h-[64px]">
                     ${isPaidUp ? `
