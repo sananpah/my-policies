@@ -1,4 +1,4 @@
-/* component_sg.js - v6.4.6 - Adaptive Timeline for Long-Term Policies */
+/* component_sg.js - v6.4.8 - Smart Horizon Timeline */
 import { autoFmt, toNum } from './india.js';
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -56,14 +56,15 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     if (TODAY < thisYearAnniversary) yearsPassedForCharges--;
     const policyYearIdx = yearsPassedForCharges + 1;
 
-    // --- ADAPTIVE MAX YEARS ---
+    // --- 2. SMART HORIZON LOGIC ---
     let maxYears;
     const currentProgress = policyYearIdx;
     if (mip > 0) {
-        maxYears = Math.max(mip, currentProgress + 5);
+        maxYears = Math.max(mip, 15, currentProgress + 10);
     } else {
-        maxYears = Math.min(30, currentProgress + 5);
+        maxYears = Math.max(15, currentProgress + 10);
     }
+    maxYears = Math.min(40, maxYears); 
     const yearsToMat = endY - startY + 1;
     if (yearsToMat > 0 && yearsToMat < maxYears) maxYears = yearsToMat;
 
