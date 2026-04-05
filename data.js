@@ -105,7 +105,6 @@ export const POLICY_DATA = {
          { 
             logo: "image_7aee9a.png", 
             id: "34874419", 
-            totalPremiumPaid: 69176.18, // Added to reflect premium holidays
             color: "#ED1B2E",                         
             withdrawals: [9195], 
             surrenderCharges: { 1: 0 }
@@ -113,7 +112,6 @@ export const POLICY_DATA = {
         { 
             logo: "image_7aee9a.png", 
             id: "33401114", 
-            totalPremiumPaid: 72835.86, // Added to reflect premium holidays
             color: "#ED1B2E",             
             withdrawals: [27481.38, 12072.37], 
             surrenderCharges: { 1: 0 }
