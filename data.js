@@ -61,32 +61,28 @@ export const POLICY_DATA = {
             id: "503-9562771",
             uin: "130A012V02",
             color: "#005a9c",
-            maturityAmt: "Unit Value",
-            currentUnitValue: "159421"
+            maturityAmt: "Unit Value"
         },
         { 
             logo: "image_7a80d9.png",
             id: "608480927",
             uin: "104L082V02",
             color: "#ae125d",
-            maturityAmt: "Unit Value",
-            currentUnitValue: "277547"
+            maturityAmt: "Unit Value"            
         },
         { 
             logo: "image_349b41.png",
             id: "425335400",
             uin: "116L153V02",
             color: "#005a9c",
-            maturityAmt: "Unit Value",
-            currentUnitValue: "454673"
+            maturityAmt: "Unit Value"            
         },
         { 
             logo: "image_349b41.png",
             id: "378816898",
             uin: "116L181V01",
             color: "#005a9c",
-            maturityAmt: "Unit Value",
-            currentUnitValue: "208508"
+            maturityAmt: "Unit Value"
         },
         { 
             logo: "image_d82175.png",
@@ -94,8 +90,7 @@ export const POLICY_DATA = {
             uin: "N/A",
             clientId: "N/A",
             color: "#9b2226",
-            maturityAmt: "Unit Value",
-            currentUnitValue: "442990"
+            maturityAmt: "Unit Value"
         },
         { 
             logo: "image_cda45c.png",
@@ -103,8 +98,7 @@ export const POLICY_DATA = {
             uin: "N/A",
             clientId: "N/A",
             color: "#00B4EE",
-            maturityAmt: "Unit Value",
-            currentUnitValue: "556047"
+            maturityAmt: "Unit Value"
         }
     ],
     singapore: [
@@ -112,8 +106,7 @@ export const POLICY_DATA = {
             logo: "image_7aee9a.png", 
             id: "34874419", 
             totalPremiumPaid: 69176.18, // Added to reflect premium holidays
-            color: "#ED1B2E",             
-            currentUnitValue: "24671",            
+            color: "#ED1B2E",                         
             withdrawals: [9195], 
             surrenderCharges: { 1: 0 },
             mip: -1 
@@ -123,7 +116,6 @@ export const POLICY_DATA = {
             id: "33401114", 
             totalPremiumPaid: 72835.86, // Added to reflect premium holidays
             color: "#ED1B2E",             
-            currentUnitValue: "9071",            
             withdrawals: [27481.38, 12072.37], 
             surrenderCharges: { 1: 0 },
             mip: 0
@@ -133,7 +125,6 @@ export const POLICY_DATA = {
             id: "U126327913",
             color: "#d31145",
             surrenderCharges: { 1: 100, 2: 100, 3: 80, 4: 70, 5: 60, 6: 50, 7: 45, 8: 35, 9: 20, 10: 5, 11: 0 },
-            currentUnitValue: "27589",
             mip: 10
         },
         { 
@@ -141,7 +132,6 @@ export const POLICY_DATA = {
             id: "2451556041",
             color: "#00a758",            
             surrenderCharges: { 1: 100, 2: 100, 3: 79, 4: 60, 5: 50, 6: 47, 7: 44, 8: 21, 9: 16, 10: 8, 11: 0 },
-            currentUnitValue: "19460",
             mip: 5
         },
         { 
@@ -149,7 +139,6 @@ export const POLICY_DATA = {
             id: "104-1315514",
             color: "#db0011",            
             surrenderCharges: { 1: 100, 2: 52, 3: 49, 4: 45, 5: 40, 6: 32, 7: 26, 8: 20, 9: 14, 10: 8, 11: 0 },
-            currentUnitValue: "14742",
             mip: 5
         },
         { 
@@ -157,7 +146,6 @@ export const POLICY_DATA = {
             id: "P4172398", 
             color: "#E60000",            
             surrenderCharges: { 1: 100, 2: 100, 3: 80, 4: 60, 5: 50, 6: 45, 7: 40, 8: 20, 9: 15, 10: 10, 11: 0 },
-            currentUnitValue: "16205",
             mip: 3
         }
     ]
