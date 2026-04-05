@@ -70,7 +70,7 @@
     <div id="container" class="max-w-7xl mx-auto pb-20 px-4"></div>
 
     <script type="module">
-        const APP_VERSION = "4.0.106";
+        const APP_VERSION = "4.0.107";
         document.getElementById('version-tag').innerText = `v${APP_VERSION}`;
 
         const [Data, Tools, IndiaComp, SGComp, HealthComp, HealthDataFile, { syncWithGoogleSheets }] = await Promise.all([
@@ -104,7 +104,8 @@
 
         const parseDate = (str) => {
             if (!str || str === "PAID UP") return new Date(9999, 0, 1);
-            const p = str.split(' ');
+            // Handle both spaces and dots in dates
+            const p = str.toString().replace(/\./g, ' ').split(' ');
             return new Date(`${p[1]} ${p[0]}, ${p[2]}`);
         };
 
@@ -186,18 +187,16 @@
             } else {
                 const tSA = list.reduce((acc, p) => acc + toNum(p.sumAssured), 0);
                 
-                // SURGICAL UPDATE: Exclude PAID UP or Expired premiums from header total
                 const tAnn = list.reduce((acc, p) => {
                     const status = (p.status || p["Status"] || "").toUpperCase();
-                    // Double check date-math for Paid Up
                     const pEndYear = safeGetYear(p.premiumEnds);
                     const isActuallyPaid = CURRENT_YEAR > (pEndYear - 1); 
-                    
                     const isPaidUp = (status === "PAID UP" || isActuallyPaid);
                     return isPaidUp ? acc : acc + toNum(p.premium || 0);
                 }, 0);
 
-                const tUnitValue = list.reduce((acc, p) => acc + toNum(p.currentUnitValue || 0), 0);
+                // FIXED: Use unitValueNumeric for the header sum to prevent NaN from symbols
+                const tUnitValue = list.reduce((acc, p) => acc + (p.unitValueNumeric || 0), 0);
                 
                 let familyHtml = '';
                 if (cat === 'india') {
