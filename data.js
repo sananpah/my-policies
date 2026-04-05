@@ -108,8 +108,7 @@ export const POLICY_DATA = {
             totalPremiumPaid: 69176.18, // Added to reflect premium holidays
             color: "#ED1B2E",                         
             withdrawals: [9195], 
-            surrenderCharges: { 1: 0 },
-            mip: -1 
+            surrenderCharges: { 1: 0 }
         },
         { 
             logo: "image_7aee9a.png", 
@@ -117,36 +116,31 @@ export const POLICY_DATA = {
             totalPremiumPaid: 72835.86, // Added to reflect premium holidays
             color: "#ED1B2E",             
             withdrawals: [27481.38, 12072.37], 
-            surrenderCharges: { 1: 0 },
-            mip: 0
+            surrenderCharges: { 1: 0 }
         },
         { 
             logo: "image_4b9b3f.png",
             id: "U126327913",
             color: "#d31145",
-            surrenderCharges: { 1: 100, 2: 100, 3: 80, 4: 70, 5: 60, 6: 50, 7: 45, 8: 35, 9: 20, 10: 5, 11: 0 },
-            mip: 10
+            surrenderCharges: { 1: 100, 2: 100, 3: 80, 4: 70, 5: 60, 6: 50, 7: 45, 8: 35, 9: 20, 10: 5, 11: 0 }
         },
         { 
             logo: "image_d1e382.png",
             id: "2451556041",
             color: "#00a758",            
-            surrenderCharges: { 1: 100, 2: 100, 3: 79, 4: 60, 5: 50, 6: 47, 7: 44, 8: 21, 9: 16, 10: 8, 11: 0 },
-            mip: 5
+            surrenderCharges: { 1: 100, 2: 100, 3: 79, 4: 60, 5: 50, 6: 47, 7: 44, 8: 21, 9: 16, 10: 8, 11: 0 }
         },
         { 
             logo: "image_8bcf5a.png",
             id: "104-1315514",
             color: "#db0011",            
-            surrenderCharges: { 1: 100, 2: 52, 3: 49, 4: 45, 5: 40, 6: 32, 7: 26, 8: 20, 9: 14, 10: 8, 11: 0 },
-            mip: 5
+            surrenderCharges: { 1: 100, 2: 52, 3: 49, 4: 45, 5: 40, 6: 32, 7: 26, 8: 20, 9: 14, 10: 8, 11: 0 }
         },
         { 
             logo: "image_89093e.png",
             id: "P4172398", 
             color: "#E60000",            
-            surrenderCharges: { 1: 100, 2: 100, 3: 80, 4: 60, 5: 50, 6: 45, 7: 40, 8: 20, 9: 15, 10: 10, 11: 0 },
-            mip: 3
+            surrenderCharges: { 1: 100, 2: 100, 3: 80, 4: 60, 5: 50, 6: 45, 7: 40, 8: 20, 9: 15, 10: 10, 11: 0 }
         }
     ]
 };
