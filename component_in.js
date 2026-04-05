@@ -1,4 +1,4 @@
-/* component_in.js - v4.1.4 - Final Logic Alignment */
+/* component_in.js - v4.1.5 - Optimized & Final Verified */
 import { checkIsDueSoon, autoFmt, toNum, raw, safeParseDate, safeGetYear, monthMap } from './india.js';
 
 export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -24,7 +24,7 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
     const nextDueYear = hasPassedThisYear ? CURRENT_YEAR + 1 : CURRENT_YEAR;
     const nextDueStr = `${anniversaryDay} ${anniversaryMonth} ${nextDueYear}`; 
     
-    // Term is over once we pass the anniversary of the LAST payment year (premEndYear - 1)
+    // Term logic: Ends exactly on the anniversary of the last payment year
     const lastPaymentYear = premEndYear - 1;
     const isTermOver = CURRENT_YEAR > lastPaymentYear || (CURRENT_YEAR === lastPaymentYear && hasPassedThisYear);
     
@@ -36,25 +36,19 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
     const unitValue = Math.round(toNum(p.currentUnitValue || 0));
     const prem = Math.round(toNum(p.premium || 0));
        
-    // --- 4. PREMIUM REMAINING (Distance to Final Wallet Commitment) ---
+    // --- 4. PREMIUM REMAINING (Distance to Final Payment) ---
     let premRemainingStr = "";
     if (!isPaidUp) {
-        // We target the LAST payment date (1 year before the premiumEnds date)
         const lastPayDate = safeParseDate(premEndStr);
         lastPayDate.setFullYear(lastPayDate.getFullYear() - 1); 
 
         let years = lastPayDate.getFullYear() - TODAY.getFullYear();
         let months = lastPayDate.getMonth() - TODAY.getMonth();
         
-        if (months < 0) { 
-            years--; 
-            months += 12; 
-        }
+        if (months < 0) { years--; months += 12; }
 
-        // Safeguard for the final months of the final year
         const yVal = Math.max(0, years);
         const mVal = Math.max(0, months);
-        
         premRemainingStr = `${String(yVal).padStart(2, '0')}y${String(mVal).padStart(2, '0')}m`;
     }
 
@@ -69,12 +63,16 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
         const isCurrent = yr === CURRENT_YEAR;
         let color = "", phase = "", detail = "";
 
-        // yr < premEndYear ensures exactly PPT number of years show as Premium Phase
         if (yr < premEndYear) {
             const isEffectivelyPaid = isPast || isPaidUp || (isCurrent && hasPassedThisYear);
-            if (p.name.includes("Life Goal Maximizer") && polY >= (p.bonusStartYear || 2)) {
+            
+            // Logic for Shaded "Bonus" Bars (Life Goal Maximizer)
+            const isBonusPolicy = p.name.includes("Life Goal Maximizer");
+            const isBonusYear = polY >= (p.bonusStartYear || 2);
+
+            if (isBonusPolicy && isBonusYear) {
                 color = "bg-hybrid"; phase = "Premium + Bonus";
-                detail = `Prem: ${autoFmt(p.premium, sym)} + Bonus`;
+                detail = `Prem: ${autoFmt(p.premium, sym)} + Bonus Added`;
             } else {
                 color = (isCurrent && !hasPassedThisYear && !isPaidUp) ? "bg-current" : (isEffectivelyPaid ? "bg-prem-past" : "bg-prem-future");
                 phase = isEffectivelyPaid ? "Premium Completed" : "Premium Payment";
@@ -107,14 +105,7 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
             <div class="flex-1 ml-10">
                 <h3 class="font-black text-slate-800 text-xl tracking-tight flex items-center gap-3">
                     ${p.name}
-                    ${p.avatarPath ? `
-                        <div class="flex items-center ml-2">
-                            <img src="${p.avatarPath}" 
-                                 alt="${p.holderType || 'Insured'}" 
-                                 title="${p.holderType || 'Insured'}"
-                                 class="w-8 h-8 rounded-full border-2 border-white shadow-sm object-cover ring-1 ring-slate-200">
-                        </div>
-                    ` : ''}
+                    ${p.avatarPath ? `<img src="${p.avatarPath}" alt="Insured" class="w-8 h-8 rounded-full border-2 border-white shadow-sm object-cover ring-1 ring-slate-200">` : ''}
                 </h3>
              </div>
             
