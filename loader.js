@@ -1,7 +1,6 @@
-/* loader.js - v4.1.11 - India ULIP 4% Growth + Disclaimer */
+/* loader.js - v4.1.12 - Avatars Restored + India Maturity & Disclaimer */
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2UwOfG57DQBOBnJX-9hsRKOQTUgALiM3uxs-VGzD2KN8JoWNAQltH6IkgAGhPTNFEvb/pub?gid=866869416&single=true&output=csv";
 
-// Helper for Full Number Formatting
 const autoFmt = (val, sym) => {
     const n = parseFloat(val);
     if (isNaN(n) || n === 0) return sym + "0";
@@ -20,6 +19,13 @@ export async function syncWithGoogleSheets(masterList) {
         const decoder = new TextDecoder('utf-8'); 
         const csvData = decoder.decode(buffer);
         const sheetRecords = processCSV(csvData);
+
+        // --- RESTORED: AVATAR MAPPING ---
+        const insuredMap = {
+            "Suhail Nami": { type: "Self", img: "avatar_self.png" },
+            "Saima Suhail": { type: "Wife", img: "avatar_wife.png" },
+            "Sulmas Nami": { type: "Daughter", img: "avatar_daughter.png" }
+        };
 
         const cleanNumeric = (raw) => {
             if (!raw || raw === "No Value") return 0;
@@ -40,6 +46,15 @@ export async function syncWithGoogleSheets(masterList) {
                     const rawSA = String(match["Sum Assured"] || "").toLowerCase();
                     p.sumAssured = (rawSA.includes("not") || cleanNumeric(match["Sum Assured"]) === 0) ? 0 : cleanNumeric(match["Sum Assured"]);
                     
+                    // --- RESTORED: AVATAR LOGIC ---
+                    if (country === "india") {
+                        const identity = insuredMap[match["Insured"]];
+                        if (identity) {
+                            p.avatarPath = identity.img;
+                            p.holderType = identity.type;
+                        }
+                    }
+
                     // Date & Term Logic
                     let rawDate = String(match["Commenced Date"] || "").trim();
                     p.commenced = rawDate.replace(/\./g, ' '); 
@@ -103,7 +118,7 @@ export async function syncWithGoogleSheets(masterList) {
                 return p;
             });
         });
-        console.log("✅ v4.1.11: India Maturity logic with Disclaimer Active.");
+        console.log("✅ v4.1.12: Avatars Restored & Maturity Disclaimer Active.");
         return masterList;
     } catch (e) { console.warn("⚠️ Sync failed:", e); return masterList; }
 }
