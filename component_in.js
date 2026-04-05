@@ -1,4 +1,4 @@
-/* component_in.js - v4.1.3 - Fixed 10-Year Boundary Logic */
+/* component_in.js - v4.1.4 - Final Logic Alignment */
 import { checkIsDueSoon, autoFmt, toNum, raw, safeParseDate, safeGetYear, monthMap } from './india.js';
 
 export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -24,7 +24,7 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
     const nextDueYear = hasPassedThisYear ? CURRENT_YEAR + 1 : CURRENT_YEAR;
     const nextDueStr = `${anniversaryDay} ${anniversaryMonth} ${nextDueYear}`; 
     
-    // FIX: Term is over once we pass the anniversary of the LAST payment year (premEndYear - 1)
+    // Term is over once we pass the anniversary of the LAST payment year (premEndYear - 1)
     const lastPaymentYear = premEndYear - 1;
     const isTermOver = CURRENT_YEAR > lastPaymentYear || (CURRENT_YEAR === lastPaymentYear && hasPassedThisYear);
     
@@ -36,16 +36,26 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
     const unitValue = Math.round(toNum(p.currentUnitValue || 0));
     const prem = Math.round(toNum(p.premium || 0));
        
-    // 4. PREMIUM REMAINING
+    // --- 4. PREMIUM REMAINING (Distance to Final Wallet Commitment) ---
     let premRemainingStr = "";
     if (!isPaidUp) {
-        const premEndDate = safeParseDate(premEndStr);
-        let years = premEndDate.getFullYear() - TODAY.getFullYear();
-        let months = premEndDate.getMonth() - TODAY.getMonth();
-        if (months < 0) { years--; months += 12; }
-        const yStr = String(Math.max(0, years)).padStart(2, '0');
-        const mStr = String(Math.max(0, months)).padStart(2, '0');
-        premRemainingStr = `${yStr}y${mStr}m`;
+        // We target the LAST payment date (1 year before the premiumEnds date)
+        const lastPayDate = safeParseDate(premEndStr);
+        lastPayDate.setFullYear(lastPayDate.getFullYear() - 1); 
+
+        let years = lastPayDate.getFullYear() - TODAY.getFullYear();
+        let months = lastPayDate.getMonth() - TODAY.getMonth();
+        
+        if (months < 0) { 
+            years--; 
+            months += 12; 
+        }
+
+        // Safeguard for the final months of the final year
+        const yVal = Math.max(0, years);
+        const mVal = Math.max(0, months);
+        
+        premRemainingStr = `${String(yVal).padStart(2, '0')}y${String(mVal).padStart(2, '0')}m`;
     }
 
     const brandColor = p.color || "#000000";
@@ -59,7 +69,7 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
         const isCurrent = yr === CURRENT_YEAR;
         let color = "", phase = "", detail = "";
 
-        // FIX: Change <= to < to show exactly PPT number of years
+        // yr < premEndYear ensures exactly PPT number of years show as Premium Phase
         if (yr < premEndYear) {
             const isEffectivelyPaid = isPast || isPaidUp || (isCurrent && hasPassedThisYear);
             if (p.name.includes("Fortune Maximiser") && polY >= (p.bonusStartYear || 2)) {
@@ -140,7 +150,7 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
         </div>
 
         <div class="content-area" style="background: linear-gradient(to bottom, ${brandBg}, #ffffff)">
-            <div class="detail-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; padding: 20px;">
+            <div class="detail-grid">
                 <div class="detail-item"><p>Policy Number</p><p>${p.id || 'N/A'}</p></div>
                 <div class="detail-item"><p>UIN Number</p><p>${p.uin || 'N/A'}</p></div>
                 ${isULIP ? `
