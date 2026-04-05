@@ -72,7 +72,7 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
         // yr < premEndYear ensures exactly PPT number of years show as Premium Phase
         if (yr < premEndYear) {
             const isEffectivelyPaid = isPast || isPaidUp || (isCurrent && hasPassedThisYear);
-            if (p.name.includes("Fortune Maximiser") && polY >= (p.bonusStartYear || 2)) {
+            if (p.name.includes("Life Goal Maximizer") && polY >= (p.bonusStartYear || 2)) {
                 color = "bg-hybrid"; phase = "Premium + Bonus";
                 detail = `Prem: ${autoFmt(p.premium, sym)} + Bonus`;
             } else {
