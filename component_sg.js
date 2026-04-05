@@ -1,4 +1,4 @@
-/* component_sg.js - v6.4.4 - Multi-Currency Robustness & MIP Logic */
+/* component_sg.js - v6.4.6 - Adaptive Timeline for Long-Term Policies */
 import { autoFmt, toNum } from './india.js';
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -11,11 +11,9 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const commMonth = commDate.getMonth();
     const commDay = commDate.getDate();
 
-    // 1. PREMIUM REMAINING CALCULATION (Strict MIP Logic)
+    // 1. PREMIUM REMAINING CALCULATION
     let premRemainingStr = "";
     const isPaidUp = p.dueDate === "PAID UP";
-    
-    // Default to maturity (-1) if mip is missing from data.js
     const mip = (p.mip !== undefined) ? p.mip : -1;
 
     if (isPaidUp) {
@@ -43,8 +41,6 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
         }
     }
 
-    // --- 2. ROBUST VALUATION EXTRACTION ---
-    // Use the raw string for the big header display, but toNum for math
     const accountValue = Math.round(toNum(p.currentUnitValue || 0));
     const annualPremium = toNum(p.premium || 0);
     const displaySumAssured = (toNum(p.sumAssured) === 0) ? accountValue : toNum(p.sumAssured);
@@ -60,11 +56,21 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     if (TODAY < thisYearAnniversary) yearsPassedForCharges--;
     const policyYearIdx = yearsPassedForCharges + 1;
 
+    // --- ADAPTIVE MAX YEARS ---
+    let maxYears;
+    const currentProgress = policyYearIdx;
+    if (mip > 0) {
+        maxYears = Math.max(mip, currentProgress + 5);
+    } else {
+        maxYears = Math.min(30, currentProgress + 5);
+    }
+    const yearsToMat = endY - startY + 1;
+    if (yearsToMat > 0 && yearsToMat < maxYears) maxYears = yearsToMat;
+
     const totalWithdrawn = (p.withdrawals || []).reduce((a, b) => a + toNum(b), 0);
     const totalPremiumsPaid = p.totalPremiumPaid ? toNum(p.totalPremiumPaid) : (annualPremium * policyYearIdx);
     const netInvestmentBase = totalPremiumsPaid - totalWithdrawn;
 
-    // --- COLOR & VALUATION LOGIC ---
     const brandColor = p.color || "#000000";
     const brandBg = `rgba(${parseInt(brandColor.slice(1,3), 16)}, ${parseInt(brandColor.slice(3,5), 16)}, ${parseInt(brandColor.slice(5,7), 16)}, 0.04)`;
     
@@ -73,10 +79,7 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const surrenderValue = Math.round(Math.max(0, accountValue - surrenderChargeAmount));
     const lockedValue = Math.round(accountValue - surrenderValue);
 
-    // Timeline Generation
     let timelineHtml = '';
-    const maxYears = (endY - startY + 1 > 0 && endY - startY + 1 < 50) ? (endY - startY + 1) : 15;
-  
     for (let polY = 1; polY <= maxYears; polY++) {
         const yr = startY + polY - 1;
         let colorClass = "";
