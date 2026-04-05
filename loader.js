@@ -1,5 +1,15 @@
-/* loader.js - v4.1.6 - Pure Dynamic Term + Total Premium Sync */
+/* loader.js - v4.1.8 - India Maturity & Benefits Sync */
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2UwOfG57DQBOBnJX-9hsRKOQTUgALiM3uxs-VGzD2KN8JoWNAQltH6IkgAGhPTNFEvb/pub?gid=866869416&single=true&output=csv";
+
+// Helper for formatting BSA inside the loader
+const autoFmt = (val, sym) => {
+    const n = parseFloat(val);
+    if (isNaN(n) || n === 0) return "₹0";
+    if (n >= 10000000) return `${sym}${(n / 10000000).toFixed(2)} Cr`;
+    if (n >= 100000) return `${sym}${(n / 100000).toFixed(2)} L`;
+    if (n >= 1000) return `${sym}${(n / 1000).toFixed(1)} K`;
+    return `${sym}${n.toLocaleString('en-IN')}`;
+};
 
 export async function syncWithGoogleSheets(masterList) {
     try {
@@ -7,96 +17,78 @@ export async function syncWithGoogleSheets(masterList) {
         const buffer = await response.arrayBuffer();
         const decoder = new TextDecoder('utf-8'); 
         const csvData = decoder.decode(buffer);
-        
         const sheetRecords = processCSV(csvData);
-
-        const insuredMap = {
-            "Suhail Nami": { type: "Self", img: "avatar_self.png" },
-            "Saima Suhail": { type: "Wife", img: "avatar_wife.png" },
-            "Sulmas Nami": { type: "Daughter", img: "avatar_daughter.png" }
-        };
 
         const cleanNumeric = (raw) => {
             if (!raw || raw === "No Value") return 0;
-            let str = String(raw).trim();
-            str = str.replace(/[^\x00-\x7F]/g, ""); 
-            str = str.replace(/[^\d.]/g, "");       
-            const num = parseFloat(str);
-            return isNaN(num) ? 0 : num;
+            let str = String(raw).trim().replace(/[^\x00-\x7F]/g, "").replace(/[^\d.]/g, "");       
+            return parseFloat(str) || 0;
         };
 
         ["india", "singapore"].forEach(country => {
             if (!masterList[country]) return;
-
             masterList[country] = masterList[country].map(p => {
                 const match = sheetRecords.find(row => String(row["Policy No."]).trim() === String(p.id).trim());
-
                 if (match) {
                     p.name = match.name || p.name;
                     p.company = match.company || p.company;
                     p.type = match.type || p.type;
-
-                    // Date Cleaning
-                    let rawDate = String(match["Commenced Date"] || "").trim();
-                    p.commenced = rawDate.replace(/\./g, ' '); 
-
-                    // Term Extraction (PPT:MAT:MIP)
-                    const rawTerm = String(match["Term"] || ""); 
-                    if (rawTerm.includes(":")) {
-                        const termParts = rawTerm.split(":");
-                        const pptVal = parseInt(termParts[0], 10);
-                        const matVal = parseInt(termParts[1], 10);
-                        const mipVal = parseInt(termParts[2], 10);
-
-                        if (country === "singapore") {
-                            p.ppt = isNaN(pptVal) ? 0 : pptVal;
-                            p.mip = isNaN(mipVal) ? 0 : mipVal;
-                            
-                            // NEW: Total Premium Sync
-                            const rawTotal = match["Total Premium"] || "0";
-                            p.totalPremiumPaid = cleanNumeric(rawTotal);
-                        }
-
-                        if (p.commenced.includes(" ")) {
-                            const startParts = p.commenced.split(" ");
-                            const startYear = parseInt(startParts[2], 10);
-                            if (!isNaN(startYear)) {
-                                p.premiumEnds = `${startParts[0]} ${startParts[1]} ${startYear + pptVal}`;
-                                p.maturity = `${startParts[0]} ${startParts[1]} ${startYear + matVal}`;
+                    
+                    // Core Financials
+                    p.premium = cleanNumeric(match["Premium"]);
+                    const rawSA = String(match["Sum Assured"] || "").toLowerCase();
+                    p.sumAssured = (rawSA.includes("not") || cleanNumeric(match["Sum Assured"]) === 0) ? 0 : cleanNumeric(match["Sum Assured"]);
+                    
+                    // --- INDIA MATURITY MIGRATION ---
+                    if (country === "india") {
+                        const isULIP = (p.type || "").toLowerCase().includes("ulip");
+                        if (isULIP) {
+                            p.maturityAmt = `Unit Value : ${match["Current Value"] || "₹0"}`;
+                        } else {
+                            let benefits = String(match["Other Coverage & Benefits"] || "");
+                            if (benefits.toUpperCase().includes("BSA")) {
+                                // Swap BSA for live Sum Assured
+                                p.maturityAmt = benefits.replace(/BSA/gi, autoFmt(p.sumAssured, "₹"));
+                            } else {
+                                // Use Excel text exactly, or fallback to "Policy Maturity"
+                                p.maturityAmt = benefits || "Policy Maturity";
                             }
                         }
                     }
 
-                    // Financials
-                    p.premium = cleanNumeric(match["Premium"]);
-                    const rawSA = String(match["Sum Assured"] || "").toLowerCase();
-                    p.sumAssured = (rawSA.includes("not") || cleanNumeric(match["Sum Assured"]) === 0) ? 0 : cleanNumeric(match["Sum Assured"]);
-
-                    const rawCV = match["Current Value"] || "No Value";
-                    p.currentUnitValue = rawCV; 
-                    p.unitValueNumeric = cleanNumeric(rawCV);
-
-                    if (country === "india") {
-                        const identity = insuredMap[match["Insured"]];
-                        if (identity) {
-                            p.avatarPath = identity.img;
-                            p.holderType = identity.type;
+                    // --- SINGAPORE SYNC ---
+                    if (country === "singapore") {
+                        p.totalPremiumPaid = cleanNumeric(match["Total Premium"] || "0");
+                        const rawTerm = String(match["Term"] || ""); 
+                        if (rawTerm.includes(":")) {
+                            const parts = rawTerm.split(":");
+                            p.ppt = parseInt(parts[0], 10) || 0;
+                            p.mip = parseInt(parts[2], 10) || 0;
                         }
                     }
+
+                    // Date logic
+                    let rawDate = String(match["Commenced Date"] || "").trim();
+                    p.commenced = rawDate.replace(/\./g, ' '); 
+                    const rawTermFull = String(match["Term"] || "");
+                    if (rawTermFull.includes(":") && p.commenced.includes(" ")) {
+                        const parts = rawTermFull.split(":");
+                        const startYear = parseInt(p.commenced.split(" ")[2], 10);
+                        if (!isNaN(startYear)) {
+                            p.premiumEnds = `${p.commenced.split(" ")[0]} ${p.commenced.split(" ")[1]} ${startYear + parseInt(parts[0], 10)}`;
+                            p.maturity = `${p.commenced.split(" ")[0]} ${p.commenced.split(" ")[1]} ${startYear + parseInt(parts[1], 10)}`;
+                        }
+                    }
+                    p.currentUnitValue = match["Current Value"] || "No Value";
                 }
                 return p;
             });
         });
-
-        console.log("✅ v4.1.6: Total Premium & Term Sync Successful.");
+        console.log("✅ v4.1.8: India Maturity & Benefits Sync Active.");
         return masterList;
-    } catch (e) { 
-        console.warn("⚠️ Sync failed:", e);
-        return masterList; 
-    }
+    } catch (e) { console.warn("⚠️ Sync failed:", e); return masterList; }
 }
 
-// ... rest of processCSV and parseInsuranceTab (unchanged) ...
 function processCSV(csv) {
     const rows = [];
     let currentRow = [''], inQuote = false;
@@ -116,9 +108,8 @@ function processCSV(csv) {
         const obj = {};
         headers.forEach((h, i) => { if (h) obj[h] = (rowData[i] || "").trim(); });
         if (!obj["Policy_Name"] && rowData[0]?.includes(":")) obj["Policy_Name"] = rowData[0];
-        if (!obj["Policy_Name"] || obj["Policy_Name"] === "EMPTY") return null;
         return parseInsuranceTab(obj);
-    }).filter(item => item !== null);
+    }).filter(item => item && item["Policy_Name"] !== "EMPTY");
 }
 
 function parseInsuranceTab(item) {
