@@ -1,4 +1,4 @@
-/* loader.js - v4.1.12 - Avatars Restored + India Maturity & Disclaimer */
+/* loader.js - v4.1.13 - Dynamic Logos & Pure Excel Sync (Component Neutral) */
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2UwOfG57DQBOBnJX-9hsRKOQTUgALiM3uxs-VGzD2KN8JoWNAQltH6IkgAGhPTNFEvb/pub?gid=866869416&single=true&output=csv";
 
 const autoFmt = (val, sym) => {
@@ -20,7 +20,6 @@ export async function syncWithGoogleSheets(masterList) {
         const csvData = decoder.decode(buffer);
         const sheetRecords = processCSV(csvData);
 
-        // --- RESTORED: AVATAR MAPPING ---
         const insuredMap = {
             "Suhail Nami": { type: "Self", img: "avatar_self.png" },
             "Saima Suhail": { type: "Wife", img: "avatar_wife.png" },
@@ -41,12 +40,15 @@ export async function syncWithGoogleSheets(masterList) {
                     p.name = match.name || p.name;
                     p.company = match.company || p.company;
                     p.type = match.type || p.type;
-                    p.premium = cleanNumeric(match["Premium"]);
                     
+                    // --- DYNAMIC LOGO LOGIC ---
+                    const safeCompanyName = p.company.replace(/[\s.]/g, "");
+                    p.logo = `logo_${safeCompanyName}.png`;
+
+                    p.premium = cleanNumeric(match["Premium"]);
                     const rawSA = String(match["Sum Assured"] || "").toLowerCase();
                     p.sumAssured = (rawSA.includes("not") || cleanNumeric(match["Sum Assured"]) === 0) ? 0 : cleanNumeric(match["Sum Assured"]);
                     
-                    // --- RESTORED: AVATAR LOGIC ---
                     if (country === "india") {
                         const identity = insuredMap[match["Insured"]];
                         if (identity) {
@@ -73,21 +75,19 @@ export async function syncWithGoogleSheets(masterList) {
                         }
                     }
 
-                    // --- INDIA SPECIFIC MATURITY LOGIC ---
+                    // Maturity Logic (ULIP 4% vs Non-ULIP BSA)
                     if (country === "india") {
                         const isULIP = (p.type || "").toLowerCase().includes("ulip");
                         if (isULIP) {
                             const accVal = cleanNumeric(match["Current Value"]);
                             const endY = parseInt(p.maturity.split(" ")[2]) || 2050;
                             const startY = parseInt(p.commenced.split(" ")[2]) || 2000;
-                            const r = 0.04;
                             const yearsToMat = Math.max(0, endY - CURRENT_YEAR);
-                            
                             const annMonth = monthMap[p.commenced.split(" ")[1]] || 0;
                             const annDay = parseInt(p.commenced.split(" ")[0]) || 1;
                             const hasPassed = (TODAY.getMonth() > annMonth) || (TODAY.getMonth() === annMonth && TODAY.getDate() >= annDay);
                             const yearsToPay = Math.max(0, (startY + ppt) - (hasPassed ? CURRENT_YEAR + 1 : CURRENT_YEAR));
-
+                            const r = 0.04;
                             const fvUnits = accVal * Math.pow(1 + r, yearsToMat);
                             let fvPrems = 0;
                             if (yearsToPay > 0) {
@@ -95,7 +95,7 @@ export async function syncWithGoogleSheets(masterList) {
                                 if (yearsToMat > yearsToPay) fvPrems *= Math.pow(1 + r, yearsToMat - yearsToPay);
                             }
                             const projected = Math.round(fvUnits + fvPrems);
-                            p.maturityAmt = `${autoFmt(projected, "₹")}<br><span style="font-size: 8px; opacity: 0.8; font-weight: 500; display: block; margin-top: 4px;">* Calculated with 4% annual projection</span>`;
+                            p.maturityAmt = `${autoFmt(projected, "₹")}<br><span style="font-size: 8px; opacity: 0.8; display: block; margin-top: 4px;">* Calculated with 4% annual projection</span>`;
                         } else {
                             const rawBenefits = String(match["Other Coverage & Benefits"] || "");
                             const maturityLine = rawBenefits.split(/\r?\n/).find(l => l.trim().startsWith("Maturity Benefit"));
@@ -113,12 +113,10 @@ export async function syncWithGoogleSheets(masterList) {
                         if (rawTermStr.includes(":")) p.mip = parseInt(rawTermStr.split(":")[2], 10) || 0;
                     }
                     p.currentUnitValue = match["Current Value"] || "No Value";
-                    p.unitValueNumeric = cleanNumeric(p.currentUnitValue);
                 }
                 return p;
             });
         });
-        console.log("✅ v4.1.12: Avatars Restored & Maturity Disclaimer Active.");
         return masterList;
     } catch (e) { console.warn("⚠️ Sync failed:", e); return masterList; }
 }
