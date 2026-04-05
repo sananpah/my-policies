@@ -1,8 +1,8 @@
-/* component_in.js - v4.0.99.1 - Exact Visual Restoration */
+/* component_in.js - v4.1.3 - Fixed 10-Year Boundary Logic */
 import { checkIsDueSoon, autoFmt, toNum, raw, safeParseDate, safeGetYear, monthMap } from './india.js';
 
 export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
-    // 1. DATA SHIELD: Uses "safe" helpers to prevent .split() crashes during sync
+    // 1. DATA SHIELD
     const commStr = p.commenced || "01 Jan 2000";
     const matStr = p.maturity || "01 Jan 2050";
     const premEndStr = p.premiumEnds || "01 Jan 2030";
@@ -24,7 +24,10 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
     const nextDueYear = hasPassedThisYear ? CURRENT_YEAR + 1 : CURRENT_YEAR;
     const nextDueStr = `${anniversaryDay} ${anniversaryMonth} ${nextDueYear}`; 
     
-    const isTermOver = CURRENT_YEAR > premEndYear || (CURRENT_YEAR === premEndYear && hasPassedThisYear);
+    // FIX: Term is over once we pass the anniversary of the LAST payment year (premEndYear - 1)
+    const lastPaymentYear = premEndYear - 1;
+    const isTermOver = CURRENT_YEAR > lastPaymentYear || (CURRENT_YEAR === lastPaymentYear && hasPassedThisYear);
+    
     const finalDueDate = (p.status === "PAID UP" || isTermOver) ? "PAID UP" : nextDueStr;
     const isPaidUp = finalDueDate === "PAID UP";
    
@@ -33,7 +36,7 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
     const unitValue = Math.round(toNum(p.currentUnitValue || 0));
     const prem = Math.round(toNum(p.premium || 0));
        
-    // 4. PREMIUM REMAINING (Restoring exact 00y00m formatting)
+    // 4. PREMIUM REMAINING
     let premRemainingStr = "";
     if (!isPaidUp) {
         const premEndDate = safeParseDate(premEndStr);
@@ -48,7 +51,7 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
     const brandColor = p.color || "#000000";
     const brandBg = `rgba(${parseInt(brandColor.slice(1,3), 16)}, ${parseInt(brandColor.slice(3,5), 16)}, ${parseInt(brandColor.slice(5,7), 16)}, 0.04)`;
 
-    // --- 5. TIMELINE LOGIC (Restoring original phases exactly) ---
+    // --- 5. TIMELINE LOGIC ---
     let timelineHtml = '';
     for(let yr = startY; yr < matY; yr++) {
         const polY = yr - startY + 1;
@@ -56,7 +59,8 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
         const isCurrent = yr === CURRENT_YEAR;
         let color = "", phase = "", detail = "";
 
-        if (yr <= premEndYear) {
+        // FIX: Change <= to < to show exactly PPT number of years
+        if (yr < premEndYear) {
             const isEffectivelyPaid = isPast || isPaidUp || (isCurrent && hasPassedThisYear);
             if (p.name.includes("Fortune Maximiser") && polY >= (p.bonusStartYear || 2)) {
                 color = "bg-hybrid"; phase = "Premium + Bonus";
@@ -86,7 +90,6 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
 
     timelineHtml += `<div class="mat-star">★<div class="tooltip"><b class="text-orange-400 uppercase tracking-widest">Maturity</b><br><span class="${String(p.maturityAmt || p.sumAssured).length > 15 ? 'text-[10px]' : 'text-lg'} font-black">${raw(p.maturityAmt || p.sumAssured)}</span></div></div>`;
 
-    // --- 6. HTML OUTPUT (Restoring exact spacing, margins, and classes) ---
     return `
     <div class="policy-card mb-6" id="card-${p.id}" style="border-left: 16px solid ${brandColor}; border-color: ${brandColor};">
         <div class="card-header transition-colors" style="background: ${brandBg};" onclick="toggleCard('${p.id}')">
