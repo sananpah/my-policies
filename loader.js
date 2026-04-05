@@ -1,4 +1,4 @@
-/* loader.js - v4.1.2 - Junk-Safe + Dot-Master + Term Logic */
+/* loader.js - v4.1.3 - Symbol-Aware + Term Logic + SG Robustness */
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2UwOfG57DQBOBnJX-9hsRKOQTUgALiM3uxs-VGzD2KN8JoWNAQltH6IkgAGhPTNFEvb/pub?gid=866869416&single=true&output=csv";
 
 export async function syncWithGoogleSheets(masterList) {
@@ -16,17 +16,12 @@ export async function syncWithGoogleSheets(masterList) {
             "Sulmas Nami": { type: "Daughter", img: "avatar_daughter.png" }
         };
 
+        // Internal cleaner for basic numbers
         const cleanNumeric = (raw) => {
-            if (!raw) return 0;
+            if (!raw || raw === "No Value") return 0;
             let str = String(raw).trim();
             str = str.replace(/[^\x00-\x7F]/g, ""); // Junk Fix
-            str = str.replace(/[,rs]/gi, "");
-            const parts = str.split('.');
-            if (parts.length > 1) {
-                const decimal = parts.pop();
-                const integer = parts.join("");
-                str = integer + "." + decimal;
-            }
+            // Strips all symbols, spaces, and currency markers
             str = str.replace(/[^\d.]/g, "");
             const num = parseFloat(str);
             return isNaN(num) ? 0 : num;
@@ -44,31 +39,36 @@ export async function syncWithGoogleSheets(masterList) {
                     p.type = match.type || p.type;
 
                     // --- STEP 1: DOT-TO-SPACE & COMMENCED DATE ---
-                    // Changes "29.Nov.2025" -> "29 Nov 2025"
                     let rawDate = String(match["Commenced Date"] || "").trim();
                     p.commenced = rawDate.replace(/\./g, ' '); 
 
-                    // --- STEP 2: PPT:MAT TERM CALCULATION ---
+                    // --- STEP 2: PPT:MAT TERM CALCULATION (Mainly India) ---
                     const rawTerm = String(match["Term"] || ""); 
                     if (rawTerm.includes(":") && p.commenced.includes(" ")) {
                         const termParts = rawTerm.split(":");
-                        const ppt = parseInt(termParts[0], 10); // Premium Paying Term
-                        const mat = parseInt(termParts[1], 10); // Maturity Term
+                        const ppt = parseInt(termParts[0], 10);
+                        const mat = parseInt(termParts[1], 10);
                         
                         const startParts = p.commenced.split(" ");
                         const startYear = parseInt(startParts[2], 10);
                         
-                        // Dynamically calculate and update dates
                         if (!isNaN(startYear)) {
                             p.premiumEnds = `${startParts[0]} ${startParts[1]} ${startYear + ppt}`;
                             p.maturity = `${startParts[0]} ${startParts[1]} ${startYear + mat}`;
                         }
                     }
 
-                    // --- STEP 3: FINANCIAL CLEANING ---
+                    // --- STEP 3: FINANCIAL CLEANING (New Column Logic) ---
                     p.premium = cleanNumeric(match["Premium"]);
+                    
+                    // Sum Assured "Assigned" check
                     const rawSA = String(match["Sum Assured"] || "").toLowerCase();
-                    p.sumAssured = (rawSA.includes("not")) ? 0 : cleanNumeric(match["Sum Assured"]);
+                    p.sumAssured = (rawSA.includes("not") || cleanNumeric(match["Sum Assured"]) === 0) ? 0 : cleanNumeric(match["Sum Assured"]);
+
+                    // NEW: Robust "Current Value" Extraction for ULIP/SG
+                    const rawCV = match["Current Value"] || "No Value";
+                    p.currentUnitValue = rawCV; // Keep the string (₹/$ symbol) for Card UI
+                    p.unitValueNumeric = cleanNumeric(rawCV); // Clean number for Header Math
 
                     // --- STEP 4: AVATAR MAPPING ---
                     if (country === "india") {
@@ -83,7 +83,7 @@ export async function syncWithGoogleSheets(masterList) {
             });
         });
 
-        console.log("✅ v4.1.2: Junk-safe sync + Term Math Successful.");
+        console.log("✅ v4.1.3: Multi-Currency + Term Math Successful.");
         return masterList;
     } catch (e) { 
         console.warn("⚠️ Sync failed:", e);
@@ -91,8 +91,7 @@ export async function syncWithGoogleSheets(masterList) {
     }
 }
 
-// ... (processCSV and parseInsuranceTab remain the same as your provided code)
-
+// Keep your existing processCSV and parseInsuranceTab exactly as they are below
 function processCSV(csv) {
     const rows = [];
     let currentRow = [''], inQuote = false;
