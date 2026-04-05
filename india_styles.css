@@ -235,3 +235,34 @@ body {
     transform: skewX(-10deg); /* This makes it look really funky */
     display: inline-block;
 }
+
+/* --- Vertical and Size Alignment for Assigned Stamp --- */
+
+/* 1. Target the wrapper div defined in component_in.js */
+.card-header .relative.min-w-\[120px\] {
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Center horizontally in the slot */
+    align-items: flex-start; /* Standard alignment */
+    height: 100%; /* Take full header height */
+    position: relative; /* Maintain relative positioning context */
+}
+
+/* 2. Style the image stamp specifically */
+.card-header img[src="assigned.png"] {
+    /* SIZE: Adjust as needed. h-12 is ~48px tall.
+       The object-contain class in JS will preserve aspect ratio. */
+    height: 3rem !important; /* Forces Tailwind h-12 equivalent */
+    max-height: 48px;
+
+    /* RE-POSITIONING (Move right) */
+    position: absolute;
+    left: 20px !important; /* Move 20px to the right */
+    
+    /* Center vertically */
+    top: 50%;
+    transform: translateY(-50%) rotate(-8deg); /* Maintain funky rotation but center vertically */
+
+    opacity: 0.95; /* Keep high opacity */
+    filter: drop-shadow(0 4px 6px rgba(126, 34, 206, 0.4)); /* Match the new visual style */
+}
