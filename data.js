@@ -40,10 +40,8 @@ export const POLICY_DATA = {
             id: "79425536",
             uin: "107N124V01",
             clientId: "61491746",
-            color: "#e63946",
-            bonusAmount: 22050,
-            bonusStartYear: 2,
-            income: "Est. Yearly: ₹ 23,140"            
+            color: "#e63946",            
+            bonusStartYear: 2                       
         },
         { 
             id: "503-9562771",
