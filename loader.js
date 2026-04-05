@@ -1,15 +1,16 @@
-/* loader.js - v4.1.9 - Full Value Display + Surgical Maturity Extraction */
+/* loader.js - v4.1.10 - India ULIP 4% Wealth Projection */
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2UwOfG57DQBOBnJX-9hsRKOQTUgALiM3uxs-VGzD2KN8JoWNAQltH6IkgAGhPTNFEvb/pub?gid=866869416&single=true&output=csv";
 
-// Updated: No more shrinking to L/K/Cr. Shows full formatted number.
 const autoFmt = (val, sym) => {
     const n = parseFloat(val);
     if (isNaN(n) || n === 0) return sym + "0";
-    // Using en-IN to ensure Indian comma placement (2,00,000)
     return sym + Math.round(n).toLocaleString('en-IN');
 };
 
 export async function syncWithGoogleSheets(masterList) {
+    const TODAY = new Date();
+    const CURRENT_YEAR = TODAY.getFullYear();
+
     try {
         const response = await fetch(`${SHEET_URL}&t=${Date.now()}`);
         const buffer = await response.arrayBuffer();
@@ -28,38 +29,70 @@ export async function syncWithGoogleSheets(masterList) {
             masterList[country] = masterList[country].map(p => {
                 const match = sheetRecords.find(row => String(row["Policy No."]).trim() === String(p.id).trim());
                 if (match) {
+                    // Basic Info
                     p.name = match.name || p.name;
                     p.company = match.company || p.company;
                     p.type = match.type || p.type;
-                    
-                    // Core Financials
                     p.premium = cleanNumeric(match["Premium"]);
                     const rawSA = String(match["Sum Assured"] || "").toLowerCase();
                     p.sumAssured = (rawSA.includes("not") || cleanNumeric(match["Sum Assured"]) === 0) ? 0 : cleanNumeric(match["Sum Assured"]);
                     
-                    // --- INDIA MATURITY MIGRATION (Surgical Extraction) ---
+                    // Date & Term Parsing (Needed for Projection)
+                    let rawDate = String(match["Commenced Date"] || "").trim();
+                    p.commenced = rawDate.replace(/\./g, ' '); 
+                    const rawTermStr = String(match["Term"] || "");
+                    let ppt = 0, mat = 0;
+                    if (rawTermStr.includes(":")) {
+                        const parts = rawTermStr.split(":");
+                        ppt = parseInt(parts[0], 10) || 0;
+                        mat = parseInt(parts[1], 10) || 0;
+                        p.ppt = ppt; // Store for component use
+                        
+                        const startParts = p.commenced.split(" ");
+                        const startYear = parseInt(startParts[2], 10);
+                        if (!isNaN(startYear)) {
+                            p.premiumEnds = `${startParts[0]} ${startParts[1]} ${startYear + ppt}`;
+                            p.maturity = `${startParts[0]} ${startParts[1]} ${startYear + mat}`;
+                        }
+                    }
+
+                    // --- INDIA SPECIFIC LOGIC ---
                     if (country === "india") {
                         const isULIP = (p.type || "").toLowerCase().includes("ulip");
                         if (isULIP) {
-                            p.maturityAmt = match["Current Value"] || "₹0";
+                            // 4% COMPOUND PROJECTION LOGIC
+                            const accVal = cleanNumeric(match["Current Value"]);
+                            const endY = safeGetYear(p.maturity);
+                            const startY = safeGetYear(p.commenced);
+                            const r = 0.04;
+                            const yearsToMat = Math.max(0, endY - CURRENT_YEAR);
+                            
+                            // Check if premium for this year is already done
+                            const annMonth = monthMap[p.commenced.split(" ")[1]] || 0;
+                            const annDay = parseInt(p.commenced.split(" ")[0]) || 1;
+                            const hasPassed = (TODAY.getMonth() > annMonth) || (TODAY.getMonth() === annMonth && TODAY.getDate() >= annDay);
+                            
+                            const yearsToPay = Math.max(0, (startY + ppt) - (hasPassed ? CURRENT_YEAR + 1 : CURRENT_YEAR));
+
+                            // Future Value of Units + Future Value of Premiums
+                            const fvUnits = accVal * Math.pow(1 + r, yearsToMat);
+                            let fvPrems = 0;
+                            if (yearsToPay > 0) {
+                                fvPrems = p.premium * ((Math.pow(1 + r, yearsToPay) - 1) / r) * (1 + r);
+                                const gap = yearsToMat - yearsToPay;
+                                if (gap > 0) fvPrems *= Math.pow(1 + r, gap);
+                            }
+                            
+                            const projected = Math.round(fvUnits + fvPrems);
+                            p.maturityAmt = `Est. Value: ${autoFmt(projected, "₹")}*`;
                         } else {
+                            // Non-ULIP Surgical Extraction
                             const rawBenefits = String(match["Other Coverage & Benefits"] || "");
                             const lines = rawBenefits.split(/\r?\n/);
-                            
-                            // Find line starting with "Maturity Benefit"
                             const maturityLine = lines.find(l => l.trim().startsWith("Maturity Benefit"));
-
                             if (maturityLine) {
-                                // Extract everything after the first ":"
                                 let val = maturityLine.split(":")[1]?.trim() || "";
-                                
-                                // Surgical BSA Swap with FULL NUMBER
-                                if (val.toUpperCase().includes("BSA")) {
-                                    const fullSA = autoFmt(p.sumAssured, "₹");
-                                    p.maturityAmt = val.replace(/BSA/gi, fullSA);
-                                } else {
-                                    p.maturityAmt = val; 
-                                }
+                                p.maturityAmt = val.toUpperCase().includes("BSA") ? val.replace(/BSA/gi, autoFmt(p.sumAssured, "₹")) : val;
                             } else {
                                 p.maturityAmt = "Policy Maturity";
                             }
@@ -69,37 +102,33 @@ export async function syncWithGoogleSheets(masterList) {
                     // --- SINGAPORE SYNC ---
                     if (country === "singapore") {
                         p.totalPremiumPaid = cleanNumeric(match["Total Premium"] || "0");
-                        const rawTerm = String(match["Term"] || ""); 
-                        if (rawTerm.includes(":")) {
-                            const parts = rawTerm.split(":");
-                            p.ppt = parseInt(parts[0], 10) || 0;
+                        if (rawTermStr.includes(":")) {
+                            const parts = rawTermStr.split(":");
                             p.mip = parseInt(parts[2], 10) || 0;
                         }
                     }
 
-                    // Date & Term Logic
-                    let rawDate = String(match["Commenced Date"] || "").trim();
-                    p.commenced = rawDate.replace(/\./g, ' '); 
-                    const rawTermFull = String(match["Term"] || "");
-                    if (rawTermFull.includes(":") && p.commenced.includes(" ")) {
-                        const parts = rawTermFull.split(":");
-                        const startYear = parseInt(p.commenced.split(" ")[2], 10);
-                        if (!isNaN(startYear)) {
-                            p.premiumEnds = `${p.commenced.split(" ")[0]} ${p.commenced.split(" ")[1]} ${startYear + parseInt(parts[0], 10)}`;
-                            p.maturity = `${p.commenced.split(" ")[0]} ${p.commenced.split(" ")[1]} ${startYear + parseInt(parts[1], 10)}`;
-                        }
-                    }
                     p.currentUnitValue = match["Current Value"] || "No Value";
                     p.unitValueNumeric = cleanNumeric(p.currentUnitValue);
                 }
                 return p;
             });
         });
-        console.log("✅ v4.1.9: Surgical Extraction & Full Number Sync Active.");
+        console.log("✅ v4.1.10: India ULIP 4% Projection Active.");
         return masterList;
     } catch (e) { console.warn("⚠️ Sync failed:", e); return masterList; }
 }
 
+// Helpers needed for date logic inside sync
+function safeGetYear(dateStr) {
+    if (!dateStr) return 2050;
+    const parts = dateStr.split(' ');
+    return parseInt(parts[parts.length - 1]) || 2050;
+}
+
+const monthMap = { "Jan":0,"Feb":1,"Mar":2,"Apr":3,"May":4,"Jun":5,"Jul":6,"Aug":7,"Sep":8,"Oct":9,"Nov":10,"Dec":11 };
+
+// processCSV and parseInsuranceTab (unchanged)
 function processCSV(csv) {
     const rows = [];
     let currentRow = [''], inQuote = false;
