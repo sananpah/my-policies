@@ -70,7 +70,7 @@
     <div id="container" class="max-w-7xl mx-auto pb-20 px-4"></div>
 
     <script type="module">
-        const APP_VERSION = "4.0.102";
+        const APP_VERSION = "4.0.103";
         document.getElementById('version-tag').innerText = `v${APP_VERSION}`;
 
         const [Data, Tools, IndiaComp, SGComp, HealthComp, HealthDataFile, { syncWithGoogleSheets }] = await Promise.all([
@@ -84,7 +84,7 @@
         ]);
 
         const { POLICY_DATA } = Data;
-        const { toNum } = Tools;
+        const { toNum, safeGetYear } = Tools;
         const { createPolicyCard } = IndiaComp;
         const { createSGCard } = SGComp;
         const { createHealthCard } = HealthComp;
@@ -168,7 +168,6 @@
             }).join('');
 
             if (cat === 'health') {
-                // Health Calculations...
                 const sgData = healthData.filter(p => p.currency === "SGD");
                 const sgTotal = sgData.reduce((acc, p) => acc + parseFloat(p.cashAmount || 0) + parseFloat(p.cpfAmount || 0), 0);
                 const inData = healthData.filter(p => p.currency === "INR");
@@ -185,13 +184,17 @@
                     </div>
                 `;
             } else {
-                // Life Portfolio Calculations
                 const tSA = list.reduce((acc, p) => acc + toNum(p.sumAssured), 0);
                 
-                // FIXED: EXCLUDE PAID UP PREMIUMS
+                // SURGICAL UPDATE: Exclude PAID UP or Expired premiums from header total
                 const tAnn = list.reduce((acc, p) => {
                     const status = (p.status || p["Status"] || "").toUpperCase();
-                    return (status === "PAID UP") ? acc : acc + toNum(p.premium || p.premiumNumeric || 0);
+                    // Double check date-math for Paid Up
+                    const pEndYear = safeGetYear(p.premiumEnds);
+                    const isActuallyPaid = CURRENT_YEAR > (pEndYear - 1); 
+                    
+                    const isPaidUp = (status === "PAID UP" || isActuallyPaid);
+                    return isPaidUp ? acc : acc + toNum(p.premium || 0);
                 }, 0);
 
                 const tUnitValue = list.reduce((acc, p) => acc + toNum(p.currentUnitValue || 0), 0);
