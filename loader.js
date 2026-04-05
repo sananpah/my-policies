@@ -1,14 +1,12 @@
-/* loader.js - v4.1.8 - India Maturity & Benefits Sync */
+/* loader.js - v4.1.9 - Full Value Display + Surgical Maturity Extraction */
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2UwOfG57DQBOBnJX-9hsRKOQTUgALiM3uxs-VGzD2KN8JoWNAQltH6IkgAGhPTNFEvb/pub?gid=866869416&single=true&output=csv";
 
-// Helper for formatting BSA inside the loader
+// Updated: No more shrinking to L/K/Cr. Shows full formatted number.
 const autoFmt = (val, sym) => {
     const n = parseFloat(val);
-    if (isNaN(n) || n === 0) return "₹0";
-    if (n >= 10000000) return `${sym}${(n / 10000000).toFixed(2)} Cr`;
-    if (n >= 100000) return `${sym}${(n / 100000).toFixed(2)} L`;
-    if (n >= 1000) return `${sym}${(n / 1000).toFixed(1)} K`;
-    return `${sym}${n.toLocaleString('en-IN')}`;
+    if (isNaN(n) || n === 0) return sym + "0";
+    // Using en-IN to ensure Indian comma placement (2,00,000)
+    return sym + Math.round(n).toLocaleString('en-IN');
 };
 
 export async function syncWithGoogleSheets(masterList) {
@@ -39,19 +37,31 @@ export async function syncWithGoogleSheets(masterList) {
                     const rawSA = String(match["Sum Assured"] || "").toLowerCase();
                     p.sumAssured = (rawSA.includes("not") || cleanNumeric(match["Sum Assured"]) === 0) ? 0 : cleanNumeric(match["Sum Assured"]);
                     
-                    // --- INDIA MATURITY MIGRATION ---
+                    // --- INDIA MATURITY MIGRATION (Surgical Extraction) ---
                     if (country === "india") {
                         const isULIP = (p.type || "").toLowerCase().includes("ulip");
                         if (isULIP) {
-                            p.maturityAmt = `Unit Value : ${match["Current Value"] || "₹0"}`;
+                            p.maturityAmt = match["Current Value"] || "₹0";
                         } else {
-                            let benefits = String(match["Other Coverage & Benefits"] || "");
-                            if (benefits.toUpperCase().includes("BSA")) {
-                                // Swap BSA for live Sum Assured
-                                p.maturityAmt = benefits.replace(/BSA/gi, autoFmt(p.sumAssured, "₹"));
+                            const rawBenefits = String(match["Other Coverage & Benefits"] || "");
+                            const lines = rawBenefits.split(/\r?\n/);
+                            
+                            // Find line starting with "Maturity Benefit"
+                            const maturityLine = lines.find(l => l.trim().startsWith("Maturity Benefit"));
+
+                            if (maturityLine) {
+                                // Extract everything after the first ":"
+                                let val = maturityLine.split(":")[1]?.trim() || "";
+                                
+                                // Surgical BSA Swap with FULL NUMBER
+                                if (val.toUpperCase().includes("BSA")) {
+                                    const fullSA = autoFmt(p.sumAssured, "₹");
+                                    p.maturityAmt = val.replace(/BSA/gi, fullSA);
+                                } else {
+                                    p.maturityAmt = val; 
+                                }
                             } else {
-                                // Use Excel text exactly, or fallback to "Policy Maturity"
-                                p.maturityAmt = benefits || "Policy Maturity";
+                                p.maturityAmt = "Policy Maturity";
                             }
                         }
                     }
@@ -67,7 +77,7 @@ export async function syncWithGoogleSheets(masterList) {
                         }
                     }
 
-                    // Date logic
+                    // Date & Term Logic
                     let rawDate = String(match["Commenced Date"] || "").trim();
                     p.commenced = rawDate.replace(/\./g, ' '); 
                     const rawTermFull = String(match["Term"] || "");
@@ -80,11 +90,12 @@ export async function syncWithGoogleSheets(masterList) {
                         }
                     }
                     p.currentUnitValue = match["Current Value"] || "No Value";
+                    p.unitValueNumeric = cleanNumeric(p.currentUnitValue);
                 }
                 return p;
             });
         });
-        console.log("✅ v4.1.8: India Maturity & Benefits Sync Active.");
+        console.log("✅ v4.1.9: Surgical Extraction & Full Number Sync Active.");
         return masterList;
     } catch (e) { console.warn("⚠️ Sync failed:", e); return masterList; }
 }
