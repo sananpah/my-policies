@@ -1,4 +1,4 @@
-/* component_sg.js - v6.6.6 - Reference Fix + Exit Strategy Logic */
+/* component_sg.js - v6.6.7 - Fixed Countdown + 15yr Horizon + Exit Logic */
 import { autoFmt, toNum } from './india.js';
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -20,28 +20,44 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     if (TODAY < thisYearAnniversary) yearsPassed--;
     const policyYearIdx = yearsPassed + 1;
 
-    // --- 1. CORE FINANCIALS (Defined early to avoid ReferenceErrors) ---
+    // --- 1. CORE FINANCIALS ---
     const accountValue = Math.round(toNum(p.currentUnitValue || 0));
     const annualPremium = toNum(p.premium || 0);
     const totalPremiumsPaid = p.totalPremiumPaid ? toNum(p.totalPremiumPaid) : (annualPremium * policyYearIdx);
-    const totalWithdrawn = (p.withdrawals || []).reduce((a, b) => a + toNum(b), 0);
-    const netInvestmentBase = totalPremiumsPaid - totalWithdrawn;
     
     const chargePct = (p.surrenderCharges && p.surrenderCharges[policyYearIdx]) || 0;
     const surrenderValue = Math.round(Math.max(0, accountValue - (chargePct / 100 * (isPaidUp ? accountValue : totalPremiumsPaid))));
-    const lockedValue = accountValue - surrenderValue;
 
-    // --- 2. SMART HORIZON (TIMELINE BOUNDARIES) ---
+    // --- 2. PRECISE COUNTDOWN LOGIC ---
+    let vestingStr = "";
+    if (mip === 0) {
+        vestingStr = "Vested";
+    } else {
+        const targetDate = new Date(startY + mip, commMonth, commDay);
+        if (targetDate <= TODAY) {
+            vestingStr = "Vested";
+        } else {
+            let years = targetDate.getFullYear() - TODAY.getFullYear();
+            let months = targetDate.getMonth() - TODAY.getMonth();
+            let days = targetDate.getDate() - TODAY.getDate();
+            if (days < 0) months--;
+            if (months < 0) { years--; months += 12; }
+            vestingStr = `Left: ${String(Math.max(0, years)).padStart(2, '0')}y${String(Math.max(0, months)).padStart(2, '0')}m`;
+        }
+    }
+
+    // --- 3. SMART HORIZON (15yr Min for New, Maturity for Old) ---
     const yearsToMat = endY - startY;
     let maxYears;
     if (yearsToMat <= 25) {
         maxYears = yearsToMat; 
     } else {
-        maxYears = Math.max(10, policyYearIdx + 5); 
+        // Newest policies show 15 years; older ones scale with age
+        maxYears = Math.max(15, policyYearIdx + 5); 
         maxYears = Math.min(maxYears, yearsToMat);
     }
 
-    // --- 3. EXIT STRATEGY PROJECTION (PPT + 2 YEARS @ 4%) ---
+    // --- 4. EXIT STRATEGY PROJECTION (PPT + 2 YEARS @ 4%) ---
     const exitYearOffset = 2;
     const targetExitYear = startY + ppt + exitYearOffset;
     const projectionYears = Math.max(0, targetExitYear - CURRENT_YEAR);
@@ -58,7 +74,7 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     }
     const totalProjected = Math.round(fvUnits + fvPremiums);
 
-    // --- 4. TIMELINE GENERATION ---
+    // --- 5. TIMELINE GENERATION ---
     let timelineHtml = '';
     for (let polY = 1; polY <= maxYears; polY++) {
         const yr = startY + polY - 1;
@@ -86,16 +102,13 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
                     <div class="h-[1px] bg-white/10 my-1"></div>
                     <div class="flex justify-between text-[13px] text-emerald-400 font-black"><span>Est. Surrender:</span><span>${autoFmt(totalProjected, sym)}*</span></div>
                 </div>
-                <div class="mt-2 pt-2 border-t border-white/10 text-[8px] text-slate-400 italic font-medium leading-tight">
-                    *Compounded @ 4% until exit in ${targetExitYear}.
-                </div>
+                <div class="mt-2 pt-2 border-t border-white/10 text-[8px] text-slate-400 italic font-medium leading-tight">*Compounded @ 4% until exit in ${targetExitYear}.</div>
                 <div class="absolute top-full right-4 border-8 border-transparent border-t-slate-900"></div>
             </div>
         </div>`;
 
     const brandColor = p.color || "#000000";
     const brandBg = `rgba(${parseInt(brandColor.slice(1,3), 16)}, ${parseInt(brandColor.slice(3,5), 16)}, ${parseInt(brandColor.slice(5,7), 16)}, 0.04)`;
-    const vestingStr = (mip === 0 || (new Date(startY + mip, commMonth, commDay) <= TODAY)) ? "Vested" : "Locking...";
     const nextDueDisplay = new Date(hasPassedThisYear ? CURRENT_YEAR + 1 : CURRENT_YEAR, commMonth, commDay).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 
 return `
@@ -123,9 +136,9 @@ return `
             <div class="grid grid-cols-5 gap-4 mb-8">
                 <div class="p-6 rounded-[32px] bg-slate-50 border border-slate-100 relative shadow-sm"><p class="text-[10px] font-black text-slate-400 mb-2 uppercase">Policy No.</p><p class="text-lg font-mono font-bold text-slate-700">#${p.id}</p></div>
                 <div class="p-6 rounded-[32px] bg-white border border-slate-100 relative shadow-sm"><p class="text-[10px] font-black text-slate-400 mb-2 uppercase">Sum Assured</p><p class="text-xl font-black text-slate-800">${autoFmt(toNum(p.sumAssured) === 0 ? accountValue : p.sumAssured, sym)}</p></div>
-                <div class="p-6 rounded-[32px] bg-white border border-slate-100 relative shadow-sm"><p class="text-[10px] font-black text-slate-400 mb-2 uppercase">Invested</p><p class="text-xl font-black text-slate-800">${autoFmt(netInvestmentBase, sym)}</p></div>
+                <div class="p-6 rounded-[32px] bg-white border border-slate-100 relative shadow-sm"><p class="text-[10px] font-black text-slate-400 mb-2 uppercase">Invested</p><p class="text-xl font-black text-slate-800">${autoFmt(totalPremiumsPaid - (p.withdrawals || []).reduce((a, b) => a + toNum(b), 0), sym)}</p></div>
                 <div class="p-6 rounded-[32px] bg-emerald-50 border border-emerald-100 shadow-sm"><p class="text-[10px] font-black text-emerald-600 mb-2 uppercase text-center">Surrender</p><p class="text-2xl font-black text-emerald-700 text-center">${autoFmt(surrenderValue, sym)}</p></div>
-                <div class="p-6 rounded-[32px] bg-red-50 border border-red-100 shadow-sm"><p class="text-[10px] font-black text-red-400 mb-2 uppercase text-center">Locked</p><p class="text-2xl font-black text-red-600 text-center">-${autoFmt(lockedValue, sym)}</p></div>
+                <div class="p-6 rounded-[32px] bg-red-50 border border-red-100 shadow-sm"><p class="text-[10px] font-black text-red-400 mb-2 uppercase text-center">Locked</p><p class="text-2xl font-black text-red-600 text-center">-${autoFmt(accountValue - surrenderValue, sym)}</p></div>
             </div>
             <div class="flex justify-between items-end mb-4 px-2">
                 <div><p class="text-[10px] font-black text-slate-400 uppercase mb-1">Commencement</p><p class="text-sm font-bold text-slate-700 underline decoration-sky-300 decoration-2 underline-offset-4">${p.commenced}</p></div>
