@@ -1,4 +1,4 @@
-/* component_in.js - v4.1.7 - Verified Clean Indentation & Structure */
+/* component_in.js - v4.1.8 - Final Refined Structure */
 import { checkIsDueSoon, autoFmt, toNum, raw, safeParseDate, safeGetYear, monthMap } from './india.js';
 
 export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -34,7 +34,6 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
    
     // 3. FINANCIAL VALUES
     const isULIP = p.type === "ULIP";
-    const unitValue = Math.round(toNum(p.currentUnitValue || 0));
     const prem = Math.round(toNum(p.premium || 0));
        
     // 4. PREMIUM REMAINING
@@ -147,7 +146,7 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
                 ${isULIP ? 
                     `<div class="detail-item" style="background: #eef2ff; border: 2px solid #6366f1; border-radius: 12px; padding: 10px; display: flex; flex-direction: column; justify-content: center;">
                         <p style="color: #4338ca; font-weight: 800; font-size: 10px; margin: 0; text-transform: uppercase;">Portfolio Value</p>
-                        <p style="font-weight: 900; color: #1e1b4b; font-size: 18px; margin: 0;">${autoFmt(unitValue, sym)}</p>
+                        <p style="font-weight: 900; color: #1e1b4b; font-size: 18px; margin: 0;">${p.currentUnitValue || 'No Value'}</p>
                     </div>` : 
                     `<div class="detail-item"><p>Customer ID</p><p>${p.clientId || 'N/A'}</p></div>`
                 }
