@@ -1,14 +1,13 @@
-/* component_sg.js - v6.7.1 - Final Fixed Visual Sync */
+/* component_sg.js - v6.7.5 - Full Visual & Font Sync */
 import { autoFmt, toNum } from './india.js';
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const commDate = new Date(p.commenced);
     const matDate = new Date(p.maturity);
     
-    // --- THE FIX: Define startY and endY ---
+    // Core Year Variables
     const startY = commDate.getFullYear();
     const endY = matDate.getFullYear();
-    
     const commMonth = commDate.getMonth();
     const commDay = commDate.getDate();
 
@@ -23,7 +22,7 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     if (TODAY < thisYearAnniversary) yearsPassed--;
     const policyYearIdx = yearsPassed + 1;
 
-    // --- 1. SMART EXIT CALCULATION ---
+    // --- 1. SMART EXIT CALCULATION (Maturity-Clamped) ---
     const targetExitYear = Math.min(startY + ppt + 2, endY);
     const projectionYears = Math.max(0, targetExitYear - CURRENT_YEAR);
 
@@ -65,7 +64,7 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
         vestingStr = `LEFT: ${String(y).padStart(2,'0')}Y${String(m).padStart(2,'0')}M`;
     }
 
-    // --- 6. TIMELINE & BRANDING ---
+    // --- 6. TIMELINE RENDER ---
     const yearsToMat = endY - startY;
     let maxYears = (yearsToMat <= 25) ? yearsToMat : Math.min(Math.max(15, policyYearIdx + 5), yearsToMat);
     let timelineHtml = '';
@@ -82,6 +81,7 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
 
     return `
     <div class="policy-card mb-10 rounded-[40px] bg-white overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.08)] border-2 relative" id="card-${p.id}" style="border-left: 16px solid ${brandColor}; border-color: ${brandColor};">
+        
         <div class="p-8 flex items-center justify-between cursor-pointer relative min-h-[100px]" style="background: ${brandBg}" onclick="toggleCard('${p.id}')">
             
             <div class="flex items-center gap-6 pl-4 min-w-[340px]">
@@ -128,20 +128,43 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
             </div>
         </div>
 
-        <div class="content-area px-10 pb-10 pt-4" style="background: linear-gradient(to bottom, ${brandBg}, #ffffff)">
-            <div class="grid grid-cols-5 gap-4 mb-8">
-                <div class="p-6 rounded-[32px] bg-slate-50 border border-slate-100 relative shadow-sm"><p class="text-[10px] font-black text-slate-400 mb-2 uppercase">Policy No.</p><p class="text-lg font-mono font-bold text-slate-700">#${p.id}</p></div>
-                <div class="p-6 rounded-[32px] bg-white border border-slate-100 relative shadow-sm"><p class="text-[10px] font-black text-slate-400 mb-2 uppercase">Valuation</p><p class="text-xl font-black text-slate-900">${p.currentUnitValue}</p></div>
-                <div class="p-6 rounded-[32px] bg-white border border-slate-100 relative shadow-sm"><p class="text-[10px] font-black text-slate-400 mb-2 uppercase">Invested</p><p class="text-xl font-black text-slate-800">${autoFmt(totalPremiumsPaid - (p.withdrawals || []).reduce((a, b) => a + toNum(b), 0), sym)}</p></div>
-                <div class="p-6 rounded-[32px] bg-emerald-50 border border-emerald-100 shadow-sm"><p class="text-[10px] font-black text-emerald-600 mb-2 uppercase text-center">Surrender</p><p class="text-2xl font-black text-emerald-700 text-center">${autoFmt(surrenderValue, sym)}</p></div>
-                <div class="p-6 rounded-[32px] bg-red-50 border border-red-100 shadow-sm"><p class="text-[10px] font-black text-red-400 mb-2 uppercase text-center">Locked</p><p class="text-2xl font-black text-red-600 text-center">-${autoFmt(accountValue - surrenderValue, sym)}</p></div>
+        <div class="content-area px-10 pb-10 pt-6 relative z-20" style="background: linear-gradient(to bottom, ${brandBg}, #ffffff)">
+            
+            <div class="grid grid-cols-3 gap-8 mb-10 bg-white/40 p-8 rounded-[40px] border border-white/60 shadow-sm">
+                
+                <div class="relative pl-6 border-l-4 border-slate-200">
+                    <p class="text-[11px] font-black text-slate-400 mb-2 uppercase tracking-[0.2em]">Policy Number</p>
+                    <p class="text-[24px] font-bold text-slate-700 tracking-[0.1em] font-mono uppercase">
+                        ${p.id}
+                    </p>
+                </div>
+
+                <div class="relative pl-6 border-l-4 border-slate-200">
+                    <p class="text-[11px] font-black text-slate-400 mb-2 uppercase tracking-[0.2em]">Valuation</p>
+                    <p class="text-[32px] font-black text-slate-900 tracking-tighter leading-none">
+                        ${p.currentUnitValue}
+                    </p>
+                </div>
+
+                <div class="relative pl-6 border-l-4 border-slate-200">
+                    <p class="text-[11px] font-black text-slate-400 mb-2 uppercase tracking-[0.2em]">Invested Amount</p>
+                    <p class="text-[32px] font-black text-slate-800 tracking-tighter leading-none">
+                        ${autoFmt(totalPremiumsPaid - (p.withdrawals || []).reduce((a, b) => a + toNum(b), 0), sym)}
+                    </p>
+                </div>
             </div>
-            <div class="flex justify-between items-end mb-4 px-2">
-                <div><p class="text-[10px] font-black text-slate-400 uppercase mb-1">Commencement</p><p class="text-sm font-bold text-slate-700 underline decoration-sky-300 decoration-2 underline-offset-4">${p.commenced}</p></div>
-                <div class="text-right"><p class="text-[10px] font-black text-slate-400 uppercase mb-1">Maturity</p><p class="text-sm font-bold text-slate-700 underline decoration-amber-300 decoration-2 underline-offset-4">${p.maturity}</p></div>
+
+            <div class="flex justify-between items-center mb-6 px-6">
+                <div>
+                    <p class="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">${p.commenced}</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">${p.maturity}</p>
+                </div>
             </div>
-            <div class="relative flex items-center h-16 bg-slate-100 rounded-[24px] px-2 border border-slate-200/50">
-                <div class="flex-1 flex h-10 items-center gap-1">${timelineHtml}</div>
+
+            <div class="relative flex items-center h-20 bg-slate-100/50 rounded-[32px] px-3 border border-slate-200/40 shadow-inner">
+                <div class="flex-1 flex h-12 items-center gap-1.5">${timelineHtml}</div>
                 ${starHtml}
             </div>
         </div>
