@@ -1,4 +1,4 @@
-/* component_sg.js - v6.6.8 - Maturity-Clamped Exit Strategy */
+/* component_sg.js - v6.6.9 - Visual Sync with India Profile */
 import { autoFmt, toNum } from './india.js';
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -21,7 +21,6 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const policyYearIdx = yearsPassed + 1;
 
     // --- 1. SMART EXIT CALCULATION (Maturity-Clamped) ---
-    // Rule: PPT + 2, but never later than the actual Maturity Year
     const targetExitYear = Math.min(startY + ppt + 2, endY);
     const projectionYears = Math.max(0, targetExitYear - CURRENT_YEAR);
 
@@ -35,7 +34,6 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     // --- 3. CONSERVATIVE PROJECTION (4%) ---
     const r = 0.04;
     const lastPayYear = startY + ppt;
-    // How many more checks are left until PPT is hit?
     const yearsToPay = isPaidUp ? 0 : Math.max(0, Math.min(lastPayYear, targetExitYear) - (hasPassedThisYear ? CURRENT_YEAR + 1 : CURRENT_YEAR));
 
     const fvUnits = accountValue * Math.pow(1 + r, projectionYears);
@@ -47,15 +45,9 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     }
     const totalProjected = Math.round(fvUnits + fvPremiums);
 
-    // --- 4. SMART HORIZON (15yr Min or Maturity) ---
+    // --- 4. SMART HORIZON ---
     const yearsToMat = endY - startY;
-    let maxYears;
-    if (yearsToMat <= 25) {
-        maxYears = yearsToMat; 
-    } else {
-        maxYears = Math.max(15, policyYearIdx + 5); 
-        maxYears = Math.min(maxYears, yearsToMat);
-    }
+    let maxYears = (yearsToMat <= 25) ? yearsToMat : Math.min(Math.max(15, policyYearIdx + 5), yearsToMat);
 
     // --- 5. UI COMPONENTS ---
     let vestingStr = (mip === 0 || (new Date(startY + mip, commMonth, commDay) <= TODAY)) ? "Vested" : "";
@@ -65,7 +57,7 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
         let m = targetVesting.getMonth() - TODAY.getMonth();
         if (targetVesting.getDate() < TODAY.getDate()) m--;
         if (m < 0) { y--; m += 12; }
-        vestingStr = `Left: ${String(y).padStart(2,'0')}y${String(m).padStart(2,'0')}m`;
+        vestingStr = `LEFT: ${String(y).padStart(2,'0')}Y${String(m).padStart(2,'0')}M`;
     }
 
     let timelineHtml = '';
@@ -82,27 +74,53 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const brandBg = `rgba(${parseInt(brandColor.slice(1,3), 16)}, ${parseInt(brandColor.slice(3,5), 16)}, ${parseInt(brandColor.slice(5,7), 16)}, 0.04)`;
     const nextDueDisplay = new Date(hasPassedThisYear ? CURRENT_YEAR + 1 : CURRENT_YEAR, commMonth, commDay).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 
-return `
+    return `
     <div class="policy-card mb-10 rounded-[40px] bg-white overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.08)] border-2 relative" id="card-${p.id}" style="border-left: 16px solid ${brandColor}; border-color: ${brandColor};">
-        <div class="p-8 flex items-center justify-between cursor-pointer relative" style="background: ${brandBg}" onclick="toggleCard('${p.id}')">
-            <div class="flex items-center gap-8 pl-6 pr-4">
-                <div class="w-20 h-20 flex-shrink-0 flex items-center justify-center bg-white rounded-[24px] shadow-sm p-3 relative z-20"><img src="${p.logo}" class="max-h-full object-contain"></div>
-                <div class="relative z-20"><h3 class="font-black text-3xl text-slate-900 mb-2 tracking-tight">${p.name}</h3></div>
+        <div class="p-8 flex items-center justify-between cursor-pointer relative min-h-[110px]" style="background: ${brandBg}" onclick="toggleCard('${p.id}')">
+            
+            <div class="flex items-center gap-6 pl-6 pr-4 min-w-[320px]">
+                <div class="w-16 h-16 flex-shrink-0 flex items-center justify-center bg-white rounded-[20px] shadow-sm p-3 relative z-20">
+                    <img src="${p.logo}" class="max-h-full object-contain">
+                </div>
+                <div class="flex items-center gap-3 relative z-20">
+                    <h3 class="font-black text-2xl text-slate-900 tracking-tight">${p.name}</h3>
+                    <div class="w-9 h-9 rounded-full border-2 border-white shadow-sm overflow-hidden bg-slate-100 flex-shrink-0">
+                        <img src="${p.avatarPath || 'avatar_self.png'}" class="w-full h-full object-cover">
+                    </div>
+                </div>
             </div>
+
+            <div class="flex-1 flex justify-center">
+                <span class="px-4 py-1.5 rounded-full border border-rose-900/30 bg-rose-50/50 text-[10px] font-bold text-rose-900 italic tracking-wider uppercase">
+                    ${p.type || 'SAVINGS'}
+                </span>
+            </div>
+
             <div class="flex items-center gap-10 text-right px-4 relative z-20">
-                <div><p class="text-[10px] font-black text-slate-300 uppercase mb-1">Premium</p><p class="text-2xl font-black text-slate-800">${autoFmt(p.premium, sym)}</p></div>
-                <div><p class="text-[10px] font-black text-slate-300 uppercase mb-1">Valuation</p><p class="text-2xl font-black text-slate-900">${p.currentUnitValue}</p></div>
-                <div class="bg-white/60 px-6 py-3 rounded-[20px] border border-white/50 flex flex-col justify-center min-w-[125px] h-[64px]">
-                    <p class="text-[9px] font-black ${vestingStr === "Vested" ? 'text-emerald-500' : 'text-indigo-500'} uppercase text-center">${vestingStr}</p>
-                    <div class="h-[1px] bg-slate-200/40 w-full my-1"></div>
-                    <p class="text-sm font-black text-slate-700 text-center tracking-tight">${nextDueDisplay}</p>
+                <div>
+                    <p class="text-[10px] font-black text-slate-400 uppercase mb-1 tracking-widest">Sum Assured</p>
+                    <p class="text-2xl font-black text-slate-800 tracking-tighter">${autoFmt(toNum(p.sumAssured) === 0 ? accountValue : p.sumAssured, sym)}</p>
+                </div>
+                <div class="pl-10 border-l border-slate-100">
+                    <p class="text-[10px] font-black text-slate-400 uppercase mb-1 tracking-widest">Annual Premium</p>
+                    <p class="text-2xl font-black text-[#059669] tracking-tighter">${autoFmt(p.premium, sym)}</p>
+                </div>
+            </div>
+
+            <div class="w-44 flex flex-col justify-center ml-4">
+                <div class="bg-white/70 px-4 py-2.5 rounded-[20px] border border-white/60 shadow-sm flex flex-col justify-center min-h-[64px]">
+                    <p class="text-[9px] font-black ${vestingStr.includes("Vested") ? 'text-emerald-500' : 'text-indigo-500'} uppercase text-center leading-none mb-1">${vestingStr}</p>
+                    <div class="h-[1px] bg-slate-200/40 w-full my-1.5"></div>
+                    <p class="text-[9px] font-bold text-slate-400 uppercase leading-none mb-1 text-center">Next Due</p>
+                    <p class="text-[13px] font-black text-slate-800 text-center tracking-tight leading-none">${nextDueDisplay}</p>
                 </div>
             </div>
         </div>
+
         <div class="content-area px-10 pb-10 pt-2 relative z-20" style="background: linear-gradient(to bottom, ${brandBg}, #ffffff)">
             <div class="grid grid-cols-5 gap-4 mb-8">
                 <div class="p-6 rounded-[32px] bg-slate-50 border border-slate-100 relative shadow-sm"><p class="text-[10px] font-black text-slate-400 mb-2 uppercase">Policy No.</p><p class="text-lg font-mono font-bold text-slate-700">#${p.id}</p></div>
-                <div class="p-6 rounded-[32px] bg-white border border-slate-100 relative shadow-sm"><p class="text-[10px] font-black text-slate-400 mb-2 uppercase">Sum Assured</p><p class="text-xl font-black text-slate-800">${autoFmt(toNum(p.sumAssured) === 0 ? accountValue : p.sumAssured, sym)}</p></div>
+                <div class="p-6 rounded-[32px] bg-white border border-slate-100 relative shadow-sm"><p class="text-[10px] font-black text-slate-400 mb-2 uppercase">Valuation</p><p class="text-xl font-black text-slate-900">${p.currentUnitValue}</p></div>
                 <div class="p-6 rounded-[32px] bg-white border border-slate-100 relative shadow-sm"><p class="text-[10px] font-black text-slate-400 mb-2 uppercase">Invested</p><p class="text-xl font-black text-slate-800">${autoFmt(totalPremiumsPaid - (p.withdrawals || []).reduce((a, b) => a + toNum(b), 0), sym)}</p></div>
                 <div class="p-6 rounded-[32px] bg-emerald-50 border border-emerald-100 shadow-sm"><p class="text-[10px] font-black text-emerald-600 mb-2 uppercase text-center">Surrender</p><p class="text-2xl font-black text-emerald-700 text-center">${autoFmt(surrenderValue, sym)}</p></div>
                 <div class="p-6 rounded-[32px] bg-red-50 border border-red-100 shadow-sm"><p class="text-[10px] font-black text-red-400 mb-2 uppercase text-center">Locked</p><p class="text-2xl font-black text-red-600 text-center">-${autoFmt(accountValue - surrenderValue, sym)}</p></div>
