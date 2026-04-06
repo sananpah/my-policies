@@ -1,12 +1,5 @@
-/* loader.js - v4.2.2 - Multi-Region Avatar Sync */
+/* loader.js - v4.1.21 - Restored Logic with Avatar & Summary Fixes */
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2UwOfG57DQBOBnJX-9hsRKOQTUgALiM3uxs-VGzD2KN8JoWNAQltH6IkgAGhPTNFEvb/pub?gid=866869416&single=true&output=csv";
-
-// Helper for Random Funky Colors
-const getRandomFunkyColor = () => {
-    const hue = Math.floor(Math.random() * 360);
-    // 75% Saturation / 45% Lightness = Vibrant but readable
-    return `hsl(${hue}, 75%, 45%)`;
-};
 
 const autoFmt = (val, sym) => {
     const n = parseFloat(val);
@@ -49,28 +42,23 @@ export async function syncWithGoogleSheets(masterList) {
                     p.company = match.company || p.company;
                     p.type = match.type || p.type;
                     
-                    p.color = getRandomFunkyColor();
+                    // Note: p.color is NOT touched here, preserving your data.js choice.
 
                     const safeCompanyName = p.company.replace(/[\s.]/g, "");
                     p.logo = `logo_${safeCompanyName}.png`;
 
-                    // --- 2. THE FIX FOR ALL REGIONS ---
-                    // This logic was previously wrapped inside 'if (country === "india")'
+                    // --- 2. THE MULTI-REGION AVATAR FIX ---
                     const identity = insuredMap[match["Insured"]];
                     if (identity) {
                         p.avatarPath = identity.img;
                         p.holderType = identity.type;
-                    } else {
-                        // Default if the Excel value isn't found in the map
-                        p.avatarPath = "avatar_self.png";
-                        p.holderType = "Self";
                     }
-                    // -----------------------------------
 
                     p.premium = cleanNumeric(match["Premium"]);
                     const rawSA = String(match["Sum Assured"] || "").toLowerCase();
                     p.sumAssured = (rawSA.includes("not") || cleanNumeric(match["Sum Assured"]) === 0) ? 0 : cleanNumeric(match["Sum Assured"]);
                     
+                    // --- 3. PORTFOLIO TOTAL FIX ---
                     p.currentUnitValue = match["Current Value"] || "No Value";
                     p.unitValueNumeric = cleanNumeric(p.currentUnitValue); 
 
@@ -92,7 +80,7 @@ export async function syncWithGoogleSheets(masterList) {
                         }
                     }
 
-                    // Maturity Logic (India ULIP 4% vs Non-ULIP BSA)
+                    // Maturity Logic (India ULIP 4% vs Traditional)
                     if (country === "india") {
                         const isULIP = (p.type || "").toLowerCase().includes("ulip");
                         if (isULIP) {
@@ -137,7 +125,6 @@ export async function syncWithGoogleSheets(masterList) {
     } catch (e) { console.warn("⚠️ Sync failed:", e); return masterList; }
 }
 
-// ... (processCSV and parseInsuranceTab remain unchanged) ...
 function processCSV(csv) {
     const rows = [];
     let currentRow = [''], inQuote = false;
