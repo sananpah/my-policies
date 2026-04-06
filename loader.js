@@ -1,5 +1,12 @@
-/* loader.js - v4.1.13 - Dynamic Logos & Pure Excel Sync (Component Neutral) */
+/* loader.js - v4.1.15 - Portfolio Fix & Funky Randomizer */
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2UwOfG57DQBOBnJX-9hsRKOQTUgALiM3uxs-VGzD2KN8JoWNAQltH6IkgAGhPTNFEvb/pub?gid=866869416&single=true&output=csv";
+
+// Helper for Random Funky Colors
+const getRandomFunkyColor = () => {
+    const hue = Math.floor(Math.random() * 360);
+    // 75% Saturation / 45% Lightness = Vibrant but readable
+    return `hsl(${hue}, 75%, 45%)`;
+};
 
 const autoFmt = (val, sym) => {
     const n = parseFloat(val);
@@ -41,14 +48,22 @@ export async function syncWithGoogleSheets(masterList) {
                     p.company = match.company || p.company;
                     p.type = match.type || p.type;
                     
-                    // --- DYNAMIC LOGO LOGIC ---
+                    // 1. DYNAMIC COLOR (Random on every refresh)
+                    p.color = getRandomFunkyColor();
+
+                    // 2. DYNAMIC LOGO
                     const safeCompanyName = p.company.replace(/[\s.]/g, "");
                     p.logo = `logo_${safeCompanyName}.png`;
 
+                    // 3. CORE FINANCIALS (Including Portfolio Sum Fix)
                     p.premium = cleanNumeric(match["Premium"]);
                     const rawSA = String(match["Sum Assured"] || "").toLowerCase();
                     p.sumAssured = (rawSA.includes("not") || cleanNumeric(match["Sum Assured"]) === 0) ? 0 : cleanNumeric(match["Sum Assured"]);
                     
+                    // The "Current Value" logic that drives the Consolidated Total
+                    p.currentUnitValue = match["Current Value"] || "No Value";
+                    p.unitValueNumeric = cleanNumeric(p.currentUnitValue); 
+
                     if (country === "india") {
                         const identity = insuredMap[match["Insured"]];
                         if (identity) {
@@ -57,7 +72,7 @@ export async function syncWithGoogleSheets(masterList) {
                         }
                     }
 
-                    // Date & Term Logic
+                    // 4. DATE & TERM LOGIC
                     let rawDate = String(match["Commenced Date"] || "").trim();
                     p.commenced = rawDate.replace(/\./g, ' '); 
                     const rawTermStr = String(match["Term"] || "");
@@ -75,11 +90,11 @@ export async function syncWithGoogleSheets(masterList) {
                         }
                     }
 
-                    // Maturity Logic (ULIP 4% vs Non-ULIP BSA)
+                    // 5. MATURITY LOGIC
                     if (country === "india") {
                         const isULIP = (p.type || "").toLowerCase().includes("ulip");
                         if (isULIP) {
-                            const accVal = cleanNumeric(match["Current Value"]);
+                            const accVal = p.unitValueNumeric;
                             const endY = parseInt(p.maturity.split(" ")[2]) || 2050;
                             const startY = parseInt(p.commenced.split(" ")[2]) || 2000;
                             const yearsToMat = Math.max(0, endY - CURRENT_YEAR);
@@ -87,6 +102,7 @@ export async function syncWithGoogleSheets(masterList) {
                             const annDay = parseInt(p.commenced.split(" ")[0]) || 1;
                             const hasPassed = (TODAY.getMonth() > annMonth) || (TODAY.getMonth() === annMonth && TODAY.getDate() >= annDay);
                             const yearsToPay = Math.max(0, (startY + ppt) - (hasPassed ? CURRENT_YEAR + 1 : CURRENT_YEAR));
+                            
                             const r = 0.04;
                             const fvUnits = accVal * Math.pow(1 + r, yearsToMat);
                             let fvPrems = 0;
@@ -112,7 +128,6 @@ export async function syncWithGoogleSheets(masterList) {
                         p.totalPremiumPaid = cleanNumeric(match["Total Premium"] || "0");
                         if (rawTermStr.includes(":")) p.mip = parseInt(rawTermStr.split(":")[2], 10) || 0;
                     }
-                    p.currentUnitValue = match["Current Value"] || "No Value";
                 }
                 return p;
             });
