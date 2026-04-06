@@ -1,11 +1,11 @@
-/* component_sg.js - v6.7.5 - Full Visual & Font Sync */
+/* component_sg.js - v6.7.7 - Surgical Font Style Sync Only */
 import { autoFmt, toNum } from './india.js';
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const commDate = new Date(p.commenced);
     const matDate = new Date(p.maturity);
     
-    // Core Year Variables
+    // Core variables (Unchanged)
     const startY = commDate.getFullYear();
     const endY = matDate.getFullYear();
     const commMonth = commDate.getMonth();
@@ -15,25 +15,25 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const ppt = (p.ppt !== undefined) ? p.ppt : 0;
     const isPaidUp = (p.dueDate === "PAID UP");
     
-    // Anniversary & Progress
+    // Anniversary & Progress logic (Unchanged)
     const thisYearAnniversary = new Date(CURRENT_YEAR, commMonth, commDay);
     const hasPassedThisYear = TODAY >= thisYearAnniversary;
     let yearsPassed = CURRENT_YEAR - startY;
     if (TODAY < thisYearAnniversary) yearsPassed--;
     const policyYearIdx = yearsPassed + 1;
 
-    // --- 1. SMART EXIT CALCULATION (Maturity-Clamped) ---
+    // --- 1. SMART EXIT CALCULATION (Unchanged) ---
     const targetExitYear = Math.min(startY + ppt + 2, endY);
     const projectionYears = Math.max(0, targetExitYear - CURRENT_YEAR);
 
-    // --- 2. CORE FINANCIALS ---
+    // --- 2. CORE FINANCIALS (Unchanged) ---
     const accountValue = Math.round(toNum(p.currentUnitValue || 0));
     const annualPremium = toNum(p.premium || 0);
     const totalPremiumsPaid = p.totalPremiumPaid ? toNum(p.totalPremiumPaid) : (annualPremium * policyYearIdx);
     const chargePct = (p.surrenderCharges && p.surrenderCharges[policyYearIdx]) || 0;
     const surrenderValue = Math.round(Math.max(0, accountValue - (chargePct / 100 * (isPaidUp ? accountValue : totalPremiumsPaid))));
 
-    // --- 3. CONSERVATIVE PROJECTION (4%) ---
+    // --- 3. CONSERVATIVE PROJECTION (Unchanged) ---
     const r = 0.04;
     const lastPayYear = startY + ppt;
     const yearsToPay = isPaidUp ? 0 : Math.max(0, Math.min(lastPayYear, targetExitYear) - (hasPassedThisYear ? CURRENT_YEAR + 1 : CURRENT_YEAR));
@@ -46,14 +46,14 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     }
     const totalProjected = Math.round(fvUnits + fvPremiums);
 
-    // --- 4. DUE DATE & BLINKING LOGIC ---
+    // --- 4. DUE DATE & BLINKING LOGIC (Unchanged) ---
     const nextDueDate = new Date(hasPassedThisYear ? CURRENT_YEAR + 1 : CURRENT_YEAR, commMonth, commDay);
     const nextDueDisplay = nextDueDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
     const diffTime = nextDueDate - TODAY;
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     const isDueSoon = diffDays <= 30 && diffDays >= 0;
 
-    // --- 5. VESTING STRING ---
+    // --- 5. VESTING STRING (Unchanged) ---
     let vestingStr = (mip === 0 || (new Date(startY + mip, commMonth, commDay) <= TODAY)) ? "Vested" : "";
     if (!vestingStr) {
         const targetVesting = new Date(startY + mip, commMonth, commDay);
@@ -64,7 +64,7 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
         vestingStr = `LEFT: ${String(y).padStart(2,'0')}Y${String(m).padStart(2,'0')}M`;
     }
 
-    // --- 6. TIMELINE RENDER ---
+    // --- 6. TIMELINE & BRANDING (Unchanged) ---
     const yearsToMat = endY - startY;
     let maxYears = (yearsToMat <= 25) ? yearsToMat : Math.min(Math.max(15, policyYearIdx + 5), yearsToMat);
     let timelineHtml = '';
@@ -81,7 +81,6 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
 
     return `
     <div class="policy-card mb-10 rounded-[40px] bg-white overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.08)] border-2 relative" id="card-${p.id}" style="border-left: 16px solid ${brandColor}; border-color: ${brandColor};">
-        
         <div class="p-8 flex items-center justify-between cursor-pointer relative min-h-[100px]" style="background: ${brandBg}" onclick="toggleCard('${p.id}')">
             
             <div class="flex items-center gap-6 pl-4 min-w-[340px]">
@@ -128,43 +127,37 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
             </div>
         </div>
 
-        <div class="content-area px-10 pb-10 pt-6 relative z-20" style="background: linear-gradient(to bottom, ${brandBg}, #ffffff)">
-            
-            <div class="grid grid-cols-3 gap-8 mb-10 bg-white/40 p-8 rounded-[40px] border border-white/60 shadow-sm">
-                
-                <div class="relative pl-6 border-l-4 border-slate-200">
-                    <p class="text-[11px] font-black text-slate-400 mb-2 uppercase tracking-[0.2em]">Policy Number</p>
-                    <p class="text-[24px] font-bold text-slate-700 tracking-[0.1em] font-mono uppercase">
-                        ${p.id}
-                    </p>
+        <div class="content-area px-10 pb-10 pt-4" style="background: linear-gradient(to bottom, ${brandBg}, #ffffff)">
+            <div class="grid grid-cols-5 gap-4 mb-8">
+                <div class="p-6 rounded-[32px] bg-slate-50 border border-slate-100 relative shadow-sm">
+                    <p class="text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest">Policy No.</p>
+                    <p class="text-lg font-mono font-bold text-slate-700 tracking-widest">#${p.id}</p>
                 </div>
-
-                <div class="relative pl-6 border-l-4 border-slate-200">
-                    <p class="text-[11px] font-black text-slate-400 mb-2 uppercase tracking-[0.2em]">Valuation</p>
-                    <p class="text-[32px] font-black text-slate-900 tracking-tighter leading-none">
-                        ${p.currentUnitValue}
-                    </p>
+                <div class="p-6 rounded-[32px] bg-white border border-slate-100 relative shadow-sm">
+                    <p class="text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest">Valuation</p>
+                    <p class="text-[24px] font-black text-slate-900 tracking-tighter leading-none">${p.currentUnitValue}</p>
                 </div>
-
-                <div class="relative pl-6 border-l-4 border-slate-200">
-                    <p class="text-[11px] font-black text-slate-400 mb-2 uppercase tracking-[0.2em]">Invested Amount</p>
-                    <p class="text-[32px] font-black text-slate-800 tracking-tighter leading-none">
-                        ${autoFmt(totalPremiumsPaid - (p.withdrawals || []).reduce((a, b) => a + toNum(b), 0), sym)}
-                    </p>
+                <div class="p-6 rounded-[32px] bg-white border border-slate-100 relative shadow-sm">
+                    <p class="text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest">Invested</p>
+                    <p class="text-[24px] font-black text-slate-800 tracking-tighter leading-none">${autoFmt(totalPremiumsPaid - (p.withdrawals || []).reduce((a, b) => a + toNum(b), 0), sym)}</p>
+                </div>
+                <div class="p-6 rounded-[32px] bg-emerald-50 border border-emerald-100 shadow-sm">
+                    <p class="text-[10px] font-black text-emerald-600 mb-2 uppercase text-center tracking-widest">Surrender</p>
+                    <p class="text-[28px] font-black text-emerald-700 text-center tracking-tighter leading-none">${autoFmt(surrenderValue, sym)}</p>
+                </div>
+                <div class="p-6 rounded-[32px] bg-red-50 border border-red-100 shadow-sm">
+                    <p class="text-[10px] font-black text-red-400 mb-2 uppercase text-center tracking-widest">Locked</p>
+                    <p class="text-[28px] font-black text-red-600 text-center tracking-tighter leading-none">-${autoFmt(accountValue - surrenderValue, sym)}</p>
                 </div>
             </div>
 
-            <div class="flex justify-between items-center mb-6 px-6">
-                <div>
-                    <p class="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">${p.commenced}</p>
-                </div>
-                <div class="text-right">
-                    <p class="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">${p.maturity}</p>
-                </div>
+            <div class="flex justify-between items-end mb-4 px-2">
+                <div><p class="text-[10px] font-black text-slate-400 uppercase mb-1 tracking-widest">${p.commenced}</p></div>
+                <div class="text-right"><p class="text-[10px] font-black text-slate-400 uppercase mb-1 tracking-widest">${p.maturity}</p></div>
             </div>
 
-            <div class="relative flex items-center h-20 bg-slate-100/50 rounded-[32px] px-3 border border-slate-200/40 shadow-inner">
-                <div class="flex-1 flex h-12 items-center gap-1.5">${timelineHtml}</div>
+            <div class="relative flex items-center h-16 bg-slate-100 rounded-[24px] px-2 border border-slate-200/50 shadow-inner">
+                <div class="flex-1 flex h-10 items-center gap-1">${timelineHtml}</div>
                 ${starHtml}
             </div>
         </div>
