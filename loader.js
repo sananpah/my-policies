@@ -1,4 +1,4 @@
-/* loader.js - v4.1.18 - Stable Restore (Verified) */
+/* loader.js - v4.1.21 - Restored to v4.1.13 logic with Summary Fix */
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2UwOfG57DQBOBnJX-9hsRKOQTUgALiM3uxs-VGzD2KN8JoWNAQltH6IkgAGhPTNFEvb/pub?gid=866869416&single=true&output=csv";
 
 const autoFmt = (val, sym) => {
@@ -35,18 +35,20 @@ export async function syncWithGoogleSheets(masterList) {
         ["india", "singapore"].forEach(country => {
             if (!masterList[country]) return;
             masterList[country] = masterList[country].map(p => {
+                // MATCHING LOGIC - Must match Excel header exactly
                 const match = sheetRecords.find(row => String(row["Policy No."]).trim() === String(p.id).trim());
                 if (match) {
-                    // 1. DATA SYNC
                     p.name = match.name || p.name;
                     p.company = match.company || p.company;
+                    p.type = match.type || p.type;
                     
-                    // Note: We do NOT set p.color here, so it uses your data.js colors.
-
-                    // 2. LOGO SYNC
                     const safeCompanyName = p.company.replace(/[\s.]/g, "");
                     p.logo = `logo_${safeCompanyName}.png`;
 
+                    p.premium = cleanNumeric(match["Premium"]);
+                    const rawSA = String(match["Sum Assured"] || "").toLowerCase();
+                    p.sumAssured = (rawSA.includes("not") || cleanNumeric(match["Sum Assured"]) === 0) ? 0 : cleanNumeric(match["Sum Assured"]);
+                    
                     if (country === "india") {
                         const identity = insuredMap[match["Insured"]];
                         if (identity) {
@@ -55,15 +57,6 @@ export async function syncWithGoogleSheets(masterList) {
                         }
                     }
 
-                    // 3. FINANCIALS
-                    p.premium = cleanNumeric(match["Premium"]);
-                    p.currentUnitValue = match["Current Value"] || "No Value";
-                    p.unitValueNumeric = cleanNumeric(p.currentUnitValue); // Fixes Consolidated Total
-
-                    const rawSA = String(match["Sum Assured"] || "").toLowerCase();
-                    p.sumAssured = (rawSA.includes("not") || cleanNumeric(match["Sum Assured"]) === 0) ? 0 : cleanNumeric(match["Sum Assured"]);
-                    
-                    // 4. DATE & TERM
                     let rawDate = String(match["Commenced Date"] || "").trim();
                     p.commenced = rawDate.replace(/\./g, ' '); 
                     const rawTermStr = String(match["Term"] || "");
@@ -81,11 +74,10 @@ export async function syncWithGoogleSheets(masterList) {
                         }
                     }
 
-                    // 5. MATURITY LOGIC
                     if (country === "india") {
-                        const isULIP = (match.type || "").toLowerCase().includes("ulip");
+                        const isULIP = (p.type || "").toLowerCase().includes("ulip");
                         if (isULIP) {
-                            const accVal = p.unitValueNumeric;
+                            const accVal = cleanNumeric(match["Current Value"]);
                             const endY = parseInt(p.maturity.split(" ")[2]) || 2050;
                             const startY = parseInt(p.commenced.split(" ")[2]) || 2000;
                             const yearsToMat = Math.max(0, endY - CURRENT_YEAR);
@@ -93,7 +85,6 @@ export async function syncWithGoogleSheets(masterList) {
                             const annDay = parseInt(p.commenced.split(" ")[0]) || 1;
                             const hasPassed = (TODAY.getMonth() > annMonth) || (TODAY.getMonth() === annMonth && TODAY.getDate() >= annDay);
                             const yearsToPay = Math.max(0, (startY + ppt) - (hasPassed ? CURRENT_YEAR + 1 : CURRENT_YEAR));
-                            
                             const r = 0.04;
                             const fvUnits = accVal * Math.pow(1 + r, yearsToMat);
                             let fvPrems = 0;
@@ -119,6 +110,10 @@ export async function syncWithGoogleSheets(masterList) {
                         p.totalPremiumPaid = cleanNumeric(match["Total Premium"] || "0");
                         if (rawTermStr.includes(":")) p.mip = parseInt(rawTermStr.split(":")[2], 10) || 0;
                     }
+                    
+                    // --- PORTFOLIO TOTAL FIX ---
+                    p.currentUnitValue = match["Current Value"] || "No Value";
+                    p.unitValueNumeric = cleanNumeric(p.currentUnitValue);
                 }
                 return p;
             });
