@@ -1,12 +1,5 @@
-/* loader.js - v4.1.15 - Portfolio Fix & Funky Randomizer */
+/* loader.js - v4.1.18 - Stable Restore (Verified) */
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2UwOfG57DQBOBnJX-9hsRKOQTUgALiM3uxs-VGzD2KN8JoWNAQltH6IkgAGhPTNFEvb/pub?gid=866869416&single=true&output=csv";
-
-// Helper for Random Funky Colors
-const getRandomFunkyColor = () => {
-    const hue = Math.floor(Math.random() * 360);
-    // 75% Saturation / 45% Lightness = Vibrant but readable
-    return `hsl(${hue}, 75%, 45%)`;
-};
 
 const autoFmt = (val, sym) => {
     const n = parseFloat(val);
@@ -44,25 +37,15 @@ export async function syncWithGoogleSheets(masterList) {
             masterList[country] = masterList[country].map(p => {
                 const match = sheetRecords.find(row => String(row["Policy No."]).trim() === String(p.id).trim());
                 if (match) {
+                    // 1. DATA SYNC
                     p.name = match.name || p.name;
                     p.company = match.company || p.company;
-                    p.type = match.type || p.type;
                     
-                    // 1. DYNAMIC COLOR (Random on every refresh)
-                    p.color = getRandomFunkyColor();
+                    // Note: We do NOT set p.color here, so it uses your data.js colors.
 
-                    // 2. DYNAMIC LOGO
+                    // 2. LOGO SYNC
                     const safeCompanyName = p.company.replace(/[\s.]/g, "");
                     p.logo = `logo_${safeCompanyName}.png`;
-
-                    // 3. CORE FINANCIALS (Including Portfolio Sum Fix)
-                    p.premium = cleanNumeric(match["Premium"]);
-                    const rawSA = String(match["Sum Assured"] || "").toLowerCase();
-                    p.sumAssured = (rawSA.includes("not") || cleanNumeric(match["Sum Assured"]) === 0) ? 0 : cleanNumeric(match["Sum Assured"]);
-                    
-                    // The "Current Value" logic that drives the Consolidated Total
-                    p.currentUnitValue = match["Current Value"] || "No Value";
-                    p.unitValueNumeric = cleanNumeric(p.currentUnitValue); 
 
                     if (country === "india") {
                         const identity = insuredMap[match["Insured"]];
@@ -72,7 +55,15 @@ export async function syncWithGoogleSheets(masterList) {
                         }
                     }
 
-                    // 4. DATE & TERM LOGIC
+                    // 3. FINANCIALS
+                    p.premium = cleanNumeric(match["Premium"]);
+                    p.currentUnitValue = match["Current Value"] || "No Value";
+                    p.unitValueNumeric = cleanNumeric(p.currentUnitValue); // Fixes Consolidated Total
+
+                    const rawSA = String(match["Sum Assured"] || "").toLowerCase();
+                    p.sumAssured = (rawSA.includes("not") || cleanNumeric(match["Sum Assured"]) === 0) ? 0 : cleanNumeric(match["Sum Assured"]);
+                    
+                    // 4. DATE & TERM
                     let rawDate = String(match["Commenced Date"] || "").trim();
                     p.commenced = rawDate.replace(/\./g, ' '); 
                     const rawTermStr = String(match["Term"] || "");
@@ -92,7 +83,7 @@ export async function syncWithGoogleSheets(masterList) {
 
                     // 5. MATURITY LOGIC
                     if (country === "india") {
-                        const isULIP = (p.type || "").toLowerCase().includes("ulip");
+                        const isULIP = (match.type || "").toLowerCase().includes("ulip");
                         if (isULIP) {
                             const accVal = p.unitValueNumeric;
                             const endY = parseInt(p.maturity.split(" ")[2]) || 2050;
