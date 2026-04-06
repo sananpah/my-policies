@@ -1,5 +1,12 @@
-/* loader.js - v4.1.21 - Restored to v4.1.13 logic with Summary Fix */
+/* loader.js - v4.2.2 - Multi-Region Avatar Sync */
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2UwOfG57DQBOBnJX-9hsRKOQTUgALiM3uxs-VGzD2KN8JoWNAQltH6IkgAGhPTNFEvb/pub?gid=866869416&single=true&output=csv";
+
+// Helper for Random Funky Colors
+const getRandomFunkyColor = () => {
+    const hue = Math.floor(Math.random() * 360);
+    // 75% Saturation / 45% Lightness = Vibrant but readable
+    return `hsl(${hue}, 75%, 45%)`;
+};
 
 const autoFmt = (val, sym) => {
     const n = parseFloat(val);
@@ -20,6 +27,7 @@ export async function syncWithGoogleSheets(masterList) {
         const csvData = decoder.decode(buffer);
         const sheetRecords = processCSV(csvData);
 
+        // --- 1. THE INSURED MAP ---
         const insuredMap = {
             "Suhail Nami": { type: "Self", img: "avatar_self.png" },
             "Saima Suhail": { type: "Wife", img: "avatar_wife.png" },
@@ -35,28 +43,38 @@ export async function syncWithGoogleSheets(masterList) {
         ["india", "singapore"].forEach(country => {
             if (!masterList[country]) return;
             masterList[country] = masterList[country].map(p => {
-                // MATCHING LOGIC - Must match Excel header exactly
                 const match = sheetRecords.find(row => String(row["Policy No."]).trim() === String(p.id).trim());
                 if (match) {
                     p.name = match.name || p.name;
                     p.company = match.company || p.company;
                     p.type = match.type || p.type;
                     
+                    p.color = getRandomFunkyColor();
+
                     const safeCompanyName = p.company.replace(/[\s.]/g, "");
                     p.logo = `logo_${safeCompanyName}.png`;
+
+                    // --- 2. THE FIX FOR ALL REGIONS ---
+                    // This logic was previously wrapped inside 'if (country === "india")'
+                    const identity = insuredMap[match["Insured"]];
+                    if (identity) {
+                        p.avatarPath = identity.img;
+                        p.holderType = identity.type;
+                    } else {
+                        // Default if the Excel value isn't found in the map
+                        p.avatarPath = "avatar_self.png";
+                        p.holderType = "Self";
+                    }
+                    // -----------------------------------
 
                     p.premium = cleanNumeric(match["Premium"]);
                     const rawSA = String(match["Sum Assured"] || "").toLowerCase();
                     p.sumAssured = (rawSA.includes("not") || cleanNumeric(match["Sum Assured"]) === 0) ? 0 : cleanNumeric(match["Sum Assured"]);
                     
-                    if (country === "india") {
-                        const identity = insuredMap[match["Insured"]];
-                        if (identity) {
-                            p.avatarPath = identity.img;
-                            p.holderType = identity.type;
-                        }
-                    }
+                    p.currentUnitValue = match["Current Value"] || "No Value";
+                    p.unitValueNumeric = cleanNumeric(p.currentUnitValue); 
 
+                    // Date & Term Logic
                     let rawDate = String(match["Commenced Date"] || "").trim();
                     p.commenced = rawDate.replace(/\./g, ' '); 
                     const rawTermStr = String(match["Term"] || "");
@@ -74,10 +92,11 @@ export async function syncWithGoogleSheets(masterList) {
                         }
                     }
 
+                    // Maturity Logic (India ULIP 4% vs Non-ULIP BSA)
                     if (country === "india") {
                         const isULIP = (p.type || "").toLowerCase().includes("ulip");
                         if (isULIP) {
-                            const accVal = cleanNumeric(match["Current Value"]);
+                            const accVal = p.unitValueNumeric;
                             const endY = parseInt(p.maturity.split(" ")[2]) || 2050;
                             const startY = parseInt(p.commenced.split(" ")[2]) || 2000;
                             const yearsToMat = Math.max(0, endY - CURRENT_YEAR);
@@ -110,10 +129,6 @@ export async function syncWithGoogleSheets(masterList) {
                         p.totalPremiumPaid = cleanNumeric(match["Total Premium"] || "0");
                         if (rawTermStr.includes(":")) p.mip = parseInt(rawTermStr.split(":")[2], 10) || 0;
                     }
-                    
-                    // --- PORTFOLIO TOTAL FIX ---
-                    p.currentUnitValue = match["Current Value"] || "No Value";
-                    p.unitValueNumeric = cleanNumeric(p.currentUnitValue);
                 }
                 return p;
             });
@@ -122,6 +137,7 @@ export async function syncWithGoogleSheets(masterList) {
     } catch (e) { console.warn("⚠️ Sync failed:", e); return masterList; }
 }
 
+// ... (processCSV and parseInsuranceTab remain unchanged) ...
 function processCSV(csv) {
     const rows = [];
     let currentRow = [''], inQuote = false;
