@@ -1,26 +1,60 @@
-/* component_sg.js - v6.7.0 - Final Visual Sync & Blinking Logic */
+/* component_sg.js - v6.7.1 - Final Fixed Visual Sync */
 import { autoFmt, toNum } from './india.js';
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
-    // ... (Keep all your existing math/financial logic at the top) ...
     const commDate = new Date(p.commenced);
+    const matDate = new Date(p.maturity);
+    
+    // --- THE FIX: Define startY and endY ---
+    const startY = commDate.getFullYear();
+    const endY = matDate.getFullYear();
+    
     const commMonth = commDate.getMonth();
     const commDay = commDate.getDate();
 
     const mip = (p.mip !== undefined) ? p.mip : 0;
     const ppt = (p.ppt !== undefined) ? p.ppt : 0;
+    const isPaidUp = (p.dueDate === "PAID UP");
     
+    // Anniversary & Progress
     const thisYearAnniversary = new Date(CURRENT_YEAR, commMonth, commDay);
     const hasPassedThisYear = TODAY >= thisYearAnniversary;
+    let yearsPassed = CURRENT_YEAR - startY;
+    if (TODAY < thisYearAnniversary) yearsPassed--;
+    const policyYearIdx = yearsPassed + 1;
+
+    // --- 1. SMART EXIT CALCULATION ---
+    const targetExitYear = Math.min(startY + ppt + 2, endY);
+    const projectionYears = Math.max(0, targetExitYear - CURRENT_YEAR);
+
+    // --- 2. CORE FINANCIALS ---
+    const accountValue = Math.round(toNum(p.currentUnitValue || 0));
+    const annualPremium = toNum(p.premium || 0);
+    const totalPremiumsPaid = p.totalPremiumPaid ? toNum(p.totalPremiumPaid) : (annualPremium * policyYearIdx);
+    const chargePct = (p.surrenderCharges && p.surrenderCharges[policyYearIdx]) || 0;
+    const surrenderValue = Math.round(Math.max(0, accountValue - (chargePct / 100 * (isPaidUp ? accountValue : totalPremiumsPaid))));
+
+    // --- 3. CONSERVATIVE PROJECTION (4%) ---
+    const r = 0.04;
+    const lastPayYear = startY + ppt;
+    const yearsToPay = isPaidUp ? 0 : Math.max(0, Math.min(lastPayYear, targetExitYear) - (hasPassedThisYear ? CURRENT_YEAR + 1 : CURRENT_YEAR));
+    const fvUnits = accountValue * Math.pow(1 + r, projectionYears);
+    let fvPremiums = 0;
+    if (yearsToPay > 0) {
+        fvPremiums = annualPremium * ((Math.pow(1 + r, yearsToPay) - 1) / r) * (1 + r);
+        const gapToExit = projectionYears - yearsToPay;
+        if (gapToExit > 0) fvPremiums = fvPremiums * Math.pow(1 + r, gapToExit);
+    }
+    const totalProjected = Math.round(fvUnits + fvPremiums);
+
+    // --- 4. DUE DATE & BLINKING LOGIC ---
     const nextDueDate = new Date(hasPassedThisYear ? CURRENT_YEAR + 1 : CURRENT_YEAR, commMonth, commDay);
     const nextDueDisplay = nextDueDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-
-    // --- BLINKING LOGIC ---
     const diffTime = nextDueDate - TODAY;
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     const isDueSoon = diffDays <= 30 && diffDays >= 0;
 
-    // --- VESTING STRING ---
+    // --- 5. VESTING STRING ---
     let vestingStr = (mip === 0 || (new Date(startY + mip, commMonth, commDay) <= TODAY)) ? "Vested" : "";
     if (!vestingStr) {
         const targetVesting = new Date(startY + mip, commMonth, commDay);
@@ -31,12 +65,23 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
         vestingStr = `LEFT: ${String(y).padStart(2,'0')}Y${String(m).padStart(2,'0')}M`;
     }
 
+    // --- 6. TIMELINE & BRANDING ---
+    const yearsToMat = endY - startY;
+    let maxYears = (yearsToMat <= 25) ? yearsToMat : Math.min(Math.max(15, policyYearIdx + 5), yearsToMat);
+    let timelineHtml = '';
+    for (let polY = 1; polY <= maxYears; polY++) {
+        const yr = startY + polY - 1;
+        let colorClass = yr < CURRENT_YEAR || (yr === CURRENT_YEAR && hasPassedThisYear) ? "bg-emerald-900" : (yr === CURRENT_YEAR ? "bg-black ring-2 ring-white z-20 scale-110 shadow-xl" : (polY <= mip ? "bg-indigo-500" : (polY <= ppt ? "bg-pink-400" : "bg-red-600")));
+        let statusLabel = yr < CURRENT_YEAR || (yr === CURRENT_YEAR && hasPassedThisYear) ? "Completed" : (yr === CURRENT_YEAR ? "Premium Due" : (polY <= mip ? "Strict Lock" : (polY <= ppt ? "Flexi Phase" : "Vested")));
+        timelineHtml += `<div class="segment ${colorClass} h-8 flex-1 border-r border-white/10 first:rounded-l-lg last:rounded-r-lg transition-all relative group/segment"><div class="opacity-0 group-hover/segment:opacity-100 absolute bottom-full mb-3 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-3 py-2 rounded-xl text-[10px] z-[100] whitespace-nowrap pointer-events-none shadow-2xl transition-all duration-200"><b class="text-sky-400 uppercase tracking-widest block mb-1 font-black">Year ${polY} (${yr})</b><span class="text-white font-bold tracking-tight">${statusLabel}</span><div class="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-slate-900"></div></div></div>`;
+    }
+
     const brandColor = p.color || "#000000";
     const brandBg = `rgba(${parseInt(brandColor.slice(1,3), 16)}, ${parseInt(brandColor.slice(3,5), 16)}, ${parseInt(brandColor.slice(5,7), 16)}, 0.04)`;
+    const starHtml = `<div class="ml-2 relative group flex items-center justify-center w-12 h-10 bg-white rounded-xl shadow-sm border border-slate-200 cursor-help"><span class="text-xl text-amber-500 transition-transform group-hover:scale-125">★</span><div class="opacity-0 group-hover:opacity-100 absolute bottom-full mb-4 right-0 bg-slate-900 text-white p-4 rounded-2xl z-[100] shadow-2xl border border-white/10 pointer-events-none min-w-[250px]"><b class="text-amber-400 uppercase tracking-widest block text-[9px] mb-2 font-black">Exit Strategy Projection (4%)</b><div class="space-y-1"><div class="flex justify-between text-[10px] text-slate-400"><span>Target Exit:</span><span class="text-white font-bold">${targetExitYear}</span></div><div class="flex justify-between text-[10px] text-slate-400"><span>Future Premiums:</span><span class="text-white font-bold">${autoFmt(yearsToPay * annualPremium, sym)}</span></div><div class="h-[1px] bg-white/10 my-1"></div><div class="flex justify-between text-[13px] text-emerald-400 font-black"><span>Est. Surrender:</span><span>${autoFmt(totalProjected, sym)}*</span></div></div><div class="mt-2 pt-2 border-t border-white/10 text-[8px] text-slate-400 italic font-medium leading-tight">*Calculated until exit in ${targetExitYear} (capped by maturity).</div><div class="absolute top-full right-4 border-8 border-transparent border-t-slate-900"></div></div></div>`;
 
     return `
     <div class="policy-card mb-10 rounded-[40px] bg-white overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.08)] border-2 relative" id="card-${p.id}" style="border-left: 16px solid ${brandColor}; border-color: ${brandColor};">
-        
         <div class="p-8 flex items-center justify-between cursor-pointer relative min-h-[100px]" style="background: ${brandBg}" onclick="toggleCard('${p.id}')">
             
             <div class="flex items-center gap-6 pl-4 min-w-[340px]">
@@ -53,21 +98,21 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
 
             <div class="flex-1 flex justify-center">
                 <div class="relative group">
-                    <div class="absolute -inset-1 bg-gradient-to-r from-rose-400 to-orange-400 rounded-full blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
-                    <span class="relative px-5 py-1.5 rounded-full border border-rose-200 bg-white/80 backdrop-blur-sm text-[11px] font-black text-rose-600 italic tracking-widest uppercase shadow-sm">
+                    <div class="absolute -inset-1 bg-gradient-to-r from-rose-400 to-orange-400 rounded-full blur opacity-25"></div>
+                    <span class="relative px-5 py-1.5 rounded-full border border-rose-200 bg-white/90 backdrop-blur-sm text-[11px] font-black text-rose-600 italic tracking-widest uppercase shadow-sm">
                         ${p.type || 'INVESTMENTS'}
                     </span>
                 </div>
             </div>
 
             <div class="flex items-center gap-14 px-6">
-                <div>
-                    <p class="text-[10px] font-black text-slate-400 uppercase mb-1.5 tracking-[0.15em] text-center">Sum Assured</p>
-                    <p class="text-[22px] font-black text-slate-800 tracking-tighter leading-none text-center">${autoFmt(toNum(p.sumAssured) === 0 ? accountValue : p.sumAssured, sym)}</p>
+                <div class="text-center">
+                    <p class="text-[10px] font-black text-slate-400 uppercase mb-1.5 tracking-[0.15em]">Sum Assured</p>
+                    <p class="text-[22px] font-black text-slate-800 tracking-tighter leading-none">${autoFmt(toNum(p.sumAssured) === 0 ? accountValue : p.sumAssured, sym)}</p>
                 </div>
-                <div class="pl-12 border-l border-slate-100">
-                    <p class="text-[10px] font-black text-slate-400 uppercase mb-1.5 tracking-[0.15em] text-center">Annual Premium</p>
-                    <p class="text-[22px] font-black text-[#059669] tracking-tighter leading-none text-center">${autoFmt(p.premium, sym)}</p>
+                <div class="pl-12 border-l border-slate-100 text-center">
+                    <p class="text-[10px] font-black text-slate-400 uppercase mb-1.5 tracking-[0.15em]">Annual Premium</p>
+                    <p class="text-[22px] font-black text-[#059669] tracking-tighter leading-none">${autoFmt(p.premium, sym)}</p>
                 </div>
             </div>
 
@@ -84,6 +129,21 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
         </div>
 
         <div class="content-area px-10 pb-10 pt-4" style="background: linear-gradient(to bottom, ${brandBg}, #ffffff)">
+            <div class="grid grid-cols-5 gap-4 mb-8">
+                <div class="p-6 rounded-[32px] bg-slate-50 border border-slate-100 relative shadow-sm"><p class="text-[10px] font-black text-slate-400 mb-2 uppercase">Policy No.</p><p class="text-lg font-mono font-bold text-slate-700">#${p.id}</p></div>
+                <div class="p-6 rounded-[32px] bg-white border border-slate-100 relative shadow-sm"><p class="text-[10px] font-black text-slate-400 mb-2 uppercase">Valuation</p><p class="text-xl font-black text-slate-900">${p.currentUnitValue}</p></div>
+                <div class="p-6 rounded-[32px] bg-white border border-slate-100 relative shadow-sm"><p class="text-[10px] font-black text-slate-400 mb-2 uppercase">Invested</p><p class="text-xl font-black text-slate-800">${autoFmt(totalPremiumsPaid - (p.withdrawals || []).reduce((a, b) => a + toNum(b), 0), sym)}</p></div>
+                <div class="p-6 rounded-[32px] bg-emerald-50 border border-emerald-100 shadow-sm"><p class="text-[10px] font-black text-emerald-600 mb-2 uppercase text-center">Surrender</p><p class="text-2xl font-black text-emerald-700 text-center">${autoFmt(surrenderValue, sym)}</p></div>
+                <div class="p-6 rounded-[32px] bg-red-50 border border-red-100 shadow-sm"><p class="text-[10px] font-black text-red-400 mb-2 uppercase text-center">Locked</p><p class="text-2xl font-black text-red-600 text-center">-${autoFmt(accountValue - surrenderValue, sym)}</p></div>
             </div>
+            <div class="flex justify-between items-end mb-4 px-2">
+                <div><p class="text-[10px] font-black text-slate-400 uppercase mb-1">Commencement</p><p class="text-sm font-bold text-slate-700 underline decoration-sky-300 decoration-2 underline-offset-4">${p.commenced}</p></div>
+                <div class="text-right"><p class="text-[10px] font-black text-slate-400 uppercase mb-1">Maturity</p><p class="text-sm font-bold text-slate-700 underline decoration-amber-300 decoration-2 underline-offset-4">${p.maturity}</p></div>
+            </div>
+            <div class="relative flex items-center h-16 bg-slate-100 rounded-[24px] px-2 border border-slate-200/50">
+                <div class="flex-1 flex h-10 items-center gap-1">${timelineHtml}</div>
+                ${starHtml}
+            </div>
+        </div>
     </div>`;
 }
