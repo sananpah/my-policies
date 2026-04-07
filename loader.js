@@ -1,4 +1,4 @@
-/* loader.js - v4.3.12 - ULIP Data & Stepper Support */
+/* loader.js - v4.3.13 - Final Precision Sync */
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2UwOfG57DQBOBnJX-9hsRKOQTUgALiM3uxs-VGzD2KN8JoWNAQltH6IkgAGhPTNFEvb/pub?gid=866869416&single=true&output=csv";
 
 export const autoFmt = (val, sym) => {
@@ -13,8 +13,7 @@ export async function syncWithGoogleSheets(masterList) {
     const TODAY = new Date();
     try {
         const response = await fetch(`${SHEET_URL}&t=${Date.now()}`);
-        const buffer = await response.arrayBuffer();
-        const csvData = new TextDecoder('utf-8').decode(buffer);
+        const csvData = await response.text();
         const sheetRecords = processCSV(csvData);
 
         const cleanNumeric = (raw) => {
@@ -27,15 +26,8 @@ export async function syncWithGoogleSheets(masterList) {
             masterList[country] = masterList[country].map(p => {
                 const match = sheetRecords.find(row => String(row["Policy No."]).trim() === String(p.id).trim());
                 if (match) {
-                    p.name = match.name || p.name;
-                    p.company = match.company || p.company;
-                    p.type = match.type || p.type;
-                    p.logo = `logo_${p.company.replace(/[\s.]/g, "")}.png`;
-
                     p.premium = cleanNumeric(match["Premium"]);
                     p.sumAssured = cleanNumeric(match["Sum Assured"]);
-                    
-                    // CRITICAL: Restore ULIP Portfolio Value
                     p.currentUnitValue = match["Current Value"] || "No Value";
 
                     let rawDate = String(match["Commenced Date"] || "").trim().replace(/\./g, ' '); 
@@ -48,39 +40,27 @@ export async function syncWithGoogleSheets(masterList) {
                         const parts = rawTermStr.split(":");
                         p.ppt = parseInt(parts[0], 10) || 0;
                         const mat = parseInt(parts[1], 10) || 0;
-                        if (!isNaN(startY)) {
-                            p.premiumEnds = `${dateParts[0]} ${dateParts[1]} ${startY + p.ppt}`;
-                            p.maturity = `${dateParts[0]} ${dateParts[1]} ${startY + mat}`;
-                        }
+                        p.premiumEnds = `${dateParts[0]} ${dateParts[1]} ${startY + p.ppt}`;
+                        p.maturity = `${dateParts[0]} ${dateParts[1]} ${startY + mat}`;
                     }
 
                     if (country === "india") {
                         const rawBenefits = String(match["Other Coverage & Benefits"] || "");
                         const mbLine = rawBenefits.split(/\r?\n/).find(l => l.toLowerCase().includes("moneyback"));
                         p.payoutSchedule = {}; 
-                        
                         if (mbLine && mbLine.includes(":")) {
                             const content = mbLine.substring(mbLine.indexOf(":") + 1).trim();
                             content.split(",").forEach(seg => {
                                 const parts = seg.split(":").map(s => s.trim());
                                 if (parts.length < 2) return;
-                                const range = parts[0];
-                                const valRaw = parts[1];
-                                let baseVal = cleanNumeric(valRaw);
-                                if (valRaw.toLowerCase().includes("%bsa")) {
-                                    baseVal = p.sumAssured * (baseVal / 100);
-                                }
-                                const [start, end] = range.includes("-") ? range.split("-").map(Number) : [Number(range), Number(range)];
+                                let baseVal = cleanNumeric(parts[1]);
+                                if (parts[1].toLowerCase().includes("%bsa")) baseVal = p.sumAssured * (baseVal / 100);
+                                const [s, e] = parts[0].includes("-") ? parts[0].split("-").map(Number) : [Number(parts[0]), Number(parts[0])];
                                 if (parts[2] === "STEP") {
-                                    const stepYears = parseInt(parts[3]);
-                                    const stepPercent = parseFloat(parts[4]) / 100;
-                                    const stepAmount = baseVal * stepPercent;
-                                    for (let y = start; y <= end; y++) {
-                                        const stepsPassed = Math.floor((y - start) / stepYears);
-                                        p.payoutSchedule[y] = baseVal + (stepsPassed * stepAmount);
-                                    }
+                                    const stepY = parseInt(parts[3]), stepP = parseFloat(parts[4]) / 100;
+                                    for (let y = s; y <= e; y++) p.payoutSchedule[y] = baseVal + (Math.floor((y - s) / stepY) * (baseVal * stepP));
                                 } else {
-                                    for (let y = start; y <= end; y++) p.payoutSchedule[y] = baseVal;
+                                    for (let y = s; y <= e; y++) p.payoutSchedule[y] = baseVal;
                                 }
                             });
                         }
@@ -90,7 +70,7 @@ export async function syncWithGoogleSheets(masterList) {
             });
         });
         return masterList;
-    } catch (e) { console.warn("Sync failed:", e); return masterList; }
+    } catch (e) { return masterList; }
 }
 
 function processCSV(csv) {
@@ -117,8 +97,7 @@ function processCSV(csv) {
             obj.company = parts[0].trim();
             obj.name = parts[1].trim(); 
         }
-        const rawCategory = obj["Category"] || "";
-        obj.type = rawCategory.includes(":") ? rawCategory.split(":")[1].trim() : (rawCategory || "Savings");
+        obj.type = (obj["Category"] || "").includes(":") ? obj["Category"].split(":")[1].trim() : (obj["Category"] || "Savings");
         return obj;
     }).filter(item => item && item["Policy_Name"] !== "EMPTY");
 }
