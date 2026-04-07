@@ -1,4 +1,4 @@
-/* loader.js - v4.2.5 - Dynamic India Maturity Calculation */
+/* loader.js - v4.2.6 - Clean India Maturity Output */
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2UwOfG57DQBOBnJX-9hsRKOQTUgALiM3uxs-VGzD2KN8JoWNAQltH6IkgAGhPTNFEvb/pub?gid=866869416&single=true&output=csv";
 
 const autoFmt = (val, sym) => {
@@ -20,7 +20,6 @@ export async function syncWithGoogleSheets(masterList) {
         const csvData = decoder.decode(buffer);
         const sheetRecords = processCSV(csvData);
 
-        // --- 1. THE INSURED MAP ---
         const insuredMap = {
             "Suhail Nami": { type: "Self", img: "avatar_self.png" },
             "Saima Suhail": { type: "Wife", img: "avatar_wife.png" },
@@ -45,7 +44,6 @@ export async function syncWithGoogleSheets(masterList) {
                     const safeCompanyName = p.company.replace(/[\s.]/g, "");
                     p.logo = `logo_${safeCompanyName}.png`;
 
-                    // --- 2. THE MULTI-REGION AVATAR FIX ---
                     const identity = insuredMap[match["Insured"]];
                     if (identity) {
                         p.avatarPath = identity.img;
@@ -56,11 +54,9 @@ export async function syncWithGoogleSheets(masterList) {
                     const rawSA = String(match["Sum Assured"] || "").toLowerCase();
                     p.sumAssured = (rawSA.includes("not") || cleanNumeric(match["Sum Assured"]) === 0) ? 0 : cleanNumeric(match["Sum Assured"]);
                     
-                    // --- 3. PORTFOLIO TOTAL FIX ---
                     p.currentUnitValue = match["Current Value"] || "No Value";
                     p.unitValueNumeric = cleanNumeric(p.currentUnitValue); 
 
-                    // Date & Term Logic
                     let rawDate = String(match["Commenced Date"] || "").trim();
                     p.commenced = rawDate.replace(/\./g, ' '); 
                     const rawTermStr = String(match["Term"] || "");
@@ -78,7 +74,6 @@ export async function syncWithGoogleSheets(masterList) {
                         }
                     }
 
-                    // --- 4. MATURITY LOGIC (India ULIP 4% vs Traditional) ---
                     if (country === "india") {
                         const isULIP = (p.type || "").toLowerCase().includes("ulip");
                         if (isULIP) {
@@ -106,15 +101,15 @@ export async function syncWithGoogleSheets(masterList) {
                             if (maturityLine) {
                                 let val = maturityLine.split(":")[1]?.trim() || "";
                                 
-                                // NEW: %BSA Parsing Surgical Insertion
+                                // REPLACEMENT LOGIC: Replaces "30%BSA" with just the "₹ X,XX,XXX" value
                                 const bsaRegex = /(\d+)%BSA/gi;
                                 val = val.replace(bsaRegex, (matchStr, percentage) => {
                                     const pct = parseFloat(percentage) / 100;
                                     const calcAmt = (p.sumAssured || 0) * pct;
-                                    return `${matchStr} (${autoFmt(calcAmt, "₹")})`;
+                                    return autoFmt(calcAmt, "₹");
                                 });
 
-                                // Replace generic "BSA" text with the actual Sum Assured
+                                // Replace single "BSA" words with the actual Sum Assured
                                 p.maturityAmt = val.toUpperCase().includes("BSA") 
                                     ? val.replace(/BSA/gi, autoFmt(p.sumAssured, "₹")) 
                                     : val;
