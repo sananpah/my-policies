@@ -1,4 +1,4 @@
-/* loader.js - v4.3.14 - Final Structural Fix */
+/* loader.js - v4.3.15 - Data Restoration */
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2UwOfG57DQBOBnJX-9hsRKOQTUgALiM3uxs-VGzD2KN8JoWNAQltH6IkgAGhPTNFEvb/pub?gid=866869416&single=true&output=csv";
 
 export const autoFmt = (val, sym) => {
@@ -31,9 +31,9 @@ export async function syncWithGoogleSheets(masterList) {
             masterList[country] = masterList[country].map(p => {
                 const match = sheetRecords.find(row => String(row["Policy No."]).trim() === String(p.id).trim());
                 if (match) {
-                    // RESTORED: Split Name and Company correctly
-                    p.name = match.name || p.name;
-                    p.company = match.company || p.company;
+                    p.name = match.name;
+                    p.company = match.company;
+                    p.type = match.type; // RESTORED TYPE
                     p.logo = `logo_${p.company.replace(/[\s.]/g, "")}.png`;
                     
                     const identity = insuredMap[match["Insured"]];
@@ -41,8 +41,6 @@ export async function syncWithGoogleSheets(masterList) {
 
                     p.premium = cleanNumeric(match["Premium"]);
                     p.sumAssured = cleanNumeric(match["Sum Assured"]);
-                    
-                    // Portfolio Math Fix
                     p.currentUnitValue = match["Current Value"] || "No Value";
                     p.unitValueNumeric = cleanNumeric(p.currentUnitValue); 
 
@@ -107,8 +105,6 @@ function processCSV(csv) {
     return rows.slice(headerIdx + 1).map(rowData => {
         const obj = {};
         headers.forEach((h, i) => { if (h) obj[h] = (rowData[i] || "").trim(); });
-        
-        // --- RESTORED: CORE NAMING LOGIC ---
         const rawFullName = obj["Policy_Name"] || "";
         if (rawFullName.includes(":")) {
             const parts = rawFullName.split(":");
@@ -118,7 +114,6 @@ function processCSV(csv) {
             obj.company = "Unknown";
             obj.name = rawFullName;
         }
-        
         const rawCategory = obj["Category"] || "";
         obj.type = rawCategory.includes(":") ? rawCategory.split(":")[1].trim() : (rawCategory || "Savings");
         return obj;
