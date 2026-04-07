@@ -1,4 +1,4 @@
-/* component_in.js - v4.1.19 - Double-Locked Rounding for UI */
+/* component_in.js - v4.1.20 - String Split Safety Gate */
 import { checkIsDueSoon, autoFmt, toNum, raw, safeParseDate, safeGetYear, monthMap } from './india.js';
 
 export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -28,17 +28,19 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
     const isIncomePhase = !isStillPaying && !!scheduledPayout;
 
     let middleLabel = "Sum Assured";
-    let middleValue = autoFmt(p.sumAssured, sym);
+    let middleValue = autoFmt(p.sumAssured, sym).split('.')[0]; // Safety Split
     let middleColor = "text-slate-700";
 
     if (isStillPaying) {
         middleLabel = "Annual Premium";
-        middleValue = autoFmt(p.premium, sym); 
+        middleValue = autoFmt(p.premium, sym).split('.')[0]; // Safety Split
         middleColor = "text-emerald-600";
     } else if (isIncomePhase) {
         middleLabel = "Annual Payout";
-        // DOUBLE LOCK: Round here to be absolutely certain no decimals show
-        middleValue = autoFmt(Math.round(scheduledPayout), sym); 
+        // 1. Get the string (e.g., "₹1,33,974.34")
+        let rawStr = autoFmt(scheduledPayout, sym);
+        // 2. Physically chop at the decimal point
+        middleValue = rawStr.split('.')[0]; 
         middleColor = "text-[#854d0e]"; // Brown
     }
     const badgeText = isIncomePhase ? "Income Phase" : (p.type || "Savings");
@@ -60,13 +62,13 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
             const isEffectivelyPaid = isPast || isPaidUp || (isLoopCurrent && hasPassedThisYear);
             color = (isLoopCurrent && !hasPassedThisYear && !isPaidUp) ? "bg-current" : (isEffectivelyPaid ? "bg-prem-past" : "bg-prem-future");
             phase = isEffectivelyPaid ? "Premium Completed" : "Premium Payment";
-            detail = `Amt: ${autoFmt(p.premium, sym)}`;
+            detail = `Amt: ${autoFmt(p.premium, sym).split('.')[0]}`;
         } else {
             const loopPayout = (p.payoutSchedule && p.payoutSchedule[loopPolY]);
             if (loopPayout) {
                 color = isPast ? "bg-payout-past" : "bg-payout-future";
                 phase = isPast ? "Payout Received" : "Income Phase";
-                detail = `Payout: ${autoFmt(loopPayout, sym)}`;
+                detail = `Payout: ${autoFmt(loopPayout, sym).split('.')[0]}`;
             } else {
                 color = isPast ? "bg-history-brown" : "bg-future-light-brown";
                 phase = isPast ? "Growth (Historical)" : "Growth Phase";
@@ -76,7 +78,7 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
         timelineHtml += `<div class="segment ${color}"><div class="tooltip"><b class="text-emerald-400 uppercase tracking-tighter">${phase}</b><br>${detail}<br><span class="opacity-40 text-[9px]">Year ${loopPolY} (${yr})</span></div></div>`;
     }
 
-    timelineHtml += `<div class="mat-star">★<div class="tooltip"><b class="text-orange-400 uppercase tracking-widest">Maturity</b><br><span class="${String(p.maturityAmt || p.sumAssured).length > 15 ? 'text-[10px]' : 'text-lg'} font-black">${raw(p.maturityAmt || p.sumAssured)}</span></div></div>`;
+    timelineHtml += `<div class="mat-star">★<div class="tooltip"><b class="text-orange-400 uppercase tracking-widest">Maturity</b><br><span class="text-lg font-black">${raw(p.maturityAmt || p.sumAssured).split('.')[0]}</span></div></div>`;
 
     return `
     <div class="policy-card mb-6" id="card-${p.id}" style="border-left: 16px solid ${brandColor}; border-color: ${brandColor};">
@@ -104,7 +106,7 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
                 </div>
                 <div class="text-center border-l-2 border-slate-100 pl-10">
                     <p class="text-[9px] font-bold text-slate-400 uppercase">Sum Assured</p>
-                    <p class="text-lg font-black text-slate-800">${autoFmt(p.sumAssured, sym)}</p>
+                    <p class="text-lg font-black text-slate-800">${autoFmt(p.sumAssured, sym).split('.')[0]}</p>
                 </div>
             </div>
             <div class="w-40 text-center flex flex-col justify-center min-h-[60px]">
