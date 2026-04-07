@@ -1,4 +1,4 @@
-/* component_in.js - v4.1.8 - Final Refined Structure */
+/* component_in.js - v4.1.9 - Safe Income Phase Integration */
 import { checkIsDueSoon, autoFmt, toNum, raw, safeParseDate, safeGetYear, monthMap } from './india.js';
 
 export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -24,7 +24,6 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
     const nextDueYear = hasPassedThisYear ? CURRENT_YEAR + 1 : CURRENT_YEAR;
     const nextDueStr = `${anniversaryDay} ${anniversaryMonth} ${nextDueYear}`; 
     
-    // Term logic: Ends on anniversary of last payment year
     const lastPaymentYear = premEndYear - 1;
     const isTermOver = CURRENT_YEAR > lastPaymentYear || (CURRENT_YEAR === lastPaymentYear && hasPassedThisYear);
     
@@ -35,7 +34,19 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
     // 3. FINANCIAL VALUES
     const isULIP = p.type === "ULIP";
     const prem = Math.round(toNum(p.premium || 0));
-       
+
+    // --- NEW: PHASE LOGIC FOR TOP BOX ---
+    const polY_Now = CURRENT_YEAR - startY + 1;
+    const currentPayout = (p.payoutSchedule && p.payoutSchedule[polY_Now]);
+    const isIncomePhase = !!currentPayout;
+
+    const topMiddleLabel = isIncomePhase ? "Current Payout" : "Sum Assured";
+    const topMiddleValue = isIncomePhase ? autoFmt(currentPayout, sym) : autoFmt(p.sumAssured, sym);
+    const topMiddleColor = isIncomePhase ? "text-emerald-600" : "text-slate-700";
+    const badgeText = isIncomePhase ? "Income Phase" : p.type;
+    const badgeColor = isIncomePhase ? "#059669" : brandColor; // Use Emerald for Income
+    // ------------------------------------
+        
     // 4. PREMIUM REMAINING
     let premRemainingStr = "";
     if (!isPaidUp) {
@@ -50,7 +61,7 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
     const brandColor = p.color || "#000000";
     const brandBg = `rgba(${parseInt(brandColor.slice(1,3), 16)}, ${parseInt(brandColor.slice(3,5), 16)}, ${parseInt(brandColor.slice(5,7), 16)}, 0.04)`;
 
-    // 5. TIMELINE LOGIC
+    // 5. TIMELINE LOGIC (Your existing loop, preserved exactly)
     let timelineHtml = '';
     for(let yr = startY; yr < matY; yr++) {
         const polY = yr - startY + 1;
@@ -91,7 +102,7 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
 
     timelineHtml += `<div class="mat-star">★<div class="tooltip"><b class="text-orange-400 uppercase tracking-widest">Maturity</b><br><span class="${String(p.maturityAmt || p.sumAssured).length > 15 ? 'text-[10px]' : 'text-lg'} font-black">${raw(p.maturityAmt || p.sumAssured)}</span></div></div>`;
 
-    // 6. HTML OUTPUT
+    // 6. HTML OUTPUT (Surgically modified to use dynamic variables)
     return `
     <div class="policy-card mb-6" id="card-${p.id}" style="border-left: 16px solid ${brandColor}; border-color: ${brandColor};">
         <div class="card-header transition-colors" style="background: ${brandBg};" onclick="toggleCard('${p.id}')">
@@ -106,15 +117,15 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
 
             <div class="flex gap-12 items-center mr-6">
                 <div class="flex items-center w-[260px] -ml-4">
-                    <div class="funky-badge-v2" style="border-color: ${brandColor}; color: ${brandColor}; background: ${brandBg}; font-size: 10px; font-weight: 900; letter-spacing: 0.1em; padding: 2px 8px; border-radius: 6px; border: 1.5px solid; text-transform: uppercase;">
-                        ${p.type}
+                    <div class="funky-badge-v2" style="border-color: ${isIncomePhase ? '#059669' : brandColor}; color: ${isIncomePhase ? '#059669' : brandColor}; background: ${brandBg}; font-size: 10px; font-weight: 900; letter-spacing: 0.1em; padding: 2px 8px; border-radius: 6px; border: 1.5px solid; text-transform: uppercase;">
+                        ${badgeText}
                     </div>
                     <div class="ml-6 relative min-w-[140px] flex items-center h-12">
                         ${isAssigned ? 
                             `<img src="assigned.png" class="h-12 object-contain ml-2 opacity-95 transform -rotate-6" title="Assigned Policy">` : 
                             `<div>
-                                <p class="text-[9px] font-bold text-slate-400 uppercase leading-none mb-1">Sum Assured</p>
-                                <p class="text-lg font-black text-slate-700 leading-none">${autoFmt(p.sumAssured, sym)}</p>
+                                <p class="text-[9px] font-bold text-slate-400 uppercase leading-none mb-1">${topMiddleLabel}</p>
+                                <p class="text-lg font-black ${topMiddleColor} leading-none">${topMiddleValue}</p>
                             </div>`
                         }
                     </div>
