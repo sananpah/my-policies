@@ -1,8 +1,10 @@
-/* component_in.js - v4.1.13 - Data-Driven Middle Box & Original Colors */
+/* component_in.js - v4.1.14 - Fixed isULIP Scope Error */
 import { checkIsDueSoon, autoFmt, toNum, raw, safeParseDate, safeGetYear, monthMap } from './india.js';
 
 export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
-    // 1. DATA SHIELD & DATE MATH
+    // 1. DATA SHIELD & CORE DEFINITIONS
+    const isULIP = (p.type || "").toUpperCase().includes("ULIP"); // Defined early to avoid scope errors
+    
     const commStr = p.commenced || "01 Jan 2000";
     const startParts = commStr.split(' ');
     const annDay = parseInt(startParts[0]);
@@ -19,35 +21,33 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
     const matY = safeGetYear(matStr);
     const premEndYear = safeGetYear(premEndStr);
 
-    // 2. BRANDING & BASIC VALUES (Original Colors Preserved)
+    // 2. BRANDING (Original Colors)
     const brandColor = p.color || "#000000";
     const brandBg = `rgba(${parseInt(brandColor.slice(1,3), 16)}, ${parseInt(brandColor.slice(3,5), 16)}, ${parseInt(brandColor.slice(5,7), 16)}, 0.04)`;
     const premAmount = Math.round(toNum(p.premium || 0));
 
-    // 3. PHASE LOGIC (Respecting the PPT Gatekeeper)
+    // 3. PHASE & MIDDLE BOX LOGIC
     const isStillPaying = (CURRENT_YEAR < premEndYear) || (CURRENT_YEAR === premEndYear && TODAY < anniversaryThisYear);
     const scheduledPayout = (p.payoutSchedule && p.payoutSchedule[currentPolYear]);
     const isIncomePhase = !isStillPaying && !!scheduledPayout;
 
-    // --- SURGICAL TEXT SWAP (Middle Box) ---
-    // If Paying: Show Premium | If Income: Show Payout | Else: Show Sum Assured
     let middleLabel = "Sum Assured";
     let middleValue = autoFmt(p.sumAssured, sym);
-    let middleColor = "text-slate-700"; // Original Slate
+    let middleColor = "text-slate-700";
 
     if (isStillPaying) {
         middleLabel = "Annual Premium";
         middleValue = autoFmt(premAmount, sym);
-        middleColor = "text-emerald-600"; // Your original premium green
+        middleColor = "text-emerald-600";
     } else if (isIncomePhase) {
         middleLabel = "Annual Payout";
         middleValue = autoFmt(scheduledPayout, sym);
-        middleColor = "text-[#854d0e]"; // Your original Income/Brown color
+        middleColor = "text-[#854d0e]"; // Original Income Brown
     }
 
     const badgeText = isIncomePhase ? "Income Phase" : (p.type || "Savings");
 
-    // 4. DYNAMIC DUE DATE & TERM
+    // 4. DYNAMIC DUE DATE
     const hasPassedThisYear = TODAY >= anniversaryThisYear;
     const nextDueStr = `${annDay} ${startParts[1]} ${hasPassedThisYear ? CURRENT_YEAR + 1 : CURRENT_YEAR}`; 
     const isTermOver = CURRENT_YEAR > (premEndYear - 1) || (CURRENT_YEAR === (premEndYear - 1) && hasPassedThisYear);
@@ -66,7 +66,7 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
         premRemainingStr = `${String(Math.max(0, y)).padStart(2, '0')}y${String(Math.max(0, m)).padStart(2, '0')}m`;
     }
 
-    // 6. TIMELINE LOGIC (Your logic exactly as is)
+    // 6. TIMELINE LOGIC
     let timelineHtml = '';
     for(let yr = startY; yr < matY; yr++) {
         const loopPolY = yr - startY + 1;
@@ -104,7 +104,7 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
 
     timelineHtml += `<div class="mat-star">★<div class="tooltip"><b class="text-orange-400 uppercase tracking-widest">Maturity</b><br><span class="${String(p.maturityAmt || p.sumAssured).length > 15 ? 'text-[10px]' : 'text-lg'} font-black">${raw(p.maturityAmt || p.sumAssured)}</span></div></div>`;
 
-    // 7. HTML OUTPUT (Identical structure, only variables updated)
+    // 7. HTML OUTPUT
     return `
     <div class="policy-card mb-6" id="card-${p.id}" style="border-left: 16px solid ${brandColor}; border-color: ${brandColor};">
         <div class="card-header transition-colors" style="background: ${brandBg};" onclick="toggleCard('${p.id}')">
@@ -131,8 +131,8 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
                     </div>
                 </div>
                 <div class="text-center border-l-2 border-slate-100 pl-10">
-                    <p class="text-[9px] font-bold text-slate-400 uppercase">Status</p>
-                    <p class="text-lg font-black text-slate-800">${isPaidUp ? 'PAID UP' : 'ACTIVE'}</p>
+                    <p class="text-[9px] font-bold text-slate-400 uppercase">Sum Assured</p>
+                    <p class="text-lg font-black text-slate-800">${autoFmt(p.sumAssured, sym)}</p>
                 </div>
             </div>
             <div class="w-40 text-center flex flex-col justify-center min-h-[60px]">
