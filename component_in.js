@@ -1,4 +1,4 @@
-/* component_in.js - v4.1.16 - Final Visual Sync */
+/* component_in.js - v4.1.18 - Rounded UI for Payouts */
 import { checkIsDueSoon, autoFmt, toNum, raw, safeParseDate, safeGetYear, monthMap } from './india.js';
 
 export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -33,11 +33,11 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
 
     if (isStillPaying) {
         middleLabel = "Annual Premium";
-        middleValue = autoFmt(p.premium, sym);
+        middleValue = autoFmt(p.premium, sym); 
         middleColor = "text-emerald-600";
     } else if (isIncomePhase) {
         middleLabel = "Annual Payout";
-        middleValue = autoFmt(scheduledPayout, sym);
+        middleValue = autoFmt(scheduledPayout, sym); // Rounded via loader.js autoFmt
         middleColor = "text-[#854d0e]"; // Brown
     }
     const badgeText = isIncomePhase ? "Income Phase" : (p.type || "Savings");
