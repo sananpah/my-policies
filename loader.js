@@ -1,10 +1,10 @@
-/* loader.js - v4.3.9 - Rounded Formatter & Stepper Logic */
+/* loader.js - v4.3.10 - Nuclear Rounding at Source */
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2UwOfG57DQBOBnJX-9hsRKOQTUgALiM3uxs-VGzD2KN8JoWNAQltH6IkgAGhPTNFEvb/pub?gid=866869416&single=true&output=csv";
 
-// STRICT ROUNDING: Force nearest whole number for the UI
 const autoFmt = (val, sym) => {
     const n = parseFloat(val);
     if (isNaN(n) || n === 0) return sym + "0";
+    // Standard rounding for general use
     return sym + Math.round(n).toLocaleString('en-IN');
 };
 
@@ -17,12 +17,6 @@ export async function syncWithGoogleSheets(masterList) {
         const buffer = await response.arrayBuffer();
         const csvData = new TextDecoder('utf-8').decode(buffer);
         const sheetRecords = processCSV(csvData);
-
-        const insuredMap = {
-            "Suhail Nami": { type: "Self", img: "avatar_self.png" },
-            "Saima Suhail": { type: "Wife", img: "avatar_wife.png" },
-            "Sulmas Nami": { type: "Daughter", img: "avatar_daughter.png" }
-        };
 
         const cleanNumeric = (raw) => {
             if (!raw || raw === "No Value") return 0;
@@ -38,10 +32,6 @@ export async function syncWithGoogleSheets(masterList) {
                     p.company = match.company || p.company;
                     p.type = match.type || p.type;
                     p.logo = `logo_${p.company.replace(/[\s.]/g, "")}.png`;
-
-                    const identity = insuredMap[match["Insured"]];
-                    if (identity) { p.avatarPath = identity.img; p.holderType = identity.type; }
-
                     p.premium = cleanNumeric(match["Premium"]);
                     p.sumAssured = cleanNumeric(match["Sum Assured"]);
                     p.currentUnitValue = match["Current Value"] || "No Value";
@@ -90,19 +80,15 @@ export async function syncWithGoogleSheets(masterList) {
 
                                     for (let y = start; y <= end; y++) {
                                         const stepsPassed = Math.floor((y - start) / stepYears);
-                                        p.payoutSchedule[y] = baseVal + (stepsPassed * stepAmount);
+                                        // NUCLEAR ROUNDING: Save as integer
+                                        p.payoutSchedule[y] = Math.round(baseVal + (stepsPassed * stepAmount));
                                     }
                                 } else {
-                                    for (let y = start; y <= end; y++) p.payoutSchedule[y] = baseVal;
+                                    for (let y = start; y <= end; y++) {
+                                        p.payoutSchedule[y] = Math.round(baseVal);
+                                    }
                                 }
                             });
-                        }
-
-                        const maturityLine = rawBenefits.split(/\r?\n/).find(l => l.trim().startsWith("Maturity Benefit"));
-                        if (maturityLine) {
-                            let val = maturityLine.split(":")[1]?.trim() || "";
-                            val = val.replace(/(\d+)%BSA/gi, (m, pct) => autoFmt((p.sumAssured * parseFloat(pct)/100), "₹"));
-                            p.maturityAmt = val.replace(/BSA/gi, autoFmt(p.sumAssured, "₹"));
                         }
                     }
                 }
