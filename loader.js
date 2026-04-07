@@ -1,4 +1,4 @@
-/* loader.js - v4.3.5 - Unified Sync & Fuzzy MoneyBack Parser */
+/* loader.js - v4.3.6 - Smart MoneyBack Parser & Data Sync */
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2UwOfG57DQBOBnJX-9hsRKOQTUgALiM3uxs-VGzD2KN8JoWNAQltH6IkgAGhPTNFEvb/pub?gid=866869416&single=true&output=csv";
 
 const autoFmt = (val, sym) => {
@@ -46,7 +46,6 @@ export async function syncWithGoogleSheets(masterList) {
                     p.premium = cleanNumeric(match["Premium"]);
                     p.sumAssured = cleanNumeric(match["Sum Assured"]);
                     p.currentUnitValue = match["Current Value"] || "No Value";
-                    p.unitValueNumeric = cleanNumeric(p.currentUnitValue); 
 
                     let rawDate = String(match["Commenced Date"] || "").trim().replace(/\./g, ' '); 
                     p.commenced = rawDate;
@@ -66,17 +65,24 @@ export async function syncWithGoogleSheets(masterList) {
 
                     if (country === "india") {
                         const rawBenefits = String(match["Other Coverage & Benefits"] || "");
-
-                        // --- FUZZY MONEYBACK PARSER ---
                         const mbLine = rawBenefits.split(/\r?\n/).find(l => l.toLowerCase().includes("moneyback"));
                         p.payoutSchedule = {}; 
+                        
                         if (mbLine && mbLine.includes(":")) {
                             const content = mbLine.substring(mbLine.indexOf(":") + 1).trim();
                             content.split(",").forEach(seg => {
                                 if (!seg.includes(":")) return;
                                 const [range, valRaw] = seg.split(":").map(s => s.trim());
-                                let pct = parseFloat(valRaw.replace(/[^\d.]/g, "")) / 100;
-                                let annualVal = (p.sumAssured || 0) * pct;
+                                
+                                let numOnly = parseFloat(valRaw.replace(/[^\d.]/g, ""));
+                                let annualVal = 0;
+
+                                // --- SMART DETECTION ---
+                                if (valRaw.toLowerCase().includes("%bsa")) {
+                                    annualVal = (p.sumAssured || 0) * (numOnly / 100);
+                                } else {
+                                    annualVal = numOnly; // Use flat amount (₹ 100,000)
+                                }
 
                                 if (range.includes("-")) {
                                     const [s, e] = range.split("-").map(Number);
@@ -95,9 +101,6 @@ export async function syncWithGoogleSheets(masterList) {
                             val = val.replace(/(\d+)%BSA/gi, (m, pct) => autoFmt((p.sumAssured * parseFloat(pct)/100), "₹"));
                             p.maturityAmt = val.replace(/BSA/gi, autoFmt(p.sumAssured, "₹"));
                         }
-                    }
-                    if (country === "singapore") {
-                        p.totalPremiumPaid = cleanNumeric(match["Total Premium"]);
                     }
                 }
                 return p;
