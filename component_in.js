@@ -1,4 +1,4 @@
-/* component_in.js - v4.1.15 - PPT Gatekeeper & Timeline Sync */
+/* component_in.js - v4.1.16 - Final Visual Sync */
 import { checkIsDueSoon, autoFmt, toNum, raw, safeParseDate, safeGetYear, monthMap } from './india.js';
 
 export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -14,10 +14,10 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
     if (TODAY < anniversaryThisYear) yearsCompleted--;
     const currentPolYear = yearsCompleted + 1; 
 
-    const matStr = p.maturity || "01 Jan 2050";
     const premEndStr = p.premiumEnds || "01 Jan 2030";
-    const matY = safeGetYear(matStr);
     const premEndYear = safeGetYear(premEndStr);
+    const matStr = p.maturity || "01 Jan 2050";
+    const matY = safeGetYear(matStr);
 
     const brandColor = p.color || "#000000";
     const brandBg = `rgba(${parseInt(brandColor.slice(1,3), 16)}, ${parseInt(brandColor.slice(3,5), 16)}, ${parseInt(brandColor.slice(5,7), 16)}, 0.04)`;
@@ -38,7 +38,7 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
     } else if (isIncomePhase) {
         middleLabel = "Annual Payout";
         middleValue = autoFmt(scheduledPayout, sym);
-        middleColor = "text-[#854d0e]"; 
+        middleColor = "text-[#854d0e]"; // Brown
     }
     const badgeText = isIncomePhase ? "Income Phase" : (p.type || "Savings");
 
@@ -48,7 +48,6 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
     const finalDueDate = isPaidUp ? "PAID UP" : nextDueStr;
     const isAssigned = toNum(p.sumAssured) === 0;
 
-    // Timeline Loop
     let timelineHtml = '';
     for(let yr = startY; yr < matY; yr++) {
         const loopPolY = yr - startY + 1;
