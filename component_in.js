@@ -1,11 +1,10 @@
-/* component_in.js - v4.1.21 - Decoupled Card Rounding */
+/* component_in.js - v4.1.22 - Restored ULIP Portfolio Display */
 import { checkIsDueSoon, autoFmt, toNum, raw, safeParseDate, safeGetYear, monthMap } from './india.js';
 
 export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
-    // LOCAL HELPER: Strictly for rounding individual card values
     const roundFmt = (v, s) => s + Math.round(v).toLocaleString('en-IN');
-
     const isULIP = (p.type || "").toUpperCase().includes("ULIP");
+
     const commStr = p.commenced || "01 Jan 2000";
     const startParts = commStr.split(' ');
     const annDay = parseInt(startParts[0]);
@@ -42,13 +41,11 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
         middleValue = roundFmt(scheduledPayout, sym); 
         middleColor = "text-[#854d0e]"; 
     }
-    const badgeText = isIncomePhase ? "Income Phase" : (p.type || "Savings");
 
     const hasPassedThisYear = TODAY >= anniversaryThisYear;
     const nextDueStr = `${annDay} ${startParts[1]} ${hasPassedThisYear ? CURRENT_YEAR + 1 : CURRENT_YEAR}`; 
     const isPaidUp = (p.status === "PAID UP") || (CURRENT_YEAR > (premEndYear - 1)) || (CURRENT_YEAR === (premEndYear - 1) && hasPassedThisYear);
     const finalDueDate = isPaidUp ? "PAID UP" : nextDueStr;
-    const isAssigned = toNum(p.sumAssured) === 0;
 
     let timelineHtml = '';
     for(let yr = startY; yr < matY; yr++) {
@@ -70,67 +67,55 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
                 detail = `Payout: ${roundFmt(loopPayout, sym)}`;
             } else {
                 color = isPast ? "bg-history-brown" : "bg-future-light-brown";
-                phase = isPast ? "Growth (Historical)" : "Growth Phase";
+                phase = isPast ? "Growth Phase";
                 detail = "Accumulating Value";
             }
         }
-        timelineHtml += `<div class="segment ${color}"><div class="tooltip"><b class="text-emerald-400 uppercase tracking-tighter">${phase}</b><br>${detail}<br><span class="opacity-40 text-[9px]">Year ${loopPolY} (${yr})</span></div></div>`;
+        timelineHtml += `<div class="segment ${color}"><div class="tooltip"><b>${phase}</b><br>${detail}</div></div>`;
     }
 
-    timelineHtml += `<div class="mat-star">★<div class="tooltip"><b class="text-orange-400 uppercase tracking-widest">Maturity</b><br><span class="text-lg font-black">${roundFmt(toNum(p.maturityAmt || p.sumAssured), sym)}</span></div></div>`;
+    timelineHtml += `<div class="mat-star">★<div class="tooltip"><b class="text-orange-400">Maturity</b><br>${roundFmt(toNum(p.maturityAmt || p.sumAssured), sym)}</div></div>`;
 
     return `
-    <div class="policy-card mb-6" id="card-${p.id}" style="border-left: 16px solid ${brandColor}; border-color: ${brandColor};">
-        <div class="card-header transition-colors" style="background: ${brandBg};" onclick="toggleCard('${p.id}')">
+    <div class="policy-card mb-6" style="border-left: 16px solid ${brandColor};">
+        <div class="card-header" style="background: ${brandBg};" onclick="toggleCard('${p.id}')">
             <div class="w-32 flex justify-center"><img src="${p.logo}" class="max-h-12"></div>
             <div class="flex-1 ml-10">
-                <h3 class="font-black text-slate-800 text-xl tracking-tight flex items-center gap-3">
-                    ${p.name}
-                    ${p.avatarPath ? `<img src="${p.avatarPath}" class="w-8 h-8 rounded-full border-2 border-white shadow-sm object-cover ring-1 ring-slate-200">` : ''}
-                </h3>
+                <h3 class="font-black text-slate-800 text-xl tracking-tight">${p.name}</h3>
             </div>
             <div class="flex gap-12 items-center mr-6">
-                <div class="flex items-center w-[260px] -ml-4">
-                    <div class="funky-badge-v2" style="border-color: ${brandColor}; color: ${brandColor}; background: ${brandBg}; font-size: 10px; font-weight: 900; letter-spacing: 0.1em; padding: 2px 8px; border-radius: 6px; border: 1.5px solid; text-transform: uppercase;">
-                        ${badgeText}
-                    </div>
-                    <div class="ml-6 relative min-w-[140px] flex items-center h-12">
-                        ${isAssigned ? `<img src="assigned.png" class="h-12 object-contain ml-2 opacity-95 transform -rotate-6">` : 
-                            `<div>
-                                <p class="text-[9px] font-bold text-slate-400 uppercase leading-none mb-1">${middleLabel}</p>
-                                <p class="text-lg font-black ${middleColor} leading-none">${middleValue}</p>
-                            </div>`
-                        }
+                <div class="flex items-center w-[260px]">
+                    <div class="funky-badge-v2" style="color:${brandColor}; border-color:${brandColor};">${isIncomePhase ? "Income Phase" : p.type}</div>
+                    <div class="ml-6">
+                        <p class="text-[9px] uppercase">${middleLabel}</p>
+                        <p class="text-lg font-black ${middleColor}">${middleValue}</p>
                     </div>
                 </div>
-                <div class="text-center border-l-2 border-slate-100 pl-10">
-                    <p class="text-[9px] font-bold text-slate-400 uppercase">Sum Assured</p>
+                <div class="text-center border-l-2 pl-10">
+                    <p class="text-[9px] uppercase">Sum Assured</p>
                     <p class="text-lg font-black text-slate-800">${roundFmt(p.sumAssured, sym)}</p>
                 </div>
             </div>
-            <div class="w-40 text-center flex flex-col justify-center min-h-[60px]">
-                ${isPaidUp ? `<img src="paid.jpg" class="paid-logo mx-auto h-12 object-contain">` : 
-                    `<div class="bg-white/60 p-2 rounded-xl border border-white/50 shadow-sm">
-                        <p class="text-[9px] font-bold text-slate-400 uppercase leading-none mb-1">Next Due</p>
-                        <div class="font-black text-[11px] ${checkIsDueSoon(finalDueDate) ? 'text-red-500 animate-pulse' : 'text-slate-900'}">${finalDueDate}</div>
-                    </div>`
-                }
+            <div class="w-40 text-center">
+                <p class="text-[9px] uppercase">Next Due</p>
+                <div class="font-black ${checkIsDueSoon(finalDueDate) ? 'text-red-500' : 'text-slate-900'}">${finalDueDate}</div>
             </div>
         </div>
-        <div class="content-area" style="background: linear-gradient(to bottom, ${brandBg}, #ffffff)">
+        <div class="content-area">
             <div class="detail-grid">
-                <div class="detail-item"><p>Policy Number</p><p>${p.id || 'N/A'}</p></div>
+                <div class="detail-item"><p>Policy Number</p><p>${p.id}</p></div>
                 <div class="detail-item"><p>UIN Number</p><p>${p.uin || 'N/A'}</p></div>
-                ${isULIP ? `<div class="detail-item" style="background: #eef2ff; border: 2px solid #6366f1; border-radius: 12px; padding: 10px;">
-                        <p style="color: #4338ca; font-weight: 800; font-size: 10px; text-transform: uppercase;">Portfolio Value</p>
-                        <p style="font-weight: 900; color: #1e1b4b; font-size: 18px;">${p.currentUnitValue || 'No Value'}</p>
-                    </div>` : `<div class="detail-item"><p>Customer ID</p><p>${p.clientId || 'N/A'}</p></div>`
+                
+                ${isULIP ? `
+                <div class="detail-item" style="background: #eef2ff; border: 2px solid #6366f1; border-radius: 12px; padding: 10px;">
+                    <p style="color: #4338ca; font-weight: 800; font-size: 10px; text-transform: uppercase;">Portfolio Value</p>
+                    <p style="font-weight: 900; color: #1e1b4b; font-size: 18px;">${p.currentUnitValue}</p>
+                </div>` : `
+                <div class="detail-item"><p>Customer ID</p><p>${p.clientId || 'N/A'}</p></div>`
                 }
             </div>
             <div class="timeline-track">
-                <div class="absolute -top-8 left-0 text-[11px] font-black text-slate-400 uppercase">${p.commenced}</div>
                 ${timelineHtml}
-                <div class="absolute -top-8 right-0 text-[11px] font-black text-slate-400 uppercase">${p.maturity}</div>
             </div>
         </div>
     </div>`;
