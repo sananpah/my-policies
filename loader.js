@@ -1,4 +1,4 @@
-/* loader.js - v4.2.6 - Clean India Maturity Output */
+/* loader.js - v4.2.9 - Unified Data Sync & MoneyBack Logic */
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2UwOfG57DQBOBnJX-9hsRKOQTUgALiM3uxs-VGzD2KN8JoWNAQltH6IkgAGhPTNFEvb/pub?gid=866869416&single=true&output=csv";
 
 const autoFmt = (val, sym) => {
@@ -20,6 +20,7 @@ export async function syncWithGoogleSheets(masterList) {
         const csvData = decoder.decode(buffer);
         const sheetRecords = processCSV(csvData);
 
+        // --- 1. THE INSURED MAP (Multi-Region) ---
         const insuredMap = {
             "Suhail Nami": { type: "Self", img: "avatar_self.png" },
             "Saima Suhail": { type: "Wife", img: "avatar_wife.png" },
@@ -44,6 +45,7 @@ export async function syncWithGoogleSheets(masterList) {
                     const safeCompanyName = p.company.replace(/[\s.]/g, "");
                     p.logo = `logo_${safeCompanyName}.png`;
 
+                    // --- 2. AVATAR SYNC ---
                     const identity = insuredMap[match["Insured"]];
                     if (identity) {
                         p.avatarPath = identity.img;
@@ -54,9 +56,11 @@ export async function syncWithGoogleSheets(masterList) {
                     const rawSA = String(match["Sum Assured"] || "").toLowerCase();
                     p.sumAssured = (rawSA.includes("not") || cleanNumeric(match["Sum Assured"]) === 0) ? 0 : cleanNumeric(match["Sum Assured"]);
                     
+                    // --- 3. PORTFOLIO TOTAL FIX ---
                     p.currentUnitValue = match["Current Value"] || "No Value";
                     p.unitValueNumeric = cleanNumeric(p.currentUnitValue); 
 
+                    // Date & Term Logic
                     let rawDate = String(match["Commenced Date"] || "").trim();
                     p.commenced = rawDate.replace(/\./g, ' '); 
                     const rawTermStr = String(match["Term"] || "");
@@ -74,7 +78,30 @@ export async function syncWithGoogleSheets(masterList) {
                         }
                     }
 
+                    // --- 4. INDIA SPECIFIC LOGIC ---
                     if (country === "india") {
+                        const rawBenefits = String(match["Other Coverage & Benefits"] || "");
+
+                        // --- MONEYBACK PARSER ---
+                        const mbLine = rawBenefits.split(/\r?\n/).find(l => l.trim().startsWith("MoneyBack"));
+                        p.payoutSchedule = {}; 
+                        if (mbLine) {
+                            const scheduleStr = mbLine.split(":")[1]?.trim() || "";
+                            const segments = scheduleStr.split(",");
+                            segments.forEach(seg => {
+                                if (!seg.includes(":")) return;
+                                const [range, valRaw] = seg.split(":").map(s => s.trim());
+                                let pct = parseFloat(valRaw) / 100;
+                                let annualVal = (p.sumAssured || 0) * pct;
+                                if (range.includes("-")) {
+                                    const [start, end] = range.split("-").map(Number);
+                                    for (let y = start; y <= end; y++) p.payoutSchedule[y] = annualVal;
+                                } else {
+                                    p.payoutSchedule[parseInt(range)] = annualVal;
+                                }
+                            });
+                        }
+
                         const isULIP = (p.type || "").toLowerCase().includes("ulip");
                         if (isULIP) {
                             const accVal = p.unitValueNumeric;
@@ -95,24 +122,13 @@ export async function syncWithGoogleSheets(masterList) {
                             const projected = Math.round(fvUnits + fvPrems);
                             p.maturityAmt = `${autoFmt(projected, "₹")}<br><span style="font-size: 8px; opacity: 0.8; display: block; margin-top: 4px;">* Calculated with 4% annual projection</span>`;
                         } else {
-                            const rawBenefits = String(match["Other Coverage & Benefits"] || "");
                             const maturityLine = rawBenefits.split(/\r?\n/).find(l => l.trim().startsWith("Maturity Benefit"));
-                            
                             if (maturityLine) {
                                 let val = maturityLine.split(":")[1]?.trim() || "";
-                                
-                                // REPLACEMENT LOGIC: Replaces "30%BSA" with just the "₹ X,XX,XXX" value
+                                // Clean Output logic: replaces 30%BSA with ₹ value
                                 const bsaRegex = /(\d+)%BSA/gi;
-                                val = val.replace(bsaRegex, (matchStr, percentage) => {
-                                    const pct = parseFloat(percentage) / 100;
-                                    const calcAmt = (p.sumAssured || 0) * pct;
-                                    return autoFmt(calcAmt, "₹");
-                                });
-
-                                // Replace single "BSA" words with the actual Sum Assured
-                                p.maturityAmt = val.toUpperCase().includes("BSA") 
-                                    ? val.replace(/BSA/gi, autoFmt(p.sumAssured, "₹")) 
-                                    : val;
+                                val = val.replace(bsaRegex, (m, pct) => autoFmt((p.sumAssured || 0) * (parseFloat(pct)/100), "₹"));
+                                p.maturityAmt = val.toUpperCase().includes("BSA") ? val.replace(/BSA/gi, autoFmt(p.sumAssured, "₹")) : val;
                             } else {
                                 p.maturityAmt = "Policy Maturity";
                             }
