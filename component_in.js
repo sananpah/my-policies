@@ -1,4 +1,4 @@
-/* component_in.js - v4.1.18 - Rounded UI for Payouts */
+/* component_in.js - v4.1.19 - Double-Locked Rounding for UI */
 import { checkIsDueSoon, autoFmt, toNum, raw, safeParseDate, safeGetYear, monthMap } from './india.js';
 
 export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -37,7 +37,8 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
         middleColor = "text-emerald-600";
     } else if (isIncomePhase) {
         middleLabel = "Annual Payout";
-        middleValue = autoFmt(scheduledPayout, sym); // Rounded via loader.js autoFmt
+        // DOUBLE LOCK: Round here to be absolutely certain no decimals show
+        middleValue = autoFmt(Math.round(scheduledPayout), sym); 
         middleColor = "text-[#854d0e]"; // Brown
     }
     const badgeText = isIncomePhase ? "Income Phase" : (p.type || "Savings");
