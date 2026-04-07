@@ -1,162 +1,135 @@
-// component_in.js — India policy card v4.2
-import { checkIsDueSoon, toNum, monthMap, safeGetYear } from './india.js';
-
-const roundFmt = (v, s) => s + Math.round(toNum(v)).toLocaleString('en-IN');
-
-function buildTimeline(p, TODAY, CURRENT_YEAR, sym) {
-    const commStr    = p.commenced || "01 Jan 2000";
-    const startParts = commStr.split(' ');
-    const annDay     = parseInt(startParts[0]);
-    const annMonth   = monthMap[startParts[1]] || 0;
-    const startY     = parseInt(startParts[2]);
-    const annThisYear = new Date(CURRENT_YEAR, annMonth, annDay);
-
-    let yearsComp = CURRENT_YEAR - startY;
-    if (TODAY < annThisYear) yearsComp--;
-    const polYear = yearsComp + 1;
-
-    const premEndYear = safeGetYear(p.premiumEnds);
-    const matY        = safeGetYear(p.maturity);
-    const isPaying    = (CURRENT_YEAR < premEndYear) || (CURRENT_YEAR === premEndYear && TODAY < annThisYear);
-
-    let html = '';
-    for (let y = startY; y < matY; y++) {
-        const lpY        = y - startY + 1;
-        const curPayout  = p.payoutSchedule ? p.payoutSchedule[lpY] : null;
-        const past       = y < CURRENT_YEAR || (y === CURRENT_YEAR && TODAY >= annThisYear);
-        let colorClass   = 'tl-growth';
-        let phase        = 'Growth';
-        let detail       = 'Accumulating value';
-
-        if (y < premEndYear) {
-            const isCurr   = (y === CURRENT_YEAR && TODAY < annThisYear);
-            colorClass     = isCurr ? 'tl-prem-curr' : (past ? 'tl-prem-past' : 'tl-prem-future');
-            phase          = 'Premium';
-            detail         = roundFmt(p.premium, sym);
-        } else if (curPayout) {
-            colorClass     = past ? 'tl-payout-past' : 'tl-payout-fut';
-            phase          = 'Payout';
-            detail         = roundFmt(curPayout, sym);
-        }
-
-        html += `<div class="tl-seg ${colorClass}"><div class="tl-tip"><b>${phase} — Year ${lpY} (${y})</b>${detail}</div></div>`;
-    }
-
-    const matAmt = roundFmt(toNum(p.maturityAmt || p.sumAssured), sym);
-    html += `<div class="tl-maturity"><div class="tl-tip"><b>Maturity (${matY})</b>${matAmt}</div>★</div>`;
-
-    return { html, startY, matY, polYear, isPaying, premEndYear, annThisYear };
-}
+/* component_in.js - v4.1.16 - Final Visual Sync */
+import { checkIsDueSoon, autoFmt, toNum, raw, safeParseDate, safeGetYear, monthMap } from './india.js';
 
 export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
-    const commStr      = p.commenced || "01 Jan 2000";
-    const startParts   = commStr.split(' ');
-    const annDay       = parseInt(startParts[0]);
-    const annMonth     = monthMap[startParts[1]] || 0;
-    const startY       = parseInt(startParts[2]);
-    const annThisYear  = new Date(CURRENT_YEAR, annMonth, annDay);
+    const isULIP = (p.type || "").toUpperCase().includes("ULIP");
+    const commStr = p.commenced || "01 Jan 2000";
+    const startParts = commStr.split(' ');
+    const annDay = parseInt(startParts[0]);
+    const annMonthNum = monthMap[startParts[1]] || 0;
+    const startY = parseInt(startParts[2]);
 
-    let yearsComp = CURRENT_YEAR - startY;
-    if (TODAY < annThisYear) yearsComp--;
-    const polYear = yearsComp + 1;
+    const anniversaryThisYear = new Date(CURRENT_YEAR, annMonthNum, annDay);
+    let yearsCompleted = CURRENT_YEAR - startY;
+    if (TODAY < anniversaryThisYear) yearsCompleted--;
+    const currentPolYear = yearsCompleted + 1; 
 
-    const premEndYear  = safeGetYear(p.premiumEnds);
-    const matY         = safeGetYear(p.maturity);
-    const isPaying     = (CURRENT_YEAR < premEndYear) || (CURRENT_YEAR === premEndYear && TODAY < annThisYear);
-    const payoutVal    = p.payoutSchedule ? p.payoutSchedule[polYear] : null;
-    const isIncome     = !isPaying && !!payoutVal;
+    const premEndStr = p.premiumEnds || "01 Jan 2030";
+    const premEndYear = safeGetYear(premEndStr);
+    const matStr = p.maturity || "01 Jan 2050";
+    const matY = safeGetYear(matStr);
 
-    const isPaidUp     = (p.status === "PAID UP") || (CURRENT_YEAR >= premEndYear && TODAY >= annThisYear);
-    const dueStr       = isPaidUp
-        ? "PAID UP"
-        : `${annDay} ${startParts[1]} ${TODAY >= annThisYear ? CURRENT_YEAR + 1 : CURRENT_YEAR}`;
+    const brandColor = p.color || "#000000";
+    const brandBg = `rgba(${parseInt(brandColor.slice(1,3), 16)}, ${parseInt(brandColor.slice(3,5), 16)}, ${parseInt(brandColor.slice(5,7), 16)}, 0.04)`;
+    
+    // --- PHASE & MIDDLE BOX LOGIC ---
+    const isStillPaying = (CURRENT_YEAR < premEndYear) || (CURRENT_YEAR === premEndYear && TODAY < anniversaryThisYear);
+    const scheduledPayout = (p.payoutSchedule && p.payoutSchedule[currentPolYear]);
+    const isIncomePhase = !isStillPaying && !!scheduledPayout;
 
-    const isDue        = checkIsDueSoon(dueStr);
-    const isULIP       = (p.type || "").toUpperCase().includes("ULIP");
-    const bc           = p.color || "#1a1916";
-    const brandAlpha   = `${bc}18`;
+    let middleLabel = "Sum Assured";
+    let middleValue = autoFmt(p.sumAssured, sym);
+    let middleColor = "text-slate-700";
 
-    // Mid metric
-    let midLbl = "Sum Assured", midVal = roundFmt(p.sumAssured, sym), midClass = "";
-    if (isPaying)      { midLbl = "Annual Premium"; midVal = roundFmt(p.premium, sym);   midClass = "emerald"; }
-    else if (isIncome) { midLbl = "Annual Payout";  midVal = roundFmt(payoutVal, sym);   midClass = "amber"; }
+    if (isStillPaying) {
+        middleLabel = "Annual Premium";
+        middleValue = autoFmt(p.premium, sym);
+        middleColor = "text-emerald-600";
+    } else if (isIncomePhase) {
+        middleLabel = "Annual Payout";
+        middleValue = autoFmt(scheduledPayout, sym);
+        middleColor = "text-[#854d0e]"; // Brown
+    }
+    const badgeText = isIncomePhase ? "Income Phase" : (p.type || "Savings");
 
-    const { html: tlHtml } = buildTimeline(p, TODAY, CURRENT_YEAR, sym);
+    const hasPassedThisYear = TODAY >= anniversaryThisYear;
+    const nextDueStr = `${annDay} ${startParts[1]} ${hasPassedThisYear ? CURRENT_YEAR + 1 : CURRENT_YEAR}`; 
+    const isPaidUp = (p.status === "PAID UP") || (CURRENT_YEAR > (premEndYear - 1)) || (CURRENT_YEAR === (premEndYear - 1) && hasPassedThisYear);
+    const finalDueDate = isPaidUp ? "PAID UP" : nextDueStr;
+    const isAssigned = toNum(p.sumAssured) === 0;
+
+    let timelineHtml = '';
+    for(let yr = startY; yr < matY; yr++) {
+        const loopPolY = yr - startY + 1;
+        const isPast = yr < CURRENT_YEAR;
+        const isLoopCurrent = yr === CURRENT_YEAR;
+        let color = "", phase = "", detail = "";
+
+        if (yr < premEndYear) {
+            const isEffectivelyPaid = isPast || isPaidUp || (isLoopCurrent && hasPassedThisYear);
+            color = (isLoopCurrent && !hasPassedThisYear && !isPaidUp) ? "bg-current" : (isEffectivelyPaid ? "bg-prem-past" : "bg-prem-future");
+            phase = isEffectivelyPaid ? "Premium Completed" : "Premium Payment";
+            detail = `Amt: ${autoFmt(p.premium, sym)}`;
+        } else {
+            const loopPayout = (p.payoutSchedule && p.payoutSchedule[loopPolY]);
+            if (loopPayout) {
+                color = isPast ? "bg-payout-past" : "bg-payout-future";
+                phase = isPast ? "Payout Received" : "Income Phase";
+                detail = `Payout: ${autoFmt(loopPayout, sym)}`;
+            } else {
+                color = isPast ? "bg-history-brown" : "bg-future-light-brown";
+                phase = isPast ? "Growth (Historical)" : "Growth Phase";
+                detail = "Accumulating Value";
+            }
+        }
+        timelineHtml += `<div class="segment ${color}"><div class="tooltip"><b class="text-emerald-400 uppercase tracking-tighter">${phase}</b><br>${detail}<br><span class="opacity-40 text-[9px]">Year ${loopPolY} (${yr})</span></div></div>`;
+    }
+
+    timelineHtml += `<div class="mat-star">★<div class="tooltip"><b class="text-orange-400 uppercase tracking-widest">Maturity</b><br><span class="${String(p.maturityAmt || p.sumAssured).length > 15 ? 'text-[10px]' : 'text-lg'} font-black">${raw(p.maturityAmt || p.sumAssured)}</span></div></div>`;
 
     return `
-<div class="policy-card" id="card-${p.id}" style="border-left: 6px solid ${bc};">
-    <div class="card-header" style="background: ${brandAlpha};" onclick="window.toggleCard('${p.id}')">
-        <div class="card-logo-wrap">
-            <img class="card-logo" src="${p.logo || 'logo_default.png'}" onerror="this.src='logo_default.png'" alt="">
-        </div>
-        <div class="card-main">
-            <div class="card-name">
-                ${p.name || p.id}
-                ${p.avatarPath ? `<img class="card-avatar" src="${p.avatarPath}" alt="" onerror="this.style.display='none'">` : ''}
+    <div class="policy-card mb-6" id="card-${p.id}" style="border-left: 16px solid ${brandColor}; border-color: ${brandColor};">
+        <div class="card-header transition-colors" style="background: ${brandBg};" onclick="toggleCard('${p.id}')">
+            <div class="w-32 flex justify-center"><img src="${p.logo}" class="max-h-12"></div>
+            <div class="flex-1 ml-10">
+                <h3 class="font-black text-slate-800 text-xl tracking-tight flex items-center gap-3">
+                    ${p.name}
+                    ${p.avatarPath ? `<img src="${p.avatarPath}" class="w-8 h-8 rounded-full border-2 border-white shadow-sm object-cover ring-1 ring-slate-200">` : ''}
+                </h3>
             </div>
-            <div class="card-company">${p.company || ''}</div>
-            <span class="type-badge" style="color:${bc};">${isIncome ? 'Income Phase' : (p.type || 'Life')}</span>
-        </div>
-        <div class="card-metrics">
-            <div class="card-metric">
-                <span class="metric-lbl">${midLbl}</span>
-                <span class="metric-val ${midClass}">${midVal}</span>
+            <div class="flex gap-12 items-center mr-6">
+                <div class="flex items-center w-[260px] -ml-4">
+                    <div class="funky-badge-v2" style="border-color: ${brandColor}; color: ${brandColor}; background: ${brandBg}; font-size: 10px; font-weight: 900; letter-spacing: 0.1em; padding: 2px 8px; border-radius: 6px; border: 1.5px solid; text-transform: uppercase;">
+                        ${badgeText}
+                    </div>
+                    <div class="ml-6 relative min-w-[140px] flex items-center h-12">
+                        ${isAssigned ? `<img src="assigned.png" class="h-12 object-contain ml-2 opacity-95 transform -rotate-6">` : 
+                            `<div>
+                                <p class="text-[9px] font-bold text-slate-400 uppercase leading-none mb-1">${middleLabel}</p>
+                                <p class="text-lg font-black ${middleColor} leading-none">${middleValue}</p>
+                            </div>`
+                        }
+                    </div>
+                </div>
+                <div class="text-center border-l-2 border-slate-100 pl-10">
+                    <p class="text-[9px] font-bold text-slate-400 uppercase">Sum Assured</p>
+                    <p class="text-lg font-black text-slate-800">${autoFmt(p.sumAssured, sym)}</p>
+                </div>
             </div>
-            <div class="card-metric">
-                <span class="metric-lbl">Sum Assured</span>
-                <span class="metric-val">${roundFmt(p.sumAssured, sym)}</span>
-            </div>
-            <div class="card-metric">
-                <span class="metric-lbl">Next Due</span>
-                <span class="due-val ${isDue ? 'due-soon' : ''}">${dueStr}</span>
-            </div>
-        </div>
-        <div class="card-toggle">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
-        </div>
-    </div>
-
-    <div class="card-body" id="content-${p.id}">
-        <div class="detail-grid">
-            <div class="detail-item">
-                <div class="detail-lbl">Policy No.</div>
-                <div class="detail-val">${p.id}</div>
-            </div>
-            <div class="detail-item">
-                <div class="detail-lbl">UIN</div>
-                <div class="detail-val">${p.uin || 'N/A'}</div>
-            </div>
-            ${isULIP
-                ? `<div class="detail-item highlight">
-                       <div class="detail-lbl">Portfolio Value</div>
-                       <div class="detail-val">${p.currentUnitValue || '—'}</div>
-                   </div>`
-                : `<div class="detail-item">
-                       <div class="detail-lbl">Customer ID</div>
-                       <div class="detail-val">${p.clientId || 'N/A'}</div>
-                   </div>`
-            }
-            <div class="detail-item">
-                <div class="detail-lbl">Commenced</div>
-                <div class="detail-val">${p.commenced || '—'}</div>
-            </div>
-            <div class="detail-item">
-                <div class="detail-lbl">Premium Ends</div>
-                <div class="detail-val">${p.premiumEnds || '—'}</div>
-            </div>
-            <div class="detail-item">
-                <div class="detail-lbl">Maturity</div>
-                <div class="detail-val">${p.maturity || '—'}</div>
+            <div class="w-40 text-center flex flex-col justify-center min-h-[60px]">
+                ${isPaidUp ? `<img src="paid.jpg" class="paid-logo mx-auto h-12 object-contain">` : 
+                    `<div class="bg-white/60 p-2 rounded-xl border border-white/50 shadow-sm">
+                        <p class="text-[9px] font-bold text-slate-400 uppercase leading-none mb-1">Next Due</p>
+                        <div class="font-black text-[11px] ${checkIsDueSoon(finalDueDate) ? 'text-red-500 animate-pulse' : 'text-slate-900'}">${finalDueDate}</div>
+                    </div>`
+                }
             </div>
         </div>
-
-        <div class="timeline-wrap">
-            <div class="timeline-labels">
-                <span class="timeline-label">${p.commenced || ''}</span>
-                <span class="timeline-label">${p.maturity || ''}</span>
+        <div class="content-area" style="background: linear-gradient(to bottom, ${brandBg}, #ffffff)">
+            <div class="detail-grid">
+                <div class="detail-item"><p>Policy Number</p><p>${p.id || 'N/A'}</p></div>
+                <div class="detail-item"><p>UIN Number</p><p>${p.uin || 'N/A'}</p></div>
+                ${isULIP ? `<div class="detail-item" style="background: #eef2ff; border: 2px solid #6366f1; border-radius: 12px; padding: 10px;">
+                        <p style="color: #4338ca; font-weight: 800; font-size: 10px; text-transform: uppercase;">Portfolio Value</p>
+                        <p style="font-weight: 900; color: #1e1b4b; font-size: 18px;">${p.currentUnitValue || 'No Value'}</p>
+                    </div>` : `<div class="detail-item"><p>Customer ID</p><p>${p.clientId || 'N/A'}</p></div>`
+                }
             </div>
-            <div class="timeline-track">${tlHtml}</div>
+            <div class="timeline-track">
+                <div class="absolute -top-8 left-0 text-[11px] font-black text-slate-400 uppercase">${p.commenced}</div>
+                ${timelineHtml}
+                <div class="absolute -top-8 right-0 text-[11px] font-black text-slate-400 uppercase">${p.maturity}</div>
+            </div>
         </div>
-    </div>
-</div>`;
+    </div>`;
 }
