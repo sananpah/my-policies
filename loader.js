@@ -1,4 +1,4 @@
-/* loader.js - v4.2.9 - Unified Data Sync & MoneyBack Logic */
+/* loader.js - v4.3.1 - Unified Data Sync & MoneyBack Logic */
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2UwOfG57DQBOBnJX-9hsRKOQTUgALiM3uxs-VGzD2KN8JoWNAQltH6IkgAGhPTNFEvb/pub?gid=866869416&single=true&output=csv";
 
 const autoFmt = (val, sym) => {
@@ -20,7 +20,7 @@ export async function syncWithGoogleSheets(masterList) {
         const csvData = decoder.decode(buffer);
         const sheetRecords = processCSV(csvData);
 
-        // --- 1. THE INSURED MAP (Multi-Region) ---
+        // --- 1. THE INSURED MAP ---
         const insuredMap = {
             "Suhail Nami": { type: "Self", img: "avatar_self.png" },
             "Saima Suhail": { type: "Wife", img: "avatar_wife.png" },
@@ -28,7 +28,7 @@ export async function syncWithGoogleSheets(masterList) {
         };
 
         const cleanNumeric = (raw) => {
-            if (!raw || raw === "No Value") return 0;
+            if (!raw || raw === "No Value" || !raw) return 0;
             let str = String(raw).trim().replace(/[^\x00-\x7F]/g, "").replace(/[^\d.]/g, "");       
             return parseFloat(str) || 0;
         };
@@ -45,7 +45,7 @@ export async function syncWithGoogleSheets(masterList) {
                     const safeCompanyName = p.company.replace(/[\s.]/g, "");
                     p.logo = `logo_${safeCompanyName}.png`;
 
-                    // --- 2. AVATAR SYNC ---
+                    // --- 2. MULTI-REGION AVATAR SYNC ---
                     const identity = insuredMap[match["Insured"]];
                     if (identity) {
                         p.avatarPath = identity.img;
@@ -64,17 +64,28 @@ export async function syncWithGoogleSheets(masterList) {
                     let rawDate = String(match["Commenced Date"] || "").trim();
                     p.commenced = rawDate.replace(/\./g, ' '); 
                     const rawTermStr = String(match["Term"] || "");
+                    
+                    // Date decomposition for current year indexing
+                    const dateParts = p.commenced.split(" ");
+                    const startY = parseInt(dateParts[2]);
+                    const commMonth = monthMap[dateParts[1]] || 0;
+                    const commDay = parseInt(dateParts[0]) || 1;
+
+                    // Calculate Current Policy Year Index
+                    const annThisYear = new Date(CURRENT_YEAR, commMonth, commDay);
+                    let yearsPassed = CURRENT_YEAR - startY;
+                    if (TODAY < annThisYear) yearsPassed--;
+                    const currentPolicyYear = yearsPassed + 1;
+
                     let ppt = 0, mat = 0;
                     if (rawTermStr.includes(":")) {
                         const parts = rawTermStr.split(":");
                         ppt = parseInt(parts[0], 10) || 0;
                         mat = parseInt(parts[1], 10) || 0;
                         p.ppt = ppt;
-                        const startParts = p.commenced.split(" ");
-                        const startY = parseInt(startParts[2], 10);
                         if (!isNaN(startY)) {
-                            p.premiumEnds = `${startParts[0]} ${startParts[1]} ${startY + ppt}`;
-                            p.maturity = `${startParts[0]} ${startParts[1]} ${startY + mat}`;
+                            p.premiumEnds = `${dateParts[0]} ${dateParts[1]} ${startY + ppt}`;
+                            p.maturity = `${dateParts[0]} ${dateParts[1]} ${startY + mat}`;
                         }
                     }
 
@@ -85,32 +96,36 @@ export async function syncWithGoogleSheets(masterList) {
                         // --- MONEYBACK PARSER ---
                         const mbLine = rawBenefits.split(/\r?\n/).find(l => l.trim().startsWith("MoneyBack"));
                         p.payoutSchedule = {}; 
+                        p.annualPayout = 0; // Initialize
+
                         if (mbLine) {
                             const scheduleStr = mbLine.split(":")[1]?.trim() || "";
                             const segments = scheduleStr.split(",");
                             segments.forEach(seg => {
                                 if (!seg.includes(":")) return;
                                 const [range, valRaw] = seg.split(":").map(s => s.trim());
-                                let pct = parseFloat(valRaw) / 100;
-                                let annualVal = (p.sumAssured || 0) * pct;
+                                let val = valRaw.includes("%BSA") ? (p.sumAssured * parseFloat(valRaw)/100) : cleanNumeric(valRaw);
+                                
                                 if (range.includes("-")) {
-                                    const [start, end] = range.split("-").map(Number);
-                                    for (let y = start; y <= end; y++) p.payoutSchedule[y] = annualVal;
+                                    const [s, e] = range.split("-").map(Number);
+                                    for (let y = s; y <= e; y++) p.payoutSchedule[y] = val;
                                 } else {
-                                    p.payoutSchedule[parseInt(range)] = annualVal;
+                                    p.payoutSchedule[parseInt(range)] = val;
                                 }
                             });
+
+                            // Assign payout for the current specific policy year
+                            if (p.payoutSchedule[currentPolicyYear]) {
+                                p.annualPayout = p.payoutSchedule[currentPolicyYear];
+                            }
                         }
 
                         const isULIP = (p.type || "").toLowerCase().includes("ulip");
                         if (isULIP) {
                             const accVal = p.unitValueNumeric;
                             const endY = parseInt(p.maturity.split(" ")[2]) || 2050;
-                            const startY = parseInt(p.commenced.split(" ")[2]) || 2000;
                             const yearsToMat = Math.max(0, endY - CURRENT_YEAR);
-                            const annMonth = monthMap[p.commenced.split(" ")[1]] || 0;
-                            const annDay = parseInt(p.commenced.split(" ")[0]) || 1;
-                            const hasPassed = (TODAY.getMonth() > annMonth) || (TODAY.getMonth() === annMonth && TODAY.getDate() >= annDay);
+                            const hasPassed = (TODAY.getMonth() > commMonth) || (TODAY.getMonth() === commMonth && TODAY.getDate() >= commDay);
                             const yearsToPay = Math.max(0, (startY + ppt) - (hasPassed ? CURRENT_YEAR + 1 : CURRENT_YEAR));
                             const r = 0.04;
                             const fvUnits = accVal * Math.pow(1 + r, yearsToMat);
