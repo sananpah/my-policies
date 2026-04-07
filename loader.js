@@ -1,4 +1,4 @@
-/* loader.js - v4.3.1 - Unified Data Sync & MoneyBack Logic */
+/* loader.js - v4.3.5 - Unified Sync & Fuzzy MoneyBack Parser */
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2UwOfG57DQBOBnJX-9hsRKOQTUgALiM3uxs-VGzD2KN8JoWNAQltH6IkgAGhPTNFEvb/pub?gid=866869416&single=true&output=csv";
 
 const autoFmt = (val, sym) => {
@@ -16,11 +16,9 @@ export async function syncWithGoogleSheets(masterList) {
     try {
         const response = await fetch(`${SHEET_URL}&t=${Date.now()}`);
         const buffer = await response.arrayBuffer();
-        const decoder = new TextDecoder('utf-8'); 
-        const csvData = decoder.decode(buffer);
+        const csvData = new TextDecoder('utf-8').decode(buffer);
         const sheetRecords = processCSV(csvData);
 
-        // --- 1. THE INSURED MAP ---
         const insuredMap = {
             "Suhail Nami": { type: "Self", img: "avatar_self.png" },
             "Saima Suhail": { type: "Wife", img: "avatar_wife.png" },
@@ -28,9 +26,8 @@ export async function syncWithGoogleSheets(masterList) {
         };
 
         const cleanNumeric = (raw) => {
-            if (!raw || raw === "No Value" || !raw) return 0;
-            let str = String(raw).trim().replace(/[^\x00-\x7F]/g, "").replace(/[^\d.]/g, "");       
-            return parseFloat(str) || 0;
+            if (!raw || raw === "No Value") return 0;
+            return parseFloat(String(raw).replace(/[^\x00-\x7F]/g, "").replace(/[^\d.]/g, "")) || 0;
         };
 
         ["india", "singapore"].forEach(country => {
@@ -41,125 +38,73 @@ export async function syncWithGoogleSheets(masterList) {
                     p.name = match.name || p.name;
                     p.company = match.company || p.company;
                     p.type = match.type || p.type;
-                    
-                    const safeCompanyName = p.company.replace(/[\s.]/g, "");
-                    p.logo = `logo_${safeCompanyName}.png`;
+                    p.logo = `logo_${p.company.replace(/[\s.]/g, "")}.png`;
 
-                    // --- 2. MULTI-REGION AVATAR SYNC ---
                     const identity = insuredMap[match["Insured"]];
-                    if (identity) {
-                        p.avatarPath = identity.img;
-                        p.holderType = identity.type;
-                    }
+                    if (identity) { p.avatarPath = identity.img; p.holderType = identity.type; }
 
                     p.premium = cleanNumeric(match["Premium"]);
-                    const rawSA = String(match["Sum Assured"] || "").toLowerCase();
-                    p.sumAssured = (rawSA.includes("not") || cleanNumeric(match["Sum Assured"]) === 0) ? 0 : cleanNumeric(match["Sum Assured"]);
-                    
-                    // --- 3. PORTFOLIO TOTAL FIX ---
+                    p.sumAssured = cleanNumeric(match["Sum Assured"]);
                     p.currentUnitValue = match["Current Value"] || "No Value";
                     p.unitValueNumeric = cleanNumeric(p.currentUnitValue); 
 
-                    // Date & Term Logic
-                    let rawDate = String(match["Commenced Date"] || "").trim();
-                    p.commenced = rawDate.replace(/\./g, ' '); 
-                    const rawTermStr = String(match["Term"] || "");
-                    
-                    // Date decomposition for current year indexing
-                    const dateParts = p.commenced.split(" ");
+                    let rawDate = String(match["Commenced Date"] || "").trim().replace(/\./g, ' '); 
+                    p.commenced = rawDate;
+                    const dateParts = rawDate.split(" ");
                     const startY = parseInt(dateParts[2]);
-                    const commMonth = monthMap[dateParts[1]] || 0;
-                    const commDay = parseInt(dateParts[0]) || 1;
 
-                    // Calculate Current Policy Year Index
-                    const annThisYear = new Date(CURRENT_YEAR, commMonth, commDay);
-                    let yearsPassed = CURRENT_YEAR - startY;
-                    if (TODAY < annThisYear) yearsPassed--;
-                    const currentPolicyYear = yearsPassed + 1;
-
-                    let ppt = 0, mat = 0;
+                    const rawTermStr = String(match["Term"] || "");
                     if (rawTermStr.includes(":")) {
                         const parts = rawTermStr.split(":");
-                        ppt = parseInt(parts[0], 10) || 0;
-                        mat = parseInt(parts[1], 10) || 0;
-                        p.ppt = ppt;
+                        p.ppt = parseInt(parts[0], 10) || 0;
+                        const mat = parseInt(parts[1], 10) || 0;
                         if (!isNaN(startY)) {
-                            p.premiumEnds = `${dateParts[0]} ${dateParts[1]} ${startY + ppt}`;
+                            p.premiumEnds = `${dateParts[0]} ${dateParts[1]} ${startY + p.ppt}`;
                             p.maturity = `${dateParts[0]} ${dateParts[1]} ${startY + mat}`;
                         }
                     }
 
-                    // --- 4. INDIA SPECIFIC LOGIC ---
                     if (country === "india") {
                         const rawBenefits = String(match["Other Coverage & Benefits"] || "");
 
-                        // --- MONEYBACK PARSER ---
-                        const mbLine = rawBenefits.split(/\r?\n/).find(l => l.trim().startsWith("MoneyBack"));
+                        // --- FUZZY MONEYBACK PARSER ---
+                        const mbLine = rawBenefits.split(/\r?\n/).find(l => l.toLowerCase().includes("moneyback"));
                         p.payoutSchedule = {}; 
-                        p.annualPayout = 0; // Initialize
-
-                        if (mbLine) {
-                            const scheduleStr = mbLine.split(":")[1]?.trim() || "";
-                            const segments = scheduleStr.split(",");
-                            segments.forEach(seg => {
+                        if (mbLine && mbLine.includes(":")) {
+                            const content = mbLine.substring(mbLine.indexOf(":") + 1).trim();
+                            content.split(",").forEach(seg => {
                                 if (!seg.includes(":")) return;
                                 const [range, valRaw] = seg.split(":").map(s => s.trim());
-                                let val = valRaw.includes("%BSA") ? (p.sumAssured * parseFloat(valRaw)/100) : cleanNumeric(valRaw);
-                                
+                                let pct = parseFloat(valRaw.replace(/[^\d.]/g, "")) / 100;
+                                let annualVal = (p.sumAssured || 0) * pct;
+
                                 if (range.includes("-")) {
                                     const [s, e] = range.split("-").map(Number);
-                                    for (let y = s; y <= e; y++) p.payoutSchedule[y] = val;
+                                    for (let y = s; y <= e; y++) p.payoutSchedule[y] = annualVal;
                                 } else {
-                                    p.payoutSchedule[parseInt(range)] = val;
+                                    const y = parseInt(range);
+                                    if (!isNaN(y)) p.payoutSchedule[y] = annualVal;
                                 }
                             });
-
-                            // Assign payout for the current specific policy year
-                            if (p.payoutSchedule[currentPolicyYear]) {
-                                p.annualPayout = p.payoutSchedule[currentPolicyYear];
-                            }
                         }
 
-                        const isULIP = (p.type || "").toLowerCase().includes("ulip");
-                        if (isULIP) {
-                            const accVal = p.unitValueNumeric;
-                            const endY = parseInt(p.maturity.split(" ")[2]) || 2050;
-                            const yearsToMat = Math.max(0, endY - CURRENT_YEAR);
-                            const hasPassed = (TODAY.getMonth() > commMonth) || (TODAY.getMonth() === commMonth && TODAY.getDate() >= commDay);
-                            const yearsToPay = Math.max(0, (startY + ppt) - (hasPassed ? CURRENT_YEAR + 1 : CURRENT_YEAR));
-                            const r = 0.04;
-                            const fvUnits = accVal * Math.pow(1 + r, yearsToMat);
-                            let fvPrems = 0;
-                            if (yearsToPay > 0) {
-                                fvPrems = p.premium * ((Math.pow(1 + r, yearsToPay) - 1) / r) * (1 + r);
-                                if (yearsToMat > yearsToPay) fvPrems *= Math.pow(1 + r, yearsToMat - yearsToPay);
-                            }
-                            const projected = Math.round(fvUnits + fvPrems);
-                            p.maturityAmt = `${autoFmt(projected, "₹")}<br><span style="font-size: 8px; opacity: 0.8; display: block; margin-top: 4px;">* Calculated with 4% annual projection</span>`;
-                        } else {
-                            const maturityLine = rawBenefits.split(/\r?\n/).find(l => l.trim().startsWith("Maturity Benefit"));
-                            if (maturityLine) {
-                                let val = maturityLine.split(":")[1]?.trim() || "";
-                                // Clean Output logic: replaces 30%BSA with ₹ value
-                                const bsaRegex = /(\d+)%BSA/gi;
-                                val = val.replace(bsaRegex, (m, pct) => autoFmt((p.sumAssured || 0) * (parseFloat(pct)/100), "₹"));
-                                p.maturityAmt = val.toUpperCase().includes("BSA") ? val.replace(/BSA/gi, autoFmt(p.sumAssured, "₹")) : val;
-                            } else {
-                                p.maturityAmt = "Policy Maturity";
-                            }
+                        // Maturity Text Formatting
+                        const maturityLine = rawBenefits.split(/\r?\n/).find(l => l.trim().startsWith("Maturity Benefit"));
+                        if (maturityLine) {
+                            let val = maturityLine.split(":")[1]?.trim() || "";
+                            val = val.replace(/(\d+)%BSA/gi, (m, pct) => autoFmt((p.sumAssured * parseFloat(pct)/100), "₹"));
+                            p.maturityAmt = val.replace(/BSA/gi, autoFmt(p.sumAssured, "₹"));
                         }
                     }
-
                     if (country === "singapore") {
-                        p.totalPremiumPaid = cleanNumeric(match["Total Premium"] || "0");
-                        if (rawTermStr.includes(":")) p.mip = parseInt(rawTermStr.split(":")[2], 10) || 0;
+                        p.totalPremiumPaid = cleanNumeric(match["Total Premium"]);
                     }
                 }
                 return p;
             });
         });
         return masterList;
-    } catch (e) { console.warn("⚠️ Sync failed:", e); return masterList; }
+    } catch (e) { console.warn("Sync failed:", e); return masterList; }
 }
 
 function processCSV(csv) {
@@ -180,22 +125,14 @@ function processCSV(csv) {
     return rows.slice(headerIdx + 1).map(rowData => {
         const obj = {};
         headers.forEach((h, i) => { if (h) obj[h] = (rowData[i] || "").trim(); });
-        if (!obj["Policy_Name"] && rowData[0]?.includes(":")) obj["Policy_Name"] = rowData[0];
-        return parseInsuranceTab(obj);
+        const rawFullName = obj["Policy_Name"] || "";
+        if (rawFullName.includes(":")) {
+            const parts = rawFullName.split(":");
+            obj.company = parts[0].trim();
+            obj.name = parts[1].trim(); 
+        }
+        const rawCategory = obj["Category"] || "";
+        obj.type = rawCategory.includes(":") ? rawCategory.split(":")[1].trim() : (rawCategory || "Savings");
+        return obj;
     }).filter(item => item && item["Policy_Name"] !== "EMPTY");
-}
-
-function parseInsuranceTab(item) {
-    const rawFullName = item["Policy_Name"] || "";
-    if (rawFullName.includes(":")) {
-        const parts = rawFullName.split(":");
-        item.company = parts[0].trim();
-        item.name = parts[1].trim(); 
-    } else {
-        item.company = "Insurance";
-        item.name = rawFullName;
-    }
-    const rawCategory = item["Category"] || "";
-    item.type = rawCategory.includes(":") ? rawCategory.split(":")[1].trim() : (rawCategory || "Savings");
-    return item;
 }
