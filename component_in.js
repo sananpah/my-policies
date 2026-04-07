@@ -1,4 +1,4 @@
-/* component_in.js - v4.1.23 - No Syntax Errors */
+/* component_in.js - v4.1.24 - UI Restoration */
 import { checkIsDueSoon, autoFmt, toNum, raw, safeParseDate, safeGetYear, monthMap } from './india.js';
 
 export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -59,8 +59,8 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
 
     return `
     <div class="policy-card mb-6" style="border-left: 16px solid ${brandColor};">
-        <div class="card-header transition-colors" style="background: ${brandBg};" onclick="toggleCard('${p.id}')">
-            <div class="w-32 flex justify-center"><img src="${p.logo}" class="max-h-12"></div>
+        <div class="card-header" style="background: ${brandBg}; cursor:pointer;" onclick="toggleCard('${p.id}')">
+            <div class="w-32 flex justify-center"><img src="${p.logo}" class="max-h-12" onerror="this.src='logo_default.png'"></div>
             <div class="flex-1 ml-10">
                 <h3 class="font-black text-slate-800 text-xl tracking-tight flex items-center gap-3">
                     ${p.name}
@@ -85,7 +85,7 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
                 <div class="font-black ${checkIsDueSoon(finalDueDate) ? 'text-red-500' : 'text-slate-900'}">${finalDueDate}</div>
             </div>
         </div>
-        <div class="content-area">
+        <div class="content-area hidden" id="content-${p.id}">
             <div class="detail-grid">
                 <div class="detail-item"><p>Policy Number</p><p>${p.id}</p></div>
                 <div class="detail-item"><p>UIN Number</p><p>${p.uin || 'N/A'}</p></div>
@@ -97,7 +97,7 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
                 <div class="detail-item"><p>Customer ID</p><p>${p.clientId || 'N/A'}</p></div>`
                 }
             </div>
-            <div class="timeline-track">${timelineHtml}</div>
+            <div class="timeline-track p-10">${timelineHtml}</div>
         </div>
     </div>`;
 }
