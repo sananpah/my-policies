@@ -1,11 +1,14 @@
-/* loader.js - v4.3.10 - Nuclear Rounding at Source */
+/* loader.js - v4.3.11 - Precision Restored for Totals */
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2UwOfG57DQBOBnJX-9hsRKOQTUgALiM3uxs-VGzD2KN8JoWNAQltH6IkgAGhPTNFEvb/pub?gid=866869416&single=true&output=csv";
 
+// Global Formatter: Preserves decimals for accurate Portfolio totals
 const autoFmt = (val, sym) => {
     const n = parseFloat(val);
     if (isNaN(n) || n === 0) return sym + "0";
-    // Standard rounding for general use
-    return sym + Math.round(n).toLocaleString('en-IN');
+    return sym + n.toLocaleString('en-IN', { 
+        maximumFractionDigits: 2,
+        minimumFractionDigits: 0 
+    });
 };
 
 const monthMap = { "Jan":0,"Feb":1,"Mar":2,"Apr":3,"May":4,"Jun":5,"Jul":6,"Aug":7,"Sep":8,"Oct":9,"Nov":10,"Dec":11 };
@@ -17,6 +20,12 @@ export async function syncWithGoogleSheets(masterList) {
         const buffer = await response.arrayBuffer();
         const csvData = new TextDecoder('utf-8').decode(buffer);
         const sheetRecords = processCSV(csvData);
+
+        const insuredMap = {
+            "Suhail Nami": { type: "Self", img: "avatar_self.png" },
+            "Saima Suhail": { type: "Wife", img: "avatar_wife.png" },
+            "Sulmas Nami": { type: "Daughter", img: "avatar_daughter.png" }
+        };
 
         const cleanNumeric = (raw) => {
             if (!raw || raw === "No Value") return 0;
@@ -32,6 +41,9 @@ export async function syncWithGoogleSheets(masterList) {
                     p.company = match.company || p.company;
                     p.type = match.type || p.type;
                     p.logo = `logo_${p.company.replace(/[\s.]/g, "")}.png`;
+                    const identity = insuredMap[match["Insured"]];
+                    if (identity) { p.avatarPath = identity.img; p.holderType = identity.type; }
+
                     p.premium = cleanNumeric(match["Premium"]);
                     p.sumAssured = cleanNumeric(match["Sum Assured"]);
                     p.currentUnitValue = match["Current Value"] || "No Value";
@@ -62,31 +74,23 @@ export async function syncWithGoogleSheets(masterList) {
                             content.split(",").forEach(seg => {
                                 const parts = seg.split(":").map(s => s.trim());
                                 if (parts.length < 2) return;
-
                                 const range = parts[0];
                                 const valRaw = parts[1];
                                 let baseVal = parseFloat(valRaw.replace(/[^\d.]/g, ""));
-                                
                                 if (valRaw.toLowerCase().includes("%bsa")) {
                                     baseVal = (p.sumAssured || 0) * (baseVal / 100);
                                 }
-
                                 const [start, end] = range.includes("-") ? range.split("-").map(Number) : [Number(range), Number(range)];
-
                                 if (parts[2] === "STEP") {
                                     const stepYears = parseInt(parts[3]);
                                     const stepPercent = parseFloat(parts[4]) / 100;
                                     const stepAmount = baseVal * stepPercent;
-
                                     for (let y = start; y <= end; y++) {
                                         const stepsPassed = Math.floor((y - start) / stepYears);
-                                        // NUCLEAR ROUNDING: Save as integer
-                                        p.payoutSchedule[y] = Math.round(baseVal + (stepsPassed * stepAmount));
+                                        p.payoutSchedule[y] = baseVal + (stepsPassed * stepAmount);
                                     }
                                 } else {
-                                    for (let y = start; y <= end; y++) {
-                                        p.payoutSchedule[y] = Math.round(baseVal);
-                                    }
+                                    for (let y = start; y <= end; y++) p.payoutSchedule[y] = baseVal;
                                 }
                             });
                         }
