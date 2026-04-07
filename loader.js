@@ -1,4 +1,4 @@
-/* loader.js - v4.1.21 - Restored Logic with Avatar & Summary Fixes */
+/* loader.js - v4.2.5 - Dynamic India Maturity Calculation */
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2UwOfG57DQBOBnJX-9hsRKOQTUgALiM3uxs-VGzD2KN8JoWNAQltH6IkgAGhPTNFEvb/pub?gid=866869416&single=true&output=csv";
 
 const autoFmt = (val, sym) => {
@@ -42,8 +42,6 @@ export async function syncWithGoogleSheets(masterList) {
                     p.company = match.company || p.company;
                     p.type = match.type || p.type;
                     
-                    // Note: p.color is NOT touched here, preserving your data.js choice.
-
                     const safeCompanyName = p.company.replace(/[\s.]/g, "");
                     p.logo = `logo_${safeCompanyName}.png`;
 
@@ -80,7 +78,7 @@ export async function syncWithGoogleSheets(masterList) {
                         }
                     }
 
-                    // Maturity Logic (India ULIP 4% vs Traditional)
+                    // --- 4. MATURITY LOGIC (India ULIP 4% vs Traditional) ---
                     if (country === "india") {
                         const isULIP = (p.type || "").toLowerCase().includes("ulip");
                         if (isULIP) {
@@ -104,9 +102,22 @@ export async function syncWithGoogleSheets(masterList) {
                         } else {
                             const rawBenefits = String(match["Other Coverage & Benefits"] || "");
                             const maturityLine = rawBenefits.split(/\r?\n/).find(l => l.trim().startsWith("Maturity Benefit"));
+                            
                             if (maturityLine) {
                                 let val = maturityLine.split(":")[1]?.trim() || "";
-                                p.maturityAmt = val.toUpperCase().includes("BSA") ? val.replace(/BSA/gi, autoFmt(p.sumAssured, "₹")) : val;
+                                
+                                // NEW: %BSA Parsing Surgical Insertion
+                                const bsaRegex = /(\d+)%BSA/gi;
+                                val = val.replace(bsaRegex, (matchStr, percentage) => {
+                                    const pct = parseFloat(percentage) / 100;
+                                    const calcAmt = (p.sumAssured || 0) * pct;
+                                    return `${matchStr} (${autoFmt(calcAmt, "₹")})`;
+                                });
+
+                                // Replace generic "BSA" text with the actual Sum Assured
+                                p.maturityAmt = val.toUpperCase().includes("BSA") 
+                                    ? val.replace(/BSA/gi, autoFmt(p.sumAssured, "₹")) 
+                                    : val;
                             } else {
                                 p.maturityAmt = "Policy Maturity";
                             }
