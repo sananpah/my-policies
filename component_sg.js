@@ -1,140 +1,178 @@
-/* component_sg.js - v6.7.8 - Restored Withdrawal Logic & Font Sync */
+// component_sg.js — Singapore policy card v4.2
 import { autoFmt, toNum } from './india.js';
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
-    const commDate = new Date(p.commenced);
-    const matDate = new Date(p.maturity);
-    const startY = commDate.getFullYear();
-    const endY = matDate.getFullYear();
+    const commDate  = new Date(p.commenced);
+    const matDate   = new Date(p.maturity);
+    const startY    = commDate.getFullYear();
+    const endY      = matDate.getFullYear();
     const commMonth = commDate.getMonth();
-    const commDay = commDate.getDate();
+    const commDay   = commDate.getDate();
 
-    const mip = (p.mip !== undefined) ? p.mip : 0;
-    const ppt = (p.ppt !== undefined) ? p.ppt : 0;
+    const mip = p.mip !== undefined ? p.mip : 0;
+    const ppt = p.ppt !== undefined ? p.ppt : 0;
     const isPaidUp = (p.dueDate === "PAID UP");
-    
-    const thisYearAnniversary = new Date(CURRENT_YEAR, commMonth, commDay);
-    const hasPassedThisYear = TODAY >= thisYearAnniversary;
-    let yearsPassed = CURRENT_YEAR - startY;
-    if (TODAY < thisYearAnniversary) yearsPassed--;
+
+    const thisYearAnn  = new Date(CURRENT_YEAR, commMonth, commDay);
+    const hasPassed    = TODAY >= thisYearAnn;
+    let yearsPassed    = CURRENT_YEAR - startY;
+    if (TODAY < thisYearAnn) yearsPassed--;
     const policyYearIdx = yearsPassed + 1;
 
-    // --- 1. CORE CALCULATIONS ---
-    const accountValue = Math.round(toNum(p.currentUnitValue || 0));
-    const annualPremium = toNum(p.premium || 0);
-    const totalPremiumsPaid = p.totalPremiumPaid ? toNum(p.totalPremiumPaid) : (annualPremium * policyYearIdx);
-    
-    // --- 2. WITHDRAWAL LOGIC (The "Missing" Part) ---
-    const totalWithdrawn = (p.withdrawals || []).reduce((a, b) => a + toNum(b), 0);
-    const netInvested = totalPremiumsPaid - totalWithdrawn;
+    const accountValue     = Math.round(toNum(p.currentUnitValue || 0));
+    const annualPremium    = toNum(p.premium || 0);
+    const totalPremiumsPaid = p.totalPremiumPaid
+        ? toNum(p.totalPremiumPaid)
+        : (annualPremium * policyYearIdx);
 
-    const chargePct = (p.surrenderCharges && p.surrenderCharges[policyYearIdx]) || 0;
-    const surrenderValue = Math.round(Math.max(0, accountValue - (chargePct / 100 * (isPaidUp ? accountValue : totalPremiumsPaid))));
+    const totalWithdrawn  = (p.withdrawals || []).reduce((a, b) => a + toNum(b), 0);
+    const netInvested     = totalPremiumsPaid - totalWithdrawn;
 
-    // --- 3. PROJECTION & DUE DATE (Same as v6.7.1) ---
-    const r = 0.04;
+    const chargePct       = (p.surrenderCharges && p.surrenderCharges[policyYearIdx]) || 0;
+    const surrenderValue  = Math.round(Math.max(0, accountValue - (chargePct / 100 * (isPaidUp ? accountValue : totalPremiumsPaid))));
+    const locked          = accountValue - surrenderValue;
+
+    // Projection
+    const r              = 0.04;
     const targetExitYear = Math.min(startY + ppt + 2, endY);
-    const projectionYears = Math.max(0, targetExitYear - CURRENT_YEAR);
-    const yearsToPay = isPaidUp ? 0 : Math.max(0, Math.min(startY + ppt, targetExitYear) - (hasPassedThisYear ? CURRENT_YEAR + 1 : CURRENT_YEAR));
-    const totalProjected = Math.round((accountValue * Math.pow(1 + r, projectionYears)) + (yearsToPay > 0 ? (annualPremium * ((Math.pow(1 + r, yearsToPay) - 1) / r) * (1 + r)) * Math.pow(1 + r, Math.max(0, projectionYears - yearsToPay)) : 0));
+    const projYears      = Math.max(0, targetExitYear - CURRENT_YEAR);
+    const yearsToPay     = isPaidUp ? 0 : Math.max(0, Math.min(startY + ppt, targetExitYear) - (hasPassed ? CURRENT_YEAR + 1 : CURRENT_YEAR));
+    const totalProjected = Math.round(
+        (accountValue * Math.pow(1 + r, projYears)) +
+        (yearsToPay > 0
+            ? (annualPremium * ((Math.pow(1 + r, yearsToPay) - 1) / r) * (1 + r))
+              * Math.pow(1 + r, Math.max(0, projYears - yearsToPay))
+            : 0)
+    );
 
-    const nextDueDate = new Date(hasPassedThisYear ? CURRENT_YEAR + 1 : CURRENT_YEAR, commMonth, commDay);
+    const nextDueDate    = new Date(hasPassed ? CURRENT_YEAR + 1 : CURRENT_YEAR, commMonth, commDay);
     const nextDueDisplay = nextDueDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-    const isDueSoon = Math.ceil((nextDueDate - TODAY) / (1000 * 60 * 60 * 24)) <= 30;
+    const isDueSoon      = Math.ceil((nextDueDate - TODAY) / 86400000) <= 30;
 
-    let vestingStr = (mip === 0 || (new Date(startY + mip, commMonth, commDay) <= TODAY)) ? "Vested" : "";
-    if (!vestingStr) {
-        const targetVesting = new Date(startY + mip, commMonth, commDay);
-        let y = targetVesting.getFullYear() - TODAY.getFullYear();
-        let m = targetVesting.getMonth() - TODAY.getMonth();
-        if (targetVesting.getDate() < TODAY.getDate()) m--;
-        if (m < 0) { y--; m += 12; }
-        vestingStr = `LEFT: ${String(y).padStart(2,'0')}Y${String(m).padStart(2,'0')}M`;
+    // Vesting
+    let vestingStr = "";
+    if (mip === 0 || (new Date(startY + mip, commMonth, commDay) <= TODAY)) {
+        vestingStr = "Vested";
+    } else {
+        const targetV = new Date(startY + mip, commMonth, commDay);
+        let vy = targetV.getFullYear() - TODAY.getFullYear();
+        let vm = targetV.getMonth() - TODAY.getMonth();
+        if (targetV.getDate() < TODAY.getDate()) vm--;
+        if (vm < 0) { vy--; vm += 12; }
+        vestingStr = `${String(vy).padStart(2,'0')}Y ${String(vm).padStart(2,'0')}M left`;
     }
+    const isVested = vestingStr === "Vested";
 
+    // Timeline
     const yearsToMat = endY - startY;
-    let maxYears = (yearsToMat <= 25) ? yearsToMat : Math.min(Math.max(15, policyYearIdx + 5), yearsToMat);
-    let timelineHtml = '';
+    const maxYears   = yearsToMat <= 25 ? yearsToMat : Math.min(Math.max(15, policyYearIdx + 5), yearsToMat);
+    let tlHtml = '';
     for (let polY = 1; polY <= maxYears; polY++) {
         const yr = startY + polY - 1;
-        let colorClass = yr < CURRENT_YEAR || (yr === CURRENT_YEAR && hasPassedThisYear) ? "bg-emerald-900" : (yr === CURRENT_YEAR ? "bg-black ring-2 ring-white z-20 scale-110 shadow-xl" : (polY <= mip ? "bg-indigo-500" : (polY <= ppt ? "bg-pink-400" : "bg-red-600")));
-        let statusLabel = yr < CURRENT_YEAR || (yr === CURRENT_YEAR && hasPassedThisYear) ? "Completed" : (yr === CURRENT_YEAR ? "Premium Due" : (polY <= mip ? "Strict Lock" : (polY <= ppt ? "Flexi Phase" : "Vested")));
-        timelineHtml += `<div class="segment ${colorClass} h-8 flex-1 border-r border-white/10 first:rounded-l-lg last:rounded-r-lg transition-all relative group/segment"><div class="opacity-0 group-hover/segment:opacity-100 absolute bottom-full mb-3 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-3 py-2 rounded-xl text-[10px] z-[100] whitespace-nowrap pointer-events-none shadow-2xl transition-all duration-200"><b class="text-sky-400 uppercase tracking-widest block mb-1 font-black">Year ${polY} (${yr})</b><span class="text-white font-bold tracking-tight">${statusLabel}</span><div class="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-slate-900"></div></div></div>`;
+        const isPast = yr < CURRENT_YEAR || (yr === CURRENT_YEAR && hasPassed);
+        const isCurr = yr === CURRENT_YEAR && !hasPassed;
+        let cls = isPast ? 'bg-tl-past' : isCurr ? 'bg-tl-curr' :
+                  polY <= mip ? 'bg-tl-lock' : polY <= ppt ? 'bg-tl-flexi' : 'bg-tl-vest';
+        const lbl = isPast ? 'Completed' : isCurr ? 'Current' :
+                    polY <= mip ? 'Lock-in' : polY <= ppt ? 'Flexi' : 'Vested';
+        tlHtml += `<div class="tl-seg ${cls} h-full"><div class="tl-tip"><b>Year ${polY} (${yr})</b>${lbl}</div></div>`;
     }
 
-    const brandColor = p.color || "#000000";
-    const brandBg = `rgba(${parseInt(brandColor.slice(1,3), 16)}, ${parseInt(brandColor.slice(3,5), 16)}, ${parseInt(brandColor.slice(5,7), 16)}, 0.04)`;
-    const starHtml = `<div class="ml-2 relative group flex items-center justify-center w-12 h-10 bg-white rounded-xl shadow-sm border border-slate-200 cursor-help"><span class="text-xl text-amber-500 transition-transform group-hover:scale-125">★</span><div class="opacity-0 group-hover:opacity-100 absolute bottom-full mb-4 right-0 bg-slate-900 text-white p-4 rounded-2xl z-[100] shadow-2xl border border-white/10 pointer-events-none min-w-[250px]"><b class="text-amber-400 uppercase tracking-widest block text-[9px] mb-2 font-black">Exit Strategy Projection (4%)</b><div class="space-y-1"><div class="flex justify-between text-[10px] text-slate-400"><span>Target Exit:</span><span class="text-white font-bold">${targetExitYear}</span></div><div class="flex justify-between text-[10px] text-slate-400"><span>Future Premiums:</span><span class="text-white font-bold">${autoFmt(yearsToPay * annualPremium, sym)}</span></div><div class="h-[1px] bg-white/10 my-1"></div><div class="flex justify-between text-[13px] text-emerald-400 font-black"><span>Est. Surrender:</span><span>${autoFmt(totalProjected, sym)}*</span></div></div><div class="mt-2 pt-2 border-t border-white/10 text-[8px] text-slate-400 italic font-medium leading-tight">*Calculated until exit in ${targetExitYear} (capped by maturity).</div><div class="absolute top-full right-4 border-8 border-transparent border-t-slate-900"></div></div></div>`;
+    const bc       = p.color || "#1a1916";
+    const brandAlpha = `${bc}18`;
 
     return `
-    <div class="policy-card mb-10 rounded-[40px] bg-white overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.08)] border-2 relative" id="card-${p.id}" style="border-left: 16px solid ${brandColor}; border-color: ${brandColor};">
-        
-        <div class="p-8 flex items-center justify-between cursor-pointer relative min-h-[100px]" style="background: ${brandBg}" onclick="toggleCard('${p.id}')">
-            <div class="flex items-center gap-6 pl-4 min-w-[340px]">
-                <div class="w-16 h-16 flex-shrink-0 flex items-center justify-center bg-white rounded-[22px] shadow-sm p-3 border border-slate-50"><img src="${p.logo}" class="max-h-full object-contain"></div>
-                <div class="flex items-center gap-3">
-                    <h3 class="font-black text-[26px] text-slate-800 tracking-tighter leading-none">${p.name}</h3>
-                    <div class="w-10 h-10 rounded-full border-2 border-white shadow-md overflow-hidden bg-slate-100 flex-shrink-0"><img src="${p.avatarPath || 'avatar_self.png'}" class="w-full h-full object-cover"></div>
-                </div>
+<div class="sg-card" id="card-${p.id}" style="border-left: 6px solid ${bc};">
+    <div class="sg-card-header" style="background: ${brandAlpha};" onclick="window.toggleCard('${p.id}')">
+        <div class="sg-logo-wrap">
+            <img class="card-logo" src="${p.logo || 'logo_default.png'}" onerror="this.src='logo_default.png'" alt="">
+        </div>
+        <div class="sg-main">
+            <div class="sg-name">${p.name || p.id}</div>
+            <div class="sg-type-badge">${p.type || 'Investment'}</div>
+            <div style="margin-top:8px">
+                <span class="vesting-pill ${isVested ? 'vested' : 'locked'}">${vestingStr}</span>
             </div>
-            <div class="flex-1 flex justify-center"><div class="relative group"><div class="absolute -inset-1 bg-gradient-to-r from-rose-400 to-orange-400 rounded-full blur opacity-25"></div><span class="relative px-5 py-1.5 rounded-full border border-rose-200 bg-white/90 backdrop-blur-sm text-[11px] font-black text-rose-600 italic tracking-widest uppercase shadow-sm">${p.type || 'INVESTMENTS'}</span></div></div>
-            <div class="flex items-center gap-14 px-6">
-                <div class="text-center">
-                    <p class="text-[10px] font-black text-slate-400 uppercase mb-1.5 tracking-[0.15em]">Sum Assured</p>
-                    <p class="text-[22px] font-black text-slate-800 tracking-tighter leading-none">${autoFmt(toNum(p.sumAssured) === 0 ? accountValue : p.sumAssured, sym)}</p>
-                </div>
-                <div class="pl-12 border-l border-slate-100 text-center">
-                    <p class="text-[10px] font-black text-slate-400 uppercase mb-1.5 tracking-[0.15em]">Annual Premium</p>
-                    <p class="text-[22px] font-black text-[#059669] tracking-tighter leading-none">${autoFmt(p.premium, sym)}</p>
-                </div>
+        </div>
+        <div class="sg-metrics">
+            <div class="sg-metric">
+                <span class="metric-lbl">Sum Assured</span>
+                <span class="metric-val">${autoFmt(toNum(p.sumAssured) === 0 ? accountValue : p.sumAssured, sym)}</span>
             </div>
-            <div class="w-48 flex flex-col justify-center ml-4">
-                <div class="bg-white/80 px-5 py-3 rounded-[24px] border border-white shadow-sm flex flex-col justify-center min-h-[68px]">
-                    <p class="text-[10px] font-black ${vestingStr.includes("Vested") ? 'text-emerald-500' : 'text-indigo-500'} uppercase text-center leading-none mb-1.5">${vestingStr}</p>
-                    <div class="h-[1px] bg-slate-200/50 w-full mb-1.5"></div>
-                    <p class="text-[9px] font-bold text-slate-400 uppercase leading-none mb-1 text-center tracking-widest">Next Due</p>
-                    <p class="text-[14px] font-black text-center tracking-tight leading-none ${isDueSoon ? 'text-red-600 animate-pulse' : 'text-slate-800'}">${nextDueDisplay}</p>
+            <div class="sg-metric">
+                <span class="metric-lbl">Annual Premium</span>
+                <span class="metric-val emerald">${autoFmt(p.premium, sym)}</span>
+            </div>
+            <div class="sg-metric">
+                <span class="metric-lbl">Next Due</span>
+                <span class="due-val ${isDueSoon ? 'due-soon' : ''}" style="font-family:var(--font-mono);font-size:12px;">${nextDueDisplay}</span>
+            </div>
+            <div class="sg-metric" style="min-width:60px;">
+                <div class="proj-star-wrap">
+                    <div class="proj-star">★</div>
+                    <div class="proj-tooltip">
+                        <div class="proj-tooltip-title">Exit Strategy (4% p.a.)</div>
+                        <div class="proj-row"><span>Target Exit</span><span>${targetExitYear}</span></div>
+                        <div class="proj-row"><span>Future Premiums</span><span>${autoFmt(yearsToPay * annualPremium, sym)}</span></div>
+                        <div class="proj-row proj-total"><span>Est. Surrender</span><span>${autoFmt(totalProjected, sym)}</span></div>
+                        <div class="proj-footnote">*Capped at maturity ${endY}. Illustrative only.</div>
+                    </div>
                 </div>
             </div>
         </div>
+        <div class="card-toggle">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+    </div>
 
-        <div class="content-area px-10 pb-10 pt-6 relative z-20" style="background: linear-gradient(to bottom, ${brandBg}, #ffffff)">
-            
-            <div class="grid grid-cols-2 gap-4 mb-4">
-                <div class="p-6 rounded-[32px] bg-slate-50 border border-slate-100 relative shadow-sm">
-                    <p class="text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest">Policy No.</p>
-                    <p class="text-lg font-mono font-bold text-slate-700 tracking-widest">#${p.id}</p>
-                </div>
-                <div class="p-6 rounded-[32px] bg-white border border-slate-100 relative shadow-sm">
-                    <p class="text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest">Current Valuation</p>
-                    <p class="text-[24px] font-black text-slate-900 tracking-tighter leading-none">${p.currentUnitValue}</p>
-                </div>
+    <div class="sg-body" id="content-${p.id}">
+        <div class="sg-value-grid" style="margin-bottom:12px;">
+            <div class="sg-stat">
+                <div class="sg-stat-lbl">Policy No.</div>
+                <div class="sg-stat-val" style="font-family:var(--font-mono);font-size:16px;">#${p.id}</div>
             </div>
-
-            <div class="grid grid-cols-3 gap-4 mb-8">
-                <div class="p-6 rounded-[32px] bg-white border border-slate-100 shadow-sm">
-                    <p class="text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest">Invested (Net)</p>
-                    <p class="text-[24px] font-black text-slate-800 tracking-tighter leading-none">${autoFmt(netInvested, sym)}</p>
-                    <p class="text-[8px] font-bold text-slate-400 mt-2 italic">* Withdrawals Factored</p>
-                </div>
-                <div class="p-6 rounded-[32px] bg-emerald-50 border border-emerald-100 shadow-sm text-center">
-                    <p class="text-[10px] font-black text-emerald-600 mb-2 uppercase tracking-widest">Surrender</p>
-                    <p class="text-[28px] font-black text-emerald-700 tracking-tighter leading-none">${autoFmt(surrenderValue, sym)}</p>
-                </div>
-                <div class="p-6 rounded-[32px] bg-red-50 border border-red-100 shadow-sm text-center">
-                    <p class="text-[10px] font-black text-red-400 mb-2 uppercase tracking-widest">Locked</p>
-                    <p class="text-[28px] font-black text-red-600 tracking-tighter leading-none">-${autoFmt(accountValue - surrenderValue, sym)}</p>
-                </div>
-            </div>
-
-            <div class="flex justify-between items-end mb-4 px-2">
-                <div><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">${p.commenced}</p></div>
-                <div class="text-right"><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">${p.maturity}</p></div>
-            </div>
-            <div class="relative flex items-center h-16 bg-slate-100 rounded-[24px] px-2 border border-slate-200/50 shadow-inner">
-                <div class="flex-1 flex h-10 items-center gap-1">${timelineHtml}</div>
-                ${starHtml}
+            <div class="sg-stat">
+                <div class="sg-stat-lbl">Current Valuation</div>
+                <div class="sg-stat-val">${p.currentUnitValue || '—'}</div>
             </div>
         </div>
-    </div>`;
+        <div class="sg-value-grid three">
+            <div class="sg-stat">
+                <div class="sg-stat-lbl">Net Invested</div>
+                <div class="sg-stat-val">${autoFmt(netInvested, sym)}</div>
+                <div class="sg-stat-sub">After withdrawals of ${autoFmt(totalWithdrawn, sym)}</div>
+            </div>
+            <div class="sg-stat green">
+                <div class="sg-stat-lbl">Surrender Value</div>
+                <div class="sg-stat-val">${autoFmt(surrenderValue, sym)}</div>
+            </div>
+            <div class="sg-stat red">
+                <div class="sg-stat-lbl">Locked</div>
+                <div class="sg-stat-val">-${autoFmt(locked, sym)}</div>
+            </div>
+        </div>
+
+        <div style="margin-top:20px;">
+            <div class="timeline-labels">
+                <span class="timeline-label">${p.commenced || ''}</span>
+                <span class="timeline-label">${p.maturity || ''}</span>
+            </div>
+            <div class="timeline-track" style="height:32px;margin-top:6px;">${tlHtml}</div>
+            <div style="display:flex;gap:16px;margin-top:10px;flex-wrap:wrap;">
+                <span style="display:flex;align-items:center;gap:5px;font-size:10px;font-weight:700;color:var(--ink-3);">
+                    <span style="width:10px;height:10px;border-radius:2px;background:#475569;display:inline-block;"></span>Paid
+                </span>
+                <span style="display:flex;align-items:center;gap:5px;font-size:10px;font-weight:700;color:var(--ink-3);">
+                    <span style="width:10px;height:10px;border-radius:2px;background:#818cf8;display:inline-block;"></span>Lock-in
+                </span>
+                <span style="display:flex;align-items:center;gap:5px;font-size:10px;font-weight:700;color:var(--ink-3);">
+                    <span style="width:10px;height:10px;border-radius:2px;background:#f472b6;display:inline-block;"></span>Flexi
+                </span>
+                <span style="display:flex;align-items:center;gap:5px;font-size:10px;font-weight:700;color:var(--ink-3);">
+                    <span style="width:10px;height:10px;border-radius:2px;background:#34d399;display:inline-block;"></span>Vested
+                </span>
+            </div>
+        </div>
+    </div>
+</div>`;
 }

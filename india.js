@@ -1,22 +1,20 @@
-/* india.js - Utility Section - v4.1.9 Verified */
-
-const TODAY = new Date();
+// india.js — Shared utilities v4.2
 
 export const monthMap = {
     "Jan": 0, "Feb": 1, "Mar": 2, "Apr": 3, "May": 4, "Jun": 5,
     "Jul": 6, "Aug": 7, "Sep": 8, "Oct": 9, "Nov": 10, "Dec": 11
 };
 
+const TODAY = new Date();
+
 export function safeParseDate(dateStr) {
     if (!dateStr) return new Date();
-    // Replaces dots with spaces to handle "01.Jan.2024" safely
     const cleanStr = dateStr.toString().replace(/\./g, ' ');
     const parts = cleanStr.trim().split(/\s+/);
-    
     if (parts.length === 3) {
-        const day = parseInt(parts[0], 10);
-        const month = monthMap[parts[1]] || 0;
-        const year = parseInt(parts[2], 10);
+        const day   = parseInt(parts[0], 10);
+        const month = monthMap[parts[1]] ?? 0;
+        const year  = parseInt(parts[2], 10);
         return new Date(year, month, day);
     }
     const d = new Date(dateStr);
@@ -25,7 +23,7 @@ export function safeParseDate(dateStr) {
 
 export function checkIsDueSoon(dueDateStr) {
     if (!dueDateStr || dueDateStr === "PAID UP") return false;
-    const due = safeParseDate(dueDateStr);
+    const due  = safeParseDate(dueDateStr);
     const diff = (due - TODAY) / 86400000;
     return diff >= 0 && diff <= 30;
 }
@@ -33,25 +31,23 @@ export function checkIsDueSoon(dueDateStr) {
 export function getTimeLeft(endDateStr) {
     if (!endDateStr || endDateStr === "PAID UP") return null;
     const end = safeParseDate(endDateStr);
-    let years = end.getFullYear() - TODAY.getFullYear();
-    let months = end.getMonth() - TODAY.getMonth();
-    
+    let years  = end.getFullYear() - TODAY.getFullYear();
+    let months = end.getMonth()    - TODAY.getMonth();
     if (months < 0) { years--; months += 12; }
     if (years < 0) return null;
-    
-    return `${String(years).padStart(2, '0')}y${String(months).padStart(2, '0')}m`;
+    return `${String(years).padStart(2, '0')}y ${String(months).padStart(2, '0')}m`;
 }
 
 export function autoFmt(val, sym) {
     if (val === undefined || val === null || val === "No Value") return sym + "0";
-    // Strips symbols to get the raw number
     const clean = val.toString().replace(/[^\d.]/g, "");
-    const num = parseFloat(clean);
-    // Returns formatted currency (e.g., ₹ 5,16,751)
+    const num   = parseFloat(clean);
     return isNaN(num) ? val : sym + num.toLocaleString('en-IN');
 }
 
-export function raw(val) { return (val === undefined || val === null) ? "" : val; }
+export function raw(val) {
+    return (val === undefined || val === null) ? "" : val;
+}
 
 export const toNum = (val) => {
     if (!val || val === "No Value") return 0;
@@ -62,10 +58,8 @@ export const toNum = (val) => {
 export function safeGetYear(dateStr) {
     if (!dateStr) return TODAY.getFullYear();
     const cleanStr = dateStr.toString().replace(/\./g, ' ');
-    const parts = cleanStr.trim().split(/\s+/);
-    if (parts.length === 3) {
-        return parseInt(parts[2], 10);
-    }
+    const parts    = cleanStr.trim().split(/\s+/);
+    if (parts.length === 3) return parseInt(parts[2], 10);
     const d = new Date(dateStr);
     return isNaN(d.getFullYear()) ? TODAY.getFullYear() : d.getFullYear();
 }

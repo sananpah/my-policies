@@ -3,233 +3,94 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="main-title">Nami Portfolio</title>
-    
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
-    <link rel="stylesheet" href="india_styles.css">
+    <title>Nami Portfolio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
 </head>
+<body>
 
-<body class="bg-slate-50">
+    <div class="ambient-bg">
+        <div class="ambient-orb orb-1"></div>
+        <div class="ambient-orb orb-2"></div>
+        <div class="ambient-orb orb-3"></div>
+    </div>
 
-    <div id="version-tag" class="fixed top-4 right-4 font-black text-[10px] text-slate-400 bg-white/80 backdrop-blur-sm px-3 py-1 rounded-lg border border-slate-200 uppercase tracking-tighter z-50 shadow-sm"></div>
+    <header class="top-bar">
+        <div class="top-bar-inner max-container">
+            <div class="brand">
+                <div class="brand-mark">N</div>
+                <div class="brand-text">
+                    <h1 class="brand-name">Nami Portfolio</h1>
+                    <p class="brand-sub">Insurance &amp; Investment Tracker</p>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="sync-status" id="sync-status">
+                    <span class="sync-dot"></span>
+                    <span class="sync-label">Syncing…</span>
+                </div>
+                <span class="version-tag" id="version-tag">v4.1</span>
+            </div>
+        </div>
+    </header>
 
-    <div class="max-w-7xl mx-auto mb-6 pt-10 px-4">
-        <div class="flex justify-between items-end mb-6">
-            <h1 class="text-5xl font-black text-slate-900 tracking-tighter">Nami Portfolio</h1>
-            <div id="portfolio-status" class="funky-badge">Portfolio</div>
+    <nav class="nav-bar">
+        <div class="nav-inner max-container">
+            <div class="tab-group">
+                <button class="tab active" data-cat="india" onclick="switchTab('india')">
+                    <img src="https://flagcdn.com/w40/in.png" class="flag" alt="">
+                    <span>India</span>
+                </button>
+                <button class="tab" data-cat="singapore" onclick="switchTab('singapore')">
+                    <img src="https://flagcdn.com/w40/sg.png" class="flag" alt="">
+                    <span>Singapore</span>
+                </button>
+                <button class="tab tab-health" data-cat="health" onclick="switchTab('health')">
+                    <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12h6M12 9v6"/></svg>
+                    <span>Health</span>
+                </button>
+            </div>
+            <div class="sort-group" id="sort-group">
+                <span class="sort-label">Sort by</span>
+                <select id="sort-trigger" onchange="render(window.currentCategory)" class="sort-select">
+                    <option value="default">Default</option>
+                    <option value="premium">Premium ↓</option>
+                    <option value="time">Maturity (Soonest)</option>
+                    <option value="due">Due (Earliest)</option>
+                </select>
+            </div>
+        </div>
+    </nav>
+
+    <div class="summary-strip">
+        <div class="max-container">
+            <div class="summary-inner" id="summary-inner">
+                <div class="summary-item">
+                    <span class="summary-lbl">Sum Assured</span>
+                    <span class="summary-val clr-emerald" id="total-sa">—</span>
+                </div>
+                <div class="summary-sep"></div>
+                <div class="summary-item">
+                    <span class="summary-lbl">Annual Premium</span>
+                    <span class="summary-val clr-indigo" id="total-premium">—</span>
+                </div>
+                <div class="summary-sep"></div>
+                <div class="summary-item">
+                    <span class="summary-lbl">Portfolio Value</span>
+                    <span class="summary-val clr-rose" id="total-unit-value">—</span>
+                </div>
+            </div>
+            <div id="family-row"></div>
         </div>
     </div>
 
-    <div class="max-w-7xl mx-auto px-4 flex flex-wrap items-center justify-between gap-4 mb-8">
-        <div class="flex gap-4">
-            <button onclick="render('india')" class="px-8 py-3 bg-slate-800 text-white rounded-full font-bold hover:bg-slate-700 transition shadow-lg flex items-center gap-3">
-                <img src="https://flagcdn.com/w40/in.png" class="w-6 h-auto rounded-sm shadow-sm">
-                <span>India</span>
-            </button>
-        
-            <button onclick="render('singapore')" class="px-8 py-3 bg-slate-800 text-white rounded-full font-bold hover:bg-slate-700 transition shadow-lg flex items-center gap-3">
-                <img src="https://flagcdn.com/w40/sg.png" class="w-6 h-auto rounded-sm shadow-sm">
-                <span>Singapore</span>
-            </button>
-
-            <button onclick="render('health')" class="px-8 py-3 bg-emerald-600 text-white rounded-full font-bold hover:bg-emerald-700 transition shadow-lg flex items-center gap-3">
-                <span class="material-symbols-outlined text-white">medical_services</span>
-                <span>Health</span>
-            </button>
+    <main class="main-content">
+        <div class="max-container">
+            <div id="container"></div>
         </div>
+    </main>
 
-        <div id="sort-container" class="flex items-center gap-3 bg-white p-2 rounded-2xl border border-slate-200 shadow-sm">
-            <span class="text-[10px] font-black uppercase text-slate-400 ml-2">Sort By</span>
-            <select id="sort-trigger" onchange="render(window.currentCategory)" class="bg-transparent text-xs font-bold rounded-lg px-2 py-1 outline-none cursor-pointer">
-                <option value="default">Default Order</option>
-                <option value="premium">Premium: High to Low</option>
-                <option value="time">Maturity: Soonest First</option>
-                <option value="due">Due Date: Earliest First</option>
-            </select>
-        </div>
-    </div>
-
-    <div id="summary-section" class="max-w-7xl mx-auto px-4 mb-10">
-        <div id="summary-bar" class="grid grid-cols-[1.2fr_1fr_1fr] gap-6 bg-slate-900 p-8 rounded-[40px] text-white shadow-2xl relative overflow-hidden">
-            <div id="sum-col-1" class="border-r border-slate-700 text-center pr-6">
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Sum Assured</p>
-                <p id="total-sa" class="text-4xl font-black text-emerald-400">0</p>
-            </div>
-            <div id="sum-col-2" class="border-r border-slate-700 text-center">
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Annual Premium</p>
-                <p id="total-premium" class="text-4xl font-black text-indigo-400">0</p>
-            </div>
-            <div id="sum-col-3" class="text-center">
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Portfolio Value</p>
-                <p id="total-unit-value" class="text-4xl font-black text-pink-500">0</p>
-            </div>
-        </div>
-    </div>
-
-    <div id="container" class="max-w-7xl mx-auto pb-20 px-4"></div>
-
-    <script type="module">
-        const APP_VERSION = "4.0.156";
-        document.getElementById('version-tag').innerText = `v${APP_VERSION}`;
-
-        const [Data, Tools, IndiaComp, SGComp, HealthComp, HealthDataFile, { syncWithGoogleSheets }] = await Promise.all([
-            import(`./data.js?v=${APP_VERSION}`),
-            import(`./india.js?v=${APP_VERSION}`),
-            import(`./component_in.js?v=${APP_VERSION}`),
-            import(`./component_sg.js?v=${APP_VERSION}`),
-            import(`./health.js?v=${APP_VERSION}`),
-            import(`./data_health.js?v=${APP_VERSION}`),
-            import(`./loader.js?v=${APP_VERSION}`)
-        ]);
-
-        const { POLICY_DATA } = Data;
-        const { toNum, safeGetYear } = Tools;
-        const { createPolicyCard } = IndiaComp;
-        const { createSGCard } = SGComp;
-        const { createHealthCard } = HealthComp;
-        const { healthData } = HealthDataFile;
-
-        const TODAY = new Date();
-        const CURRENT_YEAR = TODAY.getFullYear();
-        window.currentCategory = 'india';
-
-        window.toggleCard = (id) => {
-            const card = document.getElementById(`card-${id}`);
-            if(!card) return;
-            const wasOpen = card.classList.contains('open');
-            document.querySelectorAll('.policy-card, .health-card').forEach(c => c.classList.remove('open'));
-            if (!wasOpen) card.classList.add('open');
-        };
-
-        const parseDate = (str) => {
-            if (!str || str === "PAID UP") return new Date(9999, 0, 1);
-            // Handle both spaces and dots in dates
-            const p = str.toString().replace(/\./g, ' ').split(' ');
-            return new Date(`${p[1]} ${p[0]}, ${p[2]}`);
-        };
-
-        window.render = function(cat) {
-            window.currentCategory = cat;
-            const sortBy = document.getElementById('sort-trigger').value;
-            const container = document.getElementById('container');
-            const statusBadge = document.getElementById('portfolio-status');
-            const sortContainer = document.getElementById('sort-container');
-            const summaryBar = document.getElementById('summary-bar');
-
-            if (cat === 'health') {
-                summaryBar.className = "flex items-center justify-between bg-slate-900 p-6 rounded-[40px] text-white shadow-2xl relative overflow-hidden transition-all duration-500";
-                summaryBar.innerHTML = `
-                    <div class="flex items-center gap-2 pl-4">
-                        <span class="material-symbols-outlined text-emerald-500 text-3xl">medical_services</span>
-                        <span class="text-sm font-black uppercase tracking-widest ml-2">Health Portfolio</span>
-                    </div>
-                    <div id="health-pills-container" class="flex gap-6 pr-4"></div>
-                `;
-            } else {
-                summaryBar.className = "grid grid-cols-[1.2fr_1fr_1fr] gap-6 bg-slate-900 p-8 rounded-[40px] text-white shadow-2xl relative overflow-hidden transition-all duration-500";
-                summaryBar.innerHTML = `
-                    <div id="sum-col-1" class="border-r border-slate-700 text-center pr-6">
-                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Sum Assured</p>
-                        <p id="total-sa" class="text-4xl font-black text-emerald-400">0</p>
-                    </div>
-                    <div id="sum-col-2" class="border-r border-slate-700 text-center">
-                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Annual Premium</p>
-                        <p id="total-premium" class="text-4xl font-black text-indigo-400">0</p>
-                    </div>
-                    <div id="sum-col-3" class="text-center">
-                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Portfolio Value</p>
-                        <p id="total-unit-value" class="text-4xl font-black text-pink-500">0</p>
-                    </div>
-                `;
-            }
-
-            let list = cat === 'health' ? [...healthData] : [...(POLICY_DATA[cat] || [])];
-            const sym = (cat === 'singapore') ? "$" : "₹";
-
-            if (cat === 'health') {
-                statusBadge.innerHTML = `<span class="material-symbols-outlined text-xs align-middle mr-1">medical_services</span> HEALTH PORTFOLIO`;
-                sortContainer.classList.add('invisible');
-            } else {
-                sortContainer.classList.remove('invisible');
-                const flagSrc = (cat === 'india') ? 'in' : 'sg';
-                statusBadge.innerHTML = `<img src="https://flagcdn.com/w40/${flagSrc}.png" class="w-5 h-auto inline-block align-middle mr-2 rounded-sm">${cat.toUpperCase()} PORTFOLIO`;
-            }
-
-            if (cat !== 'health') {
-                if (sortBy === 'premium') list.sort((a, b) => toNum(b.premium) - toNum(a.premium));
-                else if (sortBy === 'due') list.sort((a, b) => parseDate(a.dueDate) - parseDate(b.dueDate));
-                else if (sortBy === 'time') list.sort((a, b) => parseDate(a.premiumEnds) - parseDate(b.premiumEnds));
-            }
-
-            container.innerHTML = list.map(p => {
-                if (cat === 'health') return createHealthCard(p);
-                if (cat === 'singapore') return createSGCard(p, sym, TODAY, CURRENT_YEAR);
-                return createPolicyCard(p, sym, TODAY, CURRENT_YEAR);
-            }).join('');
-
-            if (cat === 'health') {
-                const sgData = healthData.filter(p => p.currency === "SGD");
-                const sgTotal = sgData.reduce((acc, p) => acc + parseFloat(p.cashAmount || 0) + parseFloat(p.cpfAmount || 0), 0);
-                const inData = healthData.filter(p => p.currency === "INR");
-                const inCash = inData.reduce((acc, p) => acc + parseFloat(p.cashAmount || 0), 0);
-
-                document.getElementById('health-pills-container').innerHTML = `
-                    <div class="flex items-center gap-2 bg-slate-800/40 px-4 py-2 rounded-2xl border border-slate-700/50">
-                        <img src="https://flagcdn.com/w40/sg.png" class="w-4 h-auto rounded-sm">
-                        <span class="text-lg font-black text-white">$${Math.round(sgTotal).toLocaleString('en-IN')}</span>
-                    </div>
-                    <div class="flex items-center gap-2 bg-slate-800/40 px-4 py-2 rounded-2xl border border-slate-700/50">
-                        <img src="https://flagcdn.com/w40/in.png" class="w-4 h-auto rounded-sm">
-                        <span class="text-lg font-black text-white">₹${Math.round(inCash).toLocaleString('en-IN')}</span>
-                    </div>
-                `;
-            } else {
-                const tSA = list.reduce((acc, p) => acc + toNum(p.sumAssured), 0);
-                
-                const tAnn = list.reduce((acc, p) => {
-                    const status = (p.status || p["Status"] || "").toUpperCase();
-                    const pEndYear = safeGetYear(p.premiumEnds);
-                    const isActuallyPaid = CURRENT_YEAR > (pEndYear - 1); 
-                    const isPaidUp = (status === "PAID UP" || isActuallyPaid);
-                    return isPaidUp ? acc : acc + toNum(p.premium || 0);
-                }, 0);
-
-                // FIXED: Use unitValueNumeric for the header sum to prevent NaN from symbols
-                const tUnitValue = list.reduce((acc, p) => acc + (p.unitValueNumeric || 0), 0);
-                
-                let familyHtml = '';
-                if (cat === 'india') {
-                    const hSA = list.filter(p => !p.avatarPath || p.holderType === "Self").reduce((acc, p) => acc + toNum(p.sumAssured), 0);
-                    const wSA = list.filter(p => p.holderType === "Wife").reduce((acc, p) => acc + toNum(p.sumAssured), 0);
-                    const dSA = list.filter(p => p.holderType === "Daughter").reduce((acc, p) => acc + toNum(p.sumAssured), 0);
-                    
-                    familyHtml = `
-                        <div class="flex justify-center gap-4 mt-4 pt-3 border-t border-slate-800/50">
-                            <div class="flex items-center gap-2 bg-slate-800/30 px-3 py-1.5 rounded-full border border-slate-700/30">
-                                <img src="avatar_self.png" class="w-5 h-5 rounded-full object-cover border border-slate-500">
-                                <span class="text-[11px] font-black text-slate-200">${sym}${Math.round(hSA).toLocaleString('en-IN')}</span>
-                            </div>
-                            <div class="flex items-center gap-2 bg-pink-900/20 px-3 py-1.5 rounded-full border border-pink-700/30">
-                                <img src="avatar_wife.png" class="w-5 h-5 rounded-full object-cover border border-pink-500">
-                                <span class="text-[11px] font-black text-pink-200">${sym}${Math.round(wSA).toLocaleString('en-IN')}</span>
-                            </div>
-                            <div class="flex items-center gap-2 bg-indigo-900/20 px-3 py-1.5 rounded-full border border-indigo-700/30">
-                                <img src="avatar_daughter.png" class="w-5 h-5 rounded-full object-cover border border-indigo-500">
-                                <span class="text-[11px] font-black text-indigo-200">${sym}${Math.round(dSA).toLocaleString('en-IN')}</span>
-                            </div>
-                        </div>`;
-                }
-
-                document.getElementById('total-sa').innerHTML = `<span>${sym}${Math.round(tSA).toLocaleString('en-IN')}</span>${familyHtml}`;
-                document.getElementById('total-premium').innerText = sym + Math.round(tAnn).toLocaleString('en-IN');
-                document.getElementById('total-unit-value').innerText = sym + Math.round(tUnitValue).toLocaleString('en-IN');
-            }
-        }
-        
-        await syncWithGoogleSheets(POLICY_DATA);
-        render('india');
-        
-    </script>
+    <script type="module" src="app.js"></script>
 </body>
 </html>
