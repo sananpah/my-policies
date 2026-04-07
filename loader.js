@@ -1,6 +1,7 @@
-/* loader.js - v4.3.6 - Smart MoneyBack Parser & Data Sync */
+/* loader.js - v4.3.8 - Stepper Math + Rounded UI */
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2UwOfG57DQBOBnJX-9hsRKOQTUgALiM3uxs-VGzD2KN8JoWNAQltH6IkgAGhPTNFEvb/pub?gid=866869416&single=true&output=csv";
 
+// Rounds to the nearest whole number for a clean dashboard look
 const autoFmt = (val, sym) => {
     const n = parseFloat(val);
     if (isNaN(n) || n === 0) return sym + "0";
@@ -11,8 +12,6 @@ const monthMap = { "Jan":0,"Feb":1,"Mar":2,"Apr":3,"May":4,"Jun":5,"Jul":6,"Aug"
 
 export async function syncWithGoogleSheets(masterList) {
     const TODAY = new Date();
-    const CURRENT_YEAR = TODAY.getFullYear();
-
     try {
         const response = await fetch(`${SHEET_URL}&t=${Date.now()}`);
         const buffer = await response.arrayBuffer();
@@ -71,30 +70,34 @@ export async function syncWithGoogleSheets(masterList) {
                         if (mbLine && mbLine.includes(":")) {
                             const content = mbLine.substring(mbLine.indexOf(":") + 1).trim();
                             content.split(",").forEach(seg => {
-                                if (!seg.includes(":")) return;
-                                const [range, valRaw] = seg.split(":").map(s => s.trim());
-                                
-                                let numOnly = parseFloat(valRaw.replace(/[^\d.]/g, ""));
-                                let annualVal = 0;
+                                const parts = seg.split(":").map(s => s.trim());
+                                if (parts.length < 2) return;
 
-                                // --- SMART DETECTION ---
+                                const range = parts[0];
+                                const valRaw = parts[1];
+                                let baseVal = parseFloat(valRaw.replace(/[^\d.]/g, ""));
+                                
                                 if (valRaw.toLowerCase().includes("%bsa")) {
-                                    annualVal = (p.sumAssured || 0) * (numOnly / 100);
-                                } else {
-                                    annualVal = numOnly; // Use flat amount (₹ 100,000)
+                                    baseVal = (p.sumAssured || 0) * (baseVal / 100);
                                 }
 
-                                if (range.includes("-")) {
-                                    const [s, e] = range.split("-").map(Number);
-                                    for (let y = s; y <= e; y++) p.payoutSchedule[y] = annualVal;
+                                const [start, end] = range.includes("-") ? range.split("-").map(Number) : [Number(range), Number(range)];
+
+                                if (parts[2] === "STEP") {
+                                    const stepYears = parseInt(parts[3]);
+                                    const stepPercent = parseFloat(parts[4]) / 100;
+                                    const stepAmount = baseVal * stepPercent;
+
+                                    for (let y = start; y <= end; y++) {
+                                        const stepsPassed = Math.floor((y - start) / stepYears);
+                                        p.payoutSchedule[y] = baseVal + (stepsPassed * stepAmount);
+                                    }
                                 } else {
-                                    const y = parseInt(range);
-                                    if (!isNaN(y)) p.payoutSchedule[y] = annualVal;
+                                    for (let y = start; y <= end; y++) p.payoutSchedule[y] = baseVal;
                                 }
                             });
                         }
 
-                        // Maturity Text Formatting
                         const maturityLine = rawBenefits.split(/\r?\n/).find(l => l.trim().startsWith("Maturity Benefit"));
                         if (maturityLine) {
                             let val = maturityLine.split(":")[1]?.trim() || "";
