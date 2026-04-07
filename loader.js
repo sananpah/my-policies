@@ -1,7 +1,7 @@
-/* loader.js - v4.3.8 - Stepper Math + Rounded UI */
+/* loader.js - v4.3.9 - Rounded Formatter & Stepper Logic */
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2UwOfG57DQBOBnJX-9hsRKOQTUgALiM3uxs-VGzD2KN8JoWNAQltH6IkgAGhPTNFEvb/pub?gid=866869416&single=true&output=csv";
 
-// Rounds to the nearest whole number for a clean dashboard look
+// STRICT ROUNDING: Force nearest whole number for the UI
 const autoFmt = (val, sym) => {
     const n = parseFloat(val);
     if (isNaN(n) || n === 0) return sym + "0";
