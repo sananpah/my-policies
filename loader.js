@@ -1,4 +1,4 @@
-/* loader.js - v4.3.13 - Final Precision Sync */
+/* loader.js - v4.3.14 - Final Structural Fix */
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2UwOfG57DQBOBnJX-9hsRKOQTUgALiM3uxs-VGzD2KN8JoWNAQltH6IkgAGhPTNFEvb/pub?gid=866869416&single=true&output=csv";
 
 export const autoFmt = (val, sym) => {
@@ -10,11 +10,16 @@ export const autoFmt = (val, sym) => {
 const monthMap = { "Jan":0,"Feb":1,"Mar":2,"Apr":3,"May":4,"Jun":5,"Jul":6,"Aug":7,"Sep":8,"Oct":9,"Nov":10,"Dec":11 };
 
 export async function syncWithGoogleSheets(masterList) {
-    const TODAY = new Date();
     try {
         const response = await fetch(`${SHEET_URL}&t=${Date.now()}`);
         const csvData = await response.text();
         const sheetRecords = processCSV(csvData);
+
+        const insuredMap = {
+            "Suhail Nami": { type: "Self", img: "avatar_self.png" },
+            "Saima Suhail": { type: "Wife", img: "avatar_wife.png" },
+            "Sulmas Nami": { type: "Daughter", img: "avatar_daughter.png" }
+        };
 
         const cleanNumeric = (raw) => {
             if (!raw || raw === "No Value") return 0;
@@ -26,9 +31,20 @@ export async function syncWithGoogleSheets(masterList) {
             masterList[country] = masterList[country].map(p => {
                 const match = sheetRecords.find(row => String(row["Policy No."]).trim() === String(p.id).trim());
                 if (match) {
+                    // RESTORED: Split Name and Company correctly
+                    p.name = match.name || p.name;
+                    p.company = match.company || p.company;
+                    p.logo = `logo_${p.company.replace(/[\s.]/g, "")}.png`;
+                    
+                    const identity = insuredMap[match["Insured"]];
+                    if (identity) { p.avatarPath = identity.img; p.holderType = identity.type; }
+
                     p.premium = cleanNumeric(match["Premium"]);
                     p.sumAssured = cleanNumeric(match["Sum Assured"]);
+                    
+                    // Portfolio Math Fix
                     p.currentUnitValue = match["Current Value"] || "No Value";
+                    p.unitValueNumeric = cleanNumeric(p.currentUnitValue); 
 
                     let rawDate = String(match["Commenced Date"] || "").trim().replace(/\./g, ' '); 
                     p.commenced = rawDate;
@@ -91,13 +107,20 @@ function processCSV(csv) {
     return rows.slice(headerIdx + 1).map(rowData => {
         const obj = {};
         headers.forEach((h, i) => { if (h) obj[h] = (rowData[i] || "").trim(); });
+        
+        // --- RESTORED: CORE NAMING LOGIC ---
         const rawFullName = obj["Policy_Name"] || "";
         if (rawFullName.includes(":")) {
             const parts = rawFullName.split(":");
             obj.company = parts[0].trim();
             obj.name = parts[1].trim(); 
+        } else {
+            obj.company = "Unknown";
+            obj.name = rawFullName;
         }
-        obj.type = (obj["Category"] || "").includes(":") ? obj["Category"].split(":")[1].trim() : (obj["Category"] || "Savings");
+        
+        const rawCategory = obj["Category"] || "";
+        obj.type = rawCategory.includes(":") ? rawCategory.split(":")[1].trim() : (rawCategory || "Savings");
         return obj;
     }).filter(item => item && item["Policy_Name"] !== "EMPTY");
 }
