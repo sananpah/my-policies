@@ -1,4 +1,4 @@
-/* component_in.js - v4.1.9 - Safe Income Phase Integration */
+/* component_in.js - v4.1.10 - Fix: ReferenceError Initialization */
 import { checkIsDueSoon, autoFmt, toNum, raw, safeParseDate, safeGetYear, monthMap } from './india.js';
 
 export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -19,23 +19,25 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
     // 2. DYNAMIC DUE DATE LOGIC
     const todayMonth = TODAY.getMonth();
     const todayDay = TODAY.getDate();
-    
     const hasPassedThisYear = (todayMonth > annMonthNum) || (todayMonth === annMonthNum && todayDay >= anniversaryDay);
     const nextDueYear = hasPassedThisYear ? CURRENT_YEAR + 1 : CURRENT_YEAR;
     const nextDueStr = `${anniversaryDay} ${anniversaryMonth} ${nextDueYear}`; 
     
     const lastPaymentYear = premEndYear - 1;
     const isTermOver = CURRENT_YEAR > lastPaymentYear || (CURRENT_YEAR === lastPaymentYear && hasPassedThisYear);
-    
     const finalDueDate = (p.status === "PAID UP" || isTermOver) ? "PAID UP" : nextDueStr;
     const isPaidUp = finalDueDate === "PAID UP";
     const isAssigned = toNum(p.sumAssured) === 0;
    
-    // 3. FINANCIAL VALUES
+    // 3. BRANDING (Moved Up to fix Initialization Error)
+    const brandColor = p.color || "#000000";
+    const brandBg = `rgba(${parseInt(brandColor.slice(1,3), 16)}, ${parseInt(brandColor.slice(3,5), 16)}, ${parseInt(brandColor.slice(5,7), 16)}, 0.04)`;
+
+    // 4. FINANCIAL & PHASE LOGIC
     const isULIP = p.type === "ULIP";
     const prem = Math.round(toNum(p.premium || 0));
 
-    // --- NEW: PHASE LOGIC FOR TOP BOX ---
+    // Calculate Today's Payout Status
     const polY_Now = CURRENT_YEAR - startY + 1;
     const currentPayout = (p.payoutSchedule && p.payoutSchedule[polY_Now]);
     const isIncomePhase = !!currentPayout;
@@ -44,10 +46,9 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
     const topMiddleValue = isIncomePhase ? autoFmt(currentPayout, sym) : autoFmt(p.sumAssured, sym);
     const topMiddleColor = isIncomePhase ? "text-emerald-600" : "text-slate-700";
     const badgeText = isIncomePhase ? "Income Phase" : p.type;
-    const badgeColor = isIncomePhase ? "#059669" : brandColor; // Use Emerald for Income
     // ------------------------------------
         
-    // 4. PREMIUM REMAINING
+    // 5. PREMIUM REMAINING
     let premRemainingStr = "";
     if (!isPaidUp) {
         const lastPayDate = safeParseDate(premEndStr);
@@ -58,10 +59,7 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
         premRemainingStr = `${String(Math.max(0, years)).padStart(2, '0')}y${String(Math.max(0, months)).padStart(2, '0')}m`;
     }
 
-    const brandColor = p.color || "#000000";
-    const brandBg = `rgba(${parseInt(brandColor.slice(1,3), 16)}, ${parseInt(brandColor.slice(3,5), 16)}, ${parseInt(brandColor.slice(5,7), 16)}, 0.04)`;
-
-    // 5. TIMELINE LOGIC (Your existing loop, preserved exactly)
+    // 6. TIMELINE LOGIC (Loop Preserved)
     let timelineHtml = '';
     for(let yr = startY; yr < matY; yr++) {
         const polY = yr - startY + 1;
@@ -102,7 +100,7 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
 
     timelineHtml += `<div class="mat-star">★<div class="tooltip"><b class="text-orange-400 uppercase tracking-widest">Maturity</b><br><span class="${String(p.maturityAmt || p.sumAssured).length > 15 ? 'text-[10px]' : 'text-lg'} font-black">${raw(p.maturityAmt || p.sumAssured)}</span></div></div>`;
 
-    // 6. HTML OUTPUT (Surgically modified to use dynamic variables)
+    // 7. HTML OUTPUT
     return `
     <div class="policy-card mb-6" id="card-${p.id}" style="border-left: 16px solid ${brandColor}; border-color: ${brandColor};">
         <div class="card-header transition-colors" style="background: ${brandBg};" onclick="toggleCard('${p.id}')">
