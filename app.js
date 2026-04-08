@@ -1,6 +1,6 @@
-/* app.js - v1.0.2 - Fixed Syntax Error */
+/* app.js - v1.0.2 - Fixed Syntax */
 
-// Standard JS Imports must use static strings (no backticks/variables)
+// Static imports: No backticks or variables allowed here.
 import { syncWithGoogleSheets, autoFmt } from './loader.js?v=1.0.2';
 import { createPolicyCard } from './component_in.js?v=1.0.2';
 import { createSGCard } from './component_sg.js?v=1.0.2';
@@ -12,24 +12,16 @@ import { toNum, safeGetYear } from './india.js?v=1.0.2';
 window.currentCategory = 'india';
 let localPolicyData = POLICY_DATA;
 
-/**
- * Main Initialization
- */
 export async function initDashboard(version) {
     console.log(`Nami Portfolio Engine [Build ${version}]`);
-    
     try {
         localPolicyData = await syncWithGoogleSheets(POLICY_DATA);
     } catch (e) {
         console.warn("Sheet sync failed, using data.js baseline.");
     }
-
     render('india');
 }
 
-/**
- * Main Render Function
- */
 export function render(cat) {
     window.currentCategory = cat;
     const sortBy = document.getElementById('sort-trigger').value;
@@ -41,7 +33,6 @@ export function render(cat) {
     const TODAY = new Date();
     const CURRENT_YEAR = TODAY.getFullYear();
 
-    // UI Layout Selection
     if (cat === 'health') {
         sortContainer.classList.add('invisible');
         statusBadge.innerHTML = `<span class="material-symbols-outlined text-xs align-middle mr-1">medical_services</span> HEALTH PORTFOLIO`;
@@ -56,14 +47,12 @@ export function render(cat) {
     let list = cat === 'health' ? [...healthData] : [...(localPolicyData[cat] || [])];
     const sym = (cat === 'singapore') ? "$" : "₹";
 
-    // Sorting Logic
     if (cat !== 'health') {
         if (sortBy === 'premium') list.sort((a, b) => toNum(b.premium) - toNum(a.premium));
         else if (sortBy === 'due') list.sort((a, b) => parseDate(a.dueDate) - parseDate(b.dueDate));
         else if (sortBy === 'time') list.sort((a, b) => parseDate(a.premiumEnds) - parseDate(b.premiumEnds));
     }
 
-    // Card Generation
     container.innerHTML = list.map(p => {
         if (cat === 'health') return createHealthCard(p);
         if (cat === 'singapore') return createSGCard(p, sym, TODAY, CURRENT_YEAR);
@@ -71,9 +60,6 @@ export function render(cat) {
     }).join('');
 }
 
-/**
- * Expansion Toggle
- */
 export function handleToggle(id) {
     const card = document.getElementById(`card-${id}`);
     if (!card) return;
@@ -82,15 +68,10 @@ export function handleToggle(id) {
     if (!wasOpen) card.classList.add('open');
 }
 
-/**
- * Health Summary Content
- */
 function updateHealthSummary(bar) {
     bar.className = "flex items-center justify-between bg-slate-900 p-6 rounded-[40px] text-white shadow-2xl relative overflow-hidden transition-all duration-500";
-    
     const sgTotal = healthData.filter(p => p.currency === "SGD").reduce((acc, p) => acc + parseFloat(p.cashAmount || 0) + parseFloat(p.cpfAmount || 0), 0);
     const inCash = healthData.filter(p => p.currency === "INR").reduce((acc, p) => acc + parseFloat(p.cashAmount || 0), 0);
-
     bar.innerHTML = `
         <div class="flex items-center gap-2 pl-4">
             <span class="material-symbols-outlined text-emerald-500 text-3xl">medical_services</span>
@@ -108,15 +89,10 @@ function updateHealthSummary(bar) {
         </div>`;
 }
 
-/**
- * India/SG Summary Content
- */
 function updatePolicySummary(bar, cat, currentYear) {
     const list = localPolicyData[cat] || [];
     const sym = (cat === 'singapore') ? "$" : "₹";
-    
     bar.className = "grid grid-cols-[1.2fr_1fr_1fr] gap-6 bg-slate-900 p-8 rounded-[40px] text-white shadow-2xl relative overflow-hidden transition-all duration-500";
-
     const tSA = list.reduce((acc, p) => acc + toNum(p.sumAssured), 0);
     const tAnn = list.reduce((acc, p) => {
         const status = (p.status || "").toUpperCase();
@@ -131,22 +107,20 @@ function updatePolicySummary(bar, cat, currentYear) {
         const hSA = list.filter(p => !p.avatarPath || p.holderType === "Self").reduce((acc, p) => acc + toNum(p.sumAssured), 0);
         const wSA = list.filter(p => p.holderType === "Wife").reduce((acc, p) => acc + toNum(p.sumAssured), 0);
         const dSA = list.filter(p => p.holderType === "Daughter").reduce((acc, p) => acc + toNum(p.sumAssured), 0);
-        
-        familyHtml = `
-            <div class="flex justify-center gap-4 mt-4 pt-3 border-t border-slate-800/50">
-                <div class="flex items-center gap-2 bg-slate-800/30 px-3 py-1.5 rounded-full border border-slate-700/30">
-                    <img src="avatar_self.png" class="w-5 h-5 rounded-full object-cover">
-                    <span class="text-[11px] font-black">${sym}${Math.round(hSA).toLocaleString('en-IN')}</span>
-                </div>
-                <div class="flex items-center gap-2 bg-pink-900/20 px-3 py-1.5 rounded-full border border-pink-700/30">
-                    <img src="avatar_wife.png" class="w-5 h-5 rounded-full object-cover">
-                    <span class="text-[11px] font-black text-pink-200">${sym}${Math.round(wSA).toLocaleString('en-IN')}</span>
-                </div>
-                <div class="flex items-center gap-2 bg-indigo-900/20 px-3 py-1.5 rounded-full border border-indigo-700/30">
-                    <img src="avatar_daughter.png" class="w-5 h-5 rounded-full object-cover">
-                    <span class="text-[11px] font-black text-indigo-200">${sym}${Math.round(dSA).toLocaleString('en-IN')}</span>
-                </div>
-            </div>`;
+        familyHtml = `<div class="flex justify-center gap-4 mt-4 pt-3 border-t border-slate-800/50">
+            <div class="flex items-center gap-2 bg-slate-800/30 px-3 py-1.5 rounded-full border border-slate-700/30">
+                <img src="avatar_self.png" class="w-5 h-5 rounded-full object-cover border border-slate-500">
+                <span class="text-[11px] font-black">${sym}${Math.round(hSA).toLocaleString('en-IN')}</span>
+            </div>
+            <div class="flex items-center gap-2 bg-pink-900/20 px-3 py-1.5 rounded-full border border-pink-700/30">
+                <img src="avatar_wife.png" class="w-5 h-5 rounded-full object-cover border border-pink-500">
+                <span class="text-[11px] font-black text-pink-200">${sym}${Math.round(wSA).toLocaleString('en-IN')}</span>
+            </div>
+            <div class="flex items-center gap-2 bg-indigo-900/20 px-3 py-1.5 rounded-full border border-indigo-700/30">
+                <img src="avatar_daughter.png" class="w-5 h-5 rounded-full object-cover border border-indigo-500">
+                <span class="text-[11px] font-black text-indigo-200">${sym}${Math.round(dSA).toLocaleString('en-IN')}</span>
+            </div>
+        </div>`;
     }
 
     bar.innerHTML = `
