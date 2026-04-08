@@ -11,11 +11,25 @@ export function raw(val) {
     return (val === undefined || val === null) ? "" : val;
 }
 
-// --- DATA PARSING ---
 export const toNum = (val) => {
-    if (!val || val === "No Value") return 0;
-    const clean = val.toString().replace(/[^\d.]/g, '');
-    return parseFloat(clean) || 0;
+    // Immediate exit for null/empty
+    if (val === undefined || val === null || val === "No Value" || val === "") {
+        return 0;
+    }
+    // If it's already a number, just return it
+    if (typeof val === "number") return val;
+
+    // Clean the string:
+    // - replace(/[^\x00-\x7F]/g, ""): Removes hidden non-ASCII characters
+    // - replace(/[^\d.]/g, ""): Removes symbols (₹, $, %) and commas
+    const clean = String(val)
+        .replace(/[^\x00-\x7F]/g, "") 
+        .replace(/[^\d.]/g, "");
+    
+    const result = parseFloat(clean);
+    
+    // Final safety: return 0 if result is NaN
+    return isNaN(result) ? 0 : result;
 };
 
 export function parseDate(str) {
@@ -53,11 +67,17 @@ export function safeGetYear(dateStr) {
     return isNaN(d.getFullYear()) ? TODAY.getFullYear() : d.getFullYear();
 }
 
-// --- FORMATTERS ---
 export function autoFmt(val, sym) {
-    if (val === undefined || val === null || val === "No Value") return sym + "0";
-    const num = typeof val === "number" ? val : toNum(val);
-    return isNaN(num) ? val : sym + Math.round(num).toLocaleString('en-IN');
+    // Check for empty/null values
+    if (val === undefined || val === null || val === "No Value" || val === "") {
+        return sym + "0";
+    }
+    // If it's already a number, use it. If it's a string, clean it first.
+    const num = (typeof val === "number") ? val : toNum(val);
+    // Final check: if it's not a number at all, just return the raw value
+    if (isNaN(num)) return val;
+    // Round and format with Indian commas
+    return sym + Math.round(num).toLocaleString('en-IN');
 }
 
 export function checkIsDueSoon(dueDateStr) {
