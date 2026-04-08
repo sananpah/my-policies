@@ -1,8 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <script>const APP_VERSION = "4.1.0";</script>
-
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title id="main-title">Nami Portfolio</title>
@@ -14,9 +12,7 @@
 
 <body class="bg-slate-50">
 
-    <div id="version-tag" class="fixed top-4 right-4 font-black text-[10px] text-slate-400 bg-white/80 backdrop-blur-sm px-3 py-1 rounded-lg border border-slate-200 uppercase tracking-tighter z-50 shadow-sm">
-        <script>document.write('v' + APP_VERSION);</script>
-    </div>
+    <div id="version-tag" class="fixed top-4 right-4 font-black text-[10px] text-slate-400 bg-white/80 backdrop-blur-sm px-3 py-1 rounded-lg border border-slate-200 uppercase tracking-tighter z-50 shadow-sm"></div>
 
     <div class="max-w-7xl mx-auto mb-6 pt-10 px-4">
         <div class="flex justify-between items-end mb-6">
@@ -62,15 +58,18 @@
     <div id="container" class="max-w-7xl mx-auto pb-20 px-4"></div>
 
     <script type="module">
-        // Import everything from app.js using the version for cache-busting
+        // MASTER VERSION BUMP
+        const APP_VERSION = "4.1.1"; 
+
+        // Import the module logic
         import { initDashboard, render, handleToggle } from `./app.js?v=${APP_VERSION}`;
 
-        // Expose functions to the window so the HTML onclicks above still work
+        // Link internal functions to global window for HTML 'onclick' buttons
         window.render = render;
         window.toggleCard = handleToggle;
 
-        // Start the engine
         window.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('version-tag').innerText = `v${APP_VERSION}`;
             initDashboard(APP_VERSION);
         });
     </script>
