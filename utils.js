@@ -88,6 +88,24 @@ export function checkIsDueSoon(dueDateStr) {
     return diff >= 0 && diff <= 30;
 }
 
+/**
+ * Calculates years and months between TODAY and a target date.
+ * Returns "YYy MMm" or null if the date has passed.
+ */
+export function getTimeRemaining(targetDateStr, TODAY) {
+    if (!targetDateStr || targetDateStr === "PAID UP") return null;
+    const target = safeParseDate(targetDateStr);
+    if (target <= TODAY) return null;
+    let years = target.getFullYear() - TODAY.getFullYear();
+    let months = target.getMonth() - TODAY.getMonth();
+    if (months < 0) {
+        years--;
+        months += 12;
+    }
+    // Return formatted string
+    return `${String(years).padStart(2, '0')}y ${String(months).padStart(2, '0')}m`;
+}
+
 // --- CALCULATION LOGIC (Moved from app.js) ---
 
 /** Calculates SA, Premium (excluding paid up), and Unit Value */
