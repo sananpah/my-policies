@@ -1,11 +1,11 @@
 /* app.js - v1.1.0 */
-import { syncWithGoogleSheets } from './loader.js?v=1.0.3';
-import { createPolicyCard } from './component_in.js?v=1.03';
-import { createSGCard } from './component_sg.js?v=1.0.3';
-import { createHealthCard } from './health.js?v=1.0.3';
-import { healthData } from './data_health.js?v=1.0.3';
-import { POLICY_DATA } from './data.js?v=1.0.3';
-import { toNum, parseDate, autoFmt, calculatePortfolioTotals, calculateFamilyBreakdown, calculateHealthTotals } from './utils.js?v=1.0.3';
+import { syncWithGoogleSheets } from './loader.js?v=1.0.4';
+import { createPolicyCard } from './component_in.js?v=1.0.4';
+import { createSGCard } from './component_sg.js?v=1.0.4';
+import { createHealthCard } from './health.js?v=1.0.4';
+import { healthData } from './data_health.js?v=1.0.4';
+import { POLICY_DATA } from './data.js?v=1.0.4';
+import { toNum, parseDate, autoFmt, checkIsDueSoon, calculatePortfolioTotals, calculateFamilyBreakdown, calculateHealthTotals } from './utils.js?v=1.0.3';
 
 window.currentCategory = 'india';
 let localPolicyData = POLICY_DATA;
