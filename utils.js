@@ -1,4 +1,4 @@
-// utils.js — Shared utilities v4.2
+/* utils.js — Shared utilities v5.0 */
 
 export const monthMap = {
     "Jan": 0, "Feb": 1, "Mar": 2, "Apr": 3, "May": 4, "Jun": 5,
@@ -7,53 +7,18 @@ export const monthMap = {
 
 const TODAY = new Date();
 
-export function safeParseDate(dateStr) {
-    if (!dateStr) return new Date();
-    const cleanStr = dateStr.toString().replace(/\./g, ' ');
-    const parts = cleanStr.trim().split(/\s+/);
-    if (parts.length === 3) {
-        const day   = parseInt(parts[0], 10);
-        const month = monthMap[parts[1]] ?? 0;
-        const year  = parseInt(parts[2], 10);
-        return new Date(year, month, day);
-    }
-    const d = new Date(dateStr);
-    return isNaN(d.getTime()) ? new Date() : d;
-}
-
-export function checkIsDueSoon(dueDateStr) {
-    if (!dueDateStr || dueDateStr === "PAID UP") return false;
-    const due  = safeParseDate(dueDateStr);
-    const diff = (due - TODAY) / 86400000;
-    return diff >= 0 && diff <= 30;
-}
-
-export function getTimeLeft(endDateStr) {
-    if (!endDateStr || endDateStr === "PAID UP") return null;
-    const end = safeParseDate(endDateStr);
-    let years  = end.getFullYear() - TODAY.getFullYear();
-    let months = end.getMonth()    - TODAY.getMonth();
-    if (months < 0) { years--; months += 12; }
-    if (years < 0) return null;
-    return `${String(years).padStart(2, '0')}y ${String(months).padStart(2, '0')}m`;
-}
-
-export function autoFmt(val, sym) {
-    if (val === undefined || val === null || val === "No Value") return sym + "0";
-    const clean = val.toString().replace(/[^\d.]/g, "");
-    const num   = parseFloat(clean);
-    return isNaN(num) ? val : sym + num.toLocaleString('en-IN');
-}
-
-export function raw(val) {
-    return (val === undefined || val === null) ? "" : val;
-}
-
+// --- DATA PARSING ---
 export const toNum = (val) => {
     if (!val || val === "No Value") return 0;
     const clean = val.toString().replace(/[^\d.]/g, '');
     return parseFloat(clean) || 0;
 };
+
+export function parseDate(str) {
+    if (!str || str === "PAID UP") return new Date(9999, 0, 1);
+    const p = str.toString().replace(/\./g, ' ').split(' ');
+    return new Date(p[1] + " " + p[0] + ", " + p[2]);
+}
 
 export function safeGetYear(dateStr) {
     if (!dateStr) return TODAY.getFullYear();
@@ -64,8 +29,43 @@ export function safeGetYear(dateStr) {
     return isNaN(d.getFullYear()) ? TODAY.getFullYear() : d.getFullYear();
 }
 
-export function parseDate(str) {
-    if (!str || str === "PAID UP") return new Date(9999, 0, 1);
-    const p = str.toString().replace(/\./g, ' ').split(' ');
-    return new Date(p[1] + " " + p[0] + ", " + p[2]);
+// --- FORMATTERS ---
+export function autoFmt(val, sym) {
+    if (val === undefined || val === null || val === "No Value") return sym + "0";
+    const num = typeof val === "number" ? val : toNum(val);
+    return isNaN(num) ? val : sym + Math.round(num).toLocaleString('en-IN');
+}
+
+// --- CALCULATION LOGIC (Moved from app.js) ---
+
+/** Calculates SA, Premium (excluding paid up), and Unit Value */
+export function calculatePortfolioTotals(list) {
+    const CURRENT_YEAR = TODAY.getFullYear();
+    return list.reduce((acc, p) => {
+        const status = (p.status || "").toUpperCase();
+        const pEndYear = safeGetYear(p.premiumEnds);
+        const isPaidUp = (status === "PAID UP" || CURRENT_YEAR > (pEndYear - 1));
+
+        acc.sa += toNum(p.sumAssured);
+        acc.unitValue += (p.unitValueNumeric || 0);
+        if (!isPaidUp) acc.premium += toNum(p.premium);
+        
+        return acc;
+    }, { sa: 0, premium: 0, unitValue: 0 });
+}
+
+/** Calculates Family SA Breakdown for India */
+export function calculateFamilyBreakdown(list) {
+    return {
+        self: list.filter(p => !p.avatarPath || p.holderType === "Self").reduce((acc, p) => acc + toNum(p.sumAssured), 0),
+        wife: list.filter(p => p.holderType === "Wife").reduce((acc, p) => acc + toNum(p.sumAssured), 0),
+        daughter: list.filter(p => p.holderType === "Daughter").reduce((acc, p) => acc + toNum(p.sumAssured), 0)
+    };
+}
+
+/** Calculates Health Totals for SGD and INR */
+export function calculateHealthTotals(healthList) {
+    const sg = healthList.filter(p => p.currency === "SGD").reduce((acc, p) => acc + toNum(p.cashAmount) + toNum(p.cpfAmount), 0);
+    const inr = healthList.filter(p => p.currency === "INR").reduce((acc, p) => acc + toNum(p.cashAmount), 0);
+    return { sg, inr };
 }
