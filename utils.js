@@ -7,6 +7,10 @@ export const monthMap = {
 
 const TODAY = new Date();
 
+export function raw(val) {
+    return (val === undefined || val === null) ? "" : val;
+}
+
 // --- DATA PARSING ---
 export const toNum = (val) => {
     if (!val || val === "No Value") return 0;
