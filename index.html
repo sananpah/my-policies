@@ -56,22 +56,20 @@
     </div>
 
     <div id="container" class="max-w-7xl mx-auto pb-20 px-4"></div>
-
+    
     <script type="module">
-    // Master Version - Change this to 5.2.3
-    const VERSION = "4.1.6"; 
+    const VERSION = "4.1.7";
 
-    // Dynamic import works with backticks here!
-    import { initDashboard, render, handleToggle } from `./app.js?v=${VERSION}`;
+    // Dynamic import() works with backticks — static import does NOT
+    const { initDashboard, render, handleToggle } = await import(`./app.js?v=${VERSION}`);
 
-    // Link functions to window so the HTML 'onclick' buttons work
+    // Attach to window IMMEDIATELY, not inside DOMContentLoaded
     window.render = render;
     window.toggleCard = handleToggle;
 
-    window.addEventListener('DOMContentLoaded', () => {
-        document.getElementById('version-tag').innerText = "v" + VERSION;
-        initDashboard(VERSION);
-    });
-</script>
+    document.getElementById('version-tag').innerText = "v" + VERSION;
+    await initDashboard(VERSION);
+    </script>
+    
 </body>
 </html>
