@@ -7,7 +7,7 @@ import { createSGCard } from './component_sg.js?v=1.0.2';
 import { createHealthCard } from './health.js?v=1.0.2';
 import { healthData } from './data_health.js?v=1.0.2';
 import { POLICY_DATA } from './data.js?v=1.0.2';
-import { toNum, safeGetYear } from './india.js?v=1.0.2';
+import { toNum, safeGetYear } from './utils.js?v=1.0.2';
 
 window.currentCategory = 'india';
 let localPolicyData = POLICY_DATA;
