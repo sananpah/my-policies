@@ -1,5 +1,5 @@
 /* component_sg.js - v6.7.8 - Restored Withdrawal Logic & Font Sync */
-import { autoFmt, toNum } from './india.js';
+import { autoFmt, toNum } from './utils.js';
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const commDate = new Date(p.commenced);
