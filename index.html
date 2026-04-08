@@ -58,20 +58,20 @@
     <div id="container" class="max-w-7xl mx-auto pb-20 px-4"></div>
 
     <script type="module">
-        // MASTER VERSION BUMP
-        const APP_VERSION = "4.1.5"; 
+    // Master Version - Change this to 5.2.3
+    const VERSION = "4.1.6"; 
 
-        // Import the module logic
-        import { initDashboard, render, handleToggle } from `./app.js?v=${APP_VERSION}`;
+    // Dynamic import works with backticks here!
+    import { initDashboard, render, handleToggle } from `./app.js?v=${VERSION}`;
 
-        // Link internal functions to global window for HTML 'onclick' buttons
-        window.render = render;
-        window.toggleCard = handleToggle;
+    // Link functions to window so the HTML 'onclick' buttons work
+    window.render = render;
+    window.toggleCard = handleToggle;
 
-        window.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('version-tag').innerText = `v${APP_VERSION}`;
-            initDashboard(APP_VERSION);
-        });
-    </script>
+    window.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('version-tag').innerText = "v" + VERSION;
+        initDashboard(VERSION);
+    });
+</script>
 </body>
 </html>
