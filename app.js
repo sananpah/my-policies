@@ -1,6 +1,6 @@
-/* app.js - v1.0.2 - HARD STRINGS ONLY */
+/* app.js - v1.0.2 - Scrubbed for Syntax Errors */
 
-// Standard strings (' ') used to prevent "Unexpected template string" error.
+// Static imports MUST use plain strings. No backticks allowed here.
 import { syncWithGoogleSheets, autoFmt } from './loader.js?v=1.0.2';
 import { createPolicyCard } from './component_in.js?v=1.0.2';
 import { createSGCard } from './component_sg.js?v=1.0.2';
@@ -17,7 +17,7 @@ export async function initDashboard(version) {
     try {
         localPolicyData = await syncWithGoogleSheets(POLICY_DATA);
     } catch (e) {
-        console.warn("Sheet sync failed.");
+        console.warn("Sheet sync failed, using data.js baseline.");
     }
     render('india');
 }
