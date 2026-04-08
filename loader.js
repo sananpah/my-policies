@@ -1,7 +1,7 @@
 /* loader.js - v4.3.6 - Smart MoneyBack Parser & Data Sync */
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2UwOfG57DQBOBnJX-9hsRKOQTUgALiM3uxs-VGzD2KN8JoWNAQltH6IkgAGhPTNFEvb/pub?gid=866869416&single=true&output=csv";
 
-const autoFmt = (val, sym) => {
+export const autoFmt = (val, sym) => {
     const n = parseFloat(val);
     if (isNaN(n) || n === 0) return sym + "0";
     return sym + Math.round(n).toLocaleString('en-IN');
