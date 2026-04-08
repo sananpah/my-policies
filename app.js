@@ -98,9 +98,3 @@ function updatePolicySummary(bar, cat, currentYear) {
 
     bar.innerHTML = '<div class="border-r border-slate-700 text-center pr-6"><p class="text-[10px] font-bold text-slate-400 uppercase mb-1 tracking-widest">Total Sum Assured</p><p class="text-4xl font-black text-emerald-400">' + sym + Math.round(tSA).toLocaleString('en-IN') + '</p>' + familyHtml + '</div><div class="border-r border-slate-700 text-center"><p class="text-[10px] font-bold text-slate-400 uppercase mb-1 tracking-widest">Annual Premium</p><p class="text-4xl font-black text-indigo-400">' + sym + Math.round(tAnn).toLocaleString('en-IN') + '</p></div><div class="text-center"><p class="text-[10px] font-bold text-slate-400 uppercase mb-1 tracking-widest">Portfolio Value</p><p class="text-4xl font-black text-pink-500">' + sym + Math.round(tUnitValue).toLocaleString('en-IN') + '</p></div>';
 }
-
-function parseDate(str) {
-    if (!str || str === "PAID UP") return new Date(9999, 0, 1);
-    const p = str.toString().replace(/\./g, ' ').split(' ');
-    return new Date(p[1] + " " + p[0] + ", " + p[2]);
-}
