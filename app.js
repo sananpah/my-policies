@@ -1,13 +1,16 @@
-/* app.js - v1.0.0 - Centralized App Logic */
-import { syncWithGoogleSheets, autoFmt } from './loader.js';
-import { createPolicyCard } from './component_in.js';
-import { createSGCard } from './component_sg.js';
-import { createHealthCard } from './health.js';
-import { healthData } from './data_health.js';
-import { POLICY_DATA } from './data.js';
-import { toNum, safeGetYear } from './india.js';
+/* app.js - v1.0.2 - Fixed Versioning */
 
-// Global state to track category and current data
+// THE VERSION FOR SUB-MODULES
+const V = "1.0.2";
+
+import { syncWithGoogleSheets, autoFmt } from `./loader.js?v=${V}`;
+import { createPolicyCard } from `./component_in.js?v=${V}`;
+import { createSGCard } from `./component_sg.js?v=${V}`;
+import { createHealthCard } from `./health.js?v=${V}`;
+import { healthData } from `./data_health.js?v=${V}`;
+import { POLICY_DATA } from `./data.js?v=${V}`;
+import { toNum, safeGetYear } from `./india.js?v=${V}`;
+
 window.currentCategory = 'india';
 let localPolicyData = POLICY_DATA;
 
@@ -17,14 +20,12 @@ let localPolicyData = POLICY_DATA;
 export async function initDashboard(version) {
     console.log(`Nami Portfolio Engine [Build ${version}]`);
     
-    // Sync with Google Sheets first
     try {
         localPolicyData = await syncWithGoogleSheets(POLICY_DATA);
     } catch (e) {
-        console.warn("Sheet sync failed, using local data.js baseline.");
+        console.warn("Sheet sync failed, using data.js baseline.");
     }
 
-    // Default render
     render('india');
 }
 
@@ -42,7 +43,7 @@ export function render(cat) {
     const TODAY = new Date();
     const CURRENT_YEAR = TODAY.getFullYear();
 
-    // 1. Handle UI Layout Transitions
+    // UI Layout Selection
     if (cat === 'health') {
         sortContainer.classList.add('invisible');
         statusBadge.innerHTML = `<span class="material-symbols-outlined text-xs align-middle mr-1">medical_services</span> HEALTH PORTFOLIO`;
@@ -54,17 +55,17 @@ export function render(cat) {
         updatePolicySummary(summaryBar, cat, CURRENT_YEAR);
     }
 
-    // 2. Prepare and Sort List
     let list = cat === 'health' ? [...healthData] : [...(localPolicyData[cat] || [])];
     const sym = (cat === 'singapore') ? "$" : "₹";
 
+    // Sorting Logic
     if (cat !== 'health') {
         if (sortBy === 'premium') list.sort((a, b) => toNum(b.premium) - toNum(a.premium));
         else if (sortBy === 'due') list.sort((a, b) => parseDate(a.dueDate) - parseDate(b.dueDate));
         else if (sortBy === 'time') list.sort((a, b) => parseDate(a.premiumEnds) - parseDate(b.premiumEnds));
     }
 
-    // 3. Render Cards
+    // Card Generation
     container.innerHTML = list.map(p => {
         if (cat === 'health') return createHealthCard(p);
         if (cat === 'singapore') return createSGCard(p, sym, TODAY, CURRENT_YEAR);
@@ -73,7 +74,7 @@ export function render(cat) {
 }
 
 /**
- * Toggle Card Expansion
+ * Expansion Toggle
  */
 export function handleToggle(id) {
     const card = document.getElementById(`card-${id}`);
@@ -84,7 +85,7 @@ export function handleToggle(id) {
 }
 
 /**
- * Update Health Specific Summary Bar
+ * Health Summary Content
  */
 function updateHealthSummary(bar) {
     bar.className = "flex items-center justify-between bg-slate-900 p-6 rounded-[40px] text-white shadow-2xl relative overflow-hidden transition-all duration-500";
@@ -110,7 +111,7 @@ function updateHealthSummary(bar) {
 }
 
 /**
- * Update India/Singapore Summary Bar (with Family Breakdown)
+ * India/SG Summary Content
  */
 function updatePolicySummary(bar, cat, currentYear) {
     const list = localPolicyData[cat] || [];
@@ -136,15 +137,15 @@ function updatePolicySummary(bar, cat, currentYear) {
         familyHtml = `
             <div class="flex justify-center gap-4 mt-4 pt-3 border-t border-slate-800/50">
                 <div class="flex items-center gap-2 bg-slate-800/30 px-3 py-1.5 rounded-full border border-slate-700/30">
-                    <img src="avatar_self.png" class="w-5 h-5 rounded-full object-cover border border-slate-500">
-                    <span class="text-[11px] font-black text-slate-200">${sym}${Math.round(hSA).toLocaleString('en-IN')}</span>
+                    <img src="avatar_self.png" class="w-5 h-5 rounded-full object-cover">
+                    <span class="text-[11px] font-black">${sym}${Math.round(hSA).toLocaleString('en-IN')}</span>
                 </div>
                 <div class="flex items-center gap-2 bg-pink-900/20 px-3 py-1.5 rounded-full border border-pink-700/30">
-                    <img src="avatar_wife.png" class="w-5 h-5 rounded-full object-cover border border-pink-500">
+                    <img src="avatar_wife.png" class="w-5 h-5 rounded-full object-cover">
                     <span class="text-[11px] font-black text-pink-200">${sym}${Math.round(wSA).toLocaleString('en-IN')}</span>
                 </div>
                 <div class="flex items-center gap-2 bg-indigo-900/20 px-3 py-1.5 rounded-full border border-indigo-700/30">
-                    <img src="avatar_daughter.png" class="w-5 h-5 rounded-full object-cover border border-indigo-500">
+                    <img src="avatar_daughter.png" class="w-5 h-5 rounded-full object-cover">
                     <span class="text-[11px] font-black text-indigo-200">${sym}${Math.round(dSA).toLocaleString('en-IN')}</span>
                 </div>
             </div>`;
@@ -152,23 +153,20 @@ function updatePolicySummary(bar, cat, currentYear) {
 
     bar.innerHTML = `
         <div class="border-r border-slate-700 text-center pr-6">
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Sum Assured</p>
-            <p class="text-4xl font-black text-emerald-400"><span>${sym}${Math.round(tSA).toLocaleString('en-IN')}</span></p>
+            <p class="text-[10px] font-bold text-slate-400 uppercase mb-1 tracking-widest">Total Sum Assured</p>
+            <p class="text-4xl font-black text-emerald-400">${sym}${Math.round(tSA).toLocaleString('en-IN')}</p>
             ${familyHtml}
         </div>
         <div class="border-r border-slate-700 text-center">
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Annual Premium</p>
+            <p class="text-[10px] font-bold text-slate-400 uppercase mb-1 tracking-widest">Annual Premium</p>
             <p class="text-4xl font-black text-indigo-400">${sym}${Math.round(tAnn).toLocaleString('en-IN')}</p>
         </div>
         <div class="text-center">
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Portfolio Value</p>
+            <p class="text-[10px] font-bold text-slate-400 uppercase mb-1 tracking-widest">Portfolio Value</p>
             <p class="text-4xl font-black text-pink-500">${sym}${Math.round(tUnitValue).toLocaleString('en-IN')}</p>
         </div>`;
 }
 
-/**
- * Utility: Parse Date Strings
- */
 function parseDate(str) {
     if (!str || str === "PAID UP") return new Date(9999, 0, 1);
     const p = str.toString().replace(/\./g, ' ').split(' ');
