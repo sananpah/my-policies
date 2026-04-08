@@ -1,5 +1,5 @@
 /* component_in.js - v4.1.16 - Final Visual Sync */
-import { checkIsDueSoon, autoFmt, toNum, raw, safeParseDate, safeGetYear, monthMap } from './india.js';
+import { checkIsDueSoon, autoFmt, toNum, raw, safeParseDate, safeGetYear, monthMap } from './utils.js';
 
 export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
     const isULIP = (p.type || "").toUpperCase().includes("ULIP");
