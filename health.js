@@ -1,5 +1,5 @@
 /* health.js - v1.5.1 - Full Card Blink for Due Soon */
-import { autoFmt, checkIsDueSoon } from './india.js';
+import { autoFmt, checkIsDueSoon } from './utils.js';
 
 function getNextDue(expiryDateStr) {
     const expiry = new Date(expiryDateStr);
