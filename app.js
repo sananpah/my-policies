@@ -1,13 +1,11 @@
-/* app.js - v1.0.2 - Scrubbed for Syntax Errors */
-
-// Static imports MUST use plain strings. No backticks allowed here.
-import { syncWithGoogleSheets, autoFmt } from './loader.js?v=1.0.2';
+/* app.js - v1.1.0 */
+import { syncWithGoogleSheets } from './loader.js?v=1.0.2';
 import { createPolicyCard } from './component_in.js?v=1.0.2';
 import { createSGCard } from './component_sg.js?v=1.0.2';
 import { createHealthCard } from './health.js?v=1.0.2';
 import { healthData } from './data_health.js?v=1.0.2';
 import { POLICY_DATA } from './data.js?v=1.0.2';
-import { toNum, safeGetYear } from './utils.js?v=1.0.2';
+import { toNum, parseDate, autoFmt, calculatePortfolioTotals, calculateFamilyBreakdown, calculateHealthTotals } from './utils.js?v=1.0.2';
 
 window.currentCategory = 'india';
 let localPolicyData = POLICY_DATA;
@@ -41,7 +39,7 @@ export function render(cat) {
         sortContainer.classList.remove('invisible');
         const flagSrc = (cat === 'india') ? 'in' : 'sg';
         statusBadge.innerHTML = '<img src="https://flagcdn.com/w40/' + flagSrc + '.png" class="w-5 h-auto inline-block align-middle mr-2 rounded-sm">' + cat.toUpperCase() + ' PORTFOLIO';
-        updatePolicySummary(summaryBar, cat, CURRENT_YEAR);
+        updatePolicySummary(summaryBar, cat);
     }
 
     let list = cat === 'health' ? [...healthData] : [...(localPolicyData[cat] || [])];
@@ -70,31 +68,23 @@ export function handleToggle(id) {
 
 function updateHealthSummary(bar) {
     bar.className = "flex items-center justify-between bg-slate-900 p-6 rounded-[40px] text-white shadow-2xl relative overflow-hidden transition-all duration-500";
-    const sgTotal = healthData.filter(p => p.currency === "SGD").reduce((acc, p) => acc + parseFloat(p.cashAmount || 0) + parseFloat(p.cpfAmount || 0), 0);
-    const inCash = healthData.filter(p => p.currency === "INR").reduce((acc, p) => acc + parseFloat(p.cashAmount || 0), 0);
-    bar.innerHTML = '<div class="flex items-center gap-2 pl-4"><span class="material-symbols-outlined text-emerald-500 text-3xl">medical_services</span><span class="text-sm font-black uppercase tracking-widest ml-2">Health Portfolio</span></div><div class="flex gap-6 pr-4"><div class="flex items-center gap-2 bg-slate-800/40 px-4 py-2 rounded-2xl border border-slate-700/50"><img src="https://flagcdn.com/w40/sg.png" class="w-4 h-auto rounded-sm"><span class="text-lg font-black text-white">$' + Math.round(sgTotal).toLocaleString('en-IN') + '</span></div><div class="flex items-center gap-2 bg-slate-800/40 px-4 py-2 rounded-2xl border border-slate-700/50"><img src="https://flagcdn.com/w40/in.png" class="w-4 h-auto rounded-sm"><span class="text-lg font-black text-white">₹' + Math.round(inCash).toLocaleString('en-IN') + '</span></div></div>';
+    const totals = calculateHealthTotals(healthData);
+    
+    bar.innerHTML = '<div class="flex items-center gap-2 pl-4"><span class="material-symbols-outlined text-emerald-500 text-3xl">medical_services</span><span class="text-sm font-black uppercase tracking-widest ml-2">Health Portfolio</span></div><div class="flex gap-6 pr-4"><div class="flex items-center gap-2 bg-slate-800/40 px-4 py-2 rounded-2xl border border-slate-700/50"><img src="https://flagcdn.com/w40/sg.png" class="w-4 h-auto rounded-sm"><span class="text-lg font-black text-white">' + autoFmt(totals.sg, "$") + '</span></div><div class="flex items-center gap-2 bg-slate-800/40 px-4 py-2 rounded-2xl border border-slate-700/50"><img src="https://flagcdn.com/w40/in.png" class="w-4 h-auto rounded-sm"><span class="text-lg font-black text-white">' + autoFmt(totals.inr, "₹") + '</span></div></div>';
 }
 
-function updatePolicySummary(bar, cat, currentYear) {
+function updatePolicySummary(bar, cat) {
     const list = localPolicyData[cat] || [];
     const sym = (cat === 'singapore') ? "$" : "₹";
+    const totals = calculatePortfolioTotals(list);
+    
     bar.className = "grid grid-cols-[1.2fr_1fr_1fr] gap-6 bg-slate-900 p-8 rounded-[40px] text-white shadow-2xl relative overflow-hidden transition-all duration-500";
-    const tSA = list.reduce((acc, p) => acc + toNum(p.sumAssured), 0);
-    const tAnn = list.reduce((acc, p) => {
-        const status = (p.status || "").toUpperCase();
-        const pEndYear = safeGetYear(p.premiumEnds);
-        const isPaidUp = (status === "PAID UP" || currentYear > (pEndYear - 1));
-        return isPaidUp ? acc : acc + toNum(p.premium || 0);
-    }, 0);
-    const tUnitValue = list.reduce((acc, p) => acc + (p.unitValueNumeric || 0), 0);
 
     let familyHtml = '';
     if (cat === 'india') {
-        const hSA = list.filter(p => !p.avatarPath || p.holderType === "Self").reduce((acc, p) => acc + toNum(p.sumAssured), 0);
-        const wSA = list.filter(p => p.holderType === "Wife").reduce((acc, p) => acc + toNum(p.sumAssured), 0);
-        const dSA = list.filter(p => p.holderType === "Daughter").reduce((acc, p) => acc + toNum(p.sumAssured), 0);
-        familyHtml = '<div class="flex justify-center gap-4 mt-4 pt-3 border-t border-slate-800/50"><div class="flex items-center gap-2 bg-slate-800/30 px-3 py-1.5 rounded-full border border-slate-700/30"><img src="avatar_self.png" class="w-5 h-5 rounded-full object-cover border border-slate-500"><span class="text-[11px] font-black">' + sym + Math.round(hSA).toLocaleString('en-IN') + '</span></div><div class="flex items-center gap-2 bg-pink-900/20 px-3 py-1.5 rounded-full border border-pink-700/30"><img src="avatar_wife.png" class="w-5 h-5 rounded-full object-cover border border-pink-500"><span class="text-[11px] font-black text-pink-200">' + sym + Math.round(wSA).toLocaleString('en-IN') + '</span></div><div class="flex items-center gap-2 bg-indigo-900/20 px-3 py-1.5 rounded-full border border-indigo-700/30"><img src="avatar_daughter.png" class="w-5 h-5 rounded-full object-cover border border-indigo-500"><span class="text-[11px] font-black text-indigo-200">' + sym + Math.round(dSA).toLocaleString('en-IN') + '</span></div></div>';
+        const fam = calculateFamilyBreakdown(list);
+        familyHtml = '<div class="flex justify-center gap-4 mt-4 pt-3 border-t border-slate-800/50"><div class="flex items-center gap-2 bg-slate-800/30 px-3 py-1.5 rounded-full border border-slate-700/30"><img src="avatar_self.png" class="w-5 h-5 rounded-full object-cover border border-slate-500"><span class="text-[11px] font-black">' + autoFmt(fam.self, sym) + '</span></div><div class="flex items-center gap-2 bg-pink-900/20 px-3 py-1.5 rounded-full border border-pink-700/30"><img src="avatar_wife.png" class="w-5 h-5 rounded-full object-cover border border-pink-500"><span class="text-[11px] font-black text-pink-200">' + autoFmt(fam.wife, sym) + '</span></div><div class="flex items-center gap-2 bg-indigo-900/20 px-3 py-1.5 rounded-full border border-indigo-700/30"><img src="avatar_daughter.png" class="w-5 h-5 rounded-full object-cover border border-indigo-500"><span class="text-[11px] font-black text-indigo-200">' + autoFmt(fam.daughter, sym) + '</span></div></div>';
     }
 
-    bar.innerHTML = '<div class="border-r border-slate-700 text-center pr-6"><p class="text-[10px] font-bold text-slate-400 uppercase mb-1 tracking-widest">Total Sum Assured</p><p class="text-4xl font-black text-emerald-400">' + sym + Math.round(tSA).toLocaleString('en-IN') + '</p>' + familyHtml + '</div><div class="border-r border-slate-700 text-center"><p class="text-[10px] font-bold text-slate-400 uppercase mb-1 tracking-widest">Annual Premium</p><p class="text-4xl font-black text-indigo-400">' + sym + Math.round(tAnn).toLocaleString('en-IN') + '</p></div><div class="text-center"><p class="text-[10px] font-bold text-slate-400 uppercase mb-1 tracking-widest">Portfolio Value</p><p class="text-4xl font-black text-pink-500">' + sym + Math.round(tUnitValue).toLocaleString('en-IN') + '</p></div>';
+    bar.innerHTML = '<div class="border-r border-slate-700 text-center pr-6"><p class="text-[10px] font-bold text-slate-400 uppercase mb-1 tracking-widest">Total Sum Assured</p><p class="text-4xl font-black text-emerald-400">' + autoFmt(totals.sa, sym) + '</p>' + familyHtml + '</div><div class="border-r border-slate-700 text-center"><p class="text-[10px] font-bold text-slate-400 uppercase mb-1 tracking-widest">Annual Premium</p><p class="text-4xl font-black text-indigo-400">' + autoFmt(totals.premium, sym) + '</p></div><div class="text-center"><p class="text-[10px] font-bold text-slate-400 uppercase mb-1 tracking-widest">Portfolio Value</p><p class="text-4xl font-black text-pink-500">' + autoFmt(totals.unitValue, sym) + '</p></div>';
 }
