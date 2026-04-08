@@ -63,3 +63,9 @@ export function safeGetYear(dateStr) {
     const d = new Date(dateStr);
     return isNaN(d.getFullYear()) ? TODAY.getFullYear() : d.getFullYear();
 }
+
+export function parseDate(str) {
+    if (!str || str === "PAID UP") return new Date(9999, 0, 1);
+    const p = str.toString().replace(/\./g, ' ').split(' ');
+    return new Date(p[1] + " " + p[0] + ", " + p[2]);
+}
