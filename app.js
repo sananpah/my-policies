@@ -1,7 +1,6 @@
-/* app.js - v1.0.2 - Fixed Syntax */
+/* app.js - v1.0.2 - Fixed Syntax Error */
 
-// Note: In standard JS, imports must be static strings. 
-// We use the version suffix manually here to ensure compatibility.
+// Standard JS Imports must use static strings (no backticks/variables)
 import { syncWithGoogleSheets, autoFmt } from './loader.js?v=1.0.2';
 import { createPolicyCard } from './component_in.js?v=1.0.2';
 import { createSGCard } from './component_sg.js?v=1.0.2';
@@ -42,6 +41,7 @@ export function render(cat) {
     const TODAY = new Date();
     const CURRENT_YEAR = TODAY.getFullYear();
 
+    // UI Layout Selection
     if (cat === 'health') {
         sortContainer.classList.add('invisible');
         statusBadge.innerHTML = `<span class="material-symbols-outlined text-xs align-middle mr-1">medical_services</span> HEALTH PORTFOLIO`;
@@ -56,12 +56,14 @@ export function render(cat) {
     let list = cat === 'health' ? [...healthData] : [...(localPolicyData[cat] || [])];
     const sym = (cat === 'singapore') ? "$" : "₹";
 
+    // Sorting Logic
     if (cat !== 'health') {
         if (sortBy === 'premium') list.sort((a, b) => toNum(b.premium) - toNum(a.premium));
         else if (sortBy === 'due') list.sort((a, b) => parseDate(a.dueDate) - parseDate(b.dueDate));
         else if (sortBy === 'time') list.sort((a, b) => parseDate(a.premiumEnds) - parseDate(b.premiumEnds));
     }
 
+    // Card Generation
     container.innerHTML = list.map(p => {
         if (cat === 'health') return createHealthCard(p);
         if (cat === 'singapore') return createSGCard(p, sym, TODAY, CURRENT_YEAR);
@@ -81,12 +83,14 @@ export function handleToggle(id) {
 }
 
 /**
- * Health Summary
+ * Health Summary Content
  */
 function updateHealthSummary(bar) {
     bar.className = "flex items-center justify-between bg-slate-900 p-6 rounded-[40px] text-white shadow-2xl relative overflow-hidden transition-all duration-500";
+    
     const sgTotal = healthData.filter(p => p.currency === "SGD").reduce((acc, p) => acc + parseFloat(p.cashAmount || 0) + parseFloat(p.cpfAmount || 0), 0);
     const inCash = healthData.filter(p => p.currency === "INR").reduce((acc, p) => acc + parseFloat(p.cashAmount || 0), 0);
+
     bar.innerHTML = `
         <div class="flex items-center gap-2 pl-4">
             <span class="material-symbols-outlined text-emerald-500 text-3xl">medical_services</span>
@@ -105,12 +109,14 @@ function updateHealthSummary(bar) {
 }
 
 /**
- * Policy Summary
+ * India/SG Summary Content
  */
 function updatePolicySummary(bar, cat, currentYear) {
     const list = localPolicyData[cat] || [];
     const sym = (cat === 'singapore') ? "$" : "₹";
+    
     bar.className = "grid grid-cols-[1.2fr_1fr_1fr] gap-6 bg-slate-900 p-8 rounded-[40px] text-white shadow-2xl relative overflow-hidden transition-all duration-500";
+
     const tSA = list.reduce((acc, p) => acc + toNum(p.sumAssured), 0);
     const tAnn = list.reduce((acc, p) => {
         const status = (p.status || "").toUpperCase();
@@ -125,34 +131,36 @@ function updatePolicySummary(bar, cat, currentYear) {
         const hSA = list.filter(p => !p.avatarPath || p.holderType === "Self").reduce((acc, p) => acc + toNum(p.sumAssured), 0);
         const wSA = list.filter(p => p.holderType === "Wife").reduce((acc, p) => acc + toNum(p.sumAssured), 0);
         const dSA = list.filter(p => p.holderType === "Daughter").reduce((acc, p) => acc + toNum(p.sumAssured), 0);
-        familyHtml = `<div class="flex justify-center gap-4 mt-4 pt-3 border-t border-slate-800/50">
-            <div class="flex items-center gap-2 bg-slate-800/30 px-3 py-1.5 rounded-full border border-slate-700/30">
-                <img src="avatar_self.png" class="w-5 h-5 rounded-full object-cover border border-slate-500">
-                <span class="text-[11px] font-black">${sym}${Math.round(hSA).toLocaleString('en-IN')}</span>
-            </div>
-            <div class="flex items-center gap-2 bg-pink-900/20 px-3 py-1.5 rounded-full border border-pink-700/30">
-                <img src="avatar_wife.png" class="w-5 h-5 rounded-full object-cover border border-pink-500">
-                <span class="text-[11px] font-black text-pink-200">${sym}${Math.round(wSA).toLocaleString('en-IN')}</span>
-            </div>
-            <div class="flex items-center gap-2 bg-indigo-900/20 px-3 py-1.5 rounded-full border border-indigo-700/30">
-                <img src="avatar_daughter.png" class="w-5 h-5 rounded-full object-cover border border-indigo-500">
-                <span class="text-[11px] font-black text-indigo-200">${sym}${Math.round(dSA).toLocaleString('en-IN')}</span>
-            </div>
-        </div>`;
+        
+        familyHtml = `
+            <div class="flex justify-center gap-4 mt-4 pt-3 border-t border-slate-800/50">
+                <div class="flex items-center gap-2 bg-slate-800/30 px-3 py-1.5 rounded-full border border-slate-700/30">
+                    <img src="avatar_self.png" class="w-5 h-5 rounded-full object-cover">
+                    <span class="text-[11px] font-black">${sym}${Math.round(hSA).toLocaleString('en-IN')}</span>
+                </div>
+                <div class="flex items-center gap-2 bg-pink-900/20 px-3 py-1.5 rounded-full border border-pink-700/30">
+                    <img src="avatar_wife.png" class="w-5 h-5 rounded-full object-cover">
+                    <span class="text-[11px] font-black text-pink-200">${sym}${Math.round(wSA).toLocaleString('en-IN')}</span>
+                </div>
+                <div class="flex items-center gap-2 bg-indigo-900/20 px-3 py-1.5 rounded-full border border-indigo-700/30">
+                    <img src="avatar_daughter.png" class="w-5 h-5 rounded-full object-cover">
+                    <span class="text-[11px] font-black text-indigo-200">${sym}${Math.round(dSA).toLocaleString('en-IN')}</span>
+                </div>
+            </div>`;
     }
 
     bar.innerHTML = `
         <div class="border-r border-slate-700 text-center pr-6">
-            <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Total Sum Assured</p>
+            <p class="text-[10px] font-bold text-slate-400 uppercase mb-1 tracking-widest">Total Sum Assured</p>
             <p class="text-4xl font-black text-emerald-400">${sym}${Math.round(tSA).toLocaleString('en-IN')}</p>
             ${familyHtml}
         </div>
         <div class="border-r border-slate-700 text-center">
-            <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Annual Premium</p>
+            <p class="text-[10px] font-bold text-slate-400 uppercase mb-1 tracking-widest">Annual Premium</p>
             <p class="text-4xl font-black text-indigo-400">${sym}${Math.round(tAnn).toLocaleString('en-IN')}</p>
         </div>
         <div class="text-center">
-            <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Portfolio Value</p>
+            <p class="text-[10px] font-bold text-slate-400 uppercase mb-1 tracking-widest">Portfolio Value</p>
             <p class="text-4xl font-black text-pink-500">${sym}${Math.round(tUnitValue).toLocaleString('en-IN')}</p>
         </div>`;
 }
