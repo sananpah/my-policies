@@ -1,13 +1,7 @@
-/* loader.js - v4.3.6 - Smart MoneyBack Parser & Data Sync */
+/* loader.js - v4.4.0 - Cleaned & Modularized */
+import { toNum, autoFmt, monthMap } from './utils.js?v=1.0.2';
+
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2UwOfG57DQBOBnJX-9hsRKOQTUgALiM3uxs-VGzD2KN8JoWNAQltH6IkgAGhPTNFEvb/pub?gid=866869416&single=true&output=csv";
-
-export const autoFmt = (val, sym) => {
-    const n = parseFloat(val);
-    if (isNaN(n) || n === 0) return sym + "0";
-    return sym + Math.round(n).toLocaleString('en-IN');
-};
-
-const monthMap = { "Jan":0,"Feb":1,"Mar":2,"Apr":3,"May":4,"Jun":5,"Jul":6,"Aug":7,"Sep":8,"Oct":9,"Nov":10,"Dec":11 };
 
 export async function syncWithGoogleSheets(masterList) {
     const TODAY = new Date();
@@ -25,28 +19,33 @@ export async function syncWithGoogleSheets(masterList) {
             "Sulmas Nami": { type: "Daughter", img: "avatar_daughter.png" }
         };
 
-        const cleanNumeric = (raw) => {
-            if (!raw || raw === "No Value") return 0;
-            return parseFloat(String(raw).replace(/[^\x00-\x7F]/g, "").replace(/[^\d.]/g, "")) || 0;
-        };
-
         ["india", "singapore"].forEach(country => {
             if (!masterList[country]) return;
             masterList[country] = masterList[country].map(p => {
                 const match = sheetRecords.find(row => String(row["Policy No."]).trim() === String(p.id).trim());
                 if (match) {
+                    // Basic Info
                     p.name = match.name || p.name;
                     p.company = match.company || p.company;
                     p.type = match.type || p.type;
                     p.logo = `logo_${p.company.replace(/[\s.]/g, "")}.png`;
 
+                    // Identity Mapping
                     const identity = insuredMap[match["Insured"]];
-                    if (identity) { p.avatarPath = identity.img; p.holderType = identity.type; }
+                    if (identity) { 
+                        p.avatarPath = identity.img; 
+                        p.holderType = identity.type; 
+                    }
 
-                    p.premium = cleanNumeric(match["Premium"]);
-                    p.sumAssured = cleanNumeric(match["Sum Assured"]);
+                    // Numeric Values - Now using imported toNum
+                    p.premium = toNum(match["Premium"]);
+                    p.sumAssured = toNum(match["Sum Assured"]);
+                    
+                    // Essential for Header Calculations
+                    p.unitValueNumeric = toNum(match["Current Value"]);
                     p.currentUnitValue = match["Current Value"] || "No Value";
 
+                    // Date & Term Logic
                     let rawDate = String(match["Commenced Date"] || "").trim().replace(/\./g, ' '); 
                     p.commenced = rawDate;
                     const dateParts = rawDate.split(" ");
@@ -63,8 +62,11 @@ export async function syncWithGoogleSheets(masterList) {
                         }
                     }
 
+                    // India Specific Logic
                     if (country === "india") {
                         const rawBenefits = String(match["Other Coverage & Benefits"] || "");
+                        
+                        // MoneyBack Logic
                         const mbLine = rawBenefits.split(/\r?\n/).find(l => l.toLowerCase().includes("moneyback"));
                         p.payoutSchedule = {}; 
                         
@@ -74,15 +76,10 @@ export async function syncWithGoogleSheets(masterList) {
                                 if (!seg.includes(":")) return;
                                 const [range, valRaw] = seg.split(":").map(s => s.trim());
                                 
-                                let numOnly = parseFloat(valRaw.replace(/[^\d.]/g, ""));
-                                let annualVal = 0;
-
-                                // --- SMART DETECTION ---
-                                if (valRaw.toLowerCase().includes("%bsa")) {
-                                    annualVal = (p.sumAssured || 0) * (numOnly / 100);
-                                } else {
-                                    annualVal = numOnly; // Use flat amount (₹ 100,000)
-                                }
+                                let numOnly = toNum(valRaw);
+                                let annualVal = valRaw.toLowerCase().includes("%bsa") 
+                                    ? (p.sumAssured * (numOnly / 100)) 
+                                    : numOnly;
 
                                 if (range.includes("-")) {
                                     const [s, e] = range.split("-").map(Number);
@@ -107,7 +104,10 @@ export async function syncWithGoogleSheets(masterList) {
             });
         });
         return masterList;
-    } catch (e) { console.warn("Sync failed:", e); return masterList; }
+    } catch (e) { 
+        console.warn("Sync failed:", e); 
+        return masterList; 
+    }
 }
 
 function processCSV(csv) {
