@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script>const APP_VERSION = "4.1.0";</script>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title id="main-title">Nami Portfolio</title>
@@ -12,7 +14,9 @@
 
 <body class="bg-slate-50">
 
-    <div id="version-tag" class="fixed top-4 right-4 font-black text-[10px] text-slate-400 bg-white/80 backdrop-blur-sm px-3 py-1 rounded-lg border border-slate-200 uppercase tracking-tighter z-50 shadow-sm"></div>
+    <div id="version-tag" class="fixed top-4 right-4 font-black text-[10px] text-slate-400 bg-white/80 backdrop-blur-sm px-3 py-1 rounded-lg border border-slate-200 uppercase tracking-tighter z-50 shadow-sm">
+        <script>document.write('v' + APP_VERSION);</script>
+    </div>
 
     <div class="max-w-7xl mx-auto mb-6 pt-10 px-4">
         <div class="flex justify-between items-end mb-6">
@@ -51,185 +55,24 @@
     </div>
 
     <div id="summary-section" class="max-w-7xl mx-auto px-4 mb-10">
-        <div id="summary-bar" class="grid grid-cols-[1.2fr_1fr_1fr] gap-6 bg-slate-900 p-8 rounded-[40px] text-white shadow-2xl relative overflow-hidden">
-            <div id="sum-col-1" class="border-r border-slate-700 text-center pr-6">
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Sum Assured</p>
-                <p id="total-sa" class="text-4xl font-black text-emerald-400">0</p>
+        <div id="summary-bar" class="grid grid-cols-[1.2fr_1fr_1fr] gap-6 bg-slate-900 p-8 rounded-[40px] text-white shadow-2xl relative overflow-hidden transition-all duration-500">
             </div>
-            <div id="sum-col-2" class="border-r border-slate-700 text-center">
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Annual Premium</p>
-                <p id="total-premium" class="text-4xl font-black text-indigo-400">0</p>
-            </div>
-            <div id="sum-col-3" class="text-center">
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Portfolio Value</p>
-                <p id="total-unit-value" class="text-4xl font-black text-pink-500">0</p>
-            </div>
-        </div>
     </div>
 
     <div id="container" class="max-w-7xl mx-auto pb-20 px-4"></div>
 
     <script type="module">
-        const APP_VERSION = "4.0.180";
-        document.getElementById('version-tag').innerText = `v${APP_VERSION}`;
+        // Import everything from app.js using the version for cache-busting
+        import { initDashboard, render, handleToggle } from `./app.js?v=${APP_VERSION}`;
 
-        const [Data, Tools, IndiaComp, SGComp, HealthComp, HealthDataFile, { syncWithGoogleSheets }] = await Promise.all([
-            import(`./data.js?v=${APP_VERSION}`),
-            import(`./india.js?v=${APP_VERSION}`),
-            import(`./component_in.js?v=${APP_VERSION}`),
-            import(`./component_sg.js?v=${APP_VERSION}`),
-            import(`./health.js?v=${APP_VERSION}`),
-            import(`./data_health.js?v=${APP_VERSION}`),
-            import(`./loader.js?v=${APP_VERSION}`)
-        ]);
+        // Expose functions to the window so the HTML onclicks above still work
+        window.render = render;
+        window.toggleCard = handleToggle;
 
-        const { POLICY_DATA } = Data;
-        const { toNum, safeGetYear } = Tools;
-        const { createPolicyCard } = IndiaComp;
-        const { createSGCard } = SGComp;
-        const { createHealthCard } = HealthComp;
-        const { healthData } = HealthDataFile;
-
-        const TODAY = new Date();
-        const CURRENT_YEAR = TODAY.getFullYear();
-        window.currentCategory = 'india';
-
-        window.toggleCard = (id) => {
-            const card = document.getElementById(`card-${id}`);
-            if(!card) return;
-            const wasOpen = card.classList.contains('open');
-            document.querySelectorAll('.policy-card, .health-card').forEach(c => c.classList.remove('open'));
-            if (!wasOpen) card.classList.add('open');
-        };
-
-        const parseDate = (str) => {
-            if (!str || str === "PAID UP") return new Date(9999, 0, 1);
-            // Handle both spaces and dots in dates
-            const p = str.toString().replace(/\./g, ' ').split(' ');
-            return new Date(`${p[1]} ${p[0]}, ${p[2]}`);
-        };
-
-        window.render = function(cat) {
-            window.currentCategory = cat;
-            const sortBy = document.getElementById('sort-trigger').value;
-            const container = document.getElementById('container');
-            const statusBadge = document.getElementById('portfolio-status');
-            const sortContainer = document.getElementById('sort-container');
-            const summaryBar = document.getElementById('summary-bar');
-
-            if (cat === 'health') {
-                summaryBar.className = "flex items-center justify-between bg-slate-900 p-6 rounded-[40px] text-white shadow-2xl relative overflow-hidden transition-all duration-500";
-                summaryBar.innerHTML = `
-                    <div class="flex items-center gap-2 pl-4">
-                        <span class="material-symbols-outlined text-emerald-500 text-3xl">medical_services</span>
-                        <span class="text-sm font-black uppercase tracking-widest ml-2">Health Portfolio</span>
-                    </div>
-                    <div id="health-pills-container" class="flex gap-6 pr-4"></div>
-                `;
-            } else {
-                summaryBar.className = "grid grid-cols-[1.2fr_1fr_1fr] gap-6 bg-slate-900 p-8 rounded-[40px] text-white shadow-2xl relative overflow-hidden transition-all duration-500";
-                summaryBar.innerHTML = `
-                    <div id="sum-col-1" class="border-r border-slate-700 text-center pr-6">
-                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Sum Assured</p>
-                        <p id="total-sa" class="text-4xl font-black text-emerald-400">0</p>
-                    </div>
-                    <div id="sum-col-2" class="border-r border-slate-700 text-center">
-                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Annual Premium</p>
-                        <p id="total-premium" class="text-4xl font-black text-indigo-400">0</p>
-                    </div>
-                    <div id="sum-col-3" class="text-center">
-                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Portfolio Value</p>
-                        <p id="total-unit-value" class="text-4xl font-black text-pink-500">0</p>
-                    </div>
-                `;
-            }
-
-            let list = cat === 'health' ? [...healthData] : [...(POLICY_DATA[cat] || [])];
-            const sym = (cat === 'singapore') ? "$" : "₹";
-
-            if (cat === 'health') {
-                statusBadge.innerHTML = `<span class="material-symbols-outlined text-xs align-middle mr-1">medical_services</span> HEALTH PORTFOLIO`;
-                sortContainer.classList.add('invisible');
-            } else {
-                sortContainer.classList.remove('invisible');
-                const flagSrc = (cat === 'india') ? 'in' : 'sg';
-                statusBadge.innerHTML = `<img src="https://flagcdn.com/w40/${flagSrc}.png" class="w-5 h-auto inline-block align-middle mr-2 rounded-sm">${cat.toUpperCase()} PORTFOLIO`;
-            }
-
-            if (cat !== 'health') {
-                if (sortBy === 'premium') list.sort((a, b) => toNum(b.premium) - toNum(a.premium));
-                else if (sortBy === 'due') list.sort((a, b) => parseDate(a.dueDate) - parseDate(b.dueDate));
-                else if (sortBy === 'time') list.sort((a, b) => parseDate(a.premiumEnds) - parseDate(b.premiumEnds));
-            }
-
-            container.innerHTML = list.map(p => {
-                if (cat === 'health') return createHealthCard(p);
-                if (cat === 'singapore') return createSGCard(p, sym, TODAY, CURRENT_YEAR);
-                return createPolicyCard(p, sym, TODAY, CURRENT_YEAR);
-            }).join('');
-
-            if (cat === 'health') {
-                const sgData = healthData.filter(p => p.currency === "SGD");
-                const sgTotal = sgData.reduce((acc, p) => acc + parseFloat(p.cashAmount || 0) + parseFloat(p.cpfAmount || 0), 0);
-                const inData = healthData.filter(p => p.currency === "INR");
-                const inCash = inData.reduce((acc, p) => acc + parseFloat(p.cashAmount || 0), 0);
-
-                document.getElementById('health-pills-container').innerHTML = `
-                    <div class="flex items-center gap-2 bg-slate-800/40 px-4 py-2 rounded-2xl border border-slate-700/50">
-                        <img src="https://flagcdn.com/w40/sg.png" class="w-4 h-auto rounded-sm">
-                        <span class="text-lg font-black text-white">$${Math.round(sgTotal).toLocaleString('en-IN')}</span>
-                    </div>
-                    <div class="flex items-center gap-2 bg-slate-800/40 px-4 py-2 rounded-2xl border border-slate-700/50">
-                        <img src="https://flagcdn.com/w40/in.png" class="w-4 h-auto rounded-sm">
-                        <span class="text-lg font-black text-white">₹${Math.round(inCash).toLocaleString('en-IN')}</span>
-                    </div>
-                `;
-            } else {
-                const tSA = list.reduce((acc, p) => acc + toNum(p.sumAssured), 0);
-                
-                const tAnn = list.reduce((acc, p) => {
-                    const status = (p.status || p["Status"] || "").toUpperCase();
-                    const pEndYear = safeGetYear(p.premiumEnds);
-                    const isActuallyPaid = CURRENT_YEAR > (pEndYear - 1); 
-                    const isPaidUp = (status === "PAID UP" || isActuallyPaid);
-                    return isPaidUp ? acc : acc + toNum(p.premium || 0);
-                }, 0);
-
-                // FIXED: Use unitValueNumeric for the header sum to prevent NaN from symbols
-                const tUnitValue = list.reduce((acc, p) => acc + (p.unitValueNumeric || 0), 0);
-                
-                let familyHtml = '';
-                if (cat === 'india') {
-                    const hSA = list.filter(p => !p.avatarPath || p.holderType === "Self").reduce((acc, p) => acc + toNum(p.sumAssured), 0);
-                    const wSA = list.filter(p => p.holderType === "Wife").reduce((acc, p) => acc + toNum(p.sumAssured), 0);
-                    const dSA = list.filter(p => p.holderType === "Daughter").reduce((acc, p) => acc + toNum(p.sumAssured), 0);
-                    
-                    familyHtml = `
-                        <div class="flex justify-center gap-4 mt-4 pt-3 border-t border-slate-800/50">
-                            <div class="flex items-center gap-2 bg-slate-800/30 px-3 py-1.5 rounded-full border border-slate-700/30">
-                                <img src="avatar_self.png" class="w-5 h-5 rounded-full object-cover border border-slate-500">
-                                <span class="text-[11px] font-black text-slate-200">${sym}${Math.round(hSA).toLocaleString('en-IN')}</span>
-                            </div>
-                            <div class="flex items-center gap-2 bg-pink-900/20 px-3 py-1.5 rounded-full border border-pink-700/30">
-                                <img src="avatar_wife.png" class="w-5 h-5 rounded-full object-cover border border-pink-500">
-                                <span class="text-[11px] font-black text-pink-200">${sym}${Math.round(wSA).toLocaleString('en-IN')}</span>
-                            </div>
-                            <div class="flex items-center gap-2 bg-indigo-900/20 px-3 py-1.5 rounded-full border border-indigo-700/30">
-                                <img src="avatar_daughter.png" class="w-5 h-5 rounded-full object-cover border border-indigo-500">
-                                <span class="text-[11px] font-black text-indigo-200">${sym}${Math.round(dSA).toLocaleString('en-IN')}</span>
-                            </div>
-                        </div>`;
-                }
-
-                document.getElementById('total-sa').innerHTML = `<span>${sym}${Math.round(tSA).toLocaleString('en-IN')}</span>${familyHtml}`;
-                document.getElementById('total-premium').innerText = sym + Math.round(tAnn).toLocaleString('en-IN');
-                document.getElementById('total-unit-value').innerText = sym + Math.round(tUnitValue).toLocaleString('en-IN');
-            }
-        }
-        
-        await syncWithGoogleSheets(POLICY_DATA);
-        render('india');
-        
+        // Start the engine
+        window.addEventListener('DOMContentLoaded', () => {
+            initDashboard(APP_VERSION);
+        });
     </script>
 </body>
 </html>
