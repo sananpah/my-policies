@@ -5,7 +5,7 @@ import { createSGCard } from './component_sg.js?v=1.0.4';
 import { createHealthCard } from './health.js?v=1.0.4';
 import { healthData } from './data_health.js?v=1.0.4';
 import { POLICY_DATA } from './data.js?v=1.0.4';
-import { toNum, parseDate, autoFmt, checkIsDueSoon, calculatePortfolioTotals, calculateFamilyBreakdown, calculateHealthTotals } from './utils.js?v=1.0.3';
+import { toNum, parseDate, autoFmt, checkIsDueSoon, calculatePortfolioTotals, calculateFamilyBreakdown, calculateHealthTotals } from './utils.js?v=1.0.4';
 
 window.currentCategory = 'india';
 let localPolicyData = POLICY_DATA;
