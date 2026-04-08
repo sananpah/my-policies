@@ -36,6 +36,14 @@ export function autoFmt(val, sym) {
     return isNaN(num) ? val : sym + Math.round(num).toLocaleString('en-IN');
 }
 
+export function checkIsDueSoon(dueDateStr) {
+    const TODAY = new Date();
+    if (!dueDateStr || dueDateStr === "PAID UP") return false;
+    const due  = safeParseDate(dueDateStr);
+    const diff = (due - TODAY) / 86400000;
+    return diff >= 0 && diff <= 30;
+}
+
 // --- CALCULATION LOGIC (Moved from app.js) ---
 
 /** Calculates SA, Premium (excluding paid up), and Unit Value */
