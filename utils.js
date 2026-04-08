@@ -24,6 +24,26 @@ export function parseDate(str) {
     return new Date(p[1] + " " + p[0] + ", " + p[2]);
 }
 
+export function safeParseDate(dateStr) {
+    if (!dateStr) return new Date();
+    
+    // Clean string: replace dots with spaces and split
+    const cleanStr = dateStr.toString().replace(/\./g, ' ');
+    const parts = cleanStr.trim().split(/\s+/);
+    
+    // If format is "15 Jan 2030"
+    if (parts.length === 3) {
+        const day   = parseInt(parts[0], 10);
+        const month = monthMap[parts[1]] ?? 0;
+        const year  = parseInt(parts[2], 10);
+        return new Date(year, month, day);
+    }
+    
+    // Fallback to standard JS parsing
+    const d = new Date(dateStr);
+    return isNaN(d.getTime()) ? new Date() : d;
+}
+
 export function safeGetYear(dateStr) {
     if (!dateStr) return TODAY.getFullYear();
     const cleanStr = dateStr.toString().replace(/\./g, ' ');
