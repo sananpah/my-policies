@@ -1,4 +1,4 @@
-/* component_in.js - v4.1.17 - Integrated Time Remaining */
+/* component_in.js - v4.1.18 - Fixed Paid-Up Trigger */
 import { checkIsDueSoon, autoFmt, toNum, raw, safeParseDate, safeGetYear, monthMap, getTimeRemaining } from './utils.js';
 
 export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -19,13 +19,16 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
     const matStr = p.maturity || "01 Jan 2050";
     const matY = safeGetYear(matStr);
 
-    // --- NEW LOGIC: Get Time Remaining for Next Due Box ---
+    // --- TIME REMAINING LOGIC ---
     const timeLeft = getTimeRemaining(p.premiumEnds, TODAY);
 
     const brandColor = p.color || "#000000";
     const brandBg = `rgba(${parseInt(brandColor.slice(1,3), 16)}, ${parseInt(brandColor.slice(3,5), 16)}, ${parseInt(brandColor.slice(5,7), 16)}, 0.04)`;
     
-    const isStillPaying = (CURRENT_YEAR < premEndYear) || (CURRENT_YEAR === premEndYear && TODAY < anniversaryThisYear);
+    // Check if still in payment phase based on strict date comparison
+    const finalPremiumDate = safeParseDate(p.premiumEnds);
+    const isStillPaying = TODAY <= finalPremiumDate;
+    
     const scheduledPayout = (p.payoutSchedule && p.payoutSchedule[currentPolYear]);
     const isIncomePhase = !isStillPaying && !!scheduledPayout;
 
@@ -46,7 +49,11 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
 
     const hasPassedThisYear = TODAY >= anniversaryThisYear;
     const nextDueStr = `${annDay} ${startParts[1]} ${hasPassedThisYear ? CURRENT_YEAR + 1 : CURRENT_YEAR}`; 
-    const isPaidUp = (p.status === "PAID UP") || (CURRENT_YEAR > (premEndYear - 1)) || (CURRENT_YEAR === (premEndYear - 1) && hasPassedThisYear);
+    
+    // --- FIXED PAID UP LOGIC ---
+    // Trigger "PAID UP" only AFTER the final premium date has passed.
+    const isPaidUp = (p.status === "PAID UP") || (TODAY > finalPremiumDate);
+    
     const finalDueDate = isPaidUp ? "PAID UP" : nextDueStr;
     const isAssigned = toNum(p.sumAssured) === 0;
 
