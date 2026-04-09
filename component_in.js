@@ -1,4 +1,4 @@
-/* component_in.js - v4.1.18 - Fixed Paid-Up Trigger */
+/* component_in.js - v4.1.19 - Final Logic & Timeline Fix */
 import { checkIsDueSoon, autoFmt, toNum, raw, safeParseDate, safeGetYear, monthMap, getTimeRemaining } from './utils.js';
 
 export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -64,8 +64,9 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
         const isLoopCurrent = yr === CURRENT_YEAR;
         let color = "", phase = "", detail = "";
 
+        // SURGICAL FIX: Use <= to ensure the 10th year (premEndYear) is colored as Premium
         if (yr <= premEndYear) {
-            const isEffectivelyPaid = isPast || isPaidUp || (isLoopCurrent && hasPassedThisYear);
+            const isEffectivelyPaid = isPast || (isPaidUp && yr === premEndYear) || (isLoopCurrent && hasPassedThisYear);
             color = (isLoopCurrent && !hasPassedThisYear && !isPaidUp) ? "bg-current" : (isEffectivelyPaid ? "bg-prem-past" : "bg-prem-future");
             phase = isEffectivelyPaid ? "Premium Completed" : "Premium Payment";
             detail = `Amt: ${autoFmt(p.premium, sym)}`;
