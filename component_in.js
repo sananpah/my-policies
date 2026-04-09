@@ -1,4 +1,4 @@
-/* component_in.js - v4.1.20 - Surgical Fix: Assigned & Paid-Up UI */
+/* component_in.js - v4.1.22 - ULIP Projections & Logic Fixes */
 import { checkIsDueSoon, autoFmt, toNum, raw, safeParseDate, safeGetYear, monthMap, getTimeRemaining } from './utils.js';
 
 export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -29,7 +29,6 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
     const scheduledPayout = (p.payoutSchedule && p.payoutSchedule[currentPolYear]);
     const isIncomePhase = !isStillPaying && !!scheduledPayout;
 
-    // --- LOGIC: Assigned & Paid-Up Formatting ---
     const isAssigned = toNum(p.sumAssured) === 0;
     const isPaidUp = (p.status === "PAID UP") || (TODAY > finalPremiumDate);
 
@@ -77,7 +76,12 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
         timelineHtml += `<div class="segment ${color}"><div class="tooltip"><b class="text-emerald-400 uppercase tracking-tighter">${phase}</b><br>${detail}<br><span class="opacity-40 text-[9px]">Year ${loopPolY} (${yr})</span></div></div>`;
     }
 
-    timelineHtml += `<div class="mat-star">★<div class="tooltip"><b class="text-orange-400 uppercase tracking-widest">Maturity</b><br><span class="${String(p.maturityAmt || p.sumAssured).length > 15 ? 'text-[10px]' : 'text-lg'} font-black">${raw(p.maturityAmt || p.sumAssured)}</span></div></div>`;
+    timelineHtml += `<div class="mat-star">★
+        <div class="tooltip" style="min-width: 140px;">
+            <b class="text-orange-400 uppercase tracking-widest text-[9px]">${isULIP ? 'Projected Maturity' : 'Maturity'}</b><br>
+            <span class="text-[10px] font-black leading-tight text-white">${p.maturityAmt || autoFmt(p.sumAssured, sym)}</span>
+        </div>
+    </div>`;
 
     return `
     <div class="policy-card mb-6" id="card-${p.id}" style="border-left: 16px solid ${brandColor}; border-color: ${brandColor};">
@@ -135,6 +139,11 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
                 ${timelineHtml}
                 <div class="absolute -top-8 right-0 text-[11px] font-black text-slate-400 uppercase">${p.maturity}</div>
             </div>
+            ${isULIP ? `
+            <div class="mt-8 pt-2 border-t border-slate-200/50 opacity-50 italic text-[7px] text-slate-500 leading-tight">
+                * ULIP Projections: Based on current portfolio value + outstanding premiums, compounded annually. 
+                Actual returns are subject to market risks.
+            </div>` : ''}
         </div>
     </div>`;
 }
