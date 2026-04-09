@@ -1,5 +1,5 @@
-/* component_in.js - v4.1.16 - Final Visual Sync */
-import { checkIsDueSoon, autoFmt, toNum, raw, safeParseDate, safeGetYear, monthMap } from './utils.js';
+/* component_in.js - v4.1.17 - Integrated Time Remaining */
+import { checkIsDueSoon, autoFmt, toNum, raw, safeParseDate, safeGetYear, monthMap, getTimeRemaining } from './utils.js';
 
 export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
     const isULIP = (p.type || "").toUpperCase().includes("ULIP");
@@ -19,10 +19,12 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
     const matStr = p.maturity || "01 Jan 2050";
     const matY = safeGetYear(matStr);
 
+    // --- NEW LOGIC: Get Time Remaining for Next Due Box ---
+    const timeLeft = getTimeRemaining(p.premiumEnds, TODAY);
+
     const brandColor = p.color || "#000000";
     const brandBg = `rgba(${parseInt(brandColor.slice(1,3), 16)}, ${parseInt(brandColor.slice(3,5), 16)}, ${parseInt(brandColor.slice(5,7), 16)}, 0.04)`;
     
-    // --- PHASE & MIDDLE BOX LOGIC ---
     const isStillPaying = (CURRENT_YEAR < premEndYear) || (CURRENT_YEAR === premEndYear && TODAY < anniversaryThisYear);
     const scheduledPayout = (p.payoutSchedule && p.payoutSchedule[currentPolYear]);
     const isIncomePhase = !isStillPaying && !!scheduledPayout;
@@ -38,7 +40,7 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
     } else if (isIncomePhase) {
         middleLabel = "Annual Payout";
         middleValue = autoFmt(scheduledPayout, sym);
-        middleColor = "text-[#854d0e]"; // Brown
+        middleColor = "text-[#854d0e]";
     }
     const badgeText = isIncomePhase ? "Income Phase" : (p.type || "Savings");
 
@@ -109,6 +111,7 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
             <div class="w-40 text-center flex flex-col justify-center min-h-[60px]">
                 ${isPaidUp ? `<img src="paid.jpg" class="paid-logo mx-auto h-12 object-contain">` : 
                     `<div class="bg-white/60 p-2 rounded-xl border border-white/50 shadow-sm">
+                        ${timeLeft ? `<p class="text-[9px] font-black text-indigo-500 uppercase leading-none mb-1">Left: ${timeLeft}</p>` : ''}
                         <p class="text-[9px] font-bold text-slate-400 uppercase leading-none mb-1">Next Due</p>
                         <div class="font-black text-[11px] ${checkIsDueSoon(finalDueDate) ? 'text-red-500 animate-pulse' : 'text-slate-900'}">${finalDueDate}</div>
                     </div>`
