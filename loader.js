@@ -66,27 +66,44 @@ export async function syncWithGoogleSheets(masterList) {
                     if (country === "india") {
                         const rawBenefits = String(match["Other Coverage & Benefits"] || "");
                         
-                        // MoneyBack Logic
-                        const mbLine = rawBenefits.split(/\r?\n/).find(l => l.toLowerCase().includes("moneyback"));
-                        p.payoutSchedule = {}; 
+                     // MoneyBack Logic with Step-Up & Rounding Fix
+                     const mbLine = rawBenefits.split(/\r?\n/).find(l => l.toLowerCase().includes("moneyback"));
+                     p.payoutSchedule = {}; 
                         
                         if (mbLine && mbLine.includes(":")) {
                             const content = mbLine.substring(mbLine.indexOf(":") + 1).trim();
                             content.split(",").forEach(seg => {
-                                if (!seg.includes(":")) return;
-                                const [range, valRaw] = seg.split(":").map(s => s.trim());
+                                const parts = seg.split(":").map(s => s.trim());
+                                if (parts.length < 2) return;
+
+                                const range = parts[0];
+                                const valRaw = parts[1];
                                 
                                 let numOnly = toNum(valRaw);
-                                let annualVal = valRaw.toLowerCase().includes("%bsa") 
+                                let baseVal = valRaw.toLowerCase().includes("%bsa") 
                                     ? (p.sumAssured * (numOnly / 100)) 
                                     : numOnly;
 
                                 if (range.includes("-")) {
                                     const [s, e] = range.split("-").map(Number);
-                                    for (let y = s; y <= e; y++) p.payoutSchedule[y] = annualVal;
+                                    
+                                    // STEP Logic: range:val:STEP:interval:percent
+                                    const hasStep = parts[2]?.toUpperCase() === "STEP";
+                                    const stepInterval = hasStep ? parseInt(parts[3]) : 0;
+                                    const stepPercent = hasStep ? parseInt(parts[4]) : 0;
+
+                                    for (let y = s; y <= e; y++) {
+                                        let finalVal = baseVal;
+                                        if (hasStep && y >= s + stepInterval) {
+                                            const stepsPassed = Math.floor((y - s) / stepInterval);
+                                            // Apply Step and Round to nearest whole number to fix decimal issues
+                                            finalVal = Math.round(baseVal * (1 + (stepsPassed * (stepPercent / 100))));
+                                        }
+                                        p.payoutSchedule[y] = finalVal;
+                                    }
                                 } else {
                                     const y = parseInt(range);
-                                    if (!isNaN(y)) p.payoutSchedule[y] = annualVal;
+                                    if (!isNaN(y)) p.payoutSchedule[y] = baseVal;
                                 }
                             });
                         }
