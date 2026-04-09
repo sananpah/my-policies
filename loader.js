@@ -57,7 +57,7 @@ export async function syncWithGoogleSheets(masterList) {
                         p.ppt = parseInt(parts[0], 10) || 0;
                         const mat = parseInt(parts[1], 10) || 0;
                         if (!isNaN(startY)) {
-                            p.premiumEnds = `${dateParts[0]} ${dateParts[1]} ${startY + p.ppt}`;
+                            p.premiumEnds = `${dateParts[0]} ${dateParts[1]} ${startY + p.ppt - 1}`;
                             p.maturity = `${dateParts[0]} ${dateParts[1]} ${startY + mat}`;
                         }
                     }
