@@ -64,7 +64,7 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
         const isLoopCurrent = yr === CURRENT_YEAR;
         let color = "", phase = "", detail = "";
 
-        if (yr < premEndYear) {
+        if (yr <= premEndYear) {
             const isEffectivelyPaid = isPast || isPaidUp || (isLoopCurrent && hasPassedThisYear);
             color = (isLoopCurrent && !hasPassedThisYear && !isPaidUp) ? "bg-current" : (isEffectivelyPaid ? "bg-prem-past" : "bg-prem-future");
             phase = isEffectivelyPaid ? "Premium Completed" : "Premium Payment";
