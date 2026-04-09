@@ -1,4 +1,4 @@
-/* loader.js - v4.4.0 - Cleaned & Modularized */
+/* loader.js - v4.4.1 - India ULIP Projections & Step-Up Logic */
 import { toNum, autoFmt, monthMap } from './utils.js?v=1.0.2';
 
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2UwOfG57DQBOBnJX-9hsRKOQTUgALiM3uxs-VGzD2KN8JoWNAQltH6IkgAGhPTNFEvb/pub?gid=866869416&single=true&output=csv";
@@ -24,28 +24,22 @@ export async function syncWithGoogleSheets(masterList) {
             masterList[country] = masterList[country].map(p => {
                 const match = sheetRecords.find(row => String(row["Policy No."]).trim() === String(p.id).trim());
                 if (match) {
-                    // Basic Info
                     p.name = match.name || p.name;
                     p.company = match.company || p.company;
                     p.type = match.type || p.type;
                     p.logo = `logo_${p.company.replace(/[\s.]/g, "")}.png`;
 
-                    // Identity Mapping
                     const identity = insuredMap[match["Insured"]];
                     if (identity) { 
                         p.avatarPath = identity.img; 
                         p.holderType = identity.type; 
                     }
 
-                    // Numeric Values - Now using imported toNum
                     p.premium = toNum(match["Premium"]);
                     p.sumAssured = toNum(match["Sum Assured"]);
-                    
-                    // Essential for Header Calculations
                     p.unitValueNumeric = toNum(match["Current Value"]);
                     p.currentUnitValue = match["Current Value"] || "No Value";
 
-                    // Date & Term Logic
                     let rawDate = String(match["Commenced Date"] || "").trim().replace(/\./g, ' '); 
                     p.commenced = rawDate;
                     const dateParts = rawDate.split(" ");
@@ -62,32 +56,27 @@ export async function syncWithGoogleSheets(masterList) {
                         }
                     }
 
-                    // India Specific Logic
                     if (country === "india") {
                         const rawBenefits = String(match["Other Coverage & Benefits"] || "");
-                        
-                     // MoneyBack Logic with Step-Up & Rounding Fix
-                     const mbLine = rawBenefits.split(/\r?\n/).find(l => l.toLowerCase().includes("moneyback"));
-                     p.payoutSchedule = {}; 
+                        const isULIP = (p.type || "").toUpperCase().includes("ULIP");
+                        const sym = "₹";
+
+                        const mbLine = rawBenefits.split(/\r?\n/).find(l => l.toLowerCase().includes("moneyback"));
+                        p.payoutSchedule = {}; 
                         
                         if (mbLine && mbLine.includes(":")) {
                             const content = mbLine.substring(mbLine.indexOf(":") + 1).trim();
                             content.split(",").forEach(seg => {
                                 const parts = seg.split(":").map(s => s.trim());
                                 if (parts.length < 2) return;
-
                                 const range = parts[0];
                                 const valRaw = parts[1];
                                 
                                 let numOnly = toNum(valRaw);
-                                let baseVal = valRaw.toLowerCase().includes("%bsa") 
-                                    ? (p.sumAssured * (numOnly / 100)) 
-                                    : numOnly;
+                                let baseVal = valRaw.toLowerCase().includes("%bsa") ? (p.sumAssured * (numOnly / 100)) : numOnly;
 
                                 if (range.includes("-")) {
                                     const [s, e] = range.split("-").map(Number);
-                                    
-                                    // STEP Logic: range:val:STEP:interval:percent
                                     const hasStep = parts[2]?.toUpperCase() === "STEP";
                                     const stepInterval = hasStep ? parseInt(parts[3]) : 0;
                                     const stepPercent = hasStep ? parseInt(parts[4]) : 0;
@@ -96,7 +85,6 @@ export async function syncWithGoogleSheets(masterList) {
                                         let finalVal = baseVal;
                                         if (hasStep && y >= s + stepInterval) {
                                             const stepsPassed = Math.floor((y - s) / stepInterval);
-                                            // Apply Step and Round to nearest whole number to fix decimal issues
                                             finalVal = Math.round(baseVal * (1 + (stepsPassed * (stepPercent / 100))));
                                         }
                                         p.payoutSchedule[y] = finalVal;
@@ -108,12 +96,28 @@ export async function syncWithGoogleSheets(masterList) {
                             });
                         }
 
-                        // Maturity Text Formatting
-                        const maturityLine = rawBenefits.split(/\r?\n/).find(l => l.trim().startsWith("Maturity Benefit"));
-                        if (maturityLine) {
-                            let val = maturityLine.split(":")[1]?.trim() || "";
-                            val = val.replace(/(\d+)%BSA/gi, (m, pct) => autoFmt((p.sumAssured * parseFloat(pct)/100), "₹"));
-                            p.maturityAmt = val.replace(/BSA/gi, autoFmt(p.sumAssured, "₹"));
+                        if (isULIP) {
+                            const currentVal = toNum(p.currentUnitValue);
+                            const annPrem = toNum(p.premium);
+                            const startYear = TODAY.getFullYear();
+                            const endYear = startY + p.ppt; 
+
+                            const calculateProjection = (rate) => {
+                                let projected = currentVal;
+                                for (let yr = startYear; yr < endYear; yr++) {
+                                    if (yr < (startY + p.ppt)) projected += annPrem;
+                                    projected = projected * (1 + rate);
+                                }
+                                return projected;
+                            };
+                            p.maturityAmt = `Est. @4%: ${autoFmt(calculateProjection(0.04), sym)}<br>Est. @8%: ${autoFmt(calculateProjection(0.08), sym)}*`;
+                        } else {
+                            const maturityLine = rawBenefits.split(/\r?\n/).find(l => l.trim().startsWith("Maturity Benefit"));
+                            if (maturityLine) {
+                                let val = maturityLine.split(":")[1]?.trim() || "";
+                                val = val.replace(/(\d+)%BSA/gi, (m, pct) => autoFmt((p.sumAssured * parseFloat(pct)/100), sym));
+                                p.maturityAmt = val.replace(/BSA/gi, autoFmt(p.sumAssured, sym));
+                            }
                         }
                     }
                 }
@@ -121,10 +125,7 @@ export async function syncWithGoogleSheets(masterList) {
             });
         });
         return masterList;
-    } catch (e) { 
-        console.warn("Sync failed:", e); 
-        return masterList; 
-    }
+    } catch (e) { console.warn("Sync failed:", e); return masterList; }
 }
 
 function processCSV(csv) {
