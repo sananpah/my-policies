@@ -116,15 +116,18 @@ export function getTimeRemaining(targetDateStr, TODAY) {
 
 /** Calculates SA, Premium (excluding paid up), and Unit Value */
 export function calculatePortfolioTotals(list) {
-    const CURRENT_YEAR = TODAY.getFullYear();
     return list.reduce((acc, p) => {
         const status = (p.status || "").toUpperCase();
-        const pEndYear = safeGetYear(p.premiumEnds);
-        const isPaidUp = (status === "PAID UP" || CURRENT_YEAR > (pEndYear - 1));
-
+        const finalPremiumDate = safeParseDate(p.premiumEnds);
+        const isPaidUp = (status === "PAID UP" || TODAY > finalPremiumDate);
+ 
         acc.sa += toNum(p.sumAssured);
         acc.unitValue += (p.unitValueNumeric || 0);
-        if (!isPaidUp) acc.premium += toNum(p.premium);
+        
+        // Only add premium if the policy is still active and not assigned (SA > 0)
+        if (!isPaidUp && toNum(p.sumAssured) > 0) {
+            acc.premium += toNum(p.premium);
+        }
         
         return acc;
     }, { sa: 0, premium: 0, unitValue: 0 });
