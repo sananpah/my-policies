@@ -1,4 +1,4 @@
-/* loader.js - v4.4.1 - India ULIP Projections & Step-Up Logic */
+/* loader.js - v4.4.5 - Singapore Withdrawal & Projections */
 import { toNum, autoFmt, monthMap } from './utils.js?v=1.0.2';
 
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2UwOfG57DQBOBnJX-9hsRKOQTUgALiM3uxs-VGzD2KN8JoWNAQltH6IkgAGhPTNFEvb/pub?gid=866869416&single=true&output=csv";
@@ -46,24 +46,22 @@ export async function syncWithGoogleSheets(masterList) {
                     const startY = parseInt(dateParts[2]);
 
                     const rawTermStr = String(match["Term"] || "");
-                    if (rawTermStr.includes(":")) {
-                        const parts = rawTermStr.split(":");
-                        p.ppt = parseInt(parts[0], 10) || 0;
-                        const mat = parseInt(parts[1], 10) || 0;
-                        if (!isNaN(startY)) {
-                            p.premiumEnds = `${dateParts[0]} ${dateParts[1]} ${startY + p.ppt - 1}`;
-                            p.maturity = `${dateParts[0]} ${dateParts[1]} ${startY + mat}`;
-                        }
+                    const matParts = rawTermStr.includes(":") ? rawTermStr.split(":") : [0, 0];
+                    p.ppt = parseInt(matParts[0], 10) || 0;
+                    const matYears = parseInt(matParts[1], 10) || 0;
+
+                    if (!isNaN(startY)) {
+                        p.premiumEnds = `${dateParts[0]} ${dateParts[1]} ${startY + p.ppt - 1}`;
+                        p.maturity = `${dateParts[0]} ${dateParts[1]} ${startY + matYears}`;
                     }
 
-                    if (country === "india") {
-                        const rawBenefits = String(match["Other Coverage & Benefits"] || "");
-                        const isULIP = (p.type || "").toUpperCase().includes("ULIP");
-                        const sym = "₹";
+                    const rawBenefits = String(match["Other Coverage & Benefits"] || "");
+                    const isULIP = (p.type || "").toUpperCase().includes("ULIP");
+                    const sym = (country === "singapore") ? "$" : "₹";
 
+                    if (country === "india") {
                         const mbLine = rawBenefits.split(/\r?\n/).find(l => l.toLowerCase().includes("moneyback"));
                         p.payoutSchedule = {}; 
-                        
                         if (mbLine && mbLine.includes(":")) {
                             const content = mbLine.substring(mbLine.indexOf(":") + 1).trim();
                             content.split(",").forEach(seg => {
@@ -71,16 +69,13 @@ export async function syncWithGoogleSheets(masterList) {
                                 if (parts.length < 2) return;
                                 const range = parts[0];
                                 const valRaw = parts[1];
-                                
                                 let numOnly = toNum(valRaw);
                                 let baseVal = valRaw.toLowerCase().includes("%bsa") ? (p.sumAssured * (numOnly / 100)) : numOnly;
-
                                 if (range.includes("-")) {
                                     const [s, e] = range.split("-").map(Number);
                                     const hasStep = parts[2]?.toUpperCase() === "STEP";
                                     const stepInterval = hasStep ? parseInt(parts[3]) : 0;
                                     const stepPercent = hasStep ? parseInt(parts[4]) : 0;
-
                                     for (let y = s; y <= e; y++) {
                                         let finalVal = baseVal;
                                         if (hasStep && y >= s + stepInterval) {
@@ -95,29 +90,40 @@ export async function syncWithGoogleSheets(masterList) {
                                 }
                             });
                         }
+                    }
 
-                        if (isULIP) {
-                            const currentVal = toNum(p.currentUnitValue);
-                            const annPrem = toNum(p.premium);
-                            const startYear = TODAY.getFullYear();
-                            const endYear = startY + p.ppt; 
+                    if (country === "singapore") {
+                        const lines = rawBenefits.split(/\r?\n/);
+                        const withdrawLine = lines.find(l => l.toLowerCase().trim().startsWith("withdrawal"));
+                        p.withdrawals = [];
+                        if (withdrawLine) {
+                            const cleanLine = withdrawLine.replace(/,/g, ''); 
+                            const matches = cleanLine.match(/\d+(\.\d+)?/g); 
+                            if (matches) p.withdrawals = matches.map(Number);
+                        }
+                    }
 
-                            const calculateProjection = (rate) => {
-                                let projected = currentVal;
-                                for (let yr = startYear; yr < endYear; yr++) {
-                                    if (yr < (startY + p.ppt)) projected += annPrem;
-                                    projected = projected * (1 + rate);
-                                }
-                                return projected;
-                            };
-                            p.maturityAmt = `Est. @4%: ${autoFmt(calculateProjection(0.04), sym)}<br>Est. @8%: ${autoFmt(calculateProjection(0.08), sym)}*`;
-                        } else {
-                            const maturityLine = rawBenefits.split(/\r?\n/).find(l => l.trim().startsWith("Maturity Benefit"));
-                            if (maturityLine) {
-                                let val = maturityLine.split(":")[1]?.trim() || "";
-                                val = val.replace(/(\d+)%BSA/gi, (m, pct) => autoFmt((p.sumAssured * parseFloat(pct)/100), sym));
-                                p.maturityAmt = val.replace(/BSA/gi, autoFmt(p.sumAssured, sym));
+                    if (isULIP) {
+                        const currentVal = toNum(p.currentUnitValue);
+                        const annPrem = toNum(p.premium);
+                        const startYear = TODAY.getFullYear();
+                        const endYear = (country === "singapore") ? (startY + matYears + 2) : (startY + p.ppt);
+
+                        const calculateProjection = (rate) => {
+                            let projected = currentVal;
+                            for (let yr = startYear; yr < endYear; yr++) {
+                                if (yr < (startY + p.ppt)) projected += annPrem;
+                                projected = projected * (1 + rate);
                             }
+                            return projected;
+                        };
+                        p.maturityAmt = `Est. @4%: ${autoFmt(calculateProjection(0.04), sym)}<br>Est. @8%: ${autoFmt(calculateProjection(0.08), sym)}*`;
+                    } else {
+                        const maturityLine = rawBenefits.split(/\r?\n/).find(l => l.trim().startsWith("Maturity Benefit"));
+                        if (maturityLine) {
+                            let val = maturityLine.split(":")[1]?.trim() || "";
+                            val = val.replace(/(\d+)%BSA/gi, (m, pct) => autoFmt((p.sumAssured * parseFloat(pct)/100), sym));
+                            p.maturityAmt = val.replace(/BSA/gi, autoFmt(p.sumAssured, sym));
                         }
                     }
                 }
