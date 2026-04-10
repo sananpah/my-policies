@@ -1,5 +1,5 @@
-/* component_in.js - v4.1.36 - Precise Nominee Insertion */
-import { checkIsDueSoon, autoFmt, toNum, raw, safeParseDate, safeGetYear, monthMap, getTimeRemaining } from './utils.js';
+/* component_in.js - v4.1.38 - Standard Grid with Extreme Right Nominees */
+import { checkIsDueSoon, autoFmt, toNum, safeParseDate, safeGetYear, monthMap, getTimeRemaining } from './utils.js';
 
 export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
     const isULIP = (p.type || "").toUpperCase().includes("ULIP");
@@ -29,22 +29,19 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
     const isIncomePhase = !isStillPaying && !!scheduledPayout;
     const isPaidUp = (p.status === "PAID UP") || (TODAY > finalPremiumDate);
 
-    // --- NOMINEE UI ---
+    // --- NOMINEE UI (For Extreme Right) ---
     let nomineeHtml = "";
-    if (p.nomineeStatus === "NA") nomineeHtml = `<span class="text-xl">🛡️</span>`;
-    else if (p.nomineeStatus === "EMPTY") nomineeHtml = `<span class="text-[10px] font-black text-rose-500 animate-pulse">NOT ASSIGNED</span>`;
-    else {
+    if (p.nomineeStatus === "NA") {
+        nomineeHtml = `<span class="text-xl" title="Not Applicable">🛡️</span>`;
+    } else if (p.nomineeStatus === "EMPTY") {
+        nomineeHtml = `<div class="flex items-center gap-1 animate-pulse"><span class="text-xl">⚠️</span><span class="text-[9px] font-black text-rose-500 uppercase">Missing</span></div>`;
+    } else {
         nomineeHtml = `<div class="flex -space-x-2.5 justify-end">
             ${(p.nominees || []).map(n => `<img src="${n.img}" class="w-8 h-8 rounded-full border-2 border-white shadow-md object-cover ring-1 ring-slate-100 transition-transform hover:scale-125 hover:z-20" title="${n.name}">`).join('')}
         </div>`;
     }
 
-    // --- SUM ASSURED FUNKY UI ---
-    const saValue = toNum(p.sumAssured);
-    const saDisplay = (saValue === 0 || p.nomineeStatus === "NA") 
-        ? `<div class="flex items-center gap-1.5 opacity-50"><span class="text-xl">💸</span><span class="text-[9px] font-black text-slate-400 uppercase">Wealth</span></div>` 
-        : `<span class="text-[17px] font-bold text-slate-800 tracking-widest" style="font-family: 'Orbitron';">${autoFmt(saValue, sym)}</span>`;
-
+    // --- HEADER LABELS ---
     let middleLabel = "Annual Premium", middleValue = autoFmt(p.premium, sym), middleColor = isStillPaying ? "text-emerald-600 font-black" : "text-slate-700";
     if (isPaidUp) middleColor = "text-slate-400 line-through font-bold";
     else if (isIncomePhase) { middleLabel = "Annual Payout"; middleValue = autoFmt(scheduledPayout, sym); middleColor = "text-[#854d0e] font-black"; }
@@ -54,7 +51,7 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
     const nextDueStr = `${annDay} ${startParts[1]} ${hasPassedThisYear ? CURRENT_YEAR + 1 : CURRENT_YEAR}`; 
     const finalDueDate = isPaidUp ? "PAID UP" : nextDueStr;
 
-    // --- TIMELINE ENGINE (RESTORED) ---
+    // --- TIMELINE ENGINE (Untouched) ---
     let timelineHtml = '';
     for(let yr = startY; yr < matY; yr++) {
         const loopPolY = yr - startY + 1;
@@ -109,16 +106,16 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
         </div>
 
         <div class="content-area" style="background: linear-gradient(to bottom, ${brandBg}, #ffffff)">
-            <div class="grid grid-cols-4 gap-4 mb-4 px-2">
+            <div class="grid grid-cols-3 gap-4 mb-4 px-2">
                 <div class="p-4 rounded-xl bg-slate-50/50 border border-slate-100 shadow-sm flex flex-col justify-center">
-                    <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Benefit Guard</p>
-                    <div class="h-6 flex items-center">${saDisplay}</div>
+                    <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Benefit Cover</p>
+                    <p class="text-[17px] font-bold text-slate-800 tracking-widest" style="font-family:'Orbitron';">${autoFmt(p.sumAssured, sym)}</p>
                 </div>
                 <div class="p-4 rounded-xl bg-white border border-slate-100 shadow-sm flex flex-col justify-center">
                     <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Valuation</p>
                     <p class="text-[19px] font-black text-slate-900" style="font-family:'Orbitron';">${p.currentUnitValue || 'No Value'}</p>
                 </div>
-                <div class="p-4 rounded-xl bg-white border border-slate-100 shadow-sm flex flex-col justify-center col-span-2 text-right">
+                <div class="p-4 rounded-xl bg-white border border-slate-100 shadow-sm flex flex-col justify-center text-right">
                     <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Policy Nominee(s)</p>
                     <div class="flex items-center h-8 justify-end">${nomineeHtml}</div>
                 </div>
