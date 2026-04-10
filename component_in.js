@@ -1,4 +1,4 @@
-/* component_in.js - v4.1.23 - Corrected Case & Projected Label */
+/* component_in.js - v4.1.24 - Projections without Footer Disclaimer */
 import { checkIsDueSoon, autoFmt, toNum, raw, safeParseDate, safeGetYear, monthMap, getTimeRemaining } from './utils.js';
 
 export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -139,11 +139,6 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
                 ${timelineHtml}
                 <div class="absolute -top-8 right-0 text-[11px] font-black text-slate-400 uppercase">${p.maturity}</div>
             </div>
-            ${isULIP ? `
-            <div class="mt-8 pt-2 border-t border-slate-200/50 opacity-50 italic text-[7px] text-slate-500 leading-tight">
-                * ULIP Projections: Based on current portfolio value + outstanding premiums, compounded annually. 
-                Actual returns are subject to market risks.
-            </div>` : ''}
         </div>
     </div>`;
 }
