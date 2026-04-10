@@ -1,4 +1,4 @@
-/* component_sg.js - v6.8.6 - Height Sync & Value Rounding */
+/* component_sg.js - v6.8.7 - Design Sync: Rounded Left Border & Height Match */
 import { autoFmt, toNum, getTimeRemaining } from './utils.js';
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -19,7 +19,7 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     if (TODAY < thisYearAnniversary) yearsPassed--;
     const policyYearIdx = yearsPassed + 1;
 
-    // --- 1. CORE CALCULATIONS (ROUNDED VALUATION) ---
+    // --- CALCULATIONS ---
     const accountValue = Math.round(toNum(p.currentUnitValue || 0));
     const annualPremium = toNum(p.premium || 0);
     const totalPremiumsPaid = p.totalPremiumPaid ? toNum(p.totalPremiumPaid) : (annualPremium * policyYearIdx);
@@ -68,30 +68,24 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
         <div class="opacity-0 group-hover:opacity-100 absolute bottom-full mb-4 right-0 bg-slate-900 text-white p-4 rounded-2xl z-[100] shadow-2xl border border-white/10 pointer-events-none min-w-[180px]">
             <b class="text-orange-400 uppercase tracking-widest text-[9px] block mb-2 font-black">Projected Maturity*</b>
             <div class="space-y-1">
-                <div class="flex justify-between text-[10px] font-black leading-tight text-white">
-                    <span>Est. @4%:</span>
-                    <span>${autoFmt(proj4, sym)}</span>
-                </div>
-                <div class="flex justify-between text-[10px] font-black leading-tight text-white">
-                    <span>Est. @8%:</span>
-                    <span>${autoFmt(proj8, sym)}</span>
-                </div>
+                <div class="flex justify-between text-[10px] font-black leading-tight text-white"><span>Est. @4%:</span><span>${autoFmt(proj4, sym)}</span></div>
+                <div class="flex justify-between text-[10px] font-black leading-tight text-white"><span>Est. @8%:</span><span>${autoFmt(proj8, sym)}</span></div>
             </div>
-            <div class="mt-2 pt-2 border-t border-white/10 text-[8px] text-slate-400 italic font-medium leading-tight">
-                *Projected until Year ${targetExitYear}.
-            </div>
+            <div class="mt-2 pt-2 border-t border-white/10 text-[8px] text-slate-400 italic font-medium leading-tight">*Projected until Year ${targetExitYear}.</div>
             <div class="absolute top-full right-4 border-8 border-transparent border-t-slate-900"></div>
         </div>
     </div>`;
 
     return `
-    <div class="policy-card mb-6 rounded-none bg-white overflow-hidden shadow-sm border relative" id="card-${p.id}" style="border-left: 16px solid ${brandColor}; border-color: ${brandColor};">
-        <div class="card-header p-4 flex items-center justify-between cursor-pointer relative transition-colors" style="background: ${brandBg}" onclick="toggleCard('${p.id}')">
+    <div class="policy-card mb-6 rounded-3xl bg-white overflow-hidden shadow-sm border border-slate-200 relative" id="card-${p.id}" style="border-left: 16px solid ${brandColor};">
+        <div class="absolute left-[-16px] top-0 bottom-0 w-[40px] rounded-l-3xl pointer-events-none" style="background: ${brandColor}; z-index: 5;"></div>
+
+        <div class="card-header p-4 flex items-center justify-between cursor-pointer relative transition-colors" style="background: ${brandBg}; padding-left: 24px;" onclick="toggleCard('${p.id}')">
             <div class="flex items-center gap-6 min-w-[340px]">
-                <div class="w-16 h-12 flex-shrink-0 flex items-center justify-center bg-white p-1"><img src="${p.logo}" class="max-h-full object-contain"></div>
+                <div class="w-16 h-12 flex-shrink-0 flex items-center justify-center bg-white p-1 rounded-lg border border-slate-100"><img src="${p.logo}" class="max-h-full object-contain"></div>
                 <div class="flex items-center gap-3">
                     <h3 class="font-black text-xl text-slate-800 tracking-tight leading-none">${p.name}</h3>
-                    <img src="${p.avatarPath || 'avatar_self.png'}" class="w-8 h-8 rounded-full border-2 border-white shadow-sm object-cover">
+                    <img src="${p.avatarPath || 'avatar_self.png'}" class="w-8 h-8 rounded-full border-2 border-white shadow-sm object-cover ring-1 ring-slate-100">
                 </div>
             </div>
             <div class="flex-1 flex justify-center"><span class="px-3 py-1 rounded-md border border-slate-200 bg-white/50 text-[10px] font-black text-slate-600 tracking-widest uppercase shadow-sm">${p.type || 'INVESTMENTS'}</span></div>
@@ -111,13 +105,13 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
                 <div class="bg-white/60 p-2 rounded-xl border border-white/50 shadow-sm text-center">
                     <p class="text-[10px] font-black ${isVested ? 'text-emerald-500' : 'text-indigo-500'} uppercase leading-none mb-1">${timeLeft}</p>
                     <div class="h-[1px] bg-slate-200/50 w-full mb-1"></div>
-                    <p class="text-[9px] font-bold text-slate-400 uppercase leading-none mb-1">Next Due</p>
-                    <p class="text-[11px] font-black ${isDueSoon ? 'text-red-500 animate-pulse' : 'text-slate-900'} leading-none">${nextDueDisplay}</p>
+                    <p class="text-[9px] font-bold text-slate-400 uppercase leading-none mb-1 text-center">Next Due</p>
+                    <p class="text-[11px] font-black ${isDueSoon ? 'text-red-500 animate-pulse' : 'text-slate-900'} leading-none text-center">${nextDueDisplay}</p>
                 </div>
             </div>
         </div>
 
-        <div class="content-area px-8 pb-8 pt-6 relative" style="background: linear-gradient(to bottom, ${brandBg}, #ffffff)">
+        <div class="content-area px-10 pb-10 pt-6 relative" style="background: linear-gradient(to bottom, ${brandBg}, #ffffff)">
             <div class="grid grid-cols-2 gap-4 mb-4">
                 <div class="p-4 rounded-xl bg-slate-50 border border-slate-100">
                     <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">Policy No.</p>
