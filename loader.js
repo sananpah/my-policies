@@ -1,17 +1,18 @@
-/* loader.js - v4.5.0 - Dynamic Nominee Mapping & SG 3-Part Term */
-import { toNum, autoFmt, monthMap } from './utils.js';
+/* loader.js - v4.4.7 - SG 3-Part Term & Multi-line Withdrawal Logic */
+import { toNum, autoFmt, monthMap } from './utils.js?v=1.0.2';
 
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2UwOfG57DQBOBnJX-9hsRKOQTUgALiM3uxs-VGzD2KN8JoWNAQltH6IkgAGhPTNFEvb/pub?gid=866869416&single=true&output=csv";
 
 export async function syncWithGoogleSheets(masterList) {
     const TODAY = new Date();
+    const CURRENT_YEAR = TODAY.getFullYear();
+
     try {
         const response = await fetch(`${SHEET_URL}&t=${Date.now()}`);
         const buffer = await response.arrayBuffer();
         const csvData = new TextDecoder('utf-8').decode(buffer);
         const sheetRecords = processCSV(csvData);
 
-        // Single Source of Truth for Family Avatars
         const insuredMap = {
             "Suhail Nami": { type: "Self", img: "avatar_self.png" },
             "Saima Suhail": { type: "Wife", img: "avatar_wife.png" },
@@ -23,6 +24,7 @@ export async function syncWithGoogleSheets(masterList) {
             masterList[country] = masterList[country].map(p => {
                 const match = sheetRecords.find(row => String(row["Policy No."]).trim() === String(p.id).trim());
                 if (match) {
+                    // 1. Basic Policy Info
                     p.name = match.name || p.name;
                     p.company = match.company || p.company;
                     p.type = match.type || p.type;
@@ -39,29 +41,7 @@ export async function syncWithGoogleSheets(masterList) {
                     p.unitValueNumeric = toNum(match["Current Value"]);
                     p.currentUnitValue = match["Current Value"] || "No Value";
 
-                    // --- REFINED NOMINEE LOGIC (Referencing insuredMap) ---
-                    const nomineeRaw = String(match["Nominee"] || "").trim();
-                    p.nominees = []; 
-                    if (!nomineeRaw || nomineeRaw.toLowerCase() === "n/a") {
-                        p.nomineeStatus = nomineeRaw.toLowerCase() === "n/a" ? "NA" : "EMPTY";
-                    } else {
-                        p.nomineeStatus = "ASSIGNED";
-                        const names = nomineeRaw.split(/,|\band\b|&/i).map(n => n.trim());
-                        names.forEach(name => {
-                            const matchName = name.toLowerCase();
-                            let img = "avatar_unknown.png"; 
-                            
-                            // Dynamically find matching family member from insuredMap
-                            const mappedEntry = Object.entries(insuredMap).find(([fullName]) => 
-                                matchName.includes(fullName.toLowerCase())
-                            );
-                            if (mappedEntry) img = mappedEntry[1].img;
-                            
-                            p.nominees.push({ name: name, img: img });
-                        });
-                    }
-
-                    // --- TERM & DATE LOGIC ---
+                    // 2. Date & Term Logic (SG: SurrenderFree:Mat:MIP)
                     let rawDate = String(match["Commenced Date"] || "").trim().replace(/\./g, ' '); 
                     p.commenced = rawDate;
                     const dateParts = rawDate.split(" ");
@@ -69,9 +49,12 @@ export async function syncWithGoogleSheets(masterList) {
 
                     const rawTermStr = String(match["Term"] || "");
                     const termParts = rawTermStr.includes(":") ? rawTermStr.split(":") : [0, 0, 0];
-                    const surrenderFreeYear = parseInt(termParts[0], 10) || 0;
-                    const matYears = parseInt(termParts[1], 10) || 0;
                     
+                    // Part 1: Year surrender charges hit 0 (Assumed PPT for projection)
+                    const surrenderFreeYear = parseInt(termParts[0], 10) || 0;
+                    // Part 2: Total Policy Maturity
+                    const matYears = parseInt(termParts[1], 10) || 0;
+                    // Part 3: Minimum Investment Period
                     p.mip = termParts[2] ? parseInt(termParts[2], 10) : surrenderFreeYear; 
                     p.ppt = surrenderFreeYear; 
 
@@ -81,21 +64,81 @@ export async function syncWithGoogleSheets(masterList) {
                     }
 
                     const rawBenefits = String(match["Other Coverage & Benefits"] || "");
+                    const isULIP = (p.type || "").toUpperCase().includes("ULIP");
                     const sym = (country === "singapore") ? "$" : "₹";
 
-                    // --- PROJECTION LOGIC ---
-                    const isULIP = (p.type || "").toUpperCase().includes("ULIP");
+                    // 3. India Specific: MoneyBack & Step-Up
+                    if (country === "india") {
+                        const mbLine = rawBenefits.split(/\r?\n/).find(l => l.toLowerCase().includes("moneyback"));
+                        p.payoutSchedule = {}; 
+                        if (mbLine && mbLine.includes(":")) {
+                            const content = mbLine.substring(mbLine.indexOf(":") + 1).trim();
+                            content.split(",").forEach(seg => {
+                                const parts = seg.split(":").map(s => s.trim());
+                                if (parts.length < 2) return;
+                                const range = parts[0];
+                                const valRaw = parts[1];
+                                let numOnly = toNum(valRaw);
+                                let baseVal = valRaw.toLowerCase().includes("%bsa") ? (p.sumAssured * (numOnly / 100)) : numOnly;
+                                if (range.includes("-")) {
+                                    const [s, e] = range.split("-").map(Number);
+                                    const hasStep = parts[2]?.toUpperCase() === "STEP";
+                                    const stepInterval = hasStep ? parseInt(parts[3]) : 0;
+                                    const stepPercent = hasStep ? parseInt(parts[4]) : 0;
+                                    for (let y = s; y <= e; y++) {
+                                        let finalVal = baseVal;
+                                        if (hasStep && y >= s + stepInterval) {
+                                            const stepsPassed = Math.floor((y - s) / stepInterval);
+                                            finalVal = Math.round(baseVal * (1 + (stepsPassed * (stepPercent / 100))));
+                                        }
+                                        p.payoutSchedule[y] = finalVal;
+                                    }
+                                } else {
+                                    const y = parseInt(range);
+                                    if (!isNaN(y)) p.payoutSchedule[y] = baseVal;
+                                }
+                            });
+                        }
+                    }
+
+                    // 4. Singapore Specific: Withdrawal Parsing
+                    if (country === "singapore") {
+                        const lines = rawBenefits.split(/\r?\n/);
+                        const withdrawLine = lines.find(l => l.toLowerCase().trim().startsWith("withdrawal"));
+                        p.withdrawals = [];
+                        if (withdrawLine) {
+                            const cleanLine = withdrawLine.replace(/,/g, ''); 
+                            const matches = cleanLine.match(/\d+(\.\d+)?/g); 
+                            if (matches) p.withdrawals = matches.map(Number);
+                        }
+                    }
+
+                    // 5. Shared ULIP Projection Engine
                     if (isULIP) {
-                        const endProj = (country === "singapore") ? (startY + surrenderFreeYear + 2) : (startY + p.ppt);
-                        const calc = (rate) => {
-                            let proj = p.unitValueNumeric;
-                            for (let yr = TODAY.getFullYear(); yr < endProj; yr++) {
-                                if (yr < (startY + surrenderFreeYear)) proj += p.premium;
-                                proj *= (1 + rate);
+                        const currentVal = toNum(p.currentUnitValue);
+                        const annPrem = toNum(p.premium);
+                        const startYear = TODAY.getFullYear();
+                        
+                        // SG: Compounds until Surrender-Free + 2 | India: Compounds until PPT
+                        const endProjectionYear = (country === "singapore") ? (startY + surrenderFreeYear + 2) : (startY + p.ppt);
+
+                        const calculateProjection = (rate) => {
+                            let projected = currentVal;
+                            for (let yr = startYear; yr < endProjectionYear; yr++) {
+                                // Add premium only if we haven't reached the surrender-free/ppt year
+                                if (yr < (startY + surrenderFreeYear)) projected += annPrem;
+                                projected = projected * (1 + rate);
                             }
-                            return proj;
+                            return projected;
                         };
-                        p.maturityAmt = `Est. @4%: ${autoFmt(calc(0.04), sym)}<br>Est. @8%: ${autoFmt(calc(0.08), sym)}`;
+                        p.maturityAmt = `Est. @4%: ${autoFmt(calculateProjection(0.04), sym)}<br>Est. @8%: ${autoFmt(calculateProjection(0.08), sym)}*`;
+                    } else {
+                        const maturityLine = rawBenefits.split(/\r?\n/).find(l => l.trim().startsWith("Maturity Benefit"));
+                        if (maturityLine) {
+                            let val = maturityLine.split(":")[1]?.trim() || "";
+                            val = val.replace(/(\d+)%BSA/gi, (m, pct) => autoFmt((p.sumAssured * parseFloat(pct)/100), sym));
+                            p.maturityAmt = val.replace(/BSA/gi, autoFmt(p.sumAssured, sym));
+                        }
                     }
                 }
                 return p;
@@ -107,20 +150,20 @@ export async function syncWithGoogleSheets(masterList) {
 
 function processCSV(csv) {
     const rows = [];
-    let cur = [''], inQ = false;
+    let currentRow = [''], inQuote = false;
     for (let i = 0; i < csv.length; i++) {
         const char = csv[i];
-        if (char === '"' && csv[i+1] === '"') { cur[cur.length-1] += '"'; i++; }
-        else if (char === '"') inQ = !inQ;
-        else if (char === ',' && !inQ) cur.push('');
-        else if (char === '\n' && !inQ) { rows.push(cur); cur = ['']; }
-        else cur[cur.length-1] += char;
+        if (char === '"' && csv[i+1] === '"') { currentRow[currentRow.length-1] += '"'; i++; }
+        else if (char === '"') { inQuote = !inQuote; }
+        else if (char === ',' && !inQuote) { currentRow.push(''); }
+        else if (char === '\n' && !inQuote) { rows.push(currentRow); currentRow = ['']; }
+        else { currentRow[currentRow.length-1] += char; }
     }
-    rows.push(cur);
-    const hIdx = rows.findIndex(r => r.some(c => c && c.toLowerCase().includes("policy_name")));
-    if (hIdx === -1) return [];
-    const headers = rows[hIdx].map(h => h.trim());
-    return rows.slice(hIdx + 1).map(rowData => {
+    rows.push(currentRow);
+    const headerIdx = rows.findIndex(r => r.some(c => c && c.toLowerCase().includes("policy_name")));
+    if (headerIdx === -1) return [];
+    const headers = rows[headerIdx].map(h => h.trim());
+    return rows.slice(headerIdx + 1).map(rowData => {
         const obj = {};
         headers.forEach((h, i) => { if (h) obj[h] = (rowData[i] || "").trim(); });
         const rawFullName = obj["Policy_Name"] || "";
@@ -129,8 +172,8 @@ function processCSV(csv) {
             obj.company = parts[0].trim();
             obj.name = parts[1].trim(); 
         }
-        const rawCat = obj["Category"] || "";
-        obj.type = rawCat.includes(":") ? rawCat.split(":")[1].trim() : (rawCat || "Savings");
+        const rawCategory = obj["Category"] || "";
+        obj.type = rawCategory.includes(":") ? rawCategory.split(":")[1].trim() : (rawCategory || "Savings");
         return obj;
     }).filter(item => item && item["Policy_Name"] !== "EMPTY");
 }
