@@ -1,4 +1,4 @@
-/* component_sg.js - v6.9.0 - Font & Detail Grid Sync */
+/* component_sg.js - v6.9.1 - Full Border Color Sync */
 import { autoFmt, toNum, getTimeRemaining } from './utils.js';
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -66,7 +66,7 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const starHtml = `<div class="ml-2 relative group flex items-center justify-center w-12 h-10 bg-white rounded-xl shadow-sm border border-slate-200 cursor-help"><span class="text-xl text-amber-500 transition-transform group-hover:scale-125">★</span><div class="opacity-0 group-hover:opacity-100 absolute bottom-full mb-4 right-0 bg-slate-900 text-white p-4 rounded-2xl z-[100] shadow-2xl border border-white/10 pointer-events-none min-w-[180px]"><b class="text-orange-400 uppercase tracking-widest text-[9px] block mb-2 font-black">Projected Maturity*</b><div class="space-y-1"><div class="flex justify-between text-[10px] font-black leading-tight text-white"><span>Est. @4%:</span><span>${autoFmt(proj4, sym)}</span></div><div class="flex justify-between text-[10px] font-black leading-tight text-white"><span>Est. @8%:</span><span>${autoFmt(proj8, sym)}</span></div></div><div class="mt-2 pt-2 border-t border-white/10 text-[8px] text-slate-400 italic font-medium leading-tight">*Projected until Year ${targetExitYear}.</div><div class="absolute top-full right-4 border-8 border-transparent border-t-slate-900"></div></div></div>`;
 
     return `
-    <div class="policy-card mb-6 overflow-hidden bg-white shadow-sm border border-slate-200 transition-all rounded-[20px]" id="card-${p.id}" style="border-left: 16px solid ${brandColor};">
+    <div class="policy-card mb-6 overflow-hidden bg-white shadow-sm border-2 transition-all rounded-[20px]" id="card-${p.id}" style="border-color: ${brandColor}; border-left-width: 16px;">
         <div class="card-header p-4 flex items-center justify-between cursor-pointer relative transition-colors" style="background: ${brandBg};" onclick="toggleCard('${p.id}')">
             <div class="flex items-center gap-6 min-w-[340px]">
                 <div class="w-16 h-12 flex-shrink-0 flex items-center justify-center bg-white p-1 rounded-md border border-slate-100 shadow-sm"><img src="${p.logo}" class="max-h-full object-contain"></div>
