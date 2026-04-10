@@ -1,4 +1,4 @@
-/* component_sg.js - v6.9.1 - Full Border Color Sync */
+/* component_sg.js - v6.9.2 - Enhanced Locked Logic & Design Polish */
 import { autoFmt, toNum, getTimeRemaining } from './utils.js';
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -29,6 +29,12 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
 
     const chargePct = (p.surrenderCharges && p.surrenderCharges[policyYearIdx]) || 0;
     const surrenderValue = Math.round(Math.max(0, accountValue - (chargePct / 100 * (isPaidUp ? accountValue : totalPremiumsPaid))));
+
+    // --- UPDATED LOCKED LOGIC ---
+    const lockedAmount = accountValue - surrenderValue;
+    const lockedDisplay = lockedAmount <= 0 
+        ? `<span class="text-slate-400 text-sm font-bold uppercase tracking-widest">Fully Vested</span>` 
+        : `-${autoFmt(lockedAmount, sym)}`;
 
     const targetExitYear = Math.min(endY, startY + ppt + 2); 
     const projectionYears = Math.max(0, targetExitYear - CURRENT_YEAR);
@@ -95,9 +101,9 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
 
             <div class="w-40 flex flex-col justify-center">
                 <div class="bg-white/60 p-2 rounded-xl border border-white/50 shadow-sm text-center">
-                    <p class="text-[10px] font-black ${isVested ? 'text-emerald-500' : 'text-indigo-500'} uppercase leading-none mb-1">${timeLeft}</p>
+                    <p class="text-[10px] font-black ${isVested ? 'text-emerald-500' : 'text-indigo-500'} uppercase leading-none mb-1 text-center">${timeLeft}</p>
                     <div class="h-[1px] bg-slate-200/50 w-full mb-1"></div>
-                    <p class="text-[9px] font-bold text-slate-400 uppercase leading-none mb-1 tracking-widest text-center">Next Due</p>
+                    <p class="text-[9px] font-bold text-slate-400 uppercase leading-none mb-1 text-center tracking-widest">Next Due</p>
                     <p class="text-[11px] font-black text-center ${isDueSoon ? 'text-red-500 animate-pulse' : 'text-slate-900'} leading-none">${nextDueDisplay}</p>
                 </div>
             </div>
@@ -125,9 +131,9 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
                     <p class="text-[9px] font-bold text-emerald-600 uppercase mb-1.5">Surrender</p>
                     <p class="text-[20px] font-black text-emerald-700" style="font-family: 'Orbitron', 'Roboto Mono', monospace;">${autoFmt(surrenderValue, sym)}</p>
                 </div>
-                <div class="p-4 rounded-xl bg-red-50/50 border border-red-100 text-center shadow-sm">
+                <div class="p-4 rounded-xl bg-red-50/50 border border-red-100 text-center shadow-sm flex flex-col justify-center items-center">
                     <p class="text-[9px] font-bold text-red-400 uppercase mb-1.5">Locked</p>
-                    <p class="text-[20px] font-black text-red-600" style="font-family: 'Orbitron', 'Roboto Mono', monospace;">-${autoFmt(accountValue - surrenderValue, sym)}</p>
+                    <p class="text-[20px] font-black text-red-600 leading-none" style="font-family: 'Orbitron', 'Roboto Mono', monospace;">${lockedDisplay}</p>
                 </div>
             </div>
 
