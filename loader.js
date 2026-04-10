@@ -1,4 +1,4 @@
-/* loader.js - v4.4.5 - Singapore Withdrawal & Projections */
+/* loader.js - v4.4.7 - SG 3-Part Term & Multi-line Withdrawal Logic */
 import { toNum, autoFmt, monthMap } from './utils.js?v=1.0.2';
 
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2UwOfG57DQBOBnJX-9hsRKOQTUgALiM3uxs-VGzD2KN8JoWNAQltH6IkgAGhPTNFEvb/pub?gid=866869416&single=true&output=csv";
@@ -24,6 +24,7 @@ export async function syncWithGoogleSheets(masterList) {
             masterList[country] = masterList[country].map(p => {
                 const match = sheetRecords.find(row => String(row["Policy No."]).trim() === String(p.id).trim());
                 if (match) {
+                    // 1. Basic Policy Info
                     p.name = match.name || p.name;
                     p.company = match.company || p.company;
                     p.type = match.type || p.type;
@@ -40,18 +41,25 @@ export async function syncWithGoogleSheets(masterList) {
                     p.unitValueNumeric = toNum(match["Current Value"]);
                     p.currentUnitValue = match["Current Value"] || "No Value";
 
+                    // 2. Date & Term Logic (SG: SurrenderFree:Mat:MIP)
                     let rawDate = String(match["Commenced Date"] || "").trim().replace(/\./g, ' '); 
                     p.commenced = rawDate;
                     const dateParts = rawDate.split(" ");
                     const startY = parseInt(dateParts[2]);
 
                     const rawTermStr = String(match["Term"] || "");
-                    const matParts = rawTermStr.includes(":") ? rawTermStr.split(":") : [0, 0];
-                    p.ppt = parseInt(matParts[0], 10) || 0;
-                    const matYears = parseInt(matParts[1], 10) || 0;
+                    const termParts = rawTermStr.includes(":") ? rawTermStr.split(":") : [0, 0, 0];
+                    
+                    // Part 1: Year surrender charges hit 0 (Assumed PPT for projection)
+                    const surrenderFreeYear = parseInt(termParts[0], 10) || 0;
+                    // Part 2: Total Policy Maturity
+                    const matYears = parseInt(termParts[1], 10) || 0;
+                    // Part 3: Minimum Investment Period
+                    p.mip = termParts[2] ? parseInt(termParts[2], 10) : surrenderFreeYear; 
+                    p.ppt = surrenderFreeYear; 
 
                     if (!isNaN(startY)) {
-                        p.premiumEnds = `${dateParts[0]} ${dateParts[1]} ${startY + p.ppt - 1}`;
+                        p.premiumEnds = `${dateParts[0]} ${dateParts[1]} ${startY + surrenderFreeYear - 1}`;
                         p.maturity = `${dateParts[0]} ${dateParts[1]} ${startY + matYears}`;
                     }
 
@@ -59,6 +67,7 @@ export async function syncWithGoogleSheets(masterList) {
                     const isULIP = (p.type || "").toUpperCase().includes("ULIP");
                     const sym = (country === "singapore") ? "$" : "₹";
 
+                    // 3. India Specific: MoneyBack & Step-Up
                     if (country === "india") {
                         const mbLine = rawBenefits.split(/\r?\n/).find(l => l.toLowerCase().includes("moneyback"));
                         p.payoutSchedule = {}; 
@@ -92,6 +101,7 @@ export async function syncWithGoogleSheets(masterList) {
                         }
                     }
 
+                    // 4. Singapore Specific: Withdrawal Parsing
                     if (country === "singapore") {
                         const lines = rawBenefits.split(/\r?\n/);
                         const withdrawLine = lines.find(l => l.toLowerCase().trim().startsWith("withdrawal"));
@@ -103,16 +113,20 @@ export async function syncWithGoogleSheets(masterList) {
                         }
                     }
 
+                    // 5. Shared ULIP Projection Engine
                     if (isULIP) {
                         const currentVal = toNum(p.currentUnitValue);
                         const annPrem = toNum(p.premium);
                         const startYear = TODAY.getFullYear();
-                        const endYear = (country === "singapore") ? (startY + matYears + 2) : (startY + p.ppt);
+                        
+                        // SG: Compounds until Surrender-Free + 2 | India: Compounds until PPT
+                        const endProjectionYear = (country === "singapore") ? (startY + surrenderFreeYear + 2) : (startY + p.ppt);
 
                         const calculateProjection = (rate) => {
                             let projected = currentVal;
-                            for (let yr = startYear; yr < endYear; yr++) {
-                                if (yr < (startY + p.ppt)) projected += annPrem;
+                            for (let yr = startYear; yr < endProjectionYear; yr++) {
+                                // Add premium only if we haven't reached the surrender-free/ppt year
+                                if (yr < (startY + surrenderFreeYear)) projected += annPrem;
                                 projected = projected * (1 + rate);
                             }
                             return projected;
