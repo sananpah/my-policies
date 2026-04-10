@@ -1,7 +1,7 @@
 /* app.js - v1.1.0 */
 import { syncWithGoogleSheets } from './loader.js?v=1.0.5';
-import { createPolicyCard } from './component_in.js?v=1.0.5';
-import { createSGCard } from './component_sg.js?v=1.0.5';
+import { createPolicyCard } from './component_in.js?v=1.0.6';
+import { createSGCard } from './component_sg.js?v=1.0.6';
 import { createHealthCard } from './health.js?v=1.0.5';
 import { healthData } from './data_health.js?v=1.0.5';
 import { POLICY_DATA } from './data.js?v=1.0.5';
