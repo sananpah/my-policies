@@ -1,5 +1,5 @@
-/* loader.js - v4.4.8 - Nominee Mapping & SG 3-Part Term */
-import { toNum, autoFmt, monthMap } from './utils.js?v=${VERSION}';
+/* loader.js - v4.5.0 - Dynamic Nominee Mapping & SG 3-Part Term */
+import { toNum, autoFmt, monthMap } from './utils.js';
 
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2UwOfG57DQBOBnJX-9hsRKOQTUgALiM3uxs-VGzD2KN8JoWNAQltH6IkgAGhPTNFEvb/pub?gid=866869416&single=true&output=csv";
 
@@ -11,6 +11,7 @@ export async function syncWithGoogleSheets(masterList) {
         const csvData = new TextDecoder('utf-8').decode(buffer);
         const sheetRecords = processCSV(csvData);
 
+        // Single Source of Truth for Family Avatars
         const insuredMap = {
             "Suhail Nami": { type: "Self", img: "avatar_self.png" },
             "Saima Suhail": { type: "Wife", img: "avatar_wife.png" },
@@ -28,14 +29,17 @@ export async function syncWithGoogleSheets(masterList) {
                     p.logo = `logo_${p.company.replace(/[\s.]/g, "")}.png`;
 
                     const identity = insuredMap[match["Insured"]];
-                    if (identity) { p.avatarPath = identity.img; p.holderType = identity.type; }
+                    if (identity) { 
+                        p.avatarPath = identity.img; 
+                        p.holderType = identity.type; 
+                    }
 
                     p.premium = toNum(match["Premium"]);
                     p.sumAssured = toNum(match["Sum Assured"]);
                     p.unitValueNumeric = toNum(match["Current Value"]);
                     p.currentUnitValue = match["Current Value"] || "No Value";
 
-                    // --- NOMINEE PARSING ---
+                    // --- REFINED NOMINEE LOGIC (Referencing insuredMap) ---
                     const nomineeRaw = String(match["Nominee"] || "").trim();
                     p.nominees = []; 
                     if (!nomineeRaw || nomineeRaw.toLowerCase() === "n/a") {
@@ -46,9 +50,13 @@ export async function syncWithGoogleSheets(masterList) {
                         names.forEach(name => {
                             const matchName = name.toLowerCase();
                             let img = "avatar_unknown.png"; 
-                            if (matchName.includes("suhail")) img = "avatar_self.png";
-                            else if (matchName.includes("saima")) img = "avatar_wife.png";
-                            else if (matchName.includes("sulmas")) img = "avatar_daughter.png";
+                            
+                            // Dynamically find matching family member from insuredMap
+                            const mappedEntry = Object.entries(insuredMap).find(([fullName]) => 
+                                matchName.includes(fullName.toLowerCase())
+                            );
+                            if (mappedEntry) img = mappedEntry[1].img;
+                            
                             p.nominees.push({ name: name, img: img });
                         });
                     }
@@ -58,10 +66,12 @@ export async function syncWithGoogleSheets(masterList) {
                     p.commenced = rawDate;
                     const dateParts = rawDate.split(" ");
                     const startY = parseInt(dateParts[2]);
+
                     const rawTermStr = String(match["Term"] || "");
                     const termParts = rawTermStr.includes(":") ? rawTermStr.split(":") : [0, 0, 0];
                     const surrenderFreeYear = parseInt(termParts[0], 10) || 0;
                     const matYears = parseInt(termParts[1], 10) || 0;
+                    
                     p.mip = termParts[2] ? parseInt(termParts[2], 10) : surrenderFreeYear; 
                     p.ppt = surrenderFreeYear; 
 
@@ -73,18 +83,7 @@ export async function syncWithGoogleSheets(masterList) {
                     const rawBenefits = String(match["Other Coverage & Benefits"] || "");
                     const sym = (country === "singapore") ? "$" : "₹";
 
-                    // --- WITHDRAWAL & PROJECTION ---
-                    if (country === "singapore") {
-                        const lines = rawBenefits.split(/\r?\n/);
-                        const withdrawLine = lines.find(l => l.toLowerCase().trim().startsWith("withdrawal"));
-                        p.withdrawals = [];
-                        if (withdrawLine) {
-                            const cleanLine = withdrawLine.replace(/,/g, ''); 
-                            const matches = cleanLine.match(/\d+(\.\d+)?/g); 
-                            if (matches) p.withdrawals = matches.map(Number);
-                        }
-                    }
-
+                    // --- PROJECTION LOGIC ---
                     const isULIP = (p.type || "").toUpperCase().includes("ULIP");
                     if (isULIP) {
                         const endProj = (country === "singapore") ? (startY + surrenderFreeYear + 2) : (startY + p.ppt);
