@@ -95,7 +95,7 @@ export async function syncWithGoogleSheets(masterList) {
                             }
                             return proj;
                         };
-                        p.maturityAmt = `Est. @4%: ${autoFmt(calc(0.04), sym)}<br>Est. @8%: ${autoFmt(calc(0.08), sym)}*`;
+                        p.maturityAmt = `Est. @4%: ${autoFmt(calc(0.04), sym)}<br>Est. @8%: ${autoFmt(calc(0.08), sym)}`;
                     }
                 }
                 return p;
