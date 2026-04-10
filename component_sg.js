@@ -1,4 +1,4 @@
-/* component_sg.js - v6.7.9 - Dual Projection & PPT+2 Logic */
+/* component_sg.js - v6.8.1 - UI Sync: India-style Star Hover */
 import { autoFmt, toNum } from './utils.js';
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -68,8 +68,28 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const brandColor = p.color || "#000000";
     const brandBg = `rgba(${parseInt(brandColor.slice(1,3), 16)}, ${parseInt(brandColor.slice(3,5), 16)}, ${parseInt(brandColor.slice(5,7), 16)}, 0.04)`;
     
-    // Updated Star Tooltip UI
-    const starHtml = `<div class="ml-2 relative group flex items-center justify-center w-12 h-10 bg-white rounded-xl shadow-sm border border-slate-200 cursor-help"><span class="text-xl text-amber-500 transition-transform group-hover:scale-125">★</span><div class="opacity-0 group-hover:opacity-100 absolute bottom-full mb-4 right-0 bg-slate-900 text-white p-4 rounded-2xl z-[100] shadow-2xl border border-white/10 pointer-events-none min-w-[250px]"><b class="text-amber-400 uppercase tracking-widest block text-[9px] mb-2 font-black">Projected Maturity*</b><div class="space-y-1"><div class="flex justify-between text-[11px] font-bold text-white"><span>Est. @4%:</span><span>${autoFmt(proj4, sym)}</span></div><div class="flex justify-between text-[11px] font-bold text-white"><span>Est. @8%:</span><span>${autoFmt(proj8, sym)}</span></div><div class="h-[1px] bg-white/10 my-1"></div><div class="text-[8px] text-slate-400 italic leading-tight">Projected until Year ${targetExitYear} (PPT + 2). Actual returns may vary.</div></div><div class="absolute top-full right-4 border-8 border-transparent border-t-slate-900"></div></div></div>`;
+    // --- UPDATED STAR HTML: Exact Style Sync with India Card ---
+    const starHtml = `
+    <div class="ml-2 relative group flex items-center justify-center w-12 h-10 bg-white rounded-xl shadow-sm border border-slate-200 cursor-help">
+        <span class="text-xl text-amber-500 transition-transform group-hover:scale-125">★</span>
+        <div class="opacity-0 group-hover:opacity-100 absolute bottom-full mb-4 right-0 bg-slate-900 text-white p-4 rounded-2xl z-[100] shadow-2xl border border-white/10 pointer-events-none min-w-[180px]">
+            <b class="text-orange-400 uppercase tracking-widest text-[9px] block mb-2 font-black">Projected Maturity*</b>
+            <div class="space-y-1">
+                <div class="flex justify-between text-[10px] font-black leading-tight text-white">
+                    <span>Est. @4%:</span>
+                    <span>${autoFmt(proj4, sym)}</span>
+                </div>
+                <div class="flex justify-between text-[10px] font-black leading-tight text-white">
+                    <span>Est. @8%:</span>
+                    <span>${autoFmt(proj8, sym)}</span>
+                </div>
+            </div>
+            <div class="mt-2 pt-2 border-t border-white/10 text-[8px] text-slate-400 italic font-medium leading-tight">
+                *Projected until Year ${targetExitYear}.
+            </div>
+            <div class="absolute top-full right-4 border-8 border-transparent border-t-slate-900"></div>
+        </div>
+    </div>`;
 
     return `
     <div class="policy-card mb-10 rounded-[40px] bg-white overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.08)] border-2 relative" id="card-${p.id}" style="border-left: 16px solid ${brandColor}; border-color: ${brandColor};">
