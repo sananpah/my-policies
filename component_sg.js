@@ -1,5 +1,5 @@
-/* component_sg.js - v6.8.1 - UI Sync: India-style Star Hover */
-import { autoFmt, toNum } from './utils.js';
+/* component_sg.js - v6.8.2 - Sync Status Badge Logic with India (MIP based) */
+import { autoFmt, toNum, getTimeRemaining } from './utils.js';
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const commDate = new Date(p.commenced);
@@ -19,6 +19,7 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     if (TODAY < thisYearAnniversary) yearsPassed--;
     const policyYearIdx = yearsPassed + 1;
 
+    // --- 1. CORE CALCULATIONS ---
     const accountValue = Math.round(toNum(p.currentUnitValue || 0));
     const annualPremium = toNum(p.premium || 0);
     const totalPremiumsPaid = p.totalPremiumPaid ? toNum(p.totalPremiumPaid) : (annualPremium * policyYearIdx);
@@ -45,15 +46,10 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const nextDueDisplay = nextDueDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
     const isDueSoon = Math.ceil((nextDueDate - TODAY) / (1000 * 60 * 60 * 24)) <= 30;
 
-    let vestingStr = (mip === 0 || (new Date(startY + mip, commMonth, commDay) <= TODAY)) ? "Vested" : "";
-    if (!vestingStr) {
-        const targetVesting = new Date(startY + mip, commMonth, commDay);
-        let y = targetVesting.getFullYear() - TODAY.getFullYear();
-        let m = targetVesting.getMonth() - TODAY.getMonth();
-        if (targetVesting.getDate() < TODAY.getDate()) m--;
-        if (m < 0) { y--; m += 12; }
-        vestingStr = `LEFT: ${String(y).padStart(2,'0')}Y${String(m).padStart(2,'0')}M`;
-    }
+    // --- UPDATED STATUS LOGIC: MATCHING INDIA STYLE ---
+    const mipEndDate = new Date(startY + mip, commMonth, commDay);
+    const isVested = mip === 0 || TODAY >= mipEndDate;
+    const timeLeft = isVested ? "VESTED" : `LEFT: ${getTimeRemaining(mipEndDate, TODAY)}`;
 
     const yearsToMat = endY - startY;
     let maxYears = (yearsToMat <= 25) ? yearsToMat : Math.min(Math.max(15, policyYearIdx + 5), yearsToMat);
@@ -68,7 +64,6 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const brandColor = p.color || "#000000";
     const brandBg = `rgba(${parseInt(brandColor.slice(1,3), 16)}, ${parseInt(brandColor.slice(3,5), 16)}, ${parseInt(brandColor.slice(5,7), 16)}, 0.04)`;
     
-    // --- UPDATED STAR HTML: Exact Style Sync with India Card ---
     const starHtml = `
     <div class="ml-2 relative group flex items-center justify-center w-12 h-10 bg-white rounded-xl shadow-sm border border-slate-200 cursor-help">
         <span class="text-xl text-amber-500 transition-transform group-hover:scale-125">★</span>
@@ -114,7 +109,7 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
             </div>
             <div class="w-48 flex flex-col justify-center ml-4">
                 <div class="bg-white/80 px-5 py-3 rounded-[24px] border border-white shadow-sm flex flex-col justify-center min-h-[68px]">
-                    <p class="text-[10px] font-black ${vestingStr.includes("Vested") ? 'text-emerald-500' : 'text-indigo-500'} uppercase text-center leading-none mb-1.5">${vestingStr}</p>
+                    <p class="text-[10px] font-black ${isVested ? 'text-emerald-500' : 'text-indigo-500'} uppercase text-center leading-none mb-1.5">${timeLeft}</p>
                     <div class="h-[1px] bg-slate-200/50 w-full mb-1.5"></div>
                     <p class="text-[9px] font-bold text-slate-400 uppercase leading-none mb-1 text-center tracking-widest">Next Due</p>
                     <p class="text-[14px] font-black text-center tracking-tight leading-none ${isDueSoon ? 'text-red-600 animate-pulse' : 'text-slate-800'}">${nextDueDisplay}</p>
