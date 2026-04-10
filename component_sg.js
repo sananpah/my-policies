@@ -1,4 +1,4 @@
-/* component_sg.js - v6.7.8 - Restored Withdrawal Logic & Font Sync */
+/* component_sg.js - v6.7.9 - Dual Projection & PPT+2 Logic */
 import { autoFmt, toNum } from './utils.js';
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -19,24 +19,27 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     if (TODAY < thisYearAnniversary) yearsPassed--;
     const policyYearIdx = yearsPassed + 1;
 
-    // --- 1. CORE CALCULATIONS ---
     const accountValue = Math.round(toNum(p.currentUnitValue || 0));
     const annualPremium = toNum(p.premium || 0);
     const totalPremiumsPaid = p.totalPremiumPaid ? toNum(p.totalPremiumPaid) : (annualPremium * policyYearIdx);
     
-    // --- 2. WITHDRAWAL LOGIC (The "Missing" Part) ---
     const totalWithdrawn = (p.withdrawals || []).reduce((a, b) => a + toNum(b), 0);
     const netInvested = totalPremiumsPaid - totalWithdrawn;
 
     const chargePct = (p.surrenderCharges && p.surrenderCharges[policyYearIdx]) || 0;
     const surrenderValue = Math.round(Math.max(0, accountValue - (chargePct / 100 * (isPaidUp ? accountValue : totalPremiumsPaid))));
 
-    // --- 3. PROJECTION & DUE DATE (Same as v6.7.1) ---
-    const r = 0.04;
-    const targetExitYear = Math.min(startY + ppt + 2, endY);
+    // --- 3. DUAL PROJECTION (4% & 8% with PPT+2 Rule) ---
+    const targetExitYear = Math.min(endY, startY + ppt + 2); 
     const projectionYears = Math.max(0, targetExitYear - CURRENT_YEAR);
     const yearsToPay = isPaidUp ? 0 : Math.max(0, Math.min(startY + ppt, targetExitYear) - (hasPassedThisYear ? CURRENT_YEAR + 1 : CURRENT_YEAR));
-    const totalProjected = Math.round((accountValue * Math.pow(1 + r, projectionYears)) + (yearsToPay > 0 ? (annualPremium * ((Math.pow(1 + r, yearsToPay) - 1) / r) * (1 + r)) * Math.pow(1 + r, Math.max(0, projectionYears - yearsToPay)) : 0));
+
+    const calcProj = (rate) => {
+        return Math.round((accountValue * Math.pow(1 + rate, projectionYears)) + (yearsToPay > 0 ? (annualPremium * ((Math.pow(1 + rate, yearsToPay) - 1) / rate) * (1 + rate)) * Math.pow(1 + rate, Math.max(0, projectionYears - yearsToPay)) : 0));
+    };
+
+    const proj4 = calcProj(0.04);
+    const proj8 = calcProj(0.08);
 
     const nextDueDate = new Date(hasPassedThisYear ? CURRENT_YEAR + 1 : CURRENT_YEAR, commMonth, commDay);
     const nextDueDisplay = nextDueDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -64,11 +67,12 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
 
     const brandColor = p.color || "#000000";
     const brandBg = `rgba(${parseInt(brandColor.slice(1,3), 16)}, ${parseInt(brandColor.slice(3,5), 16)}, ${parseInt(brandColor.slice(5,7), 16)}, 0.04)`;
-    const starHtml = `<div class="ml-2 relative group flex items-center justify-center w-12 h-10 bg-white rounded-xl shadow-sm border border-slate-200 cursor-help"><span class="text-xl text-amber-500 transition-transform group-hover:scale-125">★</span><div class="opacity-0 group-hover:opacity-100 absolute bottom-full mb-4 right-0 bg-slate-900 text-white p-4 rounded-2xl z-[100] shadow-2xl border border-white/10 pointer-events-none min-w-[250px]"><b class="text-amber-400 uppercase tracking-widest block text-[9px] mb-2 font-black">Exit Strategy Projection (4%)</b><div class="space-y-1"><div class="flex justify-between text-[10px] text-slate-400"><span>Target Exit:</span><span class="text-white font-bold">${targetExitYear}</span></div><div class="flex justify-between text-[10px] text-slate-400"><span>Future Premiums:</span><span class="text-white font-bold">${autoFmt(yearsToPay * annualPremium, sym)}</span></div><div class="h-[1px] bg-white/10 my-1"></div><div class="flex justify-between text-[13px] text-emerald-400 font-black"><span>Est. Surrender:</span><span>${autoFmt(totalProjected, sym)}*</span></div></div><div class="mt-2 pt-2 border-t border-white/10 text-[8px] text-slate-400 italic font-medium leading-tight">*Calculated until exit in ${targetExitYear} (capped by maturity).</div><div class="absolute top-full right-4 border-8 border-transparent border-t-slate-900"></div></div></div>`;
+    
+    // Updated Star Tooltip UI
+    const starHtml = `<div class="ml-2 relative group flex items-center justify-center w-12 h-10 bg-white rounded-xl shadow-sm border border-slate-200 cursor-help"><span class="text-xl text-amber-500 transition-transform group-hover:scale-125">★</span><div class="opacity-0 group-hover:opacity-100 absolute bottom-full mb-4 right-0 bg-slate-900 text-white p-4 rounded-2xl z-[100] shadow-2xl border border-white/10 pointer-events-none min-w-[250px]"><b class="text-amber-400 uppercase tracking-widest block text-[9px] mb-2 font-black">Projected Maturity*</b><div class="space-y-1"><div class="flex justify-between text-[11px] font-bold text-white"><span>Est. @4%:</span><span>${autoFmt(proj4, sym)}</span></div><div class="flex justify-between text-[11px] font-bold text-white"><span>Est. @8%:</span><span>${autoFmt(proj8, sym)}</span></div><div class="h-[1px] bg-white/10 my-1"></div><div class="text-[8px] text-slate-400 italic leading-tight">Projected until Year ${targetExitYear} (PPT + 2). Actual returns may vary.</div></div><div class="absolute top-full right-4 border-8 border-transparent border-t-slate-900"></div></div></div>`;
 
     return `
     <div class="policy-card mb-10 rounded-[40px] bg-white overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.08)] border-2 relative" id="card-${p.id}" style="border-left: 16px solid ${brandColor}; border-color: ${brandColor};">
-        
         <div class="p-8 flex items-center justify-between cursor-pointer relative min-h-[100px]" style="background: ${brandBg}" onclick="toggleCard('${p.id}')">
             <div class="flex items-center gap-6 pl-4 min-w-[340px]">
                 <div class="w-16 h-16 flex-shrink-0 flex items-center justify-center bg-white rounded-[22px] shadow-sm p-3 border border-slate-50"><img src="${p.logo}" class="max-h-full object-contain"></div>
@@ -99,7 +103,6 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
         </div>
 
         <div class="content-area px-10 pb-10 pt-6 relative z-20" style="background: linear-gradient(to bottom, ${brandBg}, #ffffff)">
-            
             <div class="grid grid-cols-2 gap-4 mb-4">
                 <div class="p-6 rounded-[32px] bg-slate-50 border border-slate-100 relative shadow-sm">
                     <p class="text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest">Policy No.</p>
