@@ -1,4 +1,4 @@
-/* component_sg.js - v6.8.2 - Sync Status Badge Logic with India (MIP based) */
+/* component_sg.js - v6.8.5 - Header Swap & MIP-based Duration */
 import { autoFmt, toNum, getTimeRemaining } from './utils.js';
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -24,13 +24,14 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const annualPremium = toNum(p.premium || 0);
     const totalPremiumsPaid = p.totalPremiumPaid ? toNum(p.totalPremiumPaid) : (annualPremium * policyYearIdx);
     
+    // Withdrawal logic from loader.js array
     const totalWithdrawn = (p.withdrawals || []).reduce((a, b) => a + toNum(b), 0);
     const netInvested = totalPremiumsPaid - totalWithdrawn;
 
     const chargePct = (p.surrenderCharges && p.surrenderCharges[policyYearIdx]) || 0;
     const surrenderValue = Math.round(Math.max(0, accountValue - (chargePct / 100 * (isPaidUp ? accountValue : totalPremiumsPaid))));
 
-    // --- 3. DUAL PROJECTION (4% & 8% with PPT+2 Rule) ---
+    // --- 2. PROJECTION (PPT + 2 Rule) ---
     const targetExitYear = Math.min(endY, startY + ppt + 2); 
     const projectionYears = Math.max(0, targetExitYear - CURRENT_YEAR);
     const yearsToPay = isPaidUp ? 0 : Math.max(0, Math.min(startY + ppt, targetExitYear) - (hasPassedThisYear ? CURRENT_YEAR + 1 : CURRENT_YEAR));
@@ -46,11 +47,12 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const nextDueDisplay = nextDueDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
     const isDueSoon = Math.ceil((nextDueDate - TODAY) / (1000 * 60 * 60 * 24)) <= 30;
 
-    // --- UPDATED STATUS LOGIC: MATCHING INDIA STYLE ---
+    // --- 3. STATUS BADGE LOGIC (MIP BASED) ---
     const mipEndDate = new Date(startY + mip, commMonth, commDay);
     const isVested = mip === 0 || TODAY >= mipEndDate;
     const timeLeft = isVested ? "VESTED" : `LEFT: ${getTimeRemaining(mipEndDate, TODAY)}`;
 
+    // --- 4. TIMELINE HTML ---
     const yearsToMat = endY - startY;
     let maxYears = (yearsToMat <= 25) ? yearsToMat : Math.min(Math.max(15, policyYearIdx + 5), yearsToMat);
     let timelineHtml = '';
@@ -64,6 +66,7 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const brandColor = p.color || "#000000";
     const brandBg = `rgba(${parseInt(brandColor.slice(1,3), 16)}, ${parseInt(brandColor.slice(3,5), 16)}, ${parseInt(brandColor.slice(5,7), 16)}, 0.04)`;
     
+    // Star Hover synced with India UI
     const starHtml = `
     <div class="ml-2 relative group flex items-center justify-center w-12 h-10 bg-white rounded-xl shadow-sm border border-slate-200 cursor-help">
         <span class="text-xl text-amber-500 transition-transform group-hover:scale-125">★</span>
@@ -97,16 +100,18 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
                 </div>
             </div>
             <div class="flex-1 flex justify-center"><div class="relative group"><div class="absolute -inset-1 bg-gradient-to-r from-rose-400 to-orange-400 rounded-full blur opacity-25"></div><span class="relative px-5 py-1.5 rounded-full border border-rose-200 bg-white/90 backdrop-blur-sm text-[11px] font-black text-rose-600 italic tracking-widest uppercase shadow-sm">${p.type || 'INVESTMENTS'}</span></div></div>
+            
             <div class="flex items-center gap-14 px-6">
                 <div class="text-center">
-                    <p class="text-[10px] font-black text-slate-400 uppercase mb-1.5 tracking-[0.15em]">Sum Assured</p>
-                    <p class="text-[22px] font-black text-slate-800 tracking-tighter leading-none">${autoFmt(toNum(p.sumAssured) === 0 ? accountValue : p.sumAssured, sym)}</p>
-                </div>
-                <div class="pl-12 border-l border-slate-100 text-center">
                     <p class="text-[10px] font-black text-slate-400 uppercase mb-1.5 tracking-[0.15em]">Annual Premium</p>
                     <p class="text-[22px] font-black text-[#059669] tracking-tighter leading-none">${autoFmt(p.premium, sym)}</p>
                 </div>
+                <div class="pl-12 border-l border-slate-100 text-center">
+                    <p class="text-[10px] font-black text-slate-400 uppercase mb-1.5 tracking-[0.15em]">Sum Assured</p>
+                    <p class="text-[22px] font-black text-slate-800 tracking-tighter leading-none">${autoFmt(toNum(p.sumAssured) === 0 ? accountValue : p.sumAssured, sym)}</p>
+                </div>
             </div>
+
             <div class="w-48 flex flex-col justify-center ml-4">
                 <div class="bg-white/80 px-5 py-3 rounded-[24px] border border-white shadow-sm flex flex-col justify-center min-h-[68px]">
                     <p class="text-[10px] font-black ${isVested ? 'text-emerald-500' : 'text-indigo-500'} uppercase text-center leading-none mb-1.5">${timeLeft}</p>
