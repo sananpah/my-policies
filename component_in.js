@@ -1,4 +1,4 @@
-/* component_in.js - v4.1.22 - ULIP Projections & Logic Fixes */
+/* component_in.js - v4.1.23 - Corrected Case & Projected Label */
 import { checkIsDueSoon, autoFmt, toNum, raw, safeParseDate, safeGetYear, monthMap, getTimeRemaining } from './utils.js';
 
 export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -78,7 +78,7 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
 
     timelineHtml += `<div class="mat-star">★
         <div class="tooltip" style="min-width: 140px;">
-            <b class="text-orange-400 uppercase tracking-widest text-[9px]">${isULIP ? 'Projected Maturity' : 'Maturity'}</b><br>
+            <b class="text-orange-400 uppercase tracking-widest text-[9px]">${isULIP ? 'Projected Maturity*' : 'Maturity'}</b><br>
             <span class="text-[10px] font-black leading-tight text-white">${p.maturityAmt || autoFmt(p.sumAssured, sym)}</span>
         </div>
     </div>`;
