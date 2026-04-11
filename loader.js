@@ -1,4 +1,4 @@
-/* loader.js - v4.5.2 - Nominee Sync, SG 3-Part Term & Multi-line Logic */
+/* loader.js - v4.5.11 - Master Sync: Surrender Flags, Nominees, and Multi-line Data */
 import { toNum, autoFmt, monthMap } from './utils.js?v=1.0.2';
 
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2UwOfG57DQBOBnJX-9hsRKOQTUgALiM3uxs-VGzD2KN8JoWNAQltH6IkgAGhPTNFEvb/pub?gid=866869416&single=true&output=csv";
@@ -23,7 +23,7 @@ export async function syncWithGoogleSheets(masterList) {
             masterList[country] = masterList[country].map(p => {
                 const match = sheetRecords.find(row => String(row["Policy No."]).trim() === String(p.id).trim());
                 if (match) {
-                    // 1. Basic Policy Info
+                    // 1. Basic Info
                     p.name = match.name || p.name;
                     p.company = match.company || p.company;
                     p.type = match.type || p.type;
@@ -39,61 +39,84 @@ export async function syncWithGoogleSheets(masterList) {
                     p.sumAssured = toNum(match["Sum Assured"]);
                     p.unitValueNumeric = toNum(match["Current Value"]);
                     p.currentUnitValue = match["Current Value"] || "No Value";
-                    
-                    // ... Nominee() Mapping ...
+
+                    // 2. Nominee Mapping (Multi-line / Regex Clean)
                     const nomineeRaw = String(match["Nominee"] || "").trim();
                     p.nominees = []; 
-                    
                     if (!nomineeRaw || nomineeRaw.toLowerCase() === "n/a") {
                         p.nomineeStatus = nomineeRaw.toLowerCase() === "n/a" ? "NA" : "EMPTY";
                     } else {
                         p.nomineeStatus = "ASSIGNED";
-                        
-                        // NEW REGEX: Splits by comma, "and", "&", OR newlines (\n or \r)
                         const names = nomineeRaw.split(/,|\band\b|&|\n|\r/).map(n => n.trim());
-                        
                         names.forEach(name => {
-                            // Scrub any non-printable characters that Excel might have left behind
                             const cleanName = name.replace(/[^\x20-\x7E]/g, "").trim();
-                            if (!cleanName) return; // Skip empty segments
-                    
+                            if (!cleanName) return;
                             const matchName = cleanName.toLowerCase();
                             let img = "avatar_unknown.png"; 
-                            
-                            const mappedEntry = Object.entries(insuredMap).find(([fullName]) => 
-                                matchName.includes(fullName.toLowerCase())
-                            );
-                    
+                            const mappedEntry = Object.entries(insuredMap).find(([fullName]) => matchName.includes(fullName.toLowerCase()));
                             if (mappedEntry) img = mappedEntry[1].img;
-                            
                             p.nominees.push({ name: cleanName, img: img });
                         });
                     }
-                    
 
-                    // 2. Date & Term Logic (SG: SurrenderFree:Mat:MIP)
+                    // 3. Other Data: UIN, ClientID, and Surrender Charges [av]/[pp]
+                    const otherDataRaw = String(match["Other Data"] || "").trim();
+                    p.uin = "N/A";
+                    p.clientId = "N/A";
+                    p.surrenderCharges = null; // Reset to check for existence
+                    p.surrenderBase = "VALUATION"; // Default to [av]
+
+                    if (otherDataRaw && otherDataRaw.toLowerCase() !== "n/a") {
+                        const lines = otherDataRaw.split(/\n|\r/);
+                        lines.forEach(line => {
+                            const cleanLine = line.trim().toLowerCase();
+                            
+                            // UIN Extraction
+                            if (cleanLine.startsWith("uin:")) {
+                                p.uin = line.split(":")[1]?.trim() || "N/A";
+                            } 
+                            // Client ID Extraction (Skipped for ULIPs)
+                            else if (cleanLine.startsWith("clientid:")) {
+                                if (!(p.type || "").toUpperCase().includes("ULIP")) {
+                                    p.clientId = line.split(":")[1]?.trim() || "N/A";
+                                }
+                            }
+                            // SURGERY: Surrender Schedule & Flag Extraction
+                            else if (cleanLine.startsWith("surrender:")) {
+                                const content = line.split(":")[1] || "";
+                                p.surrenderBase = content.includes("[pp]") ? "PREMIUM" : "VALUATION";
+                                
+                                const rawValues = content.replace(/\[.*?\]/g, "").split(",");
+                                p.surrenderCharges = {};
+                                rawValues.forEach((val, index) => {
+                                    const cleanVal = parseInt(val.trim());
+                                    if (!isNaN(cleanVal)) p.surrenderCharges[index + 1] = cleanVal;
+                                });
+                            }
+                        });
+                    }
+                    
+                    // Default logic: If no surrender schedule was found, it is fully vested (0 charges)
+                    if (!p.surrenderCharges) p.surrenderCharges = { 1: 0 };
+
+                    // 4. Term & Dates
                     let rawDate = String(match["Commenced Date"] || "").trim().replace(/\./g, ' '); 
                     p.commenced = rawDate;
                     const dateParts = rawDate.split(" ");
                     const startY = parseInt(dateParts[2]);
-
-                    const rawTermStr = String(match["Term"] || "");
-                    const termParts = rawTermStr.includes(":") ? rawTermStr.split(":") : [0, 0, 0];
+                    const termParts = String(match["Term"] || "").split(":");
                     const surrenderFreeYear = parseInt(termParts[0], 10) || 0;
-                    const matYears = parseInt(termParts[1], 10) || 0;
-                    p.mip = termParts[2] ? parseInt(termParts[2], 10) : surrenderFreeYear; 
                     p.ppt = surrenderFreeYear; 
-
                     if (!isNaN(startY)) {
                         p.premiumEnds = `${dateParts[0]} ${dateParts[1]} ${startY + surrenderFreeYear - 1}`;
-                        p.maturity = `${dateParts[0]} ${dateParts[1]} ${startY + matYears}`;
+                        p.maturity = `${dateParts[0]} ${dateParts[1]} ${startY + (parseInt(termParts[1]) || 0)}`;
                     }
 
                     const rawBenefits = String(match["Other Coverage & Benefits"] || "");
                     const isULIP = (p.type || "").toUpperCase().includes("ULIP");
                     const sym = (country === "singapore") ? "$" : "₹";
 
-                    // 3. India Specific: MoneyBack & Step-Up
+                    // 5. India Specific Logic: MoneyBack
                     if (country === "india") {
                         const mbLine = rawBenefits.split(/\r?\n/).find(l => l.toLowerCase().includes("moneyback"));
                         p.payoutSchedule = {}; 
@@ -103,92 +126,28 @@ export async function syncWithGoogleSheets(masterList) {
                                 const parts = seg.split(":").map(s => s.trim());
                                 if (parts.length < 2) return;
                                 const range = parts[0];
-                                const valRaw = parts[1];
-                                let numOnly = toNum(valRaw);
-                                let baseVal = valRaw.toLowerCase().includes("%bsa") ? (p.sumAssured * (numOnly / 100)) : numOnly;
+                                const baseVal = parts[1].toLowerCase().includes("%bsa") ? (p.sumAssured * (toNum(parts[1]) / 100)) : toNum(parts[1]);
                                 if (range.includes("-")) {
                                     const [s, e] = range.split("-").map(Number);
-                                    const hasStep = parts[2]?.toUpperCase() === "STEP";
-                                    const stepInterval = hasStep ? parseInt(parts[3]) : 0;
-                                    const stepPercent = hasStep ? parseInt(parts[4]) : 0;
-                                    for (let y = s; y <= e; y++) {
-                                        let finalVal = baseVal;
-                                        if (hasStep && y >= s + stepInterval) {
-                                            const stepsPassed = Math.floor((y - s) / stepInterval);
-                                            finalVal = Math.round(baseVal * (1 + (stepsPassed * (stepPercent / 100))));
-                                        }
-                                        p.payoutSchedule[y] = finalVal;
-                                    }
-                                } else {
-                                    const y = parseInt(range);
-                                    if (!isNaN(y)) p.payoutSchedule[y] = baseVal;
+                                    for (let y = s; y <= e; y++) p.payoutSchedule[y] = baseVal;
+                                } else if (!isNaN(parseInt(range))) { 
+                                    p.payoutSchedule[parseInt(range)] = baseVal; 
                                 }
                             });
                         }
                     }
 
-                    // 4. Singapore Specific: Withdrawal Parsing
-                    if (country === "singapore") {
-                        const lines = rawBenefits.split(/\r?\n/);
-                        const withdrawLine = lines.find(l => l.toLowerCase().trim().startsWith("withdrawal"));
-                        p.withdrawals = [];
-                        if (withdrawLine) {
-                            const cleanLine = withdrawLine.replace(/,/g, ''); 
-                            const matches = cleanLine.match(/\d+(\.\d+)?/g); 
-                            if (matches) p.withdrawals = matches.map(Number);
-                        }
-                    }
-
-                    /* 5. Parsing of UIN and Client ID */
-                    const otherDataRaw = String(match["Other Data"] || "").trim();
-                    
-                    // Initialize defaults
-                    p.uin = "N/A";
-                    p.clientId = "N/A";
-                    
-                    if (otherDataRaw && otherDataRaw.toLowerCase() !== "n/a") {
-                        // Split by lines to handle the two-row cell structure
-                        const lines = otherDataRaw.split(/\n|\r/);
-                        
-                        lines.forEach(line => {
-                            const cleanLine = line.trim().toLowerCase();
-                            
-                            if (cleanLine.startsWith("uin:")) {
-                                p.uin = line.split(":")[1]?.trim() || "N/A";
-                            } 
-                            else if (cleanLine.startsWith("clientid:")) {
-                                // Only assign if NOT a ULIP policy
-                                const isULIP = (p.type || "").toUpperCase().includes("ULIP");
-                                if (!isULIP) {
-                                    p.clientId = line.split(":")[1]?.trim() || "N/A";
-                                }
-                            }
-                        });
-                    }
-                    
-                    // 6. Shared ULIP Projection Engine
+                    // 6. Projections
                     if (isULIP) {
-                        const currentVal = toNum(p.currentUnitValue);
-                        const annPrem = toNum(p.premium);
-                        const startYear = TODAY.getFullYear();
-                        const endProjectionYear = (country === "singapore") ? (startY + surrenderFreeYear + 2) : (startY + p.ppt);
-
                         const calculateProjection = (rate) => {
-                            let projected = currentVal;
-                            for (let yr = startYear; yr < endProjectionYear; yr++) {
-                                if (yr < (startY + surrenderFreeYear)) projected += annPrem;
+                            let projected = p.unitValueNumeric;
+                            for (let yr = TODAY.getFullYear(); yr < (startY + p.ppt + (country === "singapore" ? 2 : 0)); yr++) {
+                                if (yr < (startY + surrenderFreeYear)) projected += p.premium;
                                 projected = projected * (1 + rate);
                             }
                             return projected;
                         };
                         p.maturityAmt = `Est. @4%: ${autoFmt(calculateProjection(0.04), sym)}<br>Est. @8%: ${autoFmt(calculateProjection(0.08), sym)}*`;
-                    } else {
-                        const maturityLine = rawBenefits.split(/\r?\n/).find(l => l.trim().startsWith("Maturity Benefit"));
-                        if (maturityLine) {
-                            let val = maturityLine.split(":")[1]?.trim() || "";
-                            val = val.replace(/(\d+)%BSA/gi, (m, pct) => autoFmt((p.sumAssured * parseFloat(pct)/100), sym));
-                            p.maturityAmt = val.replace(/BSA/gi, autoFmt(p.sumAssured, sym));
-                        }
                     }
                 }
                 return p;
@@ -204,10 +163,10 @@ function processCSV(csv) {
     for (let i = 0; i < csv.length; i++) {
         const char = csv[i];
         if (char === '"' && csv[i+1] === '"') { currentRow[currentRow.length-1] += '"'; i++; }
-        else if (char === '"') { inQuote = !inQuote; }
-        else if (char === ',' && !inQuote) { currentRow.push(''); }
+        else if (char === '"') inQuote = !inQuote;
+        else if (char === ',' && !inQuote) currentRow.push('');
         else if (char === '\n' && !inQuote) { rows.push(currentRow); currentRow = ['']; }
-        else { currentRow[currentRow.length-1] += char; }
+        else currentRow[currentRow.length-1] += char;
     }
     rows.push(currentRow);
     const headerIdx = rows.findIndex(r => r.some(c => c && c.toLowerCase().includes("policy_name")));
