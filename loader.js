@@ -2,6 +2,8 @@
 import { toNum, autoFmt, monthMap } from './utils.js?v=1.0.2';
 
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2UwOfG57DQBOBnJX-9hsRKOQTUgALiM3uxs-VGzD2KN8JoWNAQltH6IkgAGhPTNFEvb/pub?gid=866869416&single=true&output=csv";
+const githubLogo = "https://raw.githubusercontent.com/sananpah/my-policies/main/assets/logo/";
+
 
 export async function syncWithGoogleSheets(masterList) {
     const TODAY = new Date();
@@ -26,7 +28,7 @@ export async function syncWithGoogleSheets(masterList) {
                     p.name = match.name || p.name;
                     p.company = match.company || p.company;
                     p.type = match.type || p.type;
-                    p.logo = `logo_${p.company.replace(/[\s.]/g, "")}.png`;
+                    p.logo = `${githubLogo}${p.company.replace(/[\s.]/g, "")}.png`;
 
                     const identity = insuredMap[match["Insured"]];
                     if (identity) { 
