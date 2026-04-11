@@ -27,6 +27,7 @@ export async function syncWithGoogleSheets(masterList) {
                 if (match) {
                     p.name = match.name || p.name;
                     p.company = match.company || p.company;
+                    p.color = getColorMap(p.company);
                     p.type = match.type || p.type;
                     p.logo = `${githubLogo}logo_${p.company.replace(/[\s.]/g, "")}.png`;
 
