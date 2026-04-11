@@ -35,6 +35,7 @@ export async function syncWithGoogleSheets(masterList) {
                     }
 
                     p.premium = toNum(match["Premium"]);
+                    p.totalPremiumPaid = toNum(match["Total Premium"]);
                     p.sumAssured = toNum(match["Sum Assured"]);
                     p.unitValueNumeric = toNum(match["Current Value"]);
                     p.currentUnitValue = match["Current Value"] || "No Value";
