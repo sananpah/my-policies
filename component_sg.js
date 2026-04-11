@@ -1,4 +1,4 @@
-/* component_sg.js - v6.9.4 - Standardized Nominee Row Insertion */
+/* component_sg.js - v6.9.5 - Correct Row Order & Multiple Nominee Fix */
 import { autoFmt, toNum, getTimeRemaining } from './utils.js';
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -34,14 +34,15 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
         ? `<span class="text-slate-400 text-sm font-bold uppercase tracking-widest">Fully Vested</span>` 
         : `-${autoFmt(lockedAmount, sym)}`;
 
-    // --- NOMINEE UI (Avatar Only - No Hover) ---
+    // --- NOMINEE UI (Multiple Avatars) ---
     let nomineeHtml = "";
     if (p.nomineeStatus === "NA") {
         nomineeHtml = `<span class="text-[11px] font-black text-slate-400 uppercase italic tracking-widest">N/A</span>`;
     } else if (p.nomineeStatus === "EMPTY") {
         nomineeHtml = `<span class="text-[11px] font-black text-rose-500 animate-pulse uppercase tracking-widest">Unassigned</span>`;
     } else {
-        nomineeHtml = `<div class="flex -space-x-3">
+        // Updated to ensure -space-x allows all avatars to be visible/stacked
+        nomineeHtml = `<div class="flex -space-x-3 items-center">
             ${(p.nominees || []).map(n => `
                 <img src="${n.img}" 
                      class="w-9 h-9 rounded-full border-2 border-white shadow-md object-cover ring-1 ring-slate-100 transition-transform hover:scale-110 hover:z-20">
@@ -134,12 +135,7 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
                 </div>
             </div>
 
-            <div class="mb-4 p-4 bg-white/50 border border-slate-100 rounded-2xl shadow-sm flex flex-col gap-2">
-                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">Nominee(s)</p>
-                <div class="flex items-center h-10">${nomineeHtml}</div>
-            </div>
-
-            <div class="grid grid-cols-3 gap-4 mb-6">
+            <div class="grid grid-cols-3 gap-4 mb-4">
                 <div class="p-4 rounded-xl bg-white border border-slate-100 shadow-sm">
                     <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Invested (Net)</p>
                     <p class="text-[17px] font-black text-slate-800 tracking-tight" style="font-family: 'Orbitron', 'Roboto Mono', monospace;">${autoFmt(netInvested, sym)}</p>
@@ -153,6 +149,11 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
                     <p class="text-[9px] font-bold text-red-400 uppercase mb-1.5">Locked</p>
                     <p class="text-[20px] font-black text-red-600 leading-none" style="font-family: 'Orbitron', 'Roboto Mono', monospace;">${lockedDisplay}</p>
                 </div>
+            </div>
+
+            <div class="mb-6 p-4 bg-white/50 border border-slate-100 rounded-2xl shadow-sm flex flex-col gap-2">
+                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">Nominee(s)</p>
+                <div class="flex items-center h-10">${nomineeHtml}</div>
             </div>
 
             <div class="flex justify-between items-end mb-4 px-2">
