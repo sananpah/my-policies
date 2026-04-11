@@ -1,8 +1,7 @@
-/* component_in.js - v4.1.40 - Avatars Only & Funky Assigned SA Logic */
+/* component_in.js - v4.1.42 - Restored Assigned Stamp & Vested expanded logic */
 import { checkIsDueSoon, autoFmt, toNum, raw, safeParseDate, safeGetYear, monthMap, getTimeRemaining } from './utils.js';
 
 export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
-    // ... [Previous date/calculation logic remains exactly the same] ...
     const isULIP = (p.type || "").toUpperCase().includes("ULIP");
     const commStr = p.commenced || "01 Jan 2000";
     const startParts = commStr.split(' ');
@@ -28,35 +27,29 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
     const isIncomePhase = !isStillPaying && !!scheduledPayout;
     const isPaidUp = (p.status === "PAID UP") || (TODAY > finalPremiumDate);
 
-    // --- REFINED NOMINEE UI (Avatars Only) ---
-    let nomineeHtml = "";
-    if (p.nomineeStatus === "NA") {
-        nomineeHtml = `<span class="text-[11px] font-black text-slate-400 uppercase italic tracking-widest">N/A</span>`;
+    // --- NOMINEE & ASSIGNED LOGIC ---
+    const isAssigned = toNum(p.sumAssured) === 0;
+    
+    let nomineeBoxContent = "";
+    if (isAssigned) {
+        nomineeBoxContent = `
+            <div class="flex items-center gap-2">
+                <span class="text-xl">🛡️</span>
+                <div class="flex flex-col text-left">
+                    <span class="text-[10px] font-black text-emerald-600 uppercase leading-none">Vested Benefit</span>
+                    <span class="text-[8px] font-bold text-slate-400 uppercase leading-none mt-1 italic">Policy is Assigned</span>
+                </div>
+            </div>`;
     } else if (p.nomineeStatus === "EMPTY") {
-        nomineeHtml = `<span class="text-[11px] font-black text-rose-500 animate-pulse uppercase tracking-widest">Unassigned</span>`;
+        nomineeBoxContent = `<span class="text-[11px] font-black text-rose-500 animate-pulse uppercase tracking-widest">Unassigned</span>`;
+    } else if (p.nomineeStatus === "NA") {
+        nomineeBoxContent = `<span class="text-[11px] font-black text-slate-400 uppercase italic tracking-widest">N/A</span>`;
     } else {
-        nomineeHtml = `<div class="flex -space-x-3">
-            ${(p.nominees || []).map(n => `
-                <img src="${n.img}" 
-                     class="w-9 h-9 rounded-full border-2 border-white shadow-md object-cover ring-1 ring-slate-100 transition-transform hover:scale-125 hover:z-20" 
-                     title="${n.name}">
-            `).join('')}
+        nomineeBoxContent = `<div class="flex -space-x-3">
+            ${(p.nominees || []).map(n => `<img src="${n.img}" class="w-9 h-9 rounded-full border-2 border-white shadow-md object-cover ring-1 ring-slate-100 transition-transform hover:scale-110 hover:z-20">`).join('')}
         </div>`;
     }
 
-    // --- FUNKY ASSIGNED LOGIC ---
-    const saValue = toNum(p.sumAssured);
-    const saDisplay = (saValue === 0) 
-        ? `<div class="flex items-center gap-2">
-            <span class="text-xl">🛡️</span>
-            <div class="flex flex-col">
-                <span class="text-[10px] font-black text-emerald-600 uppercase leading-none">Assigned</span>
-                <span class="text-[8px] font-bold text-slate-400 uppercase leading-none mt-1 italic">Vested Benefit</span>
-            </div>
-           </div>` 
-        : `<p class="text-lg font-black text-slate-800">${autoFmt(p.sumAssured, sym)}</p>`;
-
-    // ... [Header Label logic remains the same] ...
     let middleLabel = "Annual Premium", middleValue = autoFmt(p.premium, sym), middleColor = isStillPaying ? "text-emerald-600 font-black" : "text-slate-700";
     if (isPaidUp) middleColor = "text-slate-400 line-through font-bold";
     else if (isIncomePhase) { middleLabel = "Annual Payout"; middleValue = autoFmt(scheduledPayout, sym); middleColor = "text-[#854d0e] font-black"; }
@@ -65,7 +58,6 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
     const nextDueStr = `${annDay} ${startParts[1]} ${TODAY >= anniversaryThisYear ? CURRENT_YEAR + 1 : CURRENT_YEAR}`; 
     const finalDueDate = isPaidUp ? "PAID UP" : nextDueStr;
 
-    // ... [Timeline Engine remains the same] ...
     let timelineHtml = '';
     for(let yr = startY; yr < matY; yr++) {
         const loopPolY = yr - startY + 1;
@@ -105,8 +97,12 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
                     </div>
                 </div>
                 <div class="text-center border-l-2 border-slate-100 pl-10 min-w-[140px]">
-                    <p class="text-[9px] font-bold text-slate-400 uppercase leading-none mb-1">Benefit Value</p>
-                    ${saDisplay}
+                    ${isAssigned ? `<img src="assigned.png" class="h-10 object-contain mx-auto opacity-95 transform -rotate-3">` : 
+                        `<div>
+                            <p class="text-[9px] font-bold text-slate-400 uppercase">Sum Assured</p>
+                            <p class="text-lg font-black text-slate-800">${autoFmt(p.sumAssured, sym)}</p>
+                        </div>`
+                    }
                 </div>
             </div>
             <div class="w-40 text-center flex flex-col justify-center min-h-[60px]">
@@ -129,8 +125,8 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
             </div>
             
             <div class="mt-4 p-4 bg-white/50 border border-slate-100 rounded-2xl shadow-sm flex flex-col gap-3">
-                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">Beneficiary Nominee(s)</p>
-                <div class="flex items-center h-10">${nomineeHtml}</div>
+                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">${isAssigned ? 'Security Status' : 'Beneficiary Nominee(s)'}</p>
+                <div class="flex items-center h-10">${nomineeBoxContent}</div>
             </div>
 
             <div class="timeline-track">
