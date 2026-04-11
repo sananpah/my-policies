@@ -1,5 +1,5 @@
 /* loader.js - v4.5.17 - Master Sync: Multi-Withdrawal, Total Premium & 3-Part Term */
-import { toNum, autoFmt, monthMap } from './utils.js?v=1.0.2';
+import { toNum, autoFmt, monthMap, getColorMap } from './utils.js?v=1.0.3';
 
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2UwOfG57DQBOBnJX-9hsRKOQTUgALiM3uxs-VGzD2KN8JoWNAQltH6IkgAGhPTNFEvb/pub?gid=866869416&single=true&output=csv";
 const githubLogo = "https://raw.githubusercontent.com/sananpah/my-policies/main/assets/logo/";
