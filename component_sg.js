@@ -1,4 +1,4 @@
-/* component_sg.js - v7.0.8 - Header Match: Premium/Sum Assured + Policy # in Expanded */
+/* component_sg.js - v7.0.9 - Full Restoration: Tooltips, Curvature, and Header Attributes */
 import { autoFmt, toNum, getTimeRemaining } from './utils.js';
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -21,15 +21,12 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
 
     // --- COUNTDOWN LOGIC ---
     let premRemainingStr = "";
-    if (isPaidUp) {
-        premRemainingStr = "PAID UP";
-    } else if (mip === 0) {
-        premRemainingStr = "VESTED";
-    } else {
+    if (isPaidUp) { premRemainingStr = "PAID UP"; }
+    else if (mip === 0) { premRemainingStr = "VESTED"; }
+    else {
         let targetDate = (mip === -1) ? matDate : new Date(startY + mip, commMonth, commDay);
-        if (targetDate <= TODAY) {
-            premRemainingStr = "VESTED";
-        } else {
+        if (targetDate <= TODAY) { premRemainingStr = "VESTED"; }
+        else {
             let years = targetDate.getFullYear() - TODAY.getFullYear();
             let months = targetDate.getMonth() - TODAY.getMonth();
             if (months < 0) { years--; months += 12; }
@@ -38,7 +35,7 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     }
     const timeLeftDisplay = (premRemainingStr === "VESTED" || premRemainingStr === "PAID UP") ? premRemainingStr : `LEFT: ${premRemainingStr}`;
 
-    // --- CALCULATIONS ---
+    // --- MATH ---
     const accountValue = Math.round(toNum(p.currentUnitValue || 0));
     const annualPremium = toNum(p.premium || 0);
     const totalPremiumsPaid = p.totalPremiumPaid ? toNum(p.totalPremiumPaid) : (annualPremium * policyYearIdx);
@@ -72,7 +69,7 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const calcProj = (rate) => Math.round((accountValue * Math.pow(1 + rate, Math.max(0, targetExitYear - CURRENT_YEAR))) + (isPaidUp ? 0 : (annualPremium * ((Math.pow(1 + rate, Math.max(0, Math.min(startY + ppt, targetExitYear) - (hasPassedThisYear ? CURRENT_YEAR + 1 : CURRENT_YEAR))) - 1) / rate) * (1 + rate))));
     const starHtml = `<div class="ml-2 relative group flex items-center justify-center w-12 h-10 bg-white rounded-xl shadow-sm border border-slate-200 cursor-help"><span class="text-xl text-amber-500 transition-transform group-hover:scale-125">★</span><div class="opacity-0 group-hover:opacity-100 absolute bottom-full mb-4 right-0 bg-slate-900 text-white p-4 rounded-2xl z-[100] shadow-2xl border border-white/10 pointer-events-none min-w-[180px]"><b class="text-orange-400 uppercase tracking-widest text-[9px] block mb-2 font-black">Projected Maturity*</b><div class="space-y-1"><div class="flex justify-between text-[10px] font-black leading-tight text-white"><span>Est. @4%:</span><span>${autoFmt(calcProj(0.04), sym)}</span></div><div class="flex justify-between text-[10px] font-black leading-tight text-white"><span>Est. @8%:</span><span>${autoFmt(calcProj(0.08), sym)}</span></div></div><div class="mt-2 pt-2 border-t border-white/10 text-[8px] text-slate-400 italic font-medium leading-tight">*Projected until Year ${targetExitYear}.</div><div class="absolute top-full right-4 border-8 border-transparent border-t-slate-900"></div></div></div>`;
 
-    // --- TIMELINE ---
+    // --- TIMELINE WITH TOOLTIPS RESTORED ---
     let timelineHtml = '';
     const yearsToMat = endY - startY;
     let maxYears = (yearsToMat <= 25) ? yearsToMat : Math.min(Math.max(15, policyYearIdx + 5), yearsToMat);
@@ -80,7 +77,16 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
         const yr = startY + polY - 1;
         const isPast = yr < CURRENT_YEAR || (yr === CURRENT_YEAR && hasPassedThisYear);
         const colorClass = isPast ? "bg-emerald-900" : (yr === CURRENT_YEAR ? "bg-black ring-2 ring-white z-20 scale-110 shadow-xl" : (polY <= mip ? "bg-indigo-500" : (polY <= ppt ? "bg-pink-400" : "bg-red-600")));
-        timelineHtml += `<div class="segment ${colorClass} h-8 flex-1 border-r border-white/10 first:rounded-l-lg last:rounded-r-lg transition-all relative group/segment"></div>`;
+        const statusLabel = isPast ? "Completed" : (yr === CURRENT_YEAR ? "Premium Due" : (polY <= mip ? "Strict Lock" : (polY <= ppt ? "Flexi Phase" : "Vested")));
+        
+        timelineHtml += `
+            <div class="segment ${colorClass} h-8 flex-1 border-r border-white/10 first:rounded-l-lg last:rounded-r-lg transition-all relative group/segment">
+                <div class="opacity-0 group-hover/segment:opacity-100 absolute bottom-full mb-3 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-3 py-2 rounded-xl text-[10px] z-[100] whitespace-nowrap pointer-events-none shadow-2xl transition-all duration-200">
+                    <b class="text-sky-400 uppercase tracking-widest block mb-1 font-black">Year ${polY} (${yr})</b>
+                    <span class="text-white font-bold tracking-tight">${statusLabel}</span>
+                    <div class="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-slate-900"></div>
+                </div>
+            </div>`;
     }
 
     return `
