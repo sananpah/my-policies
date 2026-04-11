@@ -1,4 +1,4 @@
-/* component_sg.js - v6.9.2 - Enhanced Locked Logic & Design Polish */
+/* component_sg.js - v6.9.4 - Standardized Nominee Row Insertion */
 import { autoFmt, toNum, getTimeRemaining } from './utils.js';
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -23,18 +23,31 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const accountValue = Math.round(toNum(p.currentUnitValue || 0));
     const annualPremium = toNum(p.premium || 0);
     const totalPremiumsPaid = p.totalPremiumPaid ? toNum(p.totalPremiumPaid) : (annualPremium * policyYearIdx);
-    
     const totalWithdrawn = (p.withdrawals || []).reduce((a, b) => a + toNum(b), 0);
     const netInvested = totalPremiumsPaid - totalWithdrawn;
 
     const chargePct = (p.surrenderCharges && p.surrenderCharges[policyYearIdx]) || 0;
     const surrenderValue = Math.round(Math.max(0, accountValue - (chargePct / 100 * (isPaidUp ? accountValue : totalPremiumsPaid))));
 
-    // --- UPDATED LOCKED LOGIC ---
     const lockedAmount = accountValue - surrenderValue;
     const lockedDisplay = lockedAmount <= 0 
         ? `<span class="text-slate-400 text-sm font-bold uppercase tracking-widest">Fully Vested</span>` 
         : `-${autoFmt(lockedAmount, sym)}`;
+
+    // --- NOMINEE UI (Avatar Only - No Hover) ---
+    let nomineeHtml = "";
+    if (p.nomineeStatus === "NA") {
+        nomineeHtml = `<span class="text-[11px] font-black text-slate-400 uppercase italic tracking-widest">N/A</span>`;
+    } else if (p.nomineeStatus === "EMPTY") {
+        nomineeHtml = `<span class="text-[11px] font-black text-rose-500 animate-pulse uppercase tracking-widest">Unassigned</span>`;
+    } else {
+        nomineeHtml = `<div class="flex -space-x-3">
+            ${(p.nominees || []).map(n => `
+                <img src="${n.img}" 
+                     class="w-9 h-9 rounded-full border-2 border-white shadow-md object-cover ring-1 ring-slate-100 transition-transform hover:scale-110 hover:z-20">
+            `).join('')}
+        </div>`;
+    }
 
     const targetExitYear = Math.min(endY, startY + ppt + 2); 
     const projectionYears = Math.max(0, targetExitYear - CURRENT_YEAR);
@@ -119,6 +132,11 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
                     <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Current Valuation</p>
                     <p class="text-[19px] font-black text-slate-900 tracking-tighter" style="font-family: 'Orbitron', 'Roboto Mono', monospace;">${autoFmt(accountValue, sym)}</p>
                 </div>
+            </div>
+
+            <div class="mb-4 p-4 bg-white/50 border border-slate-100 rounded-2xl shadow-sm flex flex-col gap-2">
+                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">Nominee(s)</p>
+                <div class="flex items-center h-10">${nomineeHtml}</div>
             </div>
 
             <div class="grid grid-cols-3 gap-4 mb-6">
