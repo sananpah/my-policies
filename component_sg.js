@@ -136,7 +136,7 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
             ${(p.totalPremiumPaid || totalWithdrawn > 0) ? `
             <div class="mb-8 p-6 rounded-[32px] bg-white border border-slate-100 shadow-sm">
                 <div class="grid grid-cols-3 gap-4">
-                    <div class="p-3 rounded-2xl bg-slate-50"><p class="text-[9px] font-bold text-slate-400 uppercase">Paid</p><p class="font-black text-slate-700" style="font-family:'Orbitron'">${autoFmt(totalPremiumsPaid, sym)}</p></div>
+                    <div class="p-3 rounded-2xl bg-slate-50"><p class="text-[9px] font-bold text-slate-400 uppercase">Paid</p><p class="font-black text-slate-700" style="font-family:'Orbitron'">${autoFmt(actualTotalPaid, sym)}</p></div>
                     <div class="p-3 rounded-2xl bg-slate-50"><p class="text-[9px] font-bold text-slate-400 uppercase">Withdrawn</p><p class="font-black text-red-500" style="font-family:'Orbitron'">-${autoFmt(totalWithdrawn, sym)}</p></div>
                     <div class="p-3 rounded-2xl bg-indigo-50 border border-indigo-100"><p class="text-[9px] font-bold text-indigo-400 uppercase">Net Base</p><p class="font-black text-indigo-900" style="font-family:'Orbitron'">${autoFmt(netInvested, sym)}</p></div>
                 </div>
