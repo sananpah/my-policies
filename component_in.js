@@ -1,4 +1,4 @@
-/* component_in.js - v4.1.42 - Restored Assigned Stamp & Vested expanded logic */
+/* component_in.js - v4.1.43 - Simplified Nominee Headings */
 import { checkIsDueSoon, autoFmt, toNum, raw, safeParseDate, safeGetYear, monthMap, getTimeRemaining } from './utils.js';
 
 export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -51,7 +51,7 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
     }
 
     let middleLabel = "Annual Premium", middleValue = autoFmt(p.premium, sym), middleColor = isStillPaying ? "text-emerald-600 font-black" : "text-slate-700";
-    if (isPaidUp) middleColor = "text-slate-400 line-through font-bold";
+    if (isPaidUp && !isIncomePhase) middleColor = "text-slate-400 line-through font-bold";
     else if (isIncomePhase) { middleLabel = "Annual Payout"; middleValue = autoFmt(scheduledPayout, sym); middleColor = "text-[#854d0e] font-black"; }
     
     const badgeText = isIncomePhase ? "Income Phase" : (p.type || "Savings");
@@ -106,7 +106,7 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
                 </div>
             </div>
             <div class="w-40 text-center flex flex-col justify-center min-h-[60px]">
-                ${isPaidUp ? `<img src="paid.jpg" class="paid-logo mx-auto h-12 object-contain">` : 
+                ${isPaidUp && !isIncomePhase ? `<img src="paid.jpg" class="paid-logo mx-auto h-12 object-contain">` : 
                     `<div class="bg-white/60 p-2 rounded-xl border border-white/50 shadow-sm">
                         <p class="text-[9px] font-black text-indigo-500 uppercase leading-none mb-1">${getTimeRemaining(p.premiumEnds, TODAY) ? 'Left: ' + getTimeRemaining(p.premiumEnds, TODAY) : ''}</p>
                         <p class="text-[9px] font-bold text-slate-400 uppercase leading-none mb-1">Next Due</p>
@@ -125,7 +125,7 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
             </div>
             
             <div class="mt-4 p-4 bg-white/50 border border-slate-100 rounded-2xl shadow-sm flex flex-col gap-3">
-                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">${isAssigned ? 'Security Status' : 'Beneficiary Nominee(s)'}</p>
+                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">Nominee</p>
                 <div class="flex items-center h-10">${nomineeBoxContent}</div>
             </div>
 
