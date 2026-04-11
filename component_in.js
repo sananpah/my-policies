@@ -1,4 +1,4 @@
-/* component_in.js - v4.1.24 - Projections without Footer Disclaimer */
+/* component_in.js - v4.1.39 - Surgical Nominee Insertion */
 import { checkIsDueSoon, autoFmt, toNum, raw, safeParseDate, safeGetYear, monthMap, getTimeRemaining } from './utils.js';
 
 export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -48,6 +48,21 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
     const hasPassedThisYear = TODAY >= anniversaryThisYear;
     const nextDueStr = `${annDay} ${startParts[1]} ${hasPassedThisYear ? CURRENT_YEAR + 1 : CURRENT_YEAR}`; 
     const finalDueDate = isPaidUp ? "PAID UP" : nextDueStr;
+
+    // --- NOMINEE UI BUILDER ---
+    let nomineeHtml = "";
+    if (p.nomineeStatus === "NA") {
+        nomineeHtml = `<span class="text-[11px] font-black text-slate-400 uppercase italic">Not Applicable</span>`;
+    } else if (p.nomineeStatus === "EMPTY") {
+        nomineeHtml = `<span class="text-[11px] font-black text-rose-500 animate-pulse uppercase">Not Assigned</span>`;
+    } else {
+        nomineeHtml = `<div class="flex items-center gap-3">
+            <div class="flex -space-x-2">
+                ${(p.nominees || []).map(n => `<img src="${n.img}" class="w-8 h-8 rounded-full border-2 border-white shadow-sm object-cover ring-1 ring-slate-100 transition-transform hover:scale-125 hover:z-20" title="${n.name}">`).join('')}
+            </div>
+            <span class="text-[13px] font-bold text-slate-600 tracking-tight">${(p.nominees || []).map(n => n.name).join(', ')}</span>
+        </div>`;
+    }
 
     let timelineHtml = '';
     for(let yr = startY; yr < matY; yr++) {
@@ -134,6 +149,12 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
                     </div>` : `<div class="detail-item"><p>Customer ID</p><p>${p.clientId || 'N/A'}</p></div>`
                 }
             </div>
+            
+            <div class="mt-4 p-4 bg-white/50 border border-slate-100 rounded-2xl shadow-sm flex flex-col gap-2">
+                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">Beneficiary Nominee(s)</p>
+                <div class="flex items-center">${nomineeHtml}</div>
+            </div>
+
             <div class="timeline-track">
                 <div class="absolute -top-8 left-0 text-[11px] font-black text-slate-400 uppercase">${p.commenced}</div>
                 ${timelineHtml}
