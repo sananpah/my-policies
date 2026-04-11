@@ -1,11 +1,10 @@
-/* loader.js - v4.4.7 - SG 3-Part Term & Multi-line Withdrawal Logic */
+/* loader.js - v4.5.2 - Nominee Sync, SG 3-Part Term & Multi-line Logic */
 import { toNum, autoFmt, monthMap } from './utils.js?v=1.0.2';
 
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2UwOfG57DQBOBnJX-9hsRKOQTUgALiM3uxs-VGzD2KN8JoWNAQltH6IkgAGhPTNFEvb/pub?gid=866869416&single=true&output=csv";
 
 export async function syncWithGoogleSheets(masterList) {
     const TODAY = new Date();
-    const CURRENT_YEAR = TODAY.getFullYear();
 
     try {
         const response = await fetch(`${SHEET_URL}&t=${Date.now()}`);
@@ -41,6 +40,29 @@ export async function syncWithGoogleSheets(masterList) {
                     p.unitValueNumeric = toNum(match["Current Value"]);
                     p.currentUnitValue = match["Current Value"] || "No Value";
 
+                    // --- SURGICAL INSERTION: NOMINEE MAPPING ---
+                    const nomineeRaw = String(match["Nominee"] || "").trim();
+                    p.nominees = []; 
+                    if (!nomineeRaw || nomineeRaw.toLowerCase() === "n/a") {
+                        p.nomineeStatus = nomineeRaw.toLowerCase() === "n/a" ? "NA" : "EMPTY";
+                    } else {
+                        p.nomineeStatus = "ASSIGNED";
+                        const names = nomineeRaw.split(/,|\band\b|&/i).map(n => n.trim());
+                        names.forEach(name => {
+                            const matchName = name.toLowerCase();
+                            let img = "avatar_unknown.png"; 
+                            
+                            // Reference insuredMap dynamically to find matching avatar
+                            const mappedEntry = Object.entries(insuredMap).find(([fullName]) => 
+                                matchName.includes(fullName.toLowerCase())
+                            );
+                            if (mappedEntry) img = mappedEntry[1].img;
+                            
+                            p.nominees.push({ name: name, img: img });
+                        });
+                    }
+                    // --- END NOMINEE INSERTION ---
+
                     // 2. Date & Term Logic (SG: SurrenderFree:Mat:MIP)
                     let rawDate = String(match["Commenced Date"] || "").trim().replace(/\./g, ' '); 
                     p.commenced = rawDate;
@@ -49,12 +71,8 @@ export async function syncWithGoogleSheets(masterList) {
 
                     const rawTermStr = String(match["Term"] || "");
                     const termParts = rawTermStr.includes(":") ? rawTermStr.split(":") : [0, 0, 0];
-                    
-                    // Part 1: Year surrender charges hit 0 (Assumed PPT for projection)
                     const surrenderFreeYear = parseInt(termParts[0], 10) || 0;
-                    // Part 2: Total Policy Maturity
                     const matYears = parseInt(termParts[1], 10) || 0;
-                    // Part 3: Minimum Investment Period
                     p.mip = termParts[2] ? parseInt(termParts[2], 10) : surrenderFreeYear; 
                     p.ppt = surrenderFreeYear; 
 
@@ -118,14 +136,11 @@ export async function syncWithGoogleSheets(masterList) {
                         const currentVal = toNum(p.currentUnitValue);
                         const annPrem = toNum(p.premium);
                         const startYear = TODAY.getFullYear();
-                        
-                        // SG: Compounds until Surrender-Free + 2 | India: Compounds until PPT
                         const endProjectionYear = (country === "singapore") ? (startY + surrenderFreeYear + 2) : (startY + p.ppt);
 
                         const calculateProjection = (rate) => {
                             let projected = currentVal;
                             for (let yr = startYear; yr < endProjectionYear; yr++) {
-                                // Add premium only if we haven't reached the surrender-free/ppt year
                                 if (yr < (startY + surrenderFreeYear)) projected += annPrem;
                                 projected = projected * (1 + rate);
                             }
