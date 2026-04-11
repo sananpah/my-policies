@@ -1,4 +1,4 @@
-/* loader.js - v4.5.12 - Restored 3-Part Term (MIP) & Nominee Blink Logic */
+/* loader.js - v4.5.13 - Syntax Fix for MoneyBack & MIP Persistence */
 import { toNum, autoFmt, monthMap } from './utils.js?v=1.0.2';
 
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2UwOfG57DQBOBnJX-9hsRKOQTUgALiM3uxs-VGzD2KN8JoWNAQltH6IkgAGhPTNFEvb/pub?gid=866869416&single=true&output=csv";
@@ -39,7 +39,6 @@ export async function syncWithGoogleSheets(masterList) {
                     p.unitValueNumeric = toNum(match["Current Value"]);
                     p.currentUnitValue = match["Current Value"] || "No Value";
 
-                    // --- NOMINEE MAPPING (Blink Support) ---
                     const nomineeRaw = String(match["Nominee"] || "").trim();
                     p.nominees = []; 
                     if (!nomineeRaw || nomineeRaw.toLowerCase() === "n/a") {
@@ -58,7 +57,6 @@ export async function syncWithGoogleSheets(masterList) {
                         });
                     }
 
-                    // --- OTHER DATA: UIN, ClientID, Surrender ---
                     const otherDataRaw = String(match["Other Data"] || "").trim();
                     p.uin = "N/A"; p.clientId = "N/A";
                     p.surrenderCharges = null; p.surrenderBase = "VALUATION";
@@ -85,7 +83,6 @@ export async function syncWithGoogleSheets(masterList) {
                     }
                     if (!p.surrenderCharges) p.surrenderCharges = { 1: 0 };
 
-                    // --- RESTORED: 3-PART TERM LOGIC (SG COUNTDOWN FIX) ---
                     let rawDate = String(match["Commenced Date"] || "").trim().replace(/\./g, ' '); 
                     p.commenced = rawDate;
                     const dateParts = rawDate.split(" ");
@@ -96,7 +93,6 @@ export async function syncWithGoogleSheets(masterList) {
                     const surrenderFreeYear = parseInt(termParts[0], 10) || 0;
                     const matYears = parseInt(termParts[1], 10) || 0;
                     
-                    // Crucial: Pass MIP (index 2) specifically for Singapore countdown
                     p.mip = termParts[2] ? parseInt(termParts[2], 10) : surrenderFreeYear; 
                     p.ppt = surrenderFreeYear; 
 
@@ -109,7 +105,6 @@ export async function syncWithGoogleSheets(masterList) {
                     const isULIP = (p.type || "").toUpperCase().includes("ULIP");
                     const sym = (country === "singapore") ? "$" : "₹";
 
-                    // --- INDIA MONEYBACK ---
                     if (country === "india") {
                         const mbLine = rawBenefits.split(/\r?\n/).find(l => l.toLowerCase().includes("moneyback"));
                         p.payoutSchedule = {}; 
@@ -119,7 +114,8 @@ export async function syncWithGoogleSheets(masterList) {
                                 const parts = seg.split(":").map(s => s.trim());
                                 if (parts.length < 2) return;
                                 const range = parts[0];
-                                const baseVal = parts[1].toLowerCase().includes("%bsa") ? (p.sumAssured * (toNum(parts[1]) / 100)) : toNum(parts[1];
+                                // FIX: Added missing closing parenthesis after toNum(parts[1]) / 100
+                                const baseVal = parts[1].toLowerCase().includes("%bsa") ? (p.sumAssured * (toNum(parts[1]) / 100)) : toNum(parts[1]);
                                 if (range.includes("-")) {
                                     const [s, e] = range.split("-").map(Number);
                                     for (let y = s; y <= e; y++) p.payoutSchedule[y] = baseVal;
@@ -130,7 +126,6 @@ export async function syncWithGoogleSheets(masterList) {
                         }
                     }
 
-                    // --- PROJECTIONS ---
                     if (isULIP) {
                         const calculateProjection = (rate) => {
                             let projected = p.unitValueNumeric;
