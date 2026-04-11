@@ -1,4 +1,4 @@
-/* loader.js - v4.5.11 - Master Sync: Surrender Flags, Nominees, and Multi-line Data */
+/* loader.js - v4.5.12 - Restored 3-Part Term (MIP) & Nominee Blink Logic */
 import { toNum, autoFmt, monthMap } from './utils.js?v=1.0.2';
 
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2UwOfG57DQBOBnJX-9hsRKOQTUgALiM3uxs-VGzD2KN8JoWNAQltH6IkgAGhPTNFEvb/pub?gid=866869416&single=true&output=csv";
@@ -23,7 +23,6 @@ export async function syncWithGoogleSheets(masterList) {
             masterList[country] = masterList[country].map(p => {
                 const match = sheetRecords.find(row => String(row["Policy No."]).trim() === String(p.id).trim());
                 if (match) {
-                    // 1. Basic Info
                     p.name = match.name || p.name;
                     p.company = match.company || p.company;
                     p.type = match.type || p.type;
@@ -40,7 +39,7 @@ export async function syncWithGoogleSheets(masterList) {
                     p.unitValueNumeric = toNum(match["Current Value"]);
                     p.currentUnitValue = match["Current Value"] || "No Value";
 
-                    // 2. Nominee Mapping (Multi-line / Regex Clean)
+                    // --- NOMINEE MAPPING (Blink Support) ---
                     const nomineeRaw = String(match["Nominee"] || "").trim();
                     p.nominees = []; 
                     if (!nomineeRaw || nomineeRaw.toLowerCase() === "n/a") {
@@ -59,33 +58,22 @@ export async function syncWithGoogleSheets(masterList) {
                         });
                     }
 
-                    // 3. Other Data: UIN, ClientID, and Surrender Charges [av]/[pp]
+                    // --- OTHER DATA: UIN, ClientID, Surrender ---
                     const otherDataRaw = String(match["Other Data"] || "").trim();
-                    p.uin = "N/A";
-                    p.clientId = "N/A";
-                    p.surrenderCharges = null; // Reset to check for existence
-                    p.surrenderBase = "VALUATION"; // Default to [av]
+                    p.uin = "N/A"; p.clientId = "N/A";
+                    p.surrenderCharges = null; p.surrenderBase = "VALUATION";
 
                     if (otherDataRaw && otherDataRaw.toLowerCase() !== "n/a") {
                         const lines = otherDataRaw.split(/\n|\r/);
                         lines.forEach(line => {
                             const cleanLine = line.trim().toLowerCase();
-                            
-                            // UIN Extraction
-                            if (cleanLine.startsWith("uin:")) {
-                                p.uin = line.split(":")[1]?.trim() || "N/A";
-                            } 
-                            // Client ID Extraction (Skipped for ULIPs)
+                            if (cleanLine.startsWith("uin:")) p.uin = line.split(":")[1]?.trim() || "N/A";
                             else if (cleanLine.startsWith("clientid:")) {
-                                if (!(p.type || "").toUpperCase().includes("ULIP")) {
-                                    p.clientId = line.split(":")[1]?.trim() || "N/A";
-                                }
+                                if (!(p.type || "").toUpperCase().includes("ULIP")) p.clientId = line.split(":")[1]?.trim() || "N/A";
                             }
-                            // SURGERY: Surrender Schedule & Flag Extraction
                             else if (cleanLine.startsWith("surrender:")) {
                                 const content = line.split(":")[1] || "";
                                 p.surrenderBase = content.includes("[pp]") ? "PREMIUM" : "VALUATION";
-                                
                                 const rawValues = content.replace(/\[.*?\]/g, "").split(",");
                                 p.surrenderCharges = {};
                                 rawValues.forEach((val, index) => {
@@ -95,28 +83,33 @@ export async function syncWithGoogleSheets(masterList) {
                             }
                         });
                     }
-                    
-                    // Default logic: If no surrender schedule was found, it is fully vested (0 charges)
                     if (!p.surrenderCharges) p.surrenderCharges = { 1: 0 };
 
-                    // 4. Term & Dates
+                    // --- RESTORED: 3-PART TERM LOGIC (SG COUNTDOWN FIX) ---
                     let rawDate = String(match["Commenced Date"] || "").trim().replace(/\./g, ' '); 
                     p.commenced = rawDate;
                     const dateParts = rawDate.split(" ");
                     const startY = parseInt(dateParts[2]);
-                    const termParts = String(match["Term"] || "").split(":");
+
+                    const rawTermStr = String(match["Term"] || "");
+                    const termParts = rawTermStr.includes(":") ? rawTermStr.split(":") : [0, 0, 0];
                     const surrenderFreeYear = parseInt(termParts[0], 10) || 0;
+                    const matYears = parseInt(termParts[1], 10) || 0;
+                    
+                    // Crucial: Pass MIP (index 2) specifically for Singapore countdown
+                    p.mip = termParts[2] ? parseInt(termParts[2], 10) : surrenderFreeYear; 
                     p.ppt = surrenderFreeYear; 
+
                     if (!isNaN(startY)) {
                         p.premiumEnds = `${dateParts[0]} ${dateParts[1]} ${startY + surrenderFreeYear - 1}`;
-                        p.maturity = `${dateParts[0]} ${dateParts[1]} ${startY + (parseInt(termParts[1]) || 0)}`;
+                        p.maturity = `${dateParts[0]} ${dateParts[1]} ${startY + matYears}`;
                     }
 
                     const rawBenefits = String(match["Other Coverage & Benefits"] || "");
                     const isULIP = (p.type || "").toUpperCase().includes("ULIP");
                     const sym = (country === "singapore") ? "$" : "₹";
 
-                    // 5. India Specific Logic: MoneyBack
+                    // --- INDIA MONEYBACK ---
                     if (country === "india") {
                         const mbLine = rawBenefits.split(/\r?\n/).find(l => l.toLowerCase().includes("moneyback"));
                         p.payoutSchedule = {}; 
@@ -126,7 +119,7 @@ export async function syncWithGoogleSheets(masterList) {
                                 const parts = seg.split(":").map(s => s.trim());
                                 if (parts.length < 2) return;
                                 const range = parts[0];
-                                const baseVal = parts[1].toLowerCase().includes("%bsa") ? (p.sumAssured * (toNum(parts[1]) / 100)) : toNum(parts[1]);
+                                const baseVal = parts[1].toLowerCase().includes("%bsa") ? (p.sumAssured * (toNum(parts[1]) / 100)) : toNum(parts[1];
                                 if (range.includes("-")) {
                                     const [s, e] = range.split("-").map(Number);
                                     for (let y = s; y <= e; y++) p.payoutSchedule[y] = baseVal;
@@ -137,11 +130,11 @@ export async function syncWithGoogleSheets(masterList) {
                         }
                     }
 
-                    // 6. Projections
+                    // --- PROJECTIONS ---
                     if (isULIP) {
                         const calculateProjection = (rate) => {
                             let projected = p.unitValueNumeric;
-                            for (let yr = TODAY.getFullYear(); yr < (startY + p.ppt + (country === "singapore" ? 2 : 0)); yr++) {
+                            for (let yr = TODAY.getFullYear(); yr < (startY + p.mip + (country === "singapore" ? 2 : 0)); yr++) {
                                 if (yr < (startY + surrenderFreeYear)) projected += p.premium;
                                 projected = projected * (1 + rate);
                             }
