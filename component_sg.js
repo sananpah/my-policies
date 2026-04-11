@@ -38,9 +38,9 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     // --- MATH ---
     const accountValue = Math.round(toNum(p.currentUnitValue || 0));
     const annualPremium = toNum(p.premium || 0);
-    const totalPremiumsPaid = p.totalPremiumPaid ? toNum(p.totalPremiumPaid) : (annualPremium * policyYearIdx);
+    const actualTotalPaid = p.totalPremiumPaid > 0 ? p.totalPremiumPaid : (annualPremium * policyYearIdx);
     const totalWithdrawn = (p.withdrawals || []).reduce((a, b) => a + toNum(b), 0);
-    const netInvested = totalPremiumsPaid - totalWithdrawn;
+    const netInvested = Math.round(actualTotalPaid - totalWithdrawn);
 
     const chargePct = (p.surrenderCharges && p.surrenderCharges[policyYearIdx]) || 0;
     let surrenderValue = (p.surrenderBase === "PREMIUM") 
