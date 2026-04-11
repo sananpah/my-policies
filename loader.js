@@ -28,7 +28,7 @@ export async function syncWithGoogleSheets(masterList) {
                     p.name = match.name || p.name;
                     p.company = match.company || p.company;
                     p.type = match.type || p.type;
-                    p.logo = `${githubLogo}${p.company.replace(/[\s.]/g, "")}.png`;
+                    p.logo = `${githubLogo}logo_${p.company.replace(/[\s.]/g, "")}.png`;
 
                     const identity = insuredMap[match["Insured"]];
                     if (identity) { 
