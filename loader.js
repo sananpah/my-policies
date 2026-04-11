@@ -139,7 +139,34 @@ export async function syncWithGoogleSheets(masterList) {
                         }
                     }
 
-                    // 5. Shared ULIP Projection Engine
+                    /* 5. Parsing of UIN and Client ID */
+                    const otherDataRaw = String(match["Other Data"] || "").trim();
+                    
+                    // Initialize defaults
+                    p.uin = "N/A";
+                    p.clientId = "N/A";
+                    
+                    if (otherDataRaw && otherDataRaw.toLowerCase() !== "n/a") {
+                        // Split by lines to handle the two-row cell structure
+                        const lines = otherDataRaw.split(/\n|\r/);
+                        
+                        lines.forEach(line => {
+                            const cleanLine = line.trim().toLowerCase();
+                            
+                            if (cleanLine.startsWith("uin:")) {
+                                p.uin = line.split(":")[1]?.trim() || "N/A";
+                            } 
+                            else if (cleanLine.startsWith("clientid:")) {
+                                // Only assign if NOT a ULIP policy
+                                const isULIP = (p.type || "").toUpperCase().includes("ULIP");
+                                if (!isULIP) {
+                                    p.clientId = line.split(":")[1]?.trim() || "N/A";
+                                }
+                            }
+                        });
+                    }
+                    
+                    // 6. Shared ULIP Projection Engine
                     if (isULIP) {
                         const currentVal = toNum(p.currentUnitValue);
                         const annPrem = toNum(p.premium);
