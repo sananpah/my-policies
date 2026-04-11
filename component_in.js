@@ -1,5 +1,5 @@
-/* component_in.js - v4.1.43 - Simplified Nominee Headings */
-import { checkIsDueSoon, autoFmt, toNum, raw, safeParseDate, safeGetYear, monthMap, getTimeRemaining } from './utils.js';
+/* component_in.js - v4.1.45 - Final Integrated UI: Nominees, Orbitron & Assigned Logic */
+import { checkIsDueSoon, autoFmt, toNum, safeParseDate, safeGetYear, monthMap, getTimeRemaining } from './utils.js';
 
 export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
     const isULIP = (p.type || "").toUpperCase().includes("ULIP");
@@ -13,8 +13,6 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
     let yearsCompleted = CURRENT_YEAR - startY;
     if (TODAY < anniversaryThisYear) yearsCompleted--;
     
-    const premEndStr = p.premiumEnds || "01 Jan 2030";
-    const premEndYear = safeGetYear(premEndStr);
     const matStr = p.maturity || "01 Jan 2050";
     const matY = safeGetYear(matStr);
 
@@ -29,25 +27,15 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
 
     // --- NOMINEE & ASSIGNED LOGIC ---
     const isAssigned = toNum(p.sumAssured) === 0;
-    
     let nomineeBoxContent = "";
     if (isAssigned) {
-        nomineeBoxContent = `
-            <div class="flex items-center gap-2">
-                <span class="text-xl">🛡️</span>
-                <div class="flex flex-col text-left">
-                    <span class="text-[10px] font-black text-emerald-600 uppercase leading-none">Vested Benefit</span>
-                    <span class="text-[8px] font-bold text-slate-400 uppercase leading-none mt-1 italic">Policy is Assigned</span>
-                </div>
-            </div>`;
+        nomineeBoxContent = `<div class="flex items-center gap-2"><span class="text-xl">🛡️</span><div class="flex flex-col text-left"><span class="text-[10px] font-black text-emerald-600 uppercase leading-none">Vested Benefit</span><span class="text-[8px] font-bold text-slate-400 uppercase leading-none mt-1 italic">Policy is Assigned</span></div></div>`;
     } else if (p.nomineeStatus === "EMPTY") {
         nomineeBoxContent = `<span class="text-[11px] font-black text-rose-500 animate-pulse uppercase tracking-widest">Unassigned</span>`;
     } else if (p.nomineeStatus === "NA") {
         nomineeBoxContent = `<span class="text-[11px] font-black text-slate-400 uppercase italic tracking-widest">N/A</span>`;
     } else {
-        nomineeBoxContent = `<div class="flex -space-x-3">
-            ${(p.nominees || []).map(n => `<img src="${n.img}" class="w-9 h-9 rounded-full border-2 border-white shadow-md object-cover ring-1 ring-slate-100 transition-transform hover:scale-110 hover:z-20">`).join('')}
-        </div>`;
+        nomineeBoxContent = `<div class="flex -space-x-3">${(p.nominees || []).map(n => `<img src="${n.img}" class="w-9 h-9 rounded-full border-2 border-white shadow-md object-cover ring-1 ring-slate-100 transition-transform hover:scale-110 hover:z-20">`).join('')}</div>`;
     }
 
     let middleLabel = "Annual Premium", middleValue = autoFmt(p.premium, sym), middleColor = isStillPaying ? "text-emerald-600 font-black" : "text-slate-700";
@@ -58,7 +46,9 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
     const nextDueStr = `${annDay} ${startParts[1]} ${TODAY >= anniversaryThisYear ? CURRENT_YEAR + 1 : CURRENT_YEAR}`; 
     const finalDueDate = isPaidUp ? "PAID UP" : nextDueStr;
 
+    // --- TIMELINE (Abbreviated for brevity, logic remains same) ---
     let timelineHtml = '';
+    const premEndYear = safeGetYear(p.premiumEnds);
     for(let yr = startY; yr < matY; yr++) {
         const loopPolY = yr - startY + 1;
         const isPast = yr < CURRENT_YEAR;
@@ -98,10 +88,7 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
                 </div>
                 <div class="text-center border-l-2 border-slate-100 pl-10 min-w-[140px]">
                     ${isAssigned ? `<img src="assigned.png" class="h-10 object-contain mx-auto opacity-95 transform -rotate-3">` : 
-                        `<div>
-                            <p class="text-[9px] font-bold text-slate-400 uppercase">Sum Assured</p>
-                            <p class="text-lg font-black text-slate-800">${autoFmt(p.sumAssured, sym)}</p>
-                        </div>`
+                        `<div><p class="text-[9px] font-bold text-slate-400 uppercase leading-none mb-1">Sum Assured</p><p class="text-lg font-black text-slate-800 leading-none">${autoFmt(p.sumAssured, sym)}</p></div>`
                     }
                 </div>
             </div>
@@ -116,12 +103,10 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
         </div>
         <div class="content-area" style="background: linear-gradient(to bottom, ${brandBg}, #ffffff)">
             <div class="detail-grid">
-                <div class="detail-item"><p>Policy Number</p><p>${p.id || 'N/A'}</p></div>
-                <div class="detail-item"><p>UIN Number</p><p>${p.uin || 'N/A'}</p></div>
-                ${isULIP ? `<div class="detail-item" style="background: #eef2ff; border: 2px solid #6366f1; border-radius: 12px; padding: 10px;">
-                        <p style="color: #4338ca; font-weight: 800; font-size: 10px; text-transform: uppercase;">Portfolio Value</p>
-                        <p style="font-weight: 900; color: #1e1b4b; font-size: 18px;">${p.currentUnitValue || 'No Value'}</p>
-                    </div>` : `<div class="detail-item"><p>Customer ID</p><p>${p.clientId || 'N/A'}</p></div>`}
+                <div class="detail-item"><p>Policy Number</p><p style="font-family:'Orbitron'; font-weight:700;">${p.id || 'N/A'}</p></div>
+                <div class="detail-item"><p>UIN Number</p><p style="font-family:'Orbitron'; font-weight:700;">${p.uin || 'N/A'}</p></div>
+                ${isULIP ? `<div class="detail-item" style="background: #eef2ff; border: 2px solid #6366f1; border-radius: 12px; padding: 10px;"><p style="color:#4338ca; font-weight:800; font-size:10px; text-transform:uppercase;">Portfolio Value</p><p style="font-weight:900; color:#1e1b4b; font-size:18px; font-family:'Orbitron';">${p.currentUnitValue || 'No Value'}</p></div>` : 
+                `<div class="detail-item"><p>Customer ID</p><p style="font-family:'Orbitron'; font-weight:700;">${p.clientId || 'N/A'}</p></div>`}
             </div>
             
             <div class="mt-4 p-4 bg-white/50 border border-slate-100 rounded-2xl shadow-sm flex flex-col gap-3">
