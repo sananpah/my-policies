@@ -1,12 +1,11 @@
-/* loader.js - v4.6.5 - Master Sync: UIN Routing, Multi-Withdrawal & Holiday Fix */
-import { toNum, autoFmt, getColorMap } from './utils.js?v=1.0.3';
+/* loader.js - v4.6.6 - RESTORED: India Logic, Next Due, Paid Badges & Consolidated Fix */
+import { toNum, autoFmt, getColorMap, getTimeRemaining } from './utils.js?v=1.0.3';
 
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2UwOfG57DQBOBnJX-9hsRKOQTUgALiM3uxs-VGzD2KN8JoWNAQltH6IkgAGhPTNFEvb/pub?gid=866869416&single=true&output=csv";
 const githubLogo = "https://raw.githubusercontent.com/sananpah/my-policies/main/assets/logo/";
 
 export async function syncWithGoogleSheets() {
     const TODAY = new Date();
-    // Initialize empty lists to decommission data.js
     let masterList = { india: [], singapore: [] };
 
     try {
@@ -23,8 +22,6 @@ export async function syncWithGoogleSheets() {
 
         sheetRecords.forEach(match => {
             const otherDataRaw = String(match["Other Data"] || "").trim().toLowerCase();
-            
-            // --- UIN ROUTING LOGIC ---
             const isIndia = otherDataRaw.includes("uin:");
             const countryKey = isIndia ? "india" : "singapore";
             const sym = isIndia ? "₹" : "$";
@@ -36,26 +33,46 @@ export async function syncWithGoogleSheets() {
                 p.company = match.company;
                 p.type = match.type;
                 p.color = getColorMap(p.company);
-                
-                // GitHub Logo with Casing Preservation
-                const cleanName = p.company.replace(/[\s.]/g, "");
-                p.logo = `${githubLogo}logo_${cleanName}.png`;
+                p.logo = `${githubLogo}logo_${p.company.replace(/[\s.]/g, "")}.png`;
 
-                // Identity Mapping
                 const identity = insuredMap[match["Insured"]];
                 if (identity) { 
                     p.avatarPath = identity.img; 
                     p.holderType = identity.type; 
                 }
 
-                // Financials
+                // Financials & Consolidated Fix
                 p.premium = toNum(match["Premium"]);
-                p.totalPremiumPaid = toNum(match["Total Premium"]); // Holiday Fix
+                p.totalPremiumPaid = toNum(match["Total Premium"]); 
                 p.sumAssured = toNum(match["Sum Assured"]);
                 p.unitValueNumeric = toNum(match["Current Value"]);
                 p.currentUnitValue = match["Current Value"] || "No Value";
+                
+                // --- RESTORED: PAID STATUS & NEXT DUE LOGIC ---
+                p.dueDate = String(match["Due Date"] || "").toUpperCase();
+                p.isPaidUp = (p.dueDate === "PAID UP");
+                
+                // --- DATES & TERM (MIP FIX) ---
+                let rawDate = String(match["Commenced Date"] || "").trim().replace(/\./g, ' '); 
+                p.commenced = rawDate;
+                const dateParts = rawDate.split(" ");
+                const startY = parseInt(dateParts[2]);
+                const termParts = String(match["Term"] || "").split(":");
+                const ppt = parseInt(termParts[0]) || 0;
+                const mat = parseInt(termParts[1]) || 0;
+                p.mip = termParts[2] ? parseInt(termParts[2]) : ppt; 
+                p.ppt = ppt;
 
-                // Nominee Mapping
+                if (!isNaN(startY)) {
+                    p.maturity = `${dateParts[0]} ${dateParts[1]} ${startY + mat}`;
+                    // RESTORED: India countdown logic
+                    if (countryKey === "india") {
+                        p.nextDue = p.isPaidUp ? "PAID UP" : `${dateParts[0]} ${dateParts[1]} ${TODAY.getFullYear() + (TODAY.getMonth() > 10 ? 1 : 0)}`;
+                        p.timeRemaining = p.isPaidUp ? "Fully Paid" : getTimeRemaining(p.nextDue);
+                    }
+                }
+
+                // Nominees & Other Data (same as 4.6.5)
                 const nomineeRaw = String(match["Nominee"] || "").trim();
                 p.nominees = []; 
                 if (!nomineeRaw || nomineeRaw.toLowerCase() === "n/a") {
@@ -74,61 +91,39 @@ export async function syncWithGoogleSheets() {
                     });
                 }
 
-                // Other Data: UIN, ClientID, Surrender
                 p.uin = "N/A"; p.clientId = "N/A";
                 p.surrenderCharges = null; p.surrenderBase = "VALUATION";
-
                 if (otherDataRaw !== "n/a") {
-                    const lines = otherDataRaw.split(/\n|\r/);
-                    lines.forEach(line => {
+                    otherDataRaw.split(/\n|\r/).forEach(line => {
                         const cleanLine = line.trim().toLowerCase();
                         if (cleanLine.startsWith("uin:")) p.uin = line.split(":")[1]?.trim().toUpperCase();
                         else if (cleanLine.startsWith("clientid:")) p.clientId = line.split(":")[1]?.trim().toUpperCase();
                         else if (cleanLine.startsWith("surrender:")) {
                             const content = line.split(":")[1] || "";
                             p.surrenderBase = content.includes("[av]") ? "VALUATION" : "PREMIUM";
-                            const rawValues = content.replace(/\[.*?\]/g, "").split(",");
                             p.surrenderCharges = {};
-                            rawValues.forEach((val, index) => {
+                            content.replace(/\[.*?\]/g, "").split(",").forEach((val, idx) => {
                                 const v = parseInt(val.trim());
-                                if (!isNaN(v)) p.surrenderCharges[index + 1] = v;
+                                if (!isNaN(v)) p.surrenderCharges[idx + 1] = v;
                             });
                         }
                     });
                 }
-                if (!p.surrenderCharges) p.surrenderCharges = { 1: 0 };
 
-                // Dates & Term (MIP Fix)
-                let rawDate = String(match["Commenced Date"] || "").trim().replace(/\./g, ' '); 
-                p.commenced = rawDate;
-                const dateParts = rawDate.split(" ");
-                const startY = parseInt(dateParts[2]);
-
-                const termParts = String(match["Term"] || "").split(":");
-                const ppt = parseInt(termParts[0]) || 0;
-                const mat = parseInt(termParts[1]) || 0;
-                p.mip = termParts[2] ? parseInt(termParts[2]) : ppt; 
-                p.ppt = ppt;
-
-                if (!isNaN(startY)) {
-                    p.maturity = `${dateParts[0]} ${dateParts[1]} ${startY + mat}`;
-                }
-
-                // Multi-Withdrawal Parser
+                // --- RESTORED: MULTI-WITHDRAWAL PARSER ---
                 const rawBenefits = String(match["Other Coverage & Benefits"] || "");
                 const benefitsLines = rawBenefits.split(/\r?\n/);
                 const withdrawLine = benefitsLines.find(l => l.toLowerCase().trim().includes("withdraw"));
                 p.withdrawals = [];
                 if (withdrawLine) {
-                    const content = withdrawLine.split(":")[1] || "";
-                    content.split(",").forEach(seg => {
+                    (withdrawLine.split(":")[1] || "").split(",").forEach(seg => {
                         const cleanNum = seg.replace(/[$\s,]/g, "");
                         const val = parseFloat(cleanNum);
                         if (!isNaN(val)) p.withdrawals.push(val);
                     });
                 }
 
-                // India-Specific: Moneyback & ULIP Projections
+                // India-Specific: Moneyback & Projections
                 if (countryKey === "india") {
                     const mbLine = benefitsLines.find(l => l.toLowerCase().includes("moneyback"));
                     p.payoutSchedule = {}; 
@@ -188,11 +183,9 @@ function processCSV(csv) {
         const obj = {};
         headers.forEach((h, i) => { if (h) obj[h] = (rowData[i] || "").trim(); });
         if (!obj["Policy_Name"] || obj["Policy_Name"] === "EMPTY") return null;
-
         const nameParts = obj["Policy_Name"].split(":");
         obj.company = nameParts[0]?.trim();
         obj.name = nameParts[1]?.trim();
-
         const catParts = (obj["Category"] || "").split(":");
         obj.type = catParts[1]?.trim() || catParts[0]?.trim() || "Savings";
         return obj;
