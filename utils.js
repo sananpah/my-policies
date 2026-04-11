@@ -5,6 +5,24 @@ export const monthMap = {
     "Jul": 6, "Aug": 7, "Sep": 8, "Oct": 9, "Nov": 10, "Dec": 11
 };
 
+export const getColorMap = (companyName) => {
+    const colors = {
+        "AIA" : "#d31145",
+        "AxisMaxLife" : "#ae125d",
+        "BajajLife" : "#005a9c",
+        "BhartiAXA" : "#005a9c",
+        "HSBCLife" : "#db0011",
+        "ICICIPru" : "#9b2226",
+        "IndusIndNippon" : "#962524",
+        "KotakLife" : "#e63946",
+        "ManuLife" : "#00a758",
+        "Prudential" : "#ED1B2E",
+        "SBILife" : "#00B4EE",
+        "SingLife" : "#E60000"
+    };
+    return colors[companyName] || "#64748b";
+};
+
 const TODAY = new Date();
 
 export function raw(val) {
