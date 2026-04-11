@@ -1,18 +1,18 @@
 // data.js — Policy master list
 export const POLICY_DATA = {
     india: [
-        { id: "54751949", uin: "128N171V01", clientId: "60938507", color: "#962524"},
-        { id: "54679062", uin: "128N161V04", clientId: "60938507", color: "#962524"},
-        { id: "54040166", uin: "128N154V02", clientId: "60938507", color: "#962524"},
-        { id: "53044042", uin: "128N053V02", clientId: "60938507", color: "#962524"},
-        { id: "79079094", uin: "107N105V02", clientId: "61491746", color: "#e63946"},
-        { id: "79425536", uin: "107N124V01", clientId: "61491746", color: "#e63946"},
-        { id: "503-9562771", uin: "130A012V02", color: "#005a9c"},
-        { id: "608480927", uin: "104L082V02", color: "#ae125d"},
-        { id: "425335400", uin: "116L153V02", color: "#005a9c"},
-        { id: "378816898", uin: "116L181V01", color: "#005a9c"},
-        { id: "K7639543", uin: "N/A", clientId: "N/A", color: "#9b2226"},
-        { id: "3N307267702", uin: "N/A", clientId: "N/A", color: "#00B4EE"}
+        { id: "54751949",    color: "#962524"},
+        { id: "54679062",    color: "#962524"},
+        { id: "54040166",    color: "#962524"},
+        { id: "53044042",    color: "#962524"},
+        { id: "79079094",    color: "#e63946"},
+        { id: "79425536",    color: "#e63946"},
+        { id: "503-9562771", color: "#005a9c"},
+        { id: "608480927",   color: "#ae125d"},
+        { id: "425335400",   color: "#005a9c"},
+        { id: "378816898",   color: "#005a9c"},
+        { id: "K7639543",    color: "#9b2226"},
+        { id: "3N307267702", color: "#00B4EE"}
     ],
     singapore: [
         { id: "34874419",   color: "#ED1B2E", surrenderCharges: { 1: 0 } },
