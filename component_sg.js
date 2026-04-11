@@ -1,4 +1,4 @@
-/* component_sg.js - v6.9.5 - Correct Row Order & Multiple Nominee Fix */
+/* component_sg.js - v6.9.8 - Flag-Aware Surrender Math & Layout Sync */
 import { autoFmt, toNum, getTimeRemaining } from './utils.js';
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -26,8 +26,17 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const totalWithdrawn = (p.withdrawals || []).reduce((a, b) => a + toNum(b), 0);
     const netInvested = totalPremiumsPaid - totalWithdrawn;
 
+    // --- SURGERY: DUAL-ENGINE SURRENDER MATH ---
     const chargePct = (p.surrenderCharges && p.surrenderCharges[policyYearIdx]) || 0;
-    const surrenderValue = Math.round(Math.max(0, accountValue - (chargePct / 100 * (isPaidUp ? accountValue : totalPremiumsPaid))));
+    let surrenderValue = 0;
+
+    if (p.surrenderBase === "PREMIUM") {
+        // [pp] Logic: Charge is % of total principal paid
+        surrenderValue = Math.round(Math.max(0, accountValue - (chargePct / 100 * totalPremiumsPaid)));
+    } else {
+        // [av] Logic: Charge is % of current account value
+        surrenderValue = Math.round(Math.max(0, accountValue * (1 - (chargePct / 100))));
+    }
 
     const lockedAmount = accountValue - surrenderValue;
     const lockedDisplay = lockedAmount <= 0 
@@ -41,7 +50,6 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     } else if (p.nomineeStatus === "EMPTY") {
         nomineeHtml = `<span class="text-[11px] font-black text-rose-500 animate-pulse uppercase tracking-widest">Unassigned</span>`;
     } else {
-        // Updated to ensure -space-x allows all avatars to be visible/stacked
         nomineeHtml = `<div class="flex -space-x-3 items-center">
             ${(p.nominees || []).map(n => `
                 <img src="${n.img}" 
