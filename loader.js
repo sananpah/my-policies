@@ -39,29 +39,37 @@ export async function syncWithGoogleSheets(masterList) {
                     p.sumAssured = toNum(match["Sum Assured"]);
                     p.unitValueNumeric = toNum(match["Current Value"]);
                     p.currentUnitValue = match["Current Value"] || "No Value";
-
-                    // --- SURGICAL INSERTION: NOMINEE MAPPING ---
+                    
+                    // ... Nominee() Mapping ...
                     const nomineeRaw = String(match["Nominee"] || "").trim();
                     p.nominees = []; 
+                    
                     if (!nomineeRaw || nomineeRaw.toLowerCase() === "n/a") {
                         p.nomineeStatus = nomineeRaw.toLowerCase() === "n/a" ? "NA" : "EMPTY";
                     } else {
                         p.nomineeStatus = "ASSIGNED";
-                        const names = nomineeRaw.split(/,|\band\b|&/i).map(n => n.trim());
+                        
+                        // NEW REGEX: Splits by comma, "and", "&", OR newlines (\n or \r)
+                        const names = nomineeRaw.split(/,|\band\b|&|\n|\r/).map(n => n.trim());
+                        
                         names.forEach(name => {
-                            const matchName = name.toLowerCase();
+                            // Scrub any non-printable characters that Excel might have left behind
+                            const cleanName = name.replace(/[^\x20-\x7E]/g, "").trim();
+                            if (!cleanName) return; // Skip empty segments
+                    
+                            const matchName = cleanName.toLowerCase();
                             let img = "avatar_unknown.png"; 
                             
-                            // Reference insuredMap dynamically to find matching avatar
                             const mappedEntry = Object.entries(insuredMap).find(([fullName]) => 
                                 matchName.includes(fullName.toLowerCase())
                             );
+                    
                             if (mappedEntry) img = mappedEntry[1].img;
                             
-                            p.nominees.push({ name: name, img: img });
+                            p.nominees.push({ name: cleanName, img: img });
                         });
                     }
-                    // --- END NOMINEE INSERTION ---
+                    
 
                     // 2. Date & Term Logic (SG: SurrenderFree:Mat:MIP)
                     let rawDate = String(match["Commenced Date"] || "").trim().replace(/\./g, ' '); 
