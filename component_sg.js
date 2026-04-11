@@ -1,4 +1,4 @@
-/* component_sg.js - v7.1.9 - Reference Fix & Multi-Withdrawal Summing */
+/* component_sg.js - v7.2.0 - Clean View: Removed Capital Analysis Breakdown */
 import { autoFmt, toNum, getTimeRemaining } from './utils.js';
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -19,7 +19,7 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     if (TODAY < thisYearAnniversary) yearsPassed--;
     const policyYearIdx = yearsPassed + 1;
 
-    // --- 1. PRECISION COUNTDOWN ---
+    // --- COUNTDOWN ---
     let premRemainingStr = "";
     if (isPaidUp) { premRemainingStr = "PAID UP"; }
     else if (mip === 0) { premRemainingStr = "VESTED"; }
@@ -37,20 +37,14 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     }
     const timeLeftDisplay = (premRemainingStr === "VESTED" || premRemainingStr === "PAID UP") ? premRemainingStr : `LEFT: ${premRemainingStr}`;
 
-    // --- 2. MATH: HOLIDAY-AWARE ---
+    // --- MATH (Calculated in background, no longer printed in breakdown) ---
     const accountValue = Math.round(toNum(p.currentUnitValue || 0));
     const annualPremium = toNum(p.premium || 0);
-    
-    // FIX: Define actualTotalPaid and use it consistently
     const actualTotalPaid = p.totalPremiumPaid > 0 ? p.totalPremiumPaid : (annualPremium * policyYearIdx);
-    
-    // FIX: Correctly sum the array of withdrawals coming from loader v4.5.16
     const totalWithdrawn = (p.withdrawals || []).reduce((sum, val) => sum + val, 0);
     const netInvested = Math.round(actualTotalPaid - totalWithdrawn);
 
     const chargePct = (p.surrenderCharges && p.surrenderCharges[policyYearIdx]) || 0;
-    
-    // FIX: Changed totalPremiumsPaid (undefined) to actualTotalPaid
     let surrenderValue = (p.surrenderBase === "PREMIUM") 
         ? Math.round(Math.max(0, accountValue - (chargePct / 100 * actualTotalPaid)))
         : Math.round(Math.max(0, accountValue * (1 - (chargePct / 100))));
@@ -59,14 +53,13 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
         ? `<span class="text-slate-400 text-sm font-bold uppercase tracking-widest">Fully Vested</span>` 
         : `-${autoFmt(accountValue - surrenderValue, sym)}`;
 
-    // --- 3. UI ELEMENTS ---
+    // --- UI ELEMENTS ---
     const brandColor = p.color || "#000000";
     const brandBg = `rgba(${parseInt(brandColor.slice(1,3), 16)}, ${parseInt(brandColor.slice(3,5), 16)}, ${parseInt(brandColor.slice(5,7), 16)}, 0.04)`;
 
     const targetExitYear = Math.min(endY, startY + ppt + 2);
     const calcProj = (rate) => Math.round((accountValue * Math.pow(1 + rate, Math.max(0, targetExitYear - CURRENT_YEAR))) + (isPaidUp ? 0 : (annualPremium * ((Math.pow(1 + rate, Math.max(0, Math.min(startY + ppt, targetExitYear) - (hasPassedThisYear ? CURRENT_YEAR + 1 : CURRENT_YEAR))) - 1) / rate) * (1 + rate))));
-    
-    const starHtml = `<div class="ml-2 relative group flex items-center justify-center w-12 h-10 bg-white rounded-xl shadow-sm border border-slate-200 cursor-help"><span class="text-xl text-amber-500 transition-transform group-hover:scale-125">★</span><div class="opacity-0 group-hover:opacity-100 absolute bottom-full mb-4 right-0 bg-slate-900 text-white p-4 rounded-2xl z-[100] shadow-2xl border border-white/10 pointer-events-none min-w-[180px]"><b class="text-orange-400 uppercase tracking-widest text-[9px] block mb-2 font-black">Projected Maturity*</b><div class="space-y-1"><div class="flex justify-between text-[10px] font-black leading-tight text-white"><span>Est. @4%:</span><span>${autoFmt(calcProj(0.04), sym)}</span></div><div class="flex justify-between text-[10px] font-black leading-tight text-white"><span>Est. @8%:</span><span>${autoFmt(calcProj(0.08), sym)}</span></div></div><div class="mt-2 pt-2 border-t border-white/10 text-[8px] text-slate-400 italic font-medium leading-tight">*Projected until Year ${targetExitYear}.</div><div class="absolute top-full right-4 border-8 border-transparent border-t-slate-900"></div></div></div>`;
+    const starHtml = `<div class="ml-2 relative group flex items-center justify-center w-12 h-10 bg-white rounded-xl shadow-sm border border-slate-200 cursor-help"><span class="text-xl text-amber-500 transition-transform group-hover:scale-125">★</span><div class="opacity-0 group-hover:opacity-100 absolute bottom-full mb-4 right-0 bg-slate-900 text-white p-4 rounded-2xl z-[100] shadow-2xl border border-white/10 pointer-events-none min-w-[180px]"><b class="text-orange-400 uppercase tracking-widest text-[9px] block mb-2 font-black">Projected Maturity*</b><div class="space-y-1"><div class="flex justify-between text-[10px] font-black leading-tight text-white"><span>Est. @4%:</span><span>${autoFmt(calcProj(0.04), sym)}</span></div><div class="flex justify-between text-[10px] font-black leading-tight text-white"><span>Est. @8%:</span><span>${autoFmt(calcProj(0.08), sym)}</span></div></div><div class="absolute top-full right-4 border-8 border-transparent border-t-slate-900"></div></div></div>`;
 
     let timelineHtml = '';
     const yearsToMat = endY - startY;
@@ -106,9 +99,8 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
                 <div><p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Annual Premium</p><p class="text-2xl font-black text-[#059669]">${autoFmt(p.premium, sym)}</p></div>
                 <div><p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Sum Assured</p><p class="text-2xl font-black text-slate-800">${autoFmt(toNum(p.sumAssured) === 0 ? accountValue : p.sumAssured, sym)}</p></div>
                 <div class="bg-white/60 px-6 py-3 rounded-[20px] border border-white/50 flex flex-col justify-center min-w-[125px] h-[64px]">
-                    <p class="text-[10px] font-black ${premRemainingStr === 'VESTED' ? 'text-emerald-500' : 'text-indigo-500'} uppercase text-center">${timeLeftDisplay}</p>
+                    <p class="text-[10px] font-black ${premRemainingStr === 'VESTED' ? 'text-emerald-500' : 'text-indigo-500'} uppercase text-center">${premRemainingStr === 'VESTED' || isPaidUp ? premRemainingStr : 'LEFT: ' + premRemainingStr}</p>
                     <div class="h-[1px] bg-slate-200/40 w-full my-1"></div>
-                    <p class="text-[9px] font-black text-sky-500 uppercase text-center">Next Due</p>
                     <p class="text-sm font-black text-slate-700 text-center tracking-tight">${new Date(hasPassedThisYear ? CURRENT_YEAR + 1 : CURRENT_YEAR, commMonth, commDay).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
                 </div>
             </div>
@@ -127,14 +119,7 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
                 <div class="p-4 rounded-xl bg-emerald-50/50 border border-emerald-100 text-center shadow-sm"><p class="text-[9px] font-bold text-emerald-600 uppercase mb-1.5">Surrender</p><p class="text-[20px] font-black text-emerald-700" style="font-family:'Orbitron'">${autoFmt(surrenderValue, sym)}</p></div>
                 <div class="p-4 rounded-xl bg-red-50/50 border border-red-100 text-center shadow-sm flex flex-col justify-center items-center"><p class="text-[9px] font-bold text-red-400 uppercase mb-1.5">Locked</p><p class="text-[20px] font-black text-red-600 leading-none" style="font-family:'Orbitron'">${lockedDisplay}</p></div>
             </div>
-            ${(p.totalPremiumPaid || totalWithdrawn > 0) ? `
-            <div class="mb-8 p-6 rounded-[32px] bg-white border border-slate-100 shadow-sm">
-                <div class="grid grid-cols-3 gap-4">
-                    <div class="p-3 rounded-2xl bg-slate-50"><p class="text-[9px] font-bold text-slate-400 uppercase">Paid</p><p class="font-black text-slate-700" style="font-family:'Orbitron'">${autoFmt(actualTotalPaid, sym)}</p></div>
-                    <div class="p-3 rounded-2xl bg-slate-50"><p class="text-[9px] font-bold text-slate-400 uppercase">Withdrawn</p><p class="font-black text-red-500" style="font-family:'Orbitron'">-${autoFmt(totalWithdrawn, sym)}</p></div>
-                    <div class="p-3 rounded-2xl bg-indigo-50 border border-indigo-100"><p class="text-[9px] font-bold text-indigo-400 uppercase">Net Base</p><p class="font-black text-indigo-900" style="font-family:'Orbitron'">${autoFmt(netInvested, sym)}</p></div>
-                </div>
-            </div>` : ''}
+
             <div class="mb-6 p-4 bg-white/50 border border-slate-100 rounded-[24px] shadow-sm flex flex-col gap-2">
                 <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">Nominee(s)</p>
                 <div class="flex items-center h-10">${nomineeHtml}</div>
