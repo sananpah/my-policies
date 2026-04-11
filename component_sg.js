@@ -1,4 +1,4 @@
-/* component_sg.js - v7.1.6 - Fix Reference Error & Logic Sync */
+/* component_sg.js - v7.1.9 - Reference Fix & Multi-Withdrawal Summing */
 import { autoFmt, toNum, getTimeRemaining } from './utils.js';
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -41,12 +41,16 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const accountValue = Math.round(toNum(p.currentUnitValue || 0));
     const annualPremium = toNum(p.premium || 0);
     
-    // Reference Fix: Use actualTotalPaid throughout the logic
+    // FIX: Define actualTotalPaid and use it consistently
     const actualTotalPaid = p.totalPremiumPaid > 0 ? p.totalPremiumPaid : (annualPremium * policyYearIdx);
-    const totalWithdrawn = (p.withdrawals || []).reduce((a, b) => a + toNum(b), 0);
+    
+    // FIX: Correctly sum the array of withdrawals coming from loader v4.5.16
+    const totalWithdrawn = (p.withdrawals || []).reduce((sum, val) => sum + val, 0);
     const netInvested = Math.round(actualTotalPaid - totalWithdrawn);
 
     const chargePct = (p.surrenderCharges && p.surrenderCharges[policyYearIdx]) || 0;
+    
+    // FIX: Changed totalPremiumsPaid (undefined) to actualTotalPaid
     let surrenderValue = (p.surrenderBase === "PREMIUM") 
         ? Math.round(Math.max(0, accountValue - (chargePct / 100 * actualTotalPaid)))
         : Math.round(Math.max(0, accountValue * (1 - (chargePct / 100))));
