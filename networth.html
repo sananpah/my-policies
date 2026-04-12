@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nami Wealth Terminal v8.9</title>
+    <title>Nami Wealth Terminal v9.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -29,12 +29,8 @@
         .stat-val { font-family: 'Space Mono', monospace; font-weight: 900; letter-spacing: -1px; }
         .nami-glitch { -webkit-text-stroke: 3px #000; text-shadow: 6px 6px 0px #fff; }
         .card-emoji { position: absolute; top: 10px; right: 15px; font-size: 2.2rem; filter: drop-shadow(3px 3px 0px rgba(0,0,0,0.1)); }
-        
-        /* Growth Badges */
         .up-badge { background: #39FF14; color: #000; padding: 4px 12px; border-radius: 99px; font-weight: 900; font-size: 14px; border: 2px solid #000; }
         .down-badge { background: #FF3131; color: #fff; padding: 4px 12px; border-radius: 99px; font-weight: 900; font-size: 14px; border: 2px solid #000; }
-
-        /* Card Colors */
         .c-gold { background: #FFD700 !important; color: #000; }               
         .c-01 { background: #FF00FF !important; color: #fff; } .c-02 { background: #FF3131 !important; color: #fff; } 
         .c-03 { background: #FF5F1F !important; color: #fff; } .c-05 { background: #CCFF00 !important; }               
@@ -122,8 +118,12 @@
                 dashboardData.forEach(item => {
                     const amt = parseFloat(String(item.amount).replace(/[$,%]/g, '')) || 0;
                     currentTotal += amt;
-                    const cat = item.Category || "Other";
-                    categorySums[cat] = (categorySums[cat] || 0) + amt;
+                    // String cleanup for Category to prevent 'undefined' in charts
+                    const catRaw = item.Category || item.category || "Misc";
+                    const cat = String(catRaw).trim();
+                    if(cat && cat !== "undefined") {
+                        categorySums[cat] = (categorySums[cat] || 0) + amt;
+                    }
                 });
 
                 document.getElementById('total-networth').innerText = "$" + Math.round(currentTotal).toLocaleString();
@@ -138,14 +138,15 @@
         }
 
         function calculateGrowth(snapshotData, currentTotal) {
-            if (snapshotData.length === 0) return;
+            if (!snapshotData || snapshotData.length === 0) return;
             const grouped = snapshotData.reduce((acc, curr) => {
                 const dateKey = String(curr.Date || curr.date).trim();
                 const amt = parseFloat(String(curr.Amount || curr.amount).replace(/[$,%]/g, '')) || 0;
-                acc[dateKey] = (acc[dateKey] || 0) + amt;
+                if(dateKey && dateKey !== "undefined") acc[dateKey] = (acc[dateKey] || 0) + amt;
                 return acc;
             }, {});
             const dates = Object.keys(grouped);
+            if(dates.length === 0) return;
             const lastTotal = grouped[dates[dates.length - 1]];
             const percent = (((currentTotal - lastTotal) / lastTotal) * 100).toFixed(1);
             const badge = document.getElementById('growth-badge');
@@ -158,9 +159,10 @@
             data.forEach((item, index) => {
                 const sub = String(item['sub-category'] || "Asset").trim();
                 const amt = parseFloat(String(item.amount).replace(/[$,%]/g, '')) || 0;
+                const cat = String(item.Category || "Misc").trim();
                 let colorClass = "c-" + (((index % 11) + 1) < 10 ? '0' + ((index % 11) + 1) : ((index % 11) + 1));
                 if (sub === "Digital Gold") colorClass = "c-gold";
-                container.innerHTML += `<div class="funky-card p-6 ${colorClass}"><span class="card-emoji">${emojiMap[sub] || "💰"}</span><div class="asset-label">${item.Category}</div><br><div class="font-black text-xs uppercase opacity-80">${sub}</div><div class="text-4xl stat-val mt-4">$${Math.round(amt).toLocaleString()}</div></div>`;
+                container.innerHTML += `<div class="funky-card p-6 ${colorClass}"><span class="card-emoji">${emojiMap[sub] || "💰"}</span><div class="asset-label">${cat}</div><br><div class="font-black text-xs uppercase opacity-80">${sub}</div><div class="text-4xl stat-val mt-4">$${Math.round(amt).toLocaleString()}</div></div>`;
             });
         }
 
@@ -169,8 +171,8 @@
             if (allocChart) allocChart.destroy();
             allocChart = new Chart(ctx, {
                 type: 'doughnut',
-                data: { labels: Object.keys(catData), datasets: [{ data: Object.values(catData), backgroundColor: ['#FF00FF', '#00FFFF', '#FFD700', '#39FF14', '#FF5F1F', '#8A2BE2'], borderColor: '#000', borderWidth: 5 }] },
-                options: { responsive: true, maintainAspectRatio: false, layout: { padding: { bottom: 30 } }, plugins: { legend: { position: 'bottom', labels: { padding: 15, font: { weight: 'bold', family: 'Outfit' }, color: '#000' } } } }
+                data: { labels: Object.keys(catData), datasets: [{ data: Object.values(catData), backgroundColor: ['#FF00FF', '#00FFFF', '#FFD700', '#39FF14', '#FF5F1F', '#8A2BE2', '#FF004D'], borderColor: '#000', borderWidth: 5 }] },
+                options: { responsive: true, maintainAspectRatio: false, layout: { padding: { bottom: 30 } }, plugins: { legend: { position: 'bottom', labels: { padding: 15, font: { weight: 'bold', family: 'Outfit', size: 12 }, color: '#000' } } } }
             });
         }
 
