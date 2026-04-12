@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nami Wealth Terminal v8.8</title>
+    <title>Nami Wealth Terminal v8.9</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -13,7 +13,6 @@
             background-attachment: fixed;
             color: #000; font-family: 'Outfit', sans-serif; min-height: 100vh;
         }
-        /* Lock Screen Style */
         #lock-screen {
             position: fixed; inset: 0; background: #000; z-index: 9999;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -22,7 +21,6 @@
             background: transparent; border-bottom: 4px solid #FF00FF; color: #fff;
             font-family: 'Space Mono'; font-size: 3rem; text-align: center; width: 200px; outline: none;
         }
-        /* Dashboard Cards */
         .funky-card { 
             background: rgba(255, 255, 255, 0.95); border: 5px solid #000; border-radius: 30px; 
             box-shadow: 10px 10px 0px #000; position: relative; transition: all 0.2s; overflow: hidden;
@@ -32,7 +30,11 @@
         .nami-glitch { -webkit-text-stroke: 3px #000; text-shadow: 6px 6px 0px #fff; }
         .card-emoji { position: absolute; top: 10px; right: 15px; font-size: 2.2rem; filter: drop-shadow(3px 3px 0px rgba(0,0,0,0.1)); }
         
-        /* Color Palette */
+        /* Growth Badges */
+        .up-badge { background: #39FF14; color: #000; padding: 4px 12px; border-radius: 99px; font-weight: 900; font-size: 14px; border: 2px solid #000; }
+        .down-badge { background: #FF3131; color: #fff; padding: 4px 12px; border-radius: 99px; font-weight: 900; font-size: 14px; border: 2px solid #000; }
+
+        /* Card Colors */
         .c-gold { background: #FFD700 !important; color: #000; }               
         .c-01 { background: #FF00FF !important; color: #fff; } .c-02 { background: #FF3131 !important; color: #fff; } 
         .c-03 { background: #FF5F1F !important; color: #fff; } .c-05 { background: #CCFF00 !important; }               
@@ -57,53 +59,40 @@
                 <h1 class="text-7xl md:text-9xl font-black italic nami-glitch uppercase">NAMI</h1>
                 <p id="status-text" class="bg-black text-white inline-block px-4 py-1 text-xs font-black uppercase mt-2">Live Terminal 📡</p>
             </div>
-            <div class="funky-card bg-white p-8 px-12 text-center border-black shadow-none" style="height: auto;">
+            <div class="funky-card bg-white p-8 px-12 text-center border-black shadow-none flex flex-col items-center justify-center" style="height: auto;">
                 <span class="text-xs font-black uppercase text-gray-500 tracking-widest">Total Net Worth 🌍</span>
-                <div id="total-networth" class="text-6xl md:text-7xl font-black stat-val mt-1">$0</div>
+                <div class="flex items-center gap-4 mt-1">
+                    <div id="total-networth" class="text-5xl md:text-7xl font-black stat-val">$0</div>
+                    <div id="growth-badge"></div>
+                </div>
             </div>
         </header>
 
-        <div class="mb-12">
-            <div class="funky-card bg-white p-8 w-full">
-                <h2 class="text-center font-black uppercase mb-6 italic tracking-widest text-2xl text-pink-600">Wealth Progression 📈</h2>
-                <div class="h-[350px]"><canvas id="progressChart"></canvas></div>
-            </div>
-        </div>
-
-        <div class="mb-16 flex justify-center gap-6 flex-wrap">
-            <div class="funky-card bg-white p-6 w-full max-w-2xl h-[480px]">
-                <h2 class="text-center font-black uppercase mb-6 italic text-xl">Asset Distribution 📊</h2>
-                <canvas id="categoryChart"></canvas>
-            </div>
-        </div>
-
+        <div class="mb-12"><div class="funky-card bg-white p-8 w-full"><h2 class="text-center font-black uppercase mb-6 italic tracking-widest text-2xl text-pink-600">Wealth Progression 📈</h2><div class="h-[350px]"><canvas id="progressChart"></canvas></div></div></div>
+        
+        <div class="mb-16 flex justify-center gap-6 flex-wrap"><div class="funky-card bg-white p-6 w-full max-w-2xl h-[480px]"><h2 class="text-center font-black uppercase mb-6 italic text-xl">Asset Distribution 📊</h2><canvas id="categoryChart"></canvas></div></div>
+        
         <div id="matrix-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16"></div>
     </div>
 
     <script>
-        // --- 1. CONFIGURATION ---
         const SHEET_URL = "https://script.google.com/macros/s/AKfycby4pyDQgIfmnNXP-wNFH3CCA_xaekozyNVbtH4MeLrNG8rZgO4NrLYa2q6oDmDlCaRPwQ/exec";
-        const MY_PIN = "1977"; // <-- CHANGE YOUR PASSWORD HERE
+        const MY_PIN = "1977"; 
 
         let allocChart, progressChart;
 
-        // Security Check Function
         function checkPin() {
             const input = document.getElementById('pin-field').value;
             if (input === MY_PIN) {
                 document.getElementById('lock-screen').style.display = 'none';
                 document.getElementById('main-content').style.display = 'block';
-                fetchNamiData(); // Only fetch data once unlocked
+                fetchNamiData();
             } else {
                 document.getElementById('lock-error').innerText = "Incorrect PIN Access Denied";
                 document.getElementById('pin-field').value = '';
             }
         }
-
-        // Allow "Enter" key to unlock
-        document.getElementById('pin-field').addEventListener("keyup", function(event) {
-            if (event.key === "Enter") checkPin();
-        });
+        document.getElementById('pin-field').addEventListener("keyup", (e) => { if (e.key === "Enter") checkPin(); });
 
         const emojiMap = {
             "Digital Gold": "🌟", "Fractional Property": "🏢", "Invoice Discounting": "📑",
@@ -138,32 +127,40 @@
                 });
 
                 document.getElementById('total-networth').innerText = "$" + Math.round(currentTotal).toLocaleString();
+                
                 renderCards(dashboardData);
                 renderDonut(categorySums);
                 renderProgress(snapshotData, currentTotal);
-            } catch (error) {
-                console.error("Sync Error:", error);
-            }
+                calculateGrowth(snapshotData, currentTotal);
+
+                document.getElementById('status-text').innerText = "System Live ⚡";
+            } catch (error) { console.error(error); }
+        }
+
+        function calculateGrowth(snapshotData, currentTotal) {
+            if (snapshotData.length === 0) return;
+            const grouped = snapshotData.reduce((acc, curr) => {
+                const dateKey = String(curr.Date || curr.date).trim();
+                const amt = parseFloat(String(curr.Amount || curr.amount).replace(/[$,%]/g, '')) || 0;
+                acc[dateKey] = (acc[dateKey] || 0) + amt;
+                return acc;
+            }, {});
+            const dates = Object.keys(grouped);
+            const lastTotal = grouped[dates[dates.length - 1]];
+            const percent = (((currentTotal - lastTotal) / lastTotal) * 100).toFixed(1);
+            const badge = document.getElementById('growth-badge');
+            badge.innerHTML = currentTotal >= lastTotal ? `<span class="up-badge">▲ +${percent}%</span>` : `<span class="down-badge">▼ ${percent}%</span>`;
         }
 
         function renderCards(data) {
             const container = document.getElementById('matrix-container');
             container.innerHTML = ''; 
             data.forEach((item, index) => {
-                const cat = String(item.Category || "Misc").trim();
                 const sub = String(item['sub-category'] || "Asset").trim();
                 const amt = parseFloat(String(item.amount).replace(/[$,%]/g, '')) || 0;
                 let colorClass = "c-" + (((index % 11) + 1) < 10 ? '0' + ((index % 11) + 1) : ((index % 11) + 1));
                 if (sub === "Digital Gold") colorClass = "c-gold";
-
-                container.innerHTML += `
-                    <div class="funky-card p-6 ${colorClass}">
-                        <span class="card-emoji">${emojiMap[sub] || "💰"}</span>
-                        <div class="asset-label">${cat}</div><br>
-                        <div class="font-black text-xs uppercase opacity-80">${sub}</div>
-                        <div class="text-4xl stat-val mt-4">$${Math.round(amt).toLocaleString()}</div>
-                    </div>
-                `;
+                container.innerHTML += `<div class="funky-card p-6 ${colorClass}"><span class="card-emoji">${emojiMap[sub] || "💰"}</span><div class="asset-label">${item.Category}</div><br><div class="font-black text-xs uppercase opacity-80">${sub}</div><div class="text-4xl stat-val mt-4">$${Math.round(amt).toLocaleString()}</div></div>`;
             });
         }
 
@@ -172,19 +169,8 @@
             if (allocChart) allocChart.destroy();
             allocChart = new Chart(ctx, {
                 type: 'doughnut',
-                data: {
-                    labels: Object.keys(catData),
-                    datasets: [{
-                        data: Object.values(catData),
-                        backgroundColor: ['#FF00FF', '#00FFFF', '#FFD700', '#39FF14', '#FF5F1F', '#8A2BE2', '#FF004D'],
-                        borderColor: '#000', borderWidth: 5
-                    }]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    layout: { padding: { bottom: 30, top: 10 } },
-                    plugins: { legend: { position: 'bottom', labels: { padding: 15, font: { weight: 'bold', family: 'Outfit', size: 12 }, color: '#000' } } }
-                }
+                data: { labels: Object.keys(catData), datasets: [{ data: Object.values(catData), backgroundColor: ['#FF00FF', '#00FFFF', '#FFD700', '#39FF14', '#FF5F1F', '#8A2BE2'], borderColor: '#000', borderWidth: 5 }] },
+                options: { responsive: true, maintainAspectRatio: false, layout: { padding: { bottom: 30 } }, plugins: { legend: { position: 'bottom', labels: { padding: 15, font: { weight: 'bold', family: 'Outfit' }, color: '#000' } } } }
             });
         }
 
@@ -199,30 +185,14 @@
                 }
                 return acc;
             }, {});
-
             let labels = Object.keys(grouped);
             let values = Object.values(grouped);
-            labels.push("Today");
-            values.push(currentTotal);
-
+            labels.push("Today"); values.push(currentTotal);
             if (progressChart) progressChart.destroy();
             progressChart = new Chart(ctx, {
                 type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        data: values, borderColor: '#000', borderWidth: 6,
-                        pointRadius: 8, pointBackgroundColor: '#FF00FF', tension: 0.3, fill: false
-                    }]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    scales: {
-                        y: { ticks: { font: { family: 'Space Mono', weight: 'bold' }, callback: v => '$' + Math.round(v/1000) + 'k' } },
-                        x: { ticks: { font: { family: 'Outfit', weight: 'bold' } } }
-                    },
-                    plugins: { legend: { display: false } }
-                }
+                data: { labels: labels, datasets: [{ data: values, borderColor: '#000', borderWidth: 6, pointRadius: 8, pointBackgroundColor: '#FF00FF', tension: 0.3, fill: false }] },
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { ticks: { callback: v => '$' + Math.round(v/1000) + 'k' } } } }
             });
         }
     </script>
