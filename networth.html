@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nami Wealth Terminal v9.0</title>
+    <title>Nami Wealth Terminal v9.3</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -65,9 +65,7 @@
         </header>
 
         <div class="mb-12"><div class="funky-card bg-white p-8 w-full"><h2 class="text-center font-black uppercase mb-6 italic tracking-widest text-2xl text-pink-600">Wealth Progression 📈</h2><div class="h-[350px]"><canvas id="progressChart"></canvas></div></div></div>
-        
         <div class="mb-16 flex justify-center gap-6 flex-wrap"><div class="funky-card bg-white p-6 w-full max-w-2xl h-[480px]"><h2 class="text-center font-black uppercase mb-6 italic text-xl">Asset Distribution 📊</h2><canvas id="categoryChart"></canvas></div></div>
-        
         <div id="matrix-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16"></div>
     </div>
 
@@ -117,22 +115,18 @@
 
                 dashboardData.forEach(item => {
                     const amt = parseFloat(String(item.amount).replace(/[$,%]/g, '')) || 0;
-                    currentTotal += amt;
-                    // String cleanup for Category to prevent 'undefined' in charts
-                    const catRaw = item.Category || item.category || "Misc";
-                    const cat = String(catRaw).trim();
-                    if(cat && cat !== "undefined") {
-                        categorySums[cat] = (categorySums[cat] || 0) + amt;
+                    if (amt > 0) {
+                        currentTotal += amt;
+                        const cat = String(item.Category || item.category || "Misc").trim();
+                        if (cat && cat !== "undefined") categorySums[cat] = (categorySums[cat] || 0) + amt;
                     }
                 });
 
                 document.getElementById('total-networth').innerText = "$" + Math.round(currentTotal).toLocaleString();
-                
                 renderCards(dashboardData);
                 renderDonut(categorySums);
                 renderProgress(snapshotData, currentTotal);
                 calculateGrowth(snapshotData, currentTotal);
-
                 document.getElementById('status-text').innerText = "System Live ⚡";
             } catch (error) { console.error(error); }
         }
@@ -142,11 +136,10 @@
             const grouped = snapshotData.reduce((acc, curr) => {
                 const dateKey = String(curr.Date || curr.date).trim();
                 const amt = parseFloat(String(curr.Amount || curr.amount).replace(/[$,%]/g, '')) || 0;
-                if(dateKey && dateKey !== "undefined") acc[dateKey] = (acc[dateKey] || 0) + amt;
+                if (dateKey && dateKey !== "undefined") acc[dateKey] = (acc[dateKey] || 0) + amt;
                 return acc;
             }, {});
             const dates = Object.keys(grouped);
-            if(dates.length === 0) return;
             const lastTotal = grouped[dates[dates.length - 1]];
             const percent = (((currentTotal - lastTotal) / lastTotal) * 100).toFixed(1);
             const badge = document.getElementById('growth-badge');
@@ -176,73 +169,54 @@
             });
         }
 
-function renderProgress(snapshotData, currentTotal) {
-    const ctx = document.getElementById('progressChart').getContext('2d');
-    
-    // 1. Group the Snapshot data by date
-    const grouped = snapshotData.reduce((acc, curr) => {
-        const rawDate = String(curr.Date || curr.date || curr.DATE || "").trim();
-        const rawAmt = curr.Amount || curr.amount || curr.AMOUNT || 0;
-        const amt = parseFloat(String(rawAmt).replace(/[$,%]/g, '')) || 0;
-        
-        if (rawDate && rawDate !== "undefined" && !isNaN(amt)) {
-            const cleanDate = formatShortDate(rawDate);
-            acc[cleanDate] = (acc[cleanDate] || 0) + amt;
-        }
-        return acc;
-    }, {});
-
-    let labels = Object.keys(grouped);
-    let values = Object.values(grouped);
-
-    // 2. AUTO-ASSIGN DATE FOR LIVE TOTAL
-    // This creates a label like "Apr 26" based on the current computer time
-    const today = new Date();
-    const liveDateLabel = formatShortDate(today.toISOString());
-
-    // 3. Only add the live total if it's not already the same month as the last snapshot entry
-    if (labels[labels.length - 1] !== liveDateLabel) {
-        labels.push(liveDateLabel);
-        values.push(currentTotal);
-    } else {
-        // If the snapshot already has an entry for this month, 
-        // update that point with your latest live "OnlineDashboard" total
-        values[values.length - 1] = currentTotal;
-    }
-
-    if (progressChart) progressChart.destroy();
-    progressChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [{
-                data: values,
-                borderColor: '#000',
-                borderWidth: 6,
-                pointRadius: 8,
-                pointBackgroundColor: '#FF00FF',
-                tension: 0.3,
-                fill: false
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: { 
-                    ticks: { 
-                        font: { family: 'Space Mono', weight: 'bold' },
-                        callback: v => '$' + Math.round(v/1000) + 'k' 
-                    } 
-                },
-                x: { 
-                    ticks: { font: { family: 'Outfit', weight: 'bold' } } 
+        function renderProgress(snapshotData, currentTotal) {
+            const ctx = document.getElementById('progressChart').getContext('2d');
+            
+            const grouped = snapshotData.reduce((acc, curr) => {
+                const rawDate = String(curr.Date || curr.date || "").trim();
+                const rawAmt = curr.Amount || curr.amount || 0;
+                const amt = parseFloat(String(rawAmt).replace(/[$,%]/g, '')) || 0;
+                
+                if (rawDate && rawDate !== "undefined") {
+                    const cleanDate = formatShortDate(rawDate);
+                    acc[cleanDate] = (acc[cleanDate] || 0) + amt;
                 }
-            },
-            plugins: { legend: { display: false } }
+                return acc;
+            }, {});
+
+            let labels = Object.keys(grouped);
+            let values = Object.values(grouped);
+
+            // Using "Live" as the final label to avoid date conflicts and undefined errors
+            labels.push("Live");
+            values.push(currentTotal);
+
+            if (progressChart) progressChart.destroy();
+            progressChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: values,
+                        borderColor: '#000',
+                        borderWidth: 6,
+                        pointRadius: 8,
+                        pointBackgroundColor: '#FF00FF',
+                        tension: 0.3,
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { ticks: { font: { family: 'Space Mono', weight: 'bold' }, callback: v => '$' + Math.round(v/1000) + 'k' } },
+                        x: { ticks: { font: { family: 'Outfit', weight: 'bold' } } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
         }
-    });
-}
     </script>
 </body>
 </html>
