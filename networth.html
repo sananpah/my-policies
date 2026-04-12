@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nami Wealth Terminal v9.4</title>
+    <title>Nami Wealth Terminal v9.5</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -26,8 +26,24 @@
             box-shadow: 10px 10px 0px #000; position: relative; transition: all 0.2s; overflow: hidden;
         }
         .funky-card:hover { transform: translate(-4px, -4px); box-shadow: 14px 14px 0px #000; }
-        .stat-val { font-family: 'Space Mono', monospace; font-weight: 900; letter-spacing: -1px; }
-        .nami-glitch { -webkit-text-stroke: 2px #000; text-shadow: 4px 4px 0px #fff; }
+        
+        /* Fixed Truncation: Increased line-height (leading) and added vertical padding */
+        .stat-val { 
+            font-family: 'Space Mono', monospace; 
+            font-weight: 900; 
+            letter-spacing: -1px; 
+            line-height: 1.4; 
+            padding: 5px 0;
+        }
+        
+        /* Fixed Squeezed Header: Added tracking (letter-spacing) and word-spacing */
+        .nami-header {
+            -webkit-text-stroke: 2px #000; 
+            text-shadow: 4px 4px 0px #fff;
+            letter-spacing: 0.05em;
+            word-spacing: 0.2em;
+        }
+
         .card-emoji { position: absolute; top: 10px; right: 15px; font-size: 2.2rem; filter: drop-shadow(3px 3px 0px rgba(0,0,0,0.1)); }
         .up-badge { background: #39FF14; color: #000; padding: 4px 12px; border-radius: 99px; font-weight: 900; font-size: 14px; border: 2px solid #000; }
         .down-badge { background: #FF3131; color: #fff; padding: 4px 12px; border-radius: 99px; font-weight: 900; font-size: 14px; border: 2px solid #000; }
@@ -50,14 +66,14 @@
     </div>
 
     <div id="main-content" style="display: none;">
-        <header class="flex flex-col lg:flex-row justify-between items-center mb-12 gap-8">
-            <div>
-                <h1 class="text-4xl md:text-6xl font-black italic nami-glitch uppercase tracking-tighter">Nami Wealth Terminal</h1>
-                <p id="status-text" class="bg-black text-white inline-block px-4 py-1 text-xs font-black uppercase mt-2">Live Connection 📡</p>
+        <header class="flex flex-col lg:flex-row justify-between items-center mb-16 gap-10">
+            <div class="max-w-xl">
+                <h1 class="text-4xl md:text-5xl lg:text-6xl font-black italic nami-header uppercase tracking-tight">Nami Wealth Terminal</h1>
+                <p id="status-text" class="bg-black text-white inline-block px-4 py-1 text-xs font-black uppercase mt-4">Live Connection 📡</p>
             </div>
-            <div class="funky-card bg-white p-8 px-12 text-center border-black shadow-none flex flex-col items-center justify-center" style="height: auto;">
-                <span class="text-xs font-black uppercase text-gray-500 tracking-widest">Consolidated Net Worth 🌍</span>
-                <div class="flex items-center gap-4 mt-1">
+            <div class="funky-card bg-white p-10 px-14 text-center border-black shadow-none flex flex-col items-center justify-center min-w-[400px]" style="height: auto;">
+                <span class="text-xs font-black uppercase text-gray-400 tracking-[0.2em] mb-2">Consolidated Net Worth 🌍</span>
+                <div class="flex items-center gap-6">
                     <div id="total-networth" class="text-4xl md:text-6xl font-black stat-val">$0</div>
                     <div id="growth-badge"></div>
                 </div>
@@ -127,7 +143,6 @@
                 renderDonut(categorySums);
                 renderProgress(snapshotData, currentTotal);
                 calculateGrowth(snapshotData, currentTotal);
-                document.getElementById('status-text').innerText = "System Live ⚡";
             } catch (error) { console.error(error); }
         }
 
