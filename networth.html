@@ -176,27 +176,73 @@
             });
         }
 
-        function renderProgress(snapshotData, currentTotal) {
-            const ctx = document.getElementById('progressChart').getContext('2d');
-            const grouped = snapshotData.reduce((acc, curr) => {
-                const rawDate = String(curr.Date || curr.date).trim();
-                const amt = parseFloat(String(curr.Amount || curr.amount).replace(/[$,%]/g, '')) || 0;
-                if (rawDate !== "undefined" && rawDate !== "") {
-                    const cleanDate = formatShortDate(rawDate);
-                    acc[cleanDate] = (acc[cleanDate] || 0) + amt;
-                }
-                return acc;
-            }, {});
-            let labels = Object.keys(grouped);
-            let values = Object.values(grouped);
-            labels.push("Today"); values.push(currentTotal);
-            if (progressChart) progressChart.destroy();
-            progressChart = new Chart(ctx, {
-                type: 'line',
-                data: { labels: labels, datasets: [{ data: values, borderColor: '#000', borderWidth: 6, pointRadius: 8, pointBackgroundColor: '#FF00FF', tension: 0.3, fill: false }] },
-                options: { responsive: true, maintainAspectRatio: false, scales: { y: { ticks: { callback: v => '$' + Math.round(v/1000) + 'k' } } } }
-            });
+function renderProgress(snapshotData, currentTotal) {
+    const ctx = document.getElementById('progressChart').getContext('2d');
+    
+    // 1. Group the Snapshot data by date
+    const grouped = snapshotData.reduce((acc, curr) => {
+        const rawDate = String(curr.Date || curr.date || curr.DATE || "").trim();
+        const rawAmt = curr.Amount || curr.amount || curr.AMOUNT || 0;
+        const amt = parseFloat(String(rawAmt).replace(/[$,%]/g, '')) || 0;
+        
+        if (rawDate && rawDate !== "undefined" && !isNaN(amt)) {
+            const cleanDate = formatShortDate(rawDate);
+            acc[cleanDate] = (acc[cleanDate] || 0) + amt;
         }
+        return acc;
+    }, {});
+
+    let labels = Object.keys(grouped);
+    let values = Object.values(grouped);
+
+    // 2. AUTO-ASSIGN DATE FOR LIVE TOTAL
+    // This creates a label like "Apr 26" based on the current computer time
+    const today = new Date();
+    const liveDateLabel = formatShortDate(today.toISOString());
+
+    // 3. Only add the live total if it's not already the same month as the last snapshot entry
+    if (labels[labels.length - 1] !== liveDateLabel) {
+        labels.push(liveDateLabel);
+        values.push(currentTotal);
+    } else {
+        // If the snapshot already has an entry for this month, 
+        // update that point with your latest live "OnlineDashboard" total
+        values[values.length - 1] = currentTotal;
+    }
+
+    if (progressChart) progressChart.destroy();
+    progressChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: values,
+                borderColor: '#000',
+                borderWidth: 6,
+                pointRadius: 8,
+                pointBackgroundColor: '#FF00FF',
+                tension: 0.3,
+                fill: false
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: { 
+                    ticks: { 
+                        font: { family: 'Space Mono', weight: 'bold' },
+                        callback: v => '$' + Math.round(v/1000) + 'k' 
+                    } 
+                },
+                x: { 
+                    ticks: { font: { family: 'Outfit', weight: 'bold' } } 
+                }
+            },
+            plugins: { legend: { display: false } }
+        }
+    });
+}
     </script>
 </body>
 </html>
