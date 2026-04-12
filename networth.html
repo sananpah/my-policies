@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nami Wealth Terminal v8.7</title>
+    <title>Nami Wealth Terminal v8.8</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -13,6 +13,16 @@
             background-attachment: fixed;
             color: #000; font-family: 'Outfit', sans-serif; min-height: 100vh;
         }
+        /* Lock Screen Style */
+        #lock-screen {
+            position: fixed; inset: 0; background: #000; z-index: 9999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .pin-input {
+            background: transparent; border-bottom: 4px solid #FF00FF; color: #fff;
+            font-family: 'Space Mono'; font-size: 3rem; text-align: center; width: 200px; outline: none;
+        }
+        /* Dashboard Cards */
         .funky-card { 
             background: rgba(255, 255, 255, 0.95); border: 5px solid #000; border-radius: 30px; 
             box-shadow: 10px 10px 0px #000; position: relative; transition: all 0.2s; overflow: hidden;
@@ -21,6 +31,8 @@
         .stat-val { font-family: 'Space Mono', monospace; font-weight: 900; letter-spacing: -1px; }
         .nami-glitch { -webkit-text-stroke: 3px #000; text-shadow: 6px 6px 0px #fff; }
         .card-emoji { position: absolute; top: 10px; right: 15px; font-size: 2.2rem; filter: drop-shadow(3px 3px 0px rgba(0,0,0,0.1)); }
+        
+        /* Color Palette */
         .c-gold { background: #FFD700 !important; color: #000; }               
         .c-01 { background: #FF00FF !important; color: #fff; } .c-02 { background: #FF3131 !important; color: #fff; } 
         .c-03 { background: #FF5F1F !important; color: #fff; } .c-05 { background: #CCFF00 !important; }               
@@ -32,36 +44,66 @@
 </head>
 <body class="p-6 md:p-10 max-w-[1750px] mx-auto">
 
-    <header class="flex flex-col lg:flex-row justify-between items-center mb-12 gap-8">
-        <div>
-            <h2 class="text-7xl md:text-9xl font-black italic nami-glitch uppercase">NAMI Wealth</h2>
-            <p id="status-text" class="bg-black text-white inline-block px-4 py-1 text-xs font-black uppercase mt-2">Live Terminal 📡</p>
-        </div>
-        <div class="funky-card bg-white p-8 px-12 text-center border-black shadow-none" style="height: auto;">
-            <span class="text-xs font-black uppercase text-gray-500 tracking-widest">Total Net Worth 🌍</span>
-            <div id="total-networth" class="text-6xl md:text-7xl font-black stat-val mt-1">$0</div>
-        </div>
-    </header>
-
-    <div class="mb-12">
-        <div class="funky-card bg-white p-8 w-full">
-            <h2 class="text-center font-black uppercase mb-6 italic tracking-widest text-2xl text-pink-600">Wealth Progression 📈</h2>
-            <div class="h-[350px]"><canvas id="progressChart"></canvas></div>
-        </div>
+    <div id="lock-screen">
+        <h1 class="text-white font-black text-2xl uppercase tracking-widest mb-8">Nami Terminal Locked</h1>
+        <input type="password" id="pin-field" class="pin-input" maxlength="4" placeholder="••••">
+        <button onclick="checkPin()" class="mt-10 bg-white text-black font-black px-10 py-3 uppercase hover:bg-magenta-500 rounded-full transition-all">Unlock</button>
+        <p id="lock-error" class="mt-4 text-red-500 font-bold uppercase text-xs"></p>
     </div>
 
-    <div class="mb-16 flex justify-center gap-6 flex-wrap">
-        <div class="funky-card bg-white p-6 w-full max-w-2xl h-[480px]">
-            <h2 class="text-center font-black uppercase mb-6 italic text-xl">Asset Distribution 📊</h2>
-            <canvas id="categoryChart"></canvas>
-        </div>
-    </div>
+    <div id="main-content" style="display: none;">
+        <header class="flex flex-col lg:flex-row justify-between items-center mb-12 gap-8">
+            <div>
+                <h1 class="text-7xl md:text-9xl font-black italic nami-glitch uppercase">NAMI</h1>
+                <p id="status-text" class="bg-black text-white inline-block px-4 py-1 text-xs font-black uppercase mt-2">Live Terminal 📡</p>
+            </div>
+            <div class="funky-card bg-white p-8 px-12 text-center border-black shadow-none" style="height: auto;">
+                <span class="text-xs font-black uppercase text-gray-500 tracking-widest">Total Net Worth 🌍</span>
+                <div id="total-networth" class="text-6xl md:text-7xl font-black stat-val mt-1">$0</div>
+            </div>
+        </header>
 
-    <div id="matrix-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16"></div>
+        <div class="mb-12">
+            <div class="funky-card bg-white p-8 w-full">
+                <h2 class="text-center font-black uppercase mb-6 italic tracking-widest text-2xl text-pink-600">Wealth Progression 📈</h2>
+                <div class="h-[350px]"><canvas id="progressChart"></canvas></div>
+            </div>
+        </div>
+
+        <div class="mb-16 flex justify-center gap-6 flex-wrap">
+            <div class="funky-card bg-white p-6 w-full max-w-2xl h-[480px]">
+                <h2 class="text-center font-black uppercase mb-6 italic text-xl">Asset Distribution 📊</h2>
+                <canvas id="categoryChart"></canvas>
+            </div>
+        </div>
+
+        <div id="matrix-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16"></div>
+    </div>
 
     <script>
+        // --- 1. CONFIGURATION ---
         const SHEET_URL = "https://script.google.com/macros/s/AKfycby4pyDQgIfmnNXP-wNFH3CCA_xaekozyNVbtH4MeLrNG8rZgO4NrLYa2q6oDmDlCaRPwQ/exec";
+        const MY_PIN = "1977"; // <-- CHANGE YOUR PASSWORD HERE
+
         let allocChart, progressChart;
+
+        // Security Check Function
+        function checkPin() {
+            const input = document.getElementById('pin-field').value;
+            if (input === MY_PIN) {
+                document.getElementById('lock-screen').style.display = 'none';
+                document.getElementById('main-content').style.display = 'block';
+                fetchNamiData(); // Only fetch data once unlocked
+            } else {
+                document.getElementById('lock-error').innerText = "Incorrect PIN Access Denied";
+                document.getElementById('pin-field').value = '';
+            }
+        }
+
+        // Allow "Enter" key to unlock
+        document.getElementById('pin-field').addEventListener("keyup", function(event) {
+            if (event.key === "Enter") checkPin();
+        });
 
         const emojiMap = {
             "Digital Gold": "🌟", "Fractional Property": "🏢", "Invoice Discounting": "📑",
@@ -71,21 +113,17 @@
             "Savings + ILP + ULIP": "⛱️", "Investments": "🔒", "Non Investments": "💰", "SRS Investments": "🛡️"
         };
 
-        // Utility to format messy dates to "Jan 26"
         function formatShortDate(dateStr) {
             const date = new Date(dateStr);
-            if (isNaN(date.getTime())) return dateStr; // Return original if fail
+            if (isNaN(date.getTime())) return dateStr;
             const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-            const yearShort = date.getFullYear().toString().substr(-2);
-            return `${months[date.getMonth()]} ${yearShort}`;
+            return `${months[date.getMonth()]} ${date.getFullYear().toString().substr(-2)}`;
         }
 
         async function fetchNamiData() {
-            if (SHEET_URL.includes("PASTE_YOUR_URL_HERE")) return;
             try {
                 const response = await fetch(SHEET_URL);
                 const fullData = await response.json();
-                
                 const dashboardData = fullData.dashboard || [];
                 const snapshotData = fullData.snapshot || [];
 
@@ -100,14 +138,11 @@
                 });
 
                 document.getElementById('total-networth').innerText = "$" + Math.round(currentTotal).toLocaleString();
-                
                 renderCards(dashboardData);
                 renderDonut(categorySums);
                 renderProgress(snapshotData, currentTotal);
-
-                document.getElementById('status-text').innerText = "System Live ⚡";
             } catch (error) {
-                document.getElementById('status-text').innerText = "Sync Error ⚠️";
+                console.error("Sync Error:", error);
             }
         }
 
@@ -148,23 +183,16 @@
                 options: {
                     responsive: true, maintainAspectRatio: false,
                     layout: { padding: { bottom: 30, top: 10 } },
-                    plugins: { 
-                        legend: { 
-                            position: 'bottom', 
-                            labels: { padding: 15, font: { weight: 'bold', family: 'Outfit', size: 12 }, color: '#000' } 
-                        } 
-                    }
+                    plugins: { legend: { position: 'bottom', labels: { padding: 15, font: { weight: 'bold', family: 'Outfit', size: 12 }, color: '#000' } } }
                 }
             });
         }
 
         function renderProgress(snapshotData, currentTotal) {
             const ctx = document.getElementById('progressChart').getContext('2d');
-            
             const grouped = snapshotData.reduce((acc, curr) => {
                 const rawDate = String(curr.Date || curr.date).trim();
                 const amt = parseFloat(String(curr.Amount || curr.amount).replace(/[$,%]/g, '')) || 0;
-                
                 if (rawDate !== "undefined" && rawDate !== "") {
                     const cleanDate = formatShortDate(rawDate);
                     acc[cleanDate] = (acc[cleanDate] || 0) + amt;
@@ -174,7 +202,6 @@
 
             let labels = Object.keys(grouped);
             let values = Object.values(grouped);
-
             labels.push("Today");
             values.push(currentTotal);
 
@@ -184,13 +211,8 @@
                 data: {
                     labels: labels,
                     datasets: [{
-                        data: values,
-                        borderColor: '#000',
-                        borderWidth: 6,
-                        pointRadius: 8,
-                        pointBackgroundColor: '#FF00FF',
-                        tension: 0.3,
-                        fill: false
+                        data: values, borderColor: '#000', borderWidth: 6,
+                        pointRadius: 8, pointBackgroundColor: '#FF00FF', tension: 0.3, fill: false
                     }]
                 },
                 options: {
@@ -203,8 +225,6 @@
                 }
             });
         }
-
-        fetchNamiData();
     </script>
 </body>
 </html>
