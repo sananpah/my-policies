@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nami Wealth Terminal v8.7</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Space+Mono:wght@700&display=swap');
+        body { 
+            background: linear-gradient(125deg, #FF00E6 0%, #FFB800 25%, #00FFF0 50%, #4DFF00 75%, #FF004D 100%);
+            background-attachment: fixed;
+            color: #000; font-family: 'Outfit', sans-serif; min-height: 100vh;
+        }
+        .funky-card { 
+            background: rgba(255, 255, 255, 0.95); border: 5px solid #000; border-radius: 30px; 
+            box-shadow: 10px 10px 0px #000; position: relative; transition: all 0.2s; overflow: hidden;
+        }
+        .funky-card:hover { transform: translate(-4px, -4px); box-shadow: 14px 14px 0px #000; }
+        .stat-val { font-family: 'Space Mono', monospace; font-weight: 900; letter-spacing: -1px; }
+        .nami-glitch { -webkit-text-stroke: 3px #000; text-shadow: 6px 6px 0px #fff; }
+        .card-emoji { position: absolute; top: 10px; right: 15px; font-size: 2.2rem; filter: drop-shadow(3px 3px 0px rgba(0,0,0,0.1)); }
+        .c-gold { background: #FFD700 !important; color: #000; }               
+        .c-01 { background: #FF00FF !important; color: #fff; } .c-02 { background: #FF3131 !important; color: #fff; } 
+        .c-03 { background: #FF5F1F !important; color: #fff; } .c-05 { background: #CCFF00 !important; }               
+        .c-06 { background: #39FF14 !important; } .c-07 { background: #00FF7F !important; }               
+        .c-08 { background: #00FFFF !important; } .c-09 { background: #00F5FF !important; }               
+        .c-10 { background: #007BFF !important; color: #fff; } .c-11 { background: #8A2BE2 !important; color: #fff; } 
+        .asset-label { font-size: 9px; font-weight: 900; text-transform: uppercase; background: #000; color: #fff; padding: 2px 8px; border-radius: 6px; display: inline-block; margin-bottom: 4px; }
+    </style>
+</head>
+<body class="p-6 md:p-10 max-w-[1750px] mx-auto">
+
+    <header class="flex flex-col lg:flex-row justify-between items-center mb-12 gap-8">
+        <div>
+            <h2 class="text-7xl md:text-9xl font-black italic nami-glitch uppercase">NAMI Wealth</h2>
+            <p id="status-text" class="bg-black text-white inline-block px-4 py-1 text-xs font-black uppercase mt-2">Live Terminal 📡</p>
+        </div>
+        <div class="funky-card bg-white p-8 px-12 text-center border-black shadow-none" style="height: auto;">
+            <span class="text-xs font-black uppercase text-gray-500 tracking-widest">Total Net Worth 🌍</span>
+            <div id="total-networth" class="text-6xl md:text-7xl font-black stat-val mt-1">$0</div>
+        </div>
+    </header>
+
+    <div class="mb-12">
+        <div class="funky-card bg-white p-8 w-full">
+            <h2 class="text-center font-black uppercase mb-6 italic tracking-widest text-2xl text-pink-600">Wealth Progression 📈</h2>
+            <div class="h-[350px]"><canvas id="progressChart"></canvas></div>
+        </div>
+    </div>
+
+    <div class="mb-16 flex justify-center gap-6 flex-wrap">
+        <div class="funky-card bg-white p-6 w-full max-w-2xl h-[480px]">
+            <h2 class="text-center font-black uppercase mb-6 italic text-xl">Asset Distribution 📊</h2>
+            <canvas id="categoryChart"></canvas>
+        </div>
+    </div>
+
+    <div id="matrix-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16"></div>
+
+    <script>
+        const SHEET_URL = "https://script.google.com/macros/s/AKfycby4pyDQgIfmnNXP-wNFH3CCA_xaekozyNVbtH4MeLrNG8rZgO4NrLYa2q6oDmDlCaRPwQ/exec";
+        let allocChart, progressChart;
+
+        const emojiMap = {
+            "Digital Gold": "🌟", "Fractional Property": "🏢", "Invoice Discounting": "📑",
+            "P2P Lending": "🤝", "Property Backed Debt": "🏚️", "Crypto": "🪙",
+            "ESOW": "👔", "ETF": "📦", "Stocks + Mutual Funds": "🏦",
+            "Bonds": "🛡️", "Cash": "💵", "Robo Portfolio": "🤖",
+            "Savings + ILP + ULIP": "⛱️", "Investments": "🔒", "Non Investments": "💰", "SRS Investments": "🛡️"
+        };
+
+        // Utility to format messy dates to "Jan 26"
+        function formatShortDate(dateStr) {
+            const date = new Date(dateStr);
+            if (isNaN(date.getTime())) return dateStr; // Return original if fail
+            const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            const yearShort = date.getFullYear().toString().substr(-2);
+            return `${months[date.getMonth()]} ${yearShort}`;
+        }
+
+        async function fetchNamiData() {
+            if (SHEET_URL.includes("PASTE_YOUR_URL_HERE")) return;
+            try {
+                const response = await fetch(SHEET_URL);
+                const fullData = await response.json();
+                
+                const dashboardData = fullData.dashboard || [];
+                const snapshotData = fullData.snapshot || [];
+
+                let currentTotal = 0;
+                let categorySums = {};
+
+                dashboardData.forEach(item => {
+                    const amt = parseFloat(String(item.amount).replace(/[$,%]/g, '')) || 0;
+                    currentTotal += amt;
+                    const cat = item.Category || "Other";
+                    categorySums[cat] = (categorySums[cat] || 0) + amt;
+                });
+
+                document.getElementById('total-networth').innerText = "$" + Math.round(currentTotal).toLocaleString();
+                
+                renderCards(dashboardData);
+                renderDonut(categorySums);
+                renderProgress(snapshotData, currentTotal);
+
+                document.getElementById('status-text').innerText = "System Live ⚡";
+            } catch (error) {
+                document.getElementById('status-text').innerText = "Sync Error ⚠️";
+            }
+        }
+
+        function renderCards(data) {
+            const container = document.getElementById('matrix-container');
+            container.innerHTML = ''; 
+            data.forEach((item, index) => {
+                const cat = String(item.Category || "Misc").trim();
+                const sub = String(item['sub-category'] || "Asset").trim();
+                const amt = parseFloat(String(item.amount).replace(/[$,%]/g, '')) || 0;
+                let colorClass = "c-" + (((index % 11) + 1) < 10 ? '0' + ((index % 11) + 1) : ((index % 11) + 1));
+                if (sub === "Digital Gold") colorClass = "c-gold";
+
+                container.innerHTML += `
+                    <div class="funky-card p-6 ${colorClass}">
+                        <span class="card-emoji">${emojiMap[sub] || "💰"}</span>
+                        <div class="asset-label">${cat}</div><br>
+                        <div class="font-black text-xs uppercase opacity-80">${sub}</div>
+                        <div class="text-4xl stat-val mt-4">$${Math.round(amt).toLocaleString()}</div>
+                    </div>
+                `;
+            });
+        }
+
+        function renderDonut(catData) {
+            const ctx = document.getElementById('categoryChart').getContext('2d');
+            if (allocChart) allocChart.destroy();
+            allocChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(catData),
+                    datasets: [{
+                        data: Object.values(catData),
+                        backgroundColor: ['#FF00FF', '#00FFFF', '#FFD700', '#39FF14', '#FF5F1F', '#8A2BE2', '#FF004D'],
+                        borderColor: '#000', borderWidth: 5
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    layout: { padding: { bottom: 30, top: 10 } },
+                    plugins: { 
+                        legend: { 
+                            position: 'bottom', 
+                            labels: { padding: 15, font: { weight: 'bold', family: 'Outfit', size: 12 }, color: '#000' } 
+                        } 
+                    }
+                }
+            });
+        }
+
+        function renderProgress(snapshotData, currentTotal) {
+            const ctx = document.getElementById('progressChart').getContext('2d');
+            
+            const grouped = snapshotData.reduce((acc, curr) => {
+                const rawDate = String(curr.Date || curr.date).trim();
+                const amt = parseFloat(String(curr.Amount || curr.amount).replace(/[$,%]/g, '')) || 0;
+                
+                if (rawDate !== "undefined" && rawDate !== "") {
+                    const cleanDate = formatShortDate(rawDate);
+                    acc[cleanDate] = (acc[cleanDate] || 0) + amt;
+                }
+                return acc;
+            }, {});
+
+            let labels = Object.keys(grouped);
+            let values = Object.values(grouped);
+
+            labels.push("Today");
+            values.push(currentTotal);
+
+            if (progressChart) progressChart.destroy();
+            progressChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: values,
+                        borderColor: '#000',
+                        borderWidth: 6,
+                        pointRadius: 8,
+                        pointBackgroundColor: '#FF00FF',
+                        tension: 0.3,
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    scales: {
+                        y: { ticks: { font: { family: 'Space Mono', weight: 'bold' }, callback: v => '$' + Math.round(v/1000) + 'k' } },
+                        x: { ticks: { font: { family: 'Outfit', weight: 'bold' } } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        fetchNamiData();
+    </script>
+</body>
+</html>
