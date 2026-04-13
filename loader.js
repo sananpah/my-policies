@@ -1,4 +1,4 @@
-/* loader.js - v4.5.19 - Master Sync: Projection Disclaimers & Term Logic */
+/* loader.js - v4.5.20 - Master Sync: Global Disclaimer Fix & Font Reduction */
 import { toNum, autoFmt, monthMap, getColorMap } from './utils.js?v=1.0.3';
 
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2UwOfG57DQBOBnJX-9hsRKOQTUgALiM3uxs-VGzD2KN8JoWNAQltH6IkgAGhPTNFEvb/pub?gid=866869416&single=true&output=csv";
@@ -38,15 +38,12 @@ export async function syncWithGoogleSheets(masterList) {
                     }
 
                     p.premium = toNum(match["Premium"]);
-                    
-                    // --- HOLIDAY FIX: Map "Total Premium" column ---
                     p.totalPremiumPaid = toNum(match["Total Premium"]); 
 
                     p.sumAssured = toNum(match["Sum Assured"]);
                     p.unitValueNumeric = toNum(match["Current Value"]);
                     p.currentUnitValue = match["Current Value"] || "No Value";
 
-                    // --- NOMINEE MAPPING ---
                     const nomineeRaw = String(match["Nominee"] || "").trim();
                     p.nominees = []; 
                     if (!nomineeRaw || nomineeRaw.toLowerCase() === "n/a") {
@@ -65,7 +62,6 @@ export async function syncWithGoogleSheets(masterList) {
                         });
                     }
 
-                    // --- OTHER DATA: UIN, ClientID, Surrender ---
                     const otherDataRaw = String(match["Other Data"] || "").trim();
                     p.uin = "N/A"; p.clientId = "N/A";
                     p.surrenderCharges = null; p.surrenderBase = "VALUATION";
@@ -92,7 +88,6 @@ export async function syncWithGoogleSheets(masterList) {
                     }
                     if (!p.surrenderCharges) p.surrenderCharges = { 1: 0 };
 
-                    // --- TERM & DATES (MIP FIX) ---
                     let rawDate = String(match["Commenced Date"] || "").trim().replace(/\./g, ' '); 
                     p.commenced = rawDate;
                     const dateParts = rawDate.split(" ");
@@ -115,7 +110,6 @@ export async function syncWithGoogleSheets(masterList) {
                     const isULIP = (p.type || "").toUpperCase().includes("ULIP");
                     const sym = (country === "singapore") ? "$" : "₹";
 
-                    // --- MULTI-VALUE WITHDRAWAL PARSER ---
                     const benefitsLines = rawBenefits.split(/\r?\n/);
                     const withdrawLine = benefitsLines.find(l => l.toLowerCase().trim().includes("withdraw"));
                     p.withdrawals = [];
@@ -130,7 +124,6 @@ export async function syncWithGoogleSheets(masterList) {
                         });
                     }
 
-                    // --- INDIA MONEYBACK & PROJECTIONS ---
                     if (country === "india") {
                         const mbLine = benefitsLines.find(l => l.toLowerCase().includes("moneyback"));
                         p.payoutSchedule = {}; 
@@ -182,7 +175,8 @@ export async function syncWithGoogleSheets(masterList) {
                         const res4 = calculateProjection(0.04);
                         const res8 = calculateProjection(0.08);
 
-                        const disclaimer = `<div style="font-size:0.65rem; opacity:0.7; margin-top:4px; line-height:1.1; font-style:italic;">` +
+                        // Global Disclaimer: Adjusted font to 0.55rem
+                        const disclaimer = `<div style="font-size:0.55rem; opacity:0.65; margin-top:5px; line-height:1; font-style:italic;">` +
                             `*Assumes pay till ${res4.stop}, growth till ${res4.target}</div>`;
 
                         p.maturityAmt = `Est. @4%: ${autoFmt(res4.val, sym)}<br>` +
