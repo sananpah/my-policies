@@ -1,4 +1,4 @@
-/* loader.js - v4.5.20 - Master Sync: Global Disclaimer Fix & Font Reduction */
+/* loader.js - v4.5.22 - Master Sync: Universal Projection Display Fix */
 import { toNum, autoFmt, monthMap, getColorMap } from './utils.js?v=1.0.3';
 
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2UwOfG57DQBOBnJX-9hsRKOQTUgALiM3uxs-VGzD2KN8JoWNAQltH6IkgAGhPTNFEvb/pub?gid=866869416&single=true&output=csv";
@@ -175,9 +175,9 @@ export async function syncWithGoogleSheets(masterList) {
                         const res4 = calculateProjection(0.04);
                         const res8 = calculateProjection(0.08);
 
-                        // Global Disclaimer: Adjusted font to 0.55rem
-                        const disclaimer = `<div style="font-size:0.55rem; opacity:0.65; margin-top:5px; line-height:1; font-style:italic;">` +
-                            `*Assumes pay till ${res4.stop}, growth till ${res4.target}</div>`;
+                        // IMPROVED DISPLAY: Wrapped in a container to prevent CSS clipping
+                        const disclaimer = `<div style="display:block; clear:both; font-size:0.55rem; opacity:0.6; margin-top:2px; line-height:1; font-style:italic;">` +
+                            `*Pay till ${res4.stop}, Grow till ${res4.target}</div>`;
 
                         p.maturityAmt = `Est. @4%: ${autoFmt(res4.val, sym)}<br>` +
                                        `Est. @8%: ${autoFmt(res8.val, sym)}` + 
