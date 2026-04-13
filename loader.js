@@ -1,4 +1,4 @@
-/* loader.js - v4.5.17 - Master Sync: Multi-Withdrawal, Total Premium & 3-Part Term */
+/* loader.js - v4.5.18 - Master Sync: Multi-Withdrawal, Total Premium & 3-Part Term */
 import { toNum, autoFmt, monthMap, getColorMap } from './utils.js?v=1.0.3';
 
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2UwOfG57DQBOBnJX-9hsRKOQTUgALiM3uxs-VGzD2KN8JoWNAQltH6IkgAGhPTNFEvb/pub?gid=866869416&single=true&output=csv";
@@ -125,7 +125,6 @@ export async function syncWithGoogleSheets(masterList) {
                         const content = withdrawLine.split(":")[1] || "";
                         const segments = content.split(",");
                         segments.forEach(seg => {
-                            // Regex strips $, commas, and spaces to sum pure numbers
                             const cleanNum = seg.replace(/[$\s,]/g, "");
                             const val = parseFloat(cleanNum);
                             if (!isNaN(val)) p.withdrawals.push(val);
@@ -156,8 +155,27 @@ export async function syncWithGoogleSheets(masterList) {
                     if (isULIP) {
                         const calculateProjection = (rate) => {
                             let projected = p.unitValueNumeric;
-                            for (let yr = TODAY.getFullYear(); yr < (startY + p.mip + (country === "singapore" ? 2 : 0)); yr++) {
-                                if (yr < (startY + surrenderFreeYear)) projected += p.premium;
+                            const currentYear = TODAY.getFullYear();
+                            
+                            let targetYear;
+                            let stopPremiumYear;
+
+                            if (country === "india") {
+                                targetYear = startY + matYears; // India: till yy
+                                stopPremiumYear = startY + surrenderFreeYear; // India: pay till xx
+                            } else {
+                                // Singapore: till xx + 2 (unless xx = yy)
+                                if (surrenderFreeYear === matYears) {
+                                    targetYear = startY + matYears;
+                                    stopPremiumYear = targetYear;
+                                } else {
+                                    targetYear = startY + surrenderFreeYear + 2;
+                                    stopPremiumYear = startY + p.mip; // Singapore: stop after zz
+                                }
+                            }
+
+                            for (let yr = currentYear; yr < targetYear; yr++) {
+                                if (yr < stopPremiumYear) projected += p.premium;
                                 projected = projected * (1 + rate);
                             }
                             return projected;
