@@ -1,4 +1,4 @@
-/* loader.js - v4.5.24 - Master Sync: Global Singapore Projection Fix */
+/* loader.js - v4.5.22 - Master Sync: Universal Projection Display Fix */
 import { toNum, autoFmt, monthMap, getColorMap } from './utils.js?v=1.0.3';
 
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2UwOfG57DQBOBnJX-9hsRKOQTUgALiM3uxs-VGzD2KN8JoWNAQltH6IkgAGhPTNFEvb/pub?gid=866869416&single=true&output=csv";
@@ -72,7 +72,7 @@ export async function syncWithGoogleSheets(masterList) {
                             const cleanLine = line.trim().toLowerCase();
                             if (cleanLine.startsWith("uin:")) p.uin = line.split(":")[1]?.trim() || "N/A";
                             else if (cleanLine.startsWith("clientid:")) {
-                                if (!(p.type || "").toUpperCase().includes("ULIP") && !(p.type || "").toUpperCase().includes("ILP")) p.clientId = line.split(":")[1]?.trim() || "N/A";
+                                if (!(p.type || "").toUpperCase().includes("ULIP")) p.clientId = line.split(":")[1]?.trim() || "N/A";
                             }
                             else if (cleanLine.startsWith("surrender:")) {
                                 const content = line.split(":")[1] || "";
@@ -107,14 +107,7 @@ export async function syncWithGoogleSheets(masterList) {
                     }
 
                     const rawBenefits = String(match["Other Coverage & Benefits"] || "");
-                    
-                    // --- REVISED TRIGGER ---
-                    // India still requires "ULIP" or "ILP" keyword
-                    // Singapore now triggers for ALL policies automatically
-                    const isInvestmentLinked = (country === "singapore") || 
-                                               (p.type || "").toUpperCase().includes("ULIP") || 
-                                               (p.type || "").toUpperCase().includes("ILP");
-                    
+                    const isULIP = (p.type || "").toUpperCase().includes("ULIP");
                     const sym = (country === "singapore") ? "$" : "₹";
 
                     const benefitsLines = rawBenefits.split(/\r?\n/);
@@ -151,7 +144,7 @@ export async function syncWithGoogleSheets(masterList) {
                         }
                     }
 
-                    if (isInvestmentLinked) {
+                    if (isULIP) {
                         const calculateProjection = (rate) => {
                             let projected = p.unitValueNumeric;
                             const currentYear = TODAY.getFullYear();
@@ -160,8 +153,8 @@ export async function syncWithGoogleSheets(masterList) {
                             let stopPremiumYear;
 
                             if (country === "india") {
-                                targetYear = startYear + matYears; 
-                                stopPremiumYear = startYear + surrenderFreeYear; 
+                                targetYear = startY + matYears; 
+                                stopPremiumYear = startY + surrenderFreeYear; 
                             } else {
                                 if (surrenderFreeYear === matYears) {
                                     targetYear = startY + matYears;
@@ -182,7 +175,8 @@ export async function syncWithGoogleSheets(masterList) {
                         const res4 = calculateProjection(0.04);
                         const res8 = calculateProjection(0.08);
 
-                        const disclaimer = `<div style="display:block; font-size:0.55rem; opacity:0.6; margin-top:5px; line-height:1; font-style:italic;">` +
+                        // IMPROVED DISPLAY: Wrapped in a container to prevent CSS clipping
+                        const disclaimer = `<div style="display:block; clear:both; font-size:0.55rem; opacity:0.6; margin-top:2px; line-height:1; font-style:italic;">` +
                             `*Pay till ${res4.stop}, Grow till ${res4.target}</div>`;
 
                         p.maturityAmt = `Est. @4%: ${autoFmt(res4.val, sym)}<br>` +
