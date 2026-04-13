@@ -105,11 +105,22 @@
         document.getElementById('pin-field').addEventListener("keyup", (e) => { if (e.key === "Enter") checkPin(); });
 
         const emojiMap = {
-            "Digital Gold": "🌟", "Fractional Property": "🏢", "Invoice Discounting": "📑",
-            "P2P Lending": "🤝", "Property Backed Debt": "🏚️", "Crypto": "🪙",
-            "ESOW": "👔", "ETF": "📦", "Stocks + Mutual Funds": "🏦",
-            "Bonds": "🛡️", "Cash": "💵", "Robo Portfolio": "🤖",
-            "Savings + ILP + ULIP": "⛱️", "Investments": "🔒", "Non Investments": "💰", "SRS Investments": "🛡️"
+            "Digital Gold": "🌟",
+            "Property(Fractional + Debt)": "🏢",
+            "Invoice Discounting + Asset Leasing": "📄💸",
+            "P2P Lending": "🤝💰",
+            "Crypto": "🪙",
+            "ESOW": "👔",
+            "Unit Trust": "🏦📊" ,
+            "ETF": "🧺",
+            "Stocks + Mutual Funds": "📈",
+            "Bonds": "📜💵",
+            "Cash": "💰",
+            "Robo Portfolio": "🤖",
+            "Savings & Investment Linked": "💼",
+            "Investments": "🧓📈",
+            "Non Investments": "🧓💰",
+            "SRS Investments": "🛡️"
         };
 
         function formatShortDate(dateStr) {
