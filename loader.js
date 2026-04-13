@@ -1,4 +1,4 @@
-/* loader.js - v4.5.18 - Master Sync: Multi-Withdrawal, Total Premium & 3-Part Term */
+/* loader.js - v4.5.19 - Master Sync: Projection Disclaimers & Term Logic */
 import { toNum, autoFmt, monthMap, getColorMap } from './utils.js?v=1.0.3';
 
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2UwOfG57DQBOBnJX-9hsRKOQTUgALiM3uxs-VGzD2KN8JoWNAQltH6IkgAGhPTNFEvb/pub?gid=866869416&single=true&output=csv";
@@ -103,7 +103,6 @@ export async function syncWithGoogleSheets(masterList) {
                     const surrenderFreeYear = parseInt(termParts[0], 10) || 0;
                     const matYears = parseInt(termParts[1], 10) || 0;
                     
-                    // Maps the 3rd colon part for the "LEFT" countdown
                     p.mip = termParts[2] ? parseInt(termParts[2], 10) : surrenderFreeYear; 
                     p.ppt = surrenderFreeYear; 
 
@@ -161,16 +160,15 @@ export async function syncWithGoogleSheets(masterList) {
                             let stopPremiumYear;
 
                             if (country === "india") {
-                                targetYear = startY + matYears; // India: till yy
-                                stopPremiumYear = startY + surrenderFreeYear; // India: pay till xx
+                                targetYear = startY + matYears; 
+                                stopPremiumYear = startY + surrenderFreeYear; 
                             } else {
-                                // Singapore: till xx + 2 (unless xx = yy)
                                 if (surrenderFreeYear === matYears) {
                                     targetYear = startY + matYears;
                                     stopPremiumYear = targetYear;
                                 } else {
                                     targetYear = startY + surrenderFreeYear + 2;
-                                    stopPremiumYear = startY + p.mip; // Singapore: stop after zz
+                                    stopPremiumYear = startY + p.mip; 
                                 }
                             }
 
@@ -178,9 +176,18 @@ export async function syncWithGoogleSheets(masterList) {
                                 if (yr < stopPremiumYear) projected += p.premium;
                                 projected = projected * (1 + rate);
                             }
-                            return projected;
+                            return { val: projected, target: targetYear, stop: stopPremiumYear };
                         };
-                        p.maturityAmt = `Est. @4%: ${autoFmt(calculateProjection(0.04), sym)}<br>Est. @8%: ${autoFmt(calculateProjection(0.08), sym)}*`;
+
+                        const res4 = calculateProjection(0.04);
+                        const res8 = calculateProjection(0.08);
+
+                        const disclaimer = `<div style="font-size:0.65rem; opacity:0.7; margin-top:4px; line-height:1.1; font-style:italic;">` +
+                            `*Assumes pay till ${res4.stop}, growth till ${res4.target}</div>`;
+
+                        p.maturityAmt = `Est. @4%: ${autoFmt(res4.val, sym)}<br>` +
+                                       `Est. @8%: ${autoFmt(res8.val, sym)}` + 
+                                       disclaimer;
                     }
                 }
                 return p;
