@@ -1,4 +1,4 @@
-/* loader.js - v4.5.22 - Master Sync: Universal Projection Display Fix */
+/* loader.js - v4.5.25 - Minimal Fix: No Variable Changes */
 import { toNum, autoFmt, monthMap, getColorMap } from './utils.js?v=1.0.3';
 
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2UwOfG57DQBOBnJX-9hsRKOQTUgALiM3uxs-VGzD2KN8JoWNAQltH6IkgAGhPTNFEvb/pub?gid=866869416&single=true&output=csv";
@@ -107,7 +107,7 @@ export async function syncWithGoogleSheets(masterList) {
                     }
 
                     const rawBenefits = String(match["Other Coverage & Benefits"] || "");
-                    const isULIP = (p.type || "").toUpperCase().includes("ULIP");
+                    const isULIP = (p.type || "").toUpperCase().includes("ULIP") || (country === "singapore");
                     const sym = (country === "singapore") ? "$" : "₹";
 
                     const benefitsLines = rawBenefits.split(/\r?\n/);
@@ -149,38 +149,29 @@ export async function syncWithGoogleSheets(masterList) {
                             let projected = p.unitValueNumeric;
                             const currentYear = TODAY.getFullYear();
                             
-                            let targetYear;
-                            let stopPremiumYear;
-
-                            if (country === "india") {
-                                targetYear = startY + matYears; 
-                                stopPremiumYear = startY + surrenderFreeYear; 
-                            } else {
-                                if (surrenderFreeYear === matYears) {
-                                    targetYear = startY + matYears;
-                                    stopPremiumYear = targetYear;
-                                } else {
-                                    targetYear = startY + surrenderFreeYear + 2;
-                                    stopPremiumYear = startY + p.mip; 
-                                }
+                            let targetYear = (country === "india") ? (startY + matYears) : (startY + surrenderFreeYear + 2);
+                            let stopPayYear = (country === "india") ? (startY + surrenderFreeYear) : (startY + p.mip);
+                            
+                            if (country === "singapore" && surrenderFreeYear === matYears) {
+                                targetYear = startY + matYears;
+                                stopPayYear = targetYear;
                             }
 
                             for (let yr = currentYear; yr < targetYear; yr++) {
-                                if (yr < stopPremiumYear) projected += p.premium;
+                                if (yr < stopPayYear) projected += p.premium;
                                 projected = projected * (1 + rate);
                             }
-                            return { val: projected, target: targetYear, stop: stopPremiumYear };
+                            return { v: projected, t: targetYear, s: stopPayYear };
                         };
 
-                        const res4 = calculateProjection(0.04);
-                        const res8 = calculateProjection(0.08);
+                        const r4 = calculateProjection(0.04);
+                        const r8 = calculateProjection(0.08);
 
-                        // IMPROVED DISPLAY: Wrapped in a container to prevent CSS clipping
-                        const disclaimer = `<div style="display:block; clear:both; font-size:0.55rem; opacity:0.6; margin-top:2px; line-height:1; font-style:italic;">` +
-                            `*Pay till ${res4.stop}, Grow till ${res4.target}</div>`;
+                        const disclaimer = `<div style="font-size:0.55rem; opacity:0.6; margin-top:4px; font-style:italic;">` +
+                            `*Pay till ${r4.s}, Grow till ${r4.t}</div>`;
 
-                        p.maturityAmt = `Est. @4%: ${autoFmt(res4.val, sym)}<br>` +
-                                       `Est. @8%: ${autoFmt(res8.val, sym)}` + 
+                        p.maturityAmt = `Est. @4%: ${autoFmt(r4.v, sym)}<br>` +
+                                       `Est. @8%: ${autoFmt(r8.v, sym)}` + 
                                        disclaimer;
                     }
                 }
