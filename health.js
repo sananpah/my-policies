@@ -1,5 +1,5 @@
 /* health.js - v1.5.2 - Added GitHub Logo Pathing */
-import { autoFmt, checkIsDueSoon, githublogo } from './utils.js';
+import { autoFmt, checkIsDueSoon, githubLogo } from './utils.js';
 
 function getNextDue(expiryDateStr) {
     const expiry = new Date(expiryDateStr);
