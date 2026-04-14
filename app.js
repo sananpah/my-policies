@@ -3,7 +3,7 @@
 // We define these as placeholders to be populated during initDashboard
 let syncWithGoogleSheets, createPolicyCard, createSGCard, createHealthCard;
 let healthData, POLICY_DATA;
-let toNum, parseDate, autoFmt, calculatePortfolioTotals, calculateFamilyBreakdown, calculateHealthTotals;
+let toNum, parseDate, autoFmt, calculatePortfolioTotals, calculateFamilyBreakdown, calculateHealthTotals, insuredMap;
 
 window.currentCategory = 'india';
 let localPolicyData = {};
@@ -36,7 +36,7 @@ export async function initDashboard(version) {
         POLICY_DATA = dataP.POLICY_DATA;
         
         // Destructure Utils
-        ({ toNum, parseDate, autoFmt, calculatePortfolioTotals, calculateFamilyBreakdown, calculateHealthTotals } = utils);
+        ({ toNum, parseDate, autoFmt, calculatePortfolioTotals, calculateFamilyBreakdown, calculateHealthTotals, insuredMap } = utils);
 
         // --- STEP 3: INITIALIZE DATA ---
         localPolicyData = await syncWithGoogleSheets(POLICY_DATA);
@@ -63,15 +63,7 @@ export function render(cat) {
 
     const TODAY = new Date();
     const CURRENT_YEAR = TODAY.getFullYear();
-
-    // Map to link 'owner' names in data_health.js to local avatar files
-    const insuredMap = {
-        "Self": { type: "Self", img: "avatar_self.png" },
-        "Wife": { type: "Wife", img: "avatar_wife.png" },
-        "Daughter": { type: "Daughter", img: "avatar_daughter.png" },
-        "Family": { type: "Family", img: "avatar_family.png" }
-    };
-
+  
     if (cat === 'health') {
         sortContainer.classList.add('invisible');
         statusBadge.innerHTML = '<span class="material-symbols-outlined text-xs align-middle mr-1">medical_services</span> HEALTH PORTFOLIO';
