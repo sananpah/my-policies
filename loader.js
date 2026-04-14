@@ -15,7 +15,8 @@ export async function syncWithGoogleSheets(masterList) {
         const insuredMap = {
             "Suhail Nami": { type: "Self", img: "avatar_self.png" },
             "Saima Suhail": { type: "Wife", img: "avatar_wife.png" },
-            "Sulmas Nami": { type: "Daughter", img: "avatar_daughter.png" }
+            "Sulmas Nami": { type: "Daughter", img: "avatar_daughter.png" },
+            "Family": { type: "Family", img: "avatar_family.png" }
         };
 
         ["india", "singapore"].forEach(country => {
