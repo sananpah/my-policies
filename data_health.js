@@ -2,7 +2,7 @@
 export const healthData = [
     {
         id: "H237311630",
-        owner: "Father",
+        owner: "Self",
         name: "HealthShield Gold Max",
         company: "AIA",
         logo: "logo_AIA.png",
@@ -24,7 +24,7 @@ export const healthData = [
     },
     {
         id: "E237311630",
-        owner: "Father",
+        owner: "Self",
         name: "HealthShield Gold Max Rider",
         company: "AIA",
         logo: "logo_AIA.png",
@@ -47,7 +47,7 @@ export const healthData = [
     },
     {
         id: "33401114",
-        owner: "Father",
+        owner: "Self",
         name: "PruLink Protection",
         company: "Prudential",
         logo: "logo_Prudential.png",
@@ -64,12 +64,12 @@ export const healthData = [
             "Critical Illness: Premium Waiver",
             "Lifetime Cover: Protection active until 2086"
         ],
-        nominee: "Mother/Daughter",
+        nominee: "Wife/Daughter",
         color: "#ED1B2E"
     },
     {
         id: "P565596237",
-        owner: "Father",
+        owner: "Self",
         name: "Multistage Cancer Cover",
         company: "AIA",
         logo: "logo_AIA.png",
@@ -88,7 +88,7 @@ export const healthData = [
     },
    {
         id: "E5664237",
-        owner: "Father",
+        owner: "Self",
         name:  "ElderShield Plus",
         company: "SingLife",
         logo: "logo_SingLife.png",
@@ -106,7 +106,7 @@ export const healthData = [
     },
     {
         id: "2470883269",
-        owner: "Father",
+        owner: "Self",
         name:  "Ready Protect Head Start",
         company: "MANULIFE SINGAPORE",
         logo: "logo_ManuLife.png",
@@ -120,12 +120,12 @@ export const healthData = [
             "Accidental Death Benefit : $50,000",
             "Accidental Major Reimbursment(Local/Overseas) : $1,000/$2,000"   
         ],
-        nominee: "Mother/Daughter",
+        nominee: "Wife/Daughter",
         color: "#00a758"
     },
     {
         id: "84779015",
-        owner: "Mother",
+        owner: "Wife",
         name: "Great SupremeHealth A +",
         company: "Great Eastern",
         logo: "logo_GreatEastern.png",
@@ -179,7 +179,7 @@ export const healthData = [
             "Accidental Death Benefit : $50,000",
             "Accidental Major Reimbursment(Local/Overseas) : $1,000/$2,000"   
         ],
-        nominee: "Father/Mother",
+        nominee: "Self/Wife",
         color: "#00a758"
   },
    {
@@ -200,7 +200,7 @@ export const healthData = [
             "Early Critical Care Rider"
             
         ],
-        nominee: "Father/Mother",
+        nominee: "Self/Wife",
         color: "#00a758"
   },
   {
