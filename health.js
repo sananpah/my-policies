@@ -1,9 +1,5 @@
 /* health.js - v1.5.2 - Added GitHub Logo Pathing */
-import { autoFmt, checkIsDueSoon } from './utils.js';
-
-// 1. Define your GitHub folder path here
-// Use the "raw" link to ensure the images render correctly in the browser
-const githubLogo = "https://raw.githubusercontent.com/sananpah/my-policies/main/assets/logo/";
+import { autoFmt, checkIsDueSoon, githublogo } from './utils.js';
 
 function getNextDue(expiryDateStr) {
     const expiry = new Date(expiryDateStr);
@@ -39,9 +35,7 @@ export function createHealthCard(p, isMobile = false) {
     const premium = (parseFloat(p.cashAmount || 0) + parseFloat(p.cpfAmount || 0));
     const nextDue = getNextDue(p.expiryDate);
 
-    // --- LOGIC FOR GITHUB LOGO PATH ---
-    // This checks if p.logo is already a full URL; if not, it prepends the GitHub path
-    const logoSrc = p.logo.startsWith('http') ? p.logo : `${GITHUB_LOGO_BASE}${p.logo}`;
+    const logoSrc = `${githubLogo}${p.logo}`;
 
     const isDueSoon = checkIsDueSoon(nextDue);
     const blinkClass = isDueSoon ? "animate-card-pulse" : "";
