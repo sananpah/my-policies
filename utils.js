@@ -5,6 +5,8 @@ export const monthMap = {
     "Jul": 6, "Aug": 7, "Sep": 8, "Oct": 9, "Nov": 10, "Dec": 11
 };
 
+export const githubLogo = "https://raw.githubusercontent.com/sananpah/my-policies/main/assets/logo/";
+
 export const getColorMap = (companyName) => {
     const colors = {
         "AIA" : "#d31145",
