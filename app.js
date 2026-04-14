@@ -1,4 +1,4 @@
-/* app.js - v4.1.34 - Dynamic Asset Loading */
+/* app.js - v4.1.35 - Dynamic Asset Loading & Health Avatar Injection */
 
 // We define these as placeholders to be populated during initDashboard
 let syncWithGoogleSheets, createPolicyCard, createSGCard, createHealthCard;
@@ -17,7 +17,6 @@ export async function initDashboard(version) {
     
     try {
         // --- STEP 1: DYNAMIC ASSET LOADING ---
-        // This forces the browser to fetch the specific version of every file
         const [loader, compIn, compSg, health, dataH, dataP, utils] = await Promise.all([
             import(`./loader.js?v=${version}`),
             import(`./component_in.js?v=${version}`),
@@ -47,7 +46,6 @@ export async function initDashboard(version) {
 
     } catch (e) {
         console.error("Critical Load Failure:", e);
-        // Fallback to basic data if sync fails
         if (POLICY_DATA) {
             localPolicyData = POLICY_DATA;
             render('india');
@@ -66,6 +64,14 @@ export function render(cat) {
     const TODAY = new Date();
     const CURRENT_YEAR = TODAY.getFullYear();
 
+    // Map to link 'owner' names in data_health.js to local avatar files
+    const insuredMap = {
+        "Self": { type: "Self", img: "avatar_self.png" },
+        "Wife": { type: "Wife", img: "avatar_wife.png" },
+        "Daughter": { type: "Daughter", img: "avatar_daughter.png" },
+        "Family": { type: "Family", img: "avatar_family.png" }
+    };
+
     if (cat === 'health') {
         sortContainer.classList.add('invisible');
         statusBadge.innerHTML = '<span class="material-symbols-outlined text-xs align-middle mr-1">medical_services</span> HEALTH PORTFOLIO';
@@ -80,6 +86,7 @@ export function render(cat) {
     let list = cat === 'health' ? [...healthData] : [...(localPolicyData[cat] || [])];
     const sym = (cat === 'singapore') ? "$" : "₹";
 
+    // Sorting logic preserved for India/Singapore
     if (cat !== 'health') {
         if (sortBy === 'premium') list.sort((a, b) => toNum(b.premium) - toNum(a.premium));
         else if (sortBy === 'due') list.sort((a, b) => parseDate(a.dueDate) - parseDate(b.dueDate));
@@ -87,8 +94,20 @@ export function render(cat) {
     }
 
     container.innerHTML = list.map(p => {
-        if (cat === 'health') return createHealthCard(p);
+        if (cat === 'health') {
+            // Inject avatar and type into the health policy object before rendering
+            const identity = insuredMap[p.owner] || { type: "Other", img: null };
+            const healthPolicy = { 
+                ...p, 
+                avatar: identity.img, 
+                holderType: identity.type 
+            };
+            return createHealthCard(healthPolicy);
+        }
+        
         if (cat === 'singapore') return createSGCard(p, sym, TODAY, CURRENT_YEAR);
+        
+        // India logic
         return createPolicyCard(p, sym, TODAY, CURRENT_YEAR);
     }).join('');
 }
