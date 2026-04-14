@@ -1,5 +1,5 @@
 /* loader.js - v4.5.25 - Minimal Fix: No Variable Changes */
-import { toNum, autoFmt, monthMap, getColorMap, githublogo } from './utils.js?v=1.0.3';
+import { toNum, autoFmt, monthMap, getColorMap, githubLogo } from './utils.js?v=1.0.3';
 
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2UwOfG57DQBOBnJX-9hsRKOQTUgALiM3uxs-VGzD2KN8JoWNAQltH6IkgAGhPTNFEvb/pub?gid=866869416&single=true&output=csv";
 
