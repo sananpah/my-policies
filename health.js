@@ -1,30 +1,16 @@
-/* health.js - v1.5.2 - Added GitHub Logo Pathing */
+/* health.js - v1.5.6 - Clean Version with Local Avatars & Fallback Map */
 import { autoFmt, checkIsDueSoon, githubLogo } from './utils.js?v=1.0.4';
 
 function getNextDue(expiryDateStr) {
     const expiry = new Date(expiryDateStr);
     const today = new Date();
-    
     let nextDue = new Date(today.getFullYear(), expiry.getMonth(), expiry.getDate());
     
-    if (nextDue < today) {
-        nextDue.setFullYear(today.getFullYear() + 1);
-    }
+    if (nextDue < today) nextDue.setFullYear(today.getFullYear() + 1);
     
     const day = String(nextDue.getDate()).padStart(2, '0');
     const month = nextDue.toLocaleString('en-GB', { month: 'short' });
-    const year = nextDue.getFullYear();
-    
-    return `${day} ${month} ${year}`;
-}
-
-function getOwnerIcon(owner) {
-    const name = owner.toLowerCase();
-    if (name === 'father') return 'man';
-    if (name === 'mother') return 'woman';
-    if (name === 'daughter') return 'child_care';
-    if (name === 'family') return 'family_restroom';
-    return 'person';
+    return `${day} ${month} ${nextDue.getFullYear()}`;
 }
 
 export function createHealthCard(p, isMobile = false) {
@@ -35,7 +21,9 @@ export function createHealthCard(p, isMobile = false) {
     const premium = (parseFloat(p.cashAmount || 0) + parseFloat(p.cpfAmount || 0));
     const nextDue = getNextDue(p.expiryDate);
 
+    // Asset logic: Logos from GitHub, Avatars from local root (relative path)
     const logoSrc = `${githubLogo}${p.logo}`;
+    const avatarSrc = p.avatar || null;
 
     const isDueSoon = checkIsDueSoon(nextDue);
     const blinkClass = isDueSoon ? "animate-card-pulse" : "";
@@ -47,6 +35,10 @@ export function createHealthCard(p, isMobile = false) {
     if (months < 0) { years--; months += 12; }
     const timeRemaining = `${String(Math.max(0, years)).padStart(2, '0')}y${String(Math.max(0, months)).padStart(2, '0')}m`;
 
+    // Modern Icon Mapping (Self, Wife, Daughter, Family)
+    const iconMap = { "Self": "man", "Wife": "woman", "Daughter": "child_care", "Family": "family_restroom" };
+    const fallbackIcon = iconMap[p.holderType] || "person";
+
     return `
     <div class="health-card policy-card mb-6 rounded-[30px] md:rounded-[40px] bg-white border-2 relative overflow-hidden transition-all duration-500 ${blinkClass}" 
          id="card-${p.id}"
@@ -55,12 +47,16 @@ export function createHealthCard(p, isMobile = false) {
         <div class="p-5 md:p-8 flex flex-col md:flex-row md:items-center justify-between cursor-pointer group" style="background: ${brandBg}" onclick="toggleCard('${p.id}')">
             <div class="flex items-center gap-4 md:gap-8 mb-4 md:mb-0">
                 <div class="w-14 h-14 md:w-20 md:h-20 bg-white rounded-2xl shadow-sm p-2 flex items-center justify-center border border-slate-100">
-                    <img src="${logoSrc}" class="max-h-full object-contain" alt="${p.name} logo">
+                    <img src="${logoSrc}" class="max-h-full object-contain" alt="${p.name}">
                 </div>
                 <div>
                     <div class="flex items-center gap-2 mb-1">
-                        <div class="flex items-center justify-center w-7 h-7 rounded-full bg-slate-900 text-white">
-                            <span class="material-symbols-outlined text-[16px]">${getOwnerIcon(p.owner)}</span>
+                        <div class="flex items-center justify-center w-7 h-7 rounded-full bg-slate-900 text-white border border-white/20 overflow-hidden shadow-sm">
+                            ${avatarSrc 
+                                ? `<img src="${avatarSrc}" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';">
+                                   <span class="material-symbols-outlined text-[16px] hidden">${fallbackIcon}</span>`
+                                : `<span class="material-symbols-outlined text-[16px]">${fallbackIcon}</span>`
+                            }
                         </div>
                         <span class="text-[9px] font-black px-3 py-1 rounded-full text-white uppercase tracking-wider" style="background: ${brandColor}">
                             ${p.category}
@@ -70,6 +66,7 @@ export function createHealthCard(p, isMobile = false) {
                     <p class="text-[10px] font-bold text-slate-400 tracking-widest uppercase">#${p.id}</p>
                 </div>
             </div>
+
             <div class="flex items-center justify-between md:justify-end gap-4 md:gap-10 border-t md:border-0 pt-4 md:pt-0">
                 <div class="text-left md:text-right">
                     <p class="text-[9px] font-black text-slate-400 uppercase mb-1">Premium</p>
@@ -79,6 +76,7 @@ export function createHealthCard(p, isMobile = false) {
                         ${p.cpfAmount > 0 ? `<div class="px-1.5 py-0.5 rounded bg-blue-100 text-blue-600 text-[8px] font-black uppercase">CPF</div>` : ''}
                     </div>
                 </div>
+
                 <div class="bg-white/80 px-4 py-3 rounded-2xl border border-white/50 text-center min-w-[100px] shadow-sm">
                     <p class="text-[8px] font-black ${isDueSoon ? 'text-red-500' : 'text-orange-500'} uppercase mb-0.5">Due: ${nextDue.split(' ').slice(0,2).join(' ')}</p>
                     <p class="text-[11px] font-black ${isDueSoon ? 'text-red-700' : 'text-slate-700'} leading-none">Left: ${timeRemaining}</p>
@@ -86,6 +84,7 @@ export function createHealthCard(p, isMobile = false) {
                 <span class="material-symbols-outlined text-slate-300 hidden md:block group-[.open]:rotate-180 transition-transform">expand_more</span>
             </div>
         </div>
+
         <div class="content-area overflow-hidden">
             <div class="p-5 md:p-8 flex flex-col md:flex-row gap-4 md:gap-6 bg-white border-t border-slate-50">
                 <div class="w-full md:w-1/3 space-y-3">
@@ -100,6 +99,7 @@ export function createHealthCard(p, isMobile = false) {
                         <p class="text-lg md:text-xl font-black text-slate-600">${autoFmt(p.totalPaid, sym)}</p>
                     </div>
                 </div>
+
                 <div class="w-full md:w-2/3 p-5 md:p-6 rounded-2xl md:rounded-[32px] bg-sky-50 border border-sky-100">
                     <p class="text-[10px] font-black text-sky-600 uppercase mb-4 tracking-widest">Key Coverage Benefits</p>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
@@ -112,6 +112,7 @@ export function createHealthCard(p, isMobile = false) {
                     </div>
                 </div>
             </div>
+            
             <div class="mx-5 md:mx-8 mb-6 flex flex-col md:flex-row justify-between items-center py-4 border-t border-slate-100 gap-3">
                 <div class="flex items-center gap-2 text-slate-400">
                     <span class="material-symbols-outlined text-sm text-emerald-500">event_available</span>
