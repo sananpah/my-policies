@@ -5,6 +5,18 @@ export const monthMap = {
     "Jul": 6, "Aug": 7, "Sep": 8, "Oct": 9, "Nov": 10, "Dec": 11
 };
 
+// Centralized mapping for all family members
+export const insuredMap = {
+    "Self": { type: "Self", img: "avatar_self.png" },
+    "Wife": { type: "Wife", img: "avatar_wife.png" },
+    "Daughter": { type: "Daughter", img: "avatar_daughter.png" },
+    "Family": { type: "Family", img: "avatar_family.png" },
+    // Aliases for Google Sheet names
+    "Suhail Nami": { type: "Self", img: "avatar_self.png" },
+    "Saima Suhail": { type: "Wife", img: "avatar_wife.png" },
+    "Sulmas Nami": { type: "Daughter", img: "avatar_daughter.png" }
+};
+
 export const githubLogo = "https://raw.githubusercontent.com/sananpah/my-policies/main/assets/logo/";
 
 export const getColorMap = (companyName) => {
