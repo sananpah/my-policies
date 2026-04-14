@@ -1,5 +1,5 @@
 /* loader.js - v4.5.25 - Minimal Fix: No Variable Changes */
-import { toNum, autoFmt, monthMap, getColorMap, githubLogo } from './utils.js?v=1.0.4';
+import { toNum, autoFmt, monthMap, getColorMap, githubLogo, insuredMap } from './utils.js?v=1.0.5';
 
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2UwOfG57DQBOBnJX-9hsRKOQTUgALiM3uxs-VGzD2KN8JoWNAQltH6IkgAGhPTNFEvb/pub?gid=866869416&single=true&output=csv";
 
@@ -11,20 +11,7 @@ export async function syncWithGoogleSheets(masterList) {
         const buffer = await response.arrayBuffer();
         const csvData = new TextDecoder('utf-8').decode(buffer);
         const sheetRecords = processCSV(csvData);
-
-        /* loader.js - Update the map keys */
-
-        const insuredMap = {
-            "Self": { type: "Self", img: "avatar_self.png" },
-            "Wife": { type: "Wife", img: "avatar_wife.png" },
-            "Daughter": { type: "Daughter", img: "avatar_daughter.png" },
-            "Family": { type: "Family", img: "avatar_family.png" },
-            // Keep these for your Google Sheet sync logic
-            "Suhail Nami": { type: "Self", img: "avatar_self.png" },
-            "Saima Suhail": { type: "Wife", img: "avatar_wife.png" },
-            "Sulmas Nami": { type: "Daughter", img: "avatar_daughter.png" }
-        };
-
+      
         ["india", "singapore"].forEach(country => {
             if (!masterList[country]) return;
             masterList[country] = masterList[country].map(p => {
