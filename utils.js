@@ -32,7 +32,8 @@ export const getColorMap = (companyName) => {
         "ManuLife" : "#00a758",
         "Prudential" : "#ED1B2E",
         "SBILife" : "#00B4EE",
-        "SingLife" : "#E60000"
+        "SingLife" : "#E60000",
+        "IndiaFirstLife" : "#F3792B"
     };
     return colors[companyName] || "#64748b";
 };
