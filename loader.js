@@ -1,177 +1,179 @@
-/* loader.js - v4.5.25 - Minimal Fix: No Variable Changes */
-import { toNum, autoFmt, monthMap, getColorMap, githubLogo, insuredMap } from './utils.js?v=1.0.5';
+/* loader.js - v5.0.0 - Modular Refactor with Dynamic Country Detection */
+import { toNum, autoFmt, getColorMap, githubLogo, insuredMap } from './utils.js?v=1.0.5';
 
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThDQvcwmWKs2UwOfG57DQBOBnJX-9hsRKOQTUgALiM3uxs-VGzD2KN8JoWNAQltH6IkgAGhPTNFEvb/pub?gid=866869416&single=true&output=csv";
 
+/**
+ * Main Sync Function
+ * Decommissions hardcoded category IDs and classifies data row-by-row
+ */
 export async function syncWithGoogleSheets(masterList) {
-    const TODAY = new Date();
-
     try {
         const response = await fetch(`${SHEET_URL}&t=${Date.now()}`);
         const buffer = await response.arrayBuffer();
         const csvData = new TextDecoder('utf-8').decode(buffer);
         const sheetRecords = processCSV(csvData);
-      
-        ["india", "singapore"].forEach(country => {
-            if (!masterList[country]) return;
-            masterList[country] = masterList[country].map(p => {
-                const match = sheetRecords.find(row => String(row["Policy No."]).trim() === String(p.id).trim());
-                if (match) {
-                    p.name = match.name || p.name;
-                    p.company = match.company || p.company;
-                    p.color = getColorMap(p.company);
-                    p.type = match.type || p.type;
-                    p.logo = `${githubLogo}logo_${p.company.replace(/[\s.]/g, "")}.png`;
 
-                    const identity = insuredMap[match["Insured"]];
-                    if (identity) { 
-                        p.avatarPath = identity.img; 
-                        p.holderType = identity.type; 
-                    }
+        // Initialize new structure
+        const updatedList = { india: [], singapore: [], health: masterList.health || [] };
 
-                    p.premium = toNum(match["Premium"]);
-                    p.totalPremiumPaid = toNum(match["Total Premium"]); 
+        sheetRecords.forEach(match => {
+            const policyId = String(match["Policy No."]).trim();
+            if (!policyId || policyId === "undefined") return;
 
-                    p.sumAssured = toNum(match["Sum Assured"]);
-                    p.unitValueNumeric = toNum(match["Current Value"]);
-                    p.currentUnitValue = match["Current Value"] || "No Value";
+            // Find existing baseline if available
+            const existing = [...(masterList.india || []), ...(masterList.singapore || [])]
+                .find(p => String(p.id).trim() === policyId) || {};
 
-                    const nomineeRaw = String(match["Nominee"] || "").trim();
-                    p.nominees = []; 
-                    if (!nomineeRaw || nomineeRaw.toLowerCase() === "n/a") {
-                        p.nomineeStatus = nomineeRaw.toLowerCase() === "n/a" ? "NA" : "EMPTY";
-                    } else {
-                        p.nomineeStatus = "ASSIGNED";
-                        const names = nomineeRaw.split(/,|\band\b|&|\n|\r/).map(n => n.trim());
-                        names.forEach(name => {
-                            const cleanName = name.replace(/[^\x20-\x7E]/g, "").trim();
-                            if (!cleanName) return;
-                            const matchName = cleanName.toLowerCase();
-                            let img = "avatar_unknown.png"; 
-                            const mappedEntry = Object.entries(insuredMap).find(([fullName]) => matchName.includes(fullName.toLowerCase()));
-                            if (mappedEntry) img = mappedEntry[1].img;
-                            p.nominees.push({ name: cleanName, img: img });
-                        });
-                    }
+            let p = { ...existing, id: policyId };
 
-                    const otherDataRaw = String(match["Other Data"] || "").trim();
-                    p.uin = "N/A"; p.clientId = "N/A";
-                    p.surrenderCharges = null; p.surrenderBase = "VALUATION";
+            // 1. Basic Info & Identity
+            mapBasicInfo(p, match);
+            mapIdentity(p, match);
 
-                    if (otherDataRaw && otherDataRaw.toLowerCase() !== "n/a") {
-                        const lines = otherDataRaw.split(/\n|\r/);
-                        lines.forEach(line => {
-                            const cleanLine = line.trim().toLowerCase();
-                            if (cleanLine.startsWith("uin:")) p.uin = line.split(":")[1]?.trim() || "N/A";
-                            else if (cleanLine.startsWith("clientid:")) {
-                                if (!(p.type || "").toUpperCase().includes("ULIP")) p.clientId = line.split(":")[1]?.trim() || "N/A";
-                            }
-                            else if (cleanLine.startsWith("surrender:")) {
-                                const content = line.split(":")[1] || "";
-                                p.surrenderBase = content.includes("[pp]") ? "PREMIUM" : "VALUATION";
-                                const rawValues = content.replace(/\[.*?\]/g, "").split(",");
-                                p.surrenderCharges = {};
-                                rawValues.forEach((val, index) => {
-                                    const cleanVal = parseInt(val.trim());
-                                    if (!isNaN(cleanVal)) p.surrenderCharges[index + 1] = cleanVal;
-                                });
-                            }
-                        });
-                    }
-                    if (!p.surrenderCharges) p.surrenderCharges = { 1: 0 };
+            // 2. Financials & Nominees
+            mapFinancials(p, match);
+            mapNominees(p, match);
 
-                    let rawDate = String(match["Commenced Date"] || "").trim().replace(/\./g, ' '); 
-                    p.commenced = rawDate;
-                    const dateParts = rawDate.split(" ");
-                    const startY = parseInt(dateParts[2]);
+            // 3. Technical Data & Country Detection (UIN Logic)
+            mapTechnicalData(p, match);
+            const country = (p.uin !== "N/A") ? "india" : "singapore";
 
-                    const rawTermStr = String(match["Term"] || "");
-                    const termParts = rawTermStr.includes(":") ? rawTermStr.split(":") : [0, 0, 0];
-                    const surrenderFreeYear = parseInt(termParts[0], 10) || 0;
-                    const matYears = parseInt(termParts[1], 10) || 0;
-                    
-                    p.mip = termParts[2] ? parseInt(termParts[2], 10) : surrenderFreeYear; 
-                    p.ppt = surrenderFreeYear; 
+            // 4. Dates & Projections
+            mapDatesAndTerms(p, match);
+            mapProjections(p, match, country);
 
-                    if (!isNaN(startY)) {
-                        p.premiumEnds = `${dateParts[0]} ${dateParts[1]} ${startY + surrenderFreeYear - 1}`;
-                        p.maturity = `${dateParts[0]} ${dateParts[1]} ${startY + matYears}`;
-                    }
-
-                    const rawBenefits = String(match["Other Coverage & Benefits"] || "");
-                    const isULIP = (p.type || "").toUpperCase().includes("ULIP") || (country === "singapore");
-                    const sym = (country === "singapore") ? "$" : "₹";
-
-                    const benefitsLines = rawBenefits.split(/\r?\n/);
-                    const withdrawLine = benefitsLines.find(l => l.toLowerCase().trim().includes("withdraw"));
-                    p.withdrawals = [];
-
-                    if (withdrawLine) {
-                        const content = withdrawLine.split(":")[1] || "";
-                        const segments = content.split(",");
-                        segments.forEach(seg => {
-                            const cleanNum = seg.replace(/[$\s,]/g, "");
-                            const val = parseFloat(cleanNum);
-                            if (!isNaN(val)) p.withdrawals.push(val);
-                        });
-                    }
-
-                    if (country === "india") {
-                        const mbLine = benefitsLines.find(l => l.toLowerCase().includes("moneyback"));
-                        p.payoutSchedule = {}; 
-                        if (mbLine && mbLine.includes(":")) {
-                            const content = mbLine.substring(mbLine.indexOf(":") + 1).trim();
-                            content.split(",").forEach(seg => {
-                                const parts = seg.split(":").map(s => s.trim());
-                                if (parts.length < 2) return;
-                                const range = parts[0];
-                                const baseVal = parts[1].toLowerCase().includes("%bsa") ? (p.sumAssured * (toNum(parts[1]) / 100)) : toNum(parts[1]);
-                                if (range.includes("-")) {
-                                    const [s, e] = range.split("-").map(Number);
-                                    for (let y = s; y <= e; y++) p.payoutSchedule[y] = baseVal;
-                                } else if (!isNaN(parseInt(range))) { 
-                                    p.payoutSchedule[parseInt(range)] = baseVal; 
-                                }
-                            });
-                        }
-                    }
-
-                    if (isULIP) {
-                        const calculateProjection = (rate) => {
-                            let projected = p.unitValueNumeric;
-                            const currentYear = TODAY.getFullYear();
-                            
-                            let targetYear = (country === "india") ? (startY + matYears) : (startY + surrenderFreeYear + 2);
-                            let stopPayYear = (country === "india") ? (startY + surrenderFreeYear) : (startY + p.mip);
-                            
-                            if (country === "singapore" && surrenderFreeYear === matYears) {
-                                targetYear = startY + matYears;
-                                stopPayYear = targetYear;
-                            }
-
-                            for (let yr = currentYear; yr < targetYear; yr++) {
-                                if (yr < stopPayYear) projected += p.premium;
-                                projected = projected * (1 + rate);
-                            }
-                            return { v: projected, t: targetYear, s: stopPayYear };
-                        };
-
-                        const r4 = calculateProjection(0.04);
-                        const r8 = calculateProjection(0.08);
-
-                        const disclaimer = `<div style="font-size:0.55rem; opacity:0.6; margin-top:4px; font-style:italic;">` +
-                            `*Pay till ${r4.s}, Grow till ${r4.t}</div>`;
-
-                        p.maturityAmt = `Est. @4%: ${autoFmt(r4.v, sym)}<br>` +
-                                       `Est. @8%: ${autoFmt(r8.v, sym)}` + 
-                                       disclaimer;
-                    }
-                }
-                return p;
-            });
+            // Push to detected category
+            updatedList[country].push(p);
         });
+
+        return updatedList;
+    } catch (e) {
+        console.warn("Sync failed:", e);
         return masterList;
-    } catch (e) { console.warn("Sync failed:", e); return masterList; }
+    }
+}
+
+/* --- HELPER FUNCTIONS --- */
+
+function mapBasicInfo(p, match) {
+    p.name = match.name || p.name;
+    p.company = match.company || p.company;
+    p.color = getColorMap(p.company);
+    p.type = match.type || p.type;
+    p.logo = `${githubLogo}logo_${p.company.replace(/[\s.]/g, "")}.png`;
+}
+
+function mapIdentity(p, match) {
+    const identity = insuredMap[match["Insured"]];
+    if (identity) {
+        p.avatarPath = identity.img;
+        p.holderType = identity.type;
+    }
+}
+
+function mapFinancials(p, match) {
+    p.premium = toNum(match["Premium"]);
+    p.totalPremiumPaid = toNum(match["Total Premium"]);
+    p.sumAssured = toNum(match["Sum Assured"]);
+    p.unitValueNumeric = toNum(match["Current Value"]);
+    p.currentUnitValue = match["Current Value"] || "No Value";
+}
+
+function mapNominees(p, match) {
+    const raw = String(match["Nominee"] || "").trim();
+    p.nominees = [];
+    if (!raw || raw.toLowerCase() === "n/a") {
+        p.nomineeStatus = raw.toLowerCase() === "n/a" ? "NA" : "EMPTY";
+    } else {
+        p.nomineeStatus = "ASSIGNED";
+        const names = raw.split(/,|\band\b|&|\n|\r/).map(n => n.trim());
+        names.forEach(name => {
+            const clean = name.replace(/[^\x20-\x7E]/g, "").trim();
+            if (!clean) return;
+            let img = "avatar_unknown.png";
+            const mapped = Object.entries(insuredMap).find(([full]) => clean.toLowerCase().includes(full.toLowerCase()));
+            if (mapped) img = mapped[1].img;
+            p.nominees.push({ name: clean, img: img });
+        });
+    }
+}
+
+function mapTechnicalData(p, match) {
+    const raw = String(match["Other Data"] || "").trim();
+    p.uin = "N/A"; p.clientId = "N/A";
+    p.surrenderCharges = null; p.surrenderBase = "VALUATION";
+
+    if (raw && raw.toLowerCase() !== "n/a") {
+        const lines = raw.split(/\n|\r/);
+        lines.forEach(line => {
+            const cleanLine = line.trim().toLowerCase();
+            if (cleanLine.startsWith("uin:")) p.uin = line.split(":")[1]?.trim() || "N/A";
+            else if (cleanLine.startsWith("clientid:")) {
+                if (!(p.type || "").toUpperCase().includes("ULIP")) p.clientId = line.split(":")[1]?.trim() || "N/A";
+            } else if (cleanLine.startsWith("surrender:")) {
+                const content = line.split(":")[1] || "";
+                p.surrenderBase = content.includes("[pp]") ? "PREMIUM" : "VALUATION";
+                p.surrenderCharges = {};
+                content.replace(/\[.*?\]/g, "").split(",").forEach((val, idx) => {
+                    const cleanVal = parseInt(val.trim());
+                    if (!isNaN(cleanVal)) p.surrenderCharges[idx + 1] = cleanVal;
+                });
+            }
+        });
+    }
+    if (!p.surrenderCharges) p.surrenderCharges = { 1: 0 };
+}
+
+function mapDatesAndTerms(p, match) {
+    let rawDate = String(match["Commenced Date"] || "").trim().replace(/\./g, ' ');
+    p.commenced = rawDate;
+    const parts = rawDate.split(" ");
+    const startY = parseInt(parts[2]);
+
+    const rawTerm = String(match["Term"] || "");
+    const termParts = rawTerm.includes(":") ? rawTerm.split(":") : [0, 0, 0];
+    const ppt = parseInt(termParts[0], 10) || 0;
+    const mat = parseInt(termParts[1], 10) || 0;
+
+    p.mip = termParts[2] ? parseInt(termParts[2], 10) : ppt;
+    p.ppt = ppt;
+
+    if (!isNaN(startY)) {
+        p.premiumEnds = `${parts[0]} ${parts[1]} ${startY + ppt - 1}`;
+        p.maturity = `${parts[0]} ${parts[1]} ${startY + mat}`;
+    }
+}
+
+function mapProjections(p, match, country) {
+    const isULIP = (p.type || "").toUpperCase().includes("ULIP") || (country === "singapore");
+    const sym = (country === "singapore") ? "$" : "₹";
+    const TODAY = new Date();
+
+    if (isULIP) {
+        const calc = (rate) => {
+            let projected = p.unitValueNumeric;
+            const startY = parseInt(p.commenced.split(" ")[2]);
+            let targetYear = (country === "india") ? (startY + (p.maturity.split(" ")[2] - startY)) : (startY + p.ppt + 2);
+            let stopYear = (country === "india") ? (startY + p.ppt) : (startY + p.mip);
+
+            if (country === "singapore" && p.ppt === (p.maturity.split(" ")[2] - startY)) {
+                targetYear = stopYear = parseInt(p.maturity.split(" ")[2]);
+            }
+
+            for (let yr = TODAY.getFullYear(); yr < targetYear; yr++) {
+                if (yr < stopYear) projected += p.premium;
+                projected *= (1 + rate);
+            }
+            return { v: projected, t: targetYear, s: stopYear };
+        };
+
+        const r4 = calc(0.04);
+        const r8 = calc(0.08);
+        const disclaimer = `<div style="font-size:0.55rem; opacity:0.6; margin-top:4px; font-style:italic;">*Pay till ${r4.s}, Grow till ${r4.t}</div>`;
+        
+        p.maturityAmt = `Est. @4%: ${autoFmt(r4.v, sym)}<br>Est. @8%: ${autoFmt(r8.v, sym)}${disclaimer}`;
+    }
 }
 
 function processCSV(csv) {
@@ -192,14 +194,14 @@ function processCSV(csv) {
     return rows.slice(headerIdx + 1).map(rowData => {
         const obj = {};
         headers.forEach((h, i) => { if (h) obj[h] = (rowData[i] || "").trim(); });
-        const rawFullName = obj["Policy_Name"] || "";
-        if (rawFullName.includes(":")) {
-            const parts = rawFullName.split(":");
-            obj.company = parts[0].trim();
-            obj.name = parts[1].trim(); 
+        const rawName = obj["Policy_Name"] || "";
+        if (rawName.includes(":")) {
+            const pts = rawName.split(":");
+            obj.company = pts[0].trim();
+            obj.name = pts[1].trim();
         }
-        const rawCategory = obj["Category"] || "";
-        obj.type = rawCategory.includes(":") ? rawCategory.split(":")[1].trim() : (rawCategory || "Savings");
+        const rawCat = obj["Category"] || "";
+        obj.type = rawCat.includes(":") ? rawCat.split(":")[1].trim() : (rawCat || "Savings");
         return obj;
     }).filter(item => item && item["Policy_Name"] !== "EMPTY");
 }
