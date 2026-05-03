@@ -158,7 +158,8 @@ function mapProjections(p, match, country) {
             let projected = p.unitValueNumeric;
             const startY = parseInt(p.commenced.split(" ")[2]);
             let targetYear = (country === "india") ? (startY + (p.maturity.split(" ")[2] - startY)) : (startY + p.ppt + 2);
-            let stopYear = (country === "india") ? (startY + p.ppt) : (startY + p.mip);
+            let stopYear = (country === "india") ? (startY + p.ppt - 1) : (startY + p.mip);
+            
 
             if (country === "singapore" && p.ppt === (p.maturity.split(" ")[2] - startY)) {
                 targetYear = stopYear = parseInt(p.maturity.split(" ")[2]);
