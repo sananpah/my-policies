@@ -176,6 +176,36 @@ function mapProjections(p, match, country) {
     }
 }
 
+function mapMoneyBack(p, match) {
+    const rawBenefits = String(match["Other Coverage & Benefits"] || "");
+    const benefitsLines = rawBenefits.split(/\r?\n/);
+    const mbLine = benefitsLines.find(l => l.toLowerCase().includes("moneyback"));
+    
+    p.payoutSchedule = {}; 
+    
+    if (mbLine && mbLine.includes(":")) {
+        const content = mbLine.substring(mbLine.indexOf(":") + 1).trim();
+        content.split(",").forEach(seg => {
+            const parts = seg.split(":").map(s => s.trim());
+            if (parts.length < 2) return;
+            
+            const range = parts[0];
+            const rawVal = parts[1];
+            
+            // Calculate value: handle %BSA or flat numeric
+            const baseVal = rawVal.toLowerCase().includes("%bsa") 
+                ? (p.sumAssured * (toNum(rawVal) / 100)) 
+                : toNum(rawVal);
+            
+            if (range.includes("-")) {
+                const [s, e] = range.split("-").map(Number);
+                for (let y = s; y <= e; y++) p.payoutSchedule[y] = baseVal;
+            } else if (!isNaN(parseInt(range))) { 
+                p.payoutSchedule[parseInt(range)] = baseVal; 
+            }
+        });
+    }
+}
 function processCSV(csv) {
     const rows = [];
     let currentRow = [''], inQuote = false;
