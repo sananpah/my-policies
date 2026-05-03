@@ -39,7 +39,10 @@ export async function syncWithGoogleSheets(masterList) {
             mapTechnicalData(p, match);
             const country = (p.uin !== "N/A") ? "india" : "singapore";
 
-            // 4. Dates & Projections
+            // 4. MoneyBack Logic
+            if (country === "india") mapMoneyBack(p, match);
+
+            // 5. Dates & Projections
             mapDatesAndTerms(p, match);
             mapProjections(p, match, country);
 
