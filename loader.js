@@ -216,7 +216,10 @@ function mapProjections(p, match, country) {
 
             if (totalMaturity > 0) {
                 p.calculatedMaturity = totalMaturity;
-                p.maturityFormula = formula; // Passed to component_in.js for tooltip
+                // --- NEW LOGIC: If only "BSA" was mentioned with no extras, show "BSA Only" ---
+                p.maturityFormula = (componentsFound === 0 && formula.toUpperCase() === "BSA") 
+                    ? "BSA Only" 
+                    : formula;
             }
         }
     }
