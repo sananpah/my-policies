@@ -1,4 +1,4 @@
-/* component_in.js - v4.1.45 - Final Integrated UI: Nominees, Orbitron & Assigned Logic */
+/* component_in.js - v4.1.46 - Dynamic Maturity & Step Logic Integration */
 import { checkIsDueSoon, autoFmt, toNum, safeParseDate, safeGetYear, monthMap, getTimeRemaining } from './utils.js';
 
 export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -46,61 +46,73 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
     const nextDueStr = `${annDay} ${startParts[1]} ${TODAY >= anniversaryThisYear ? CURRENT_YEAR + 1 : CURRENT_YEAR}`; 
     const finalDueDate = isPaidUp ? "PAID UP" : nextDueStr;
 
-    // --- TIMELINE (Abbreviated for brevity, logic remains same) ---
-// --- TIMELINE LOGIC ---
-let timelineHtml = '';
-const premEndYear = safeGetYear(p.premiumEnds);
+    // --- TIMELINE LOGIC ---
+    let timelineHtml = '';
+    const premEndYear = safeGetYear(p.premiumEnds);
 
-for(let yr = startY; yr < matY; yr++) {
-    const loopPolY = yr - startY + 1;
-    const isPast = yr < CURRENT_YEAR;
-    const isLoopCurrent = yr === CURRENT_YEAR;
-    
-    // Check if this specific year has a scheduled MoneyBack payout
-    const loopPayout = (p.payoutSchedule && p.payoutSchedule[loopPolY]);
-    
-    let color = "", phase = "", detail = "";
-
-    if (yr <= premEndYear) {
-        // --- PREMIUM PAYMENT PHASE ---
-        const isEffectivelyPaid = isPast || (isPaidUp && yr === premEndYear) || (isLoopCurrent && TODAY >= anniversaryThisYear);
+    for(let yr = startY; yr < matY; yr++) {
+        const loopPolY = yr - startY + 1;
+        const isPast = yr < CURRENT_YEAR;
+        const isLoopCurrent = yr === CURRENT_YEAR;
+        const loopPayout = (p.payoutSchedule && p.payoutSchedule[loopPolY]);
         
-        // If there's a payout DURING the premium years (rare but possible)
-        if (loopPayout) {
-            color = isPast ? "bg-emerald-600" : "bg-emerald-400"; // Distinct Green for MB during PPT
-            phase = "Premium + Payout";
-            detail = `Pay: ${autoFmt(p.premium, sym)} | Get: ${autoFmt(loopPayout, sym)}`;
+        let color = "", phase = "", detail = "";
+
+        if (yr <= premEndYear) {
+            const isEffectivelyPaid = isPast || (isPaidUp && yr === premEndYear) || (isLoopCurrent && TODAY >= anniversaryThisYear);
+            if (loopPayout) {
+                color = isPast ? "bg-emerald-600" : "bg-emerald-400";
+                phase = "Premium + Payout";
+                detail = `Pay: ${autoFmt(p.premium, sym)} | Get: ${autoFmt(loopPayout, sym)}`;
+            } else {
+                color = (isLoopCurrent && TODAY < anniversaryThisYear && !isPaidUp) ? "bg-current" : (isEffectivelyPaid ? "bg-prem-past" : "bg-prem-future");
+                phase = isEffectivelyPaid ? "Premium Completed" : "Premium Payment";
+                detail = `Amt: ${autoFmt(p.premium, sym)}`;
+            }
         } else {
-            color = (isLoopCurrent && TODAY < anniversaryThisYear && !isPaidUp) ? "bg-current" : (isEffectivelyPaid ? "bg-prem-past" : "bg-prem-future");
-            phase = isEffectivelyPaid ? "Premium Completed" : "Premium Payment";
-            detail = `Amt: ${autoFmt(p.premium, sym)}`;
+            if (loopPayout) {
+                color = isPast ? "bg-amber-600" : "bg-amber-400";
+                phase = isPast ? "Payout Received" : "Scheduled Payout";
+                detail = `Income: ${autoFmt(loopPayout, sym)}`;
+            } else {
+                color = isPast ? "bg-history-brown" : "bg-future-light-brown";
+                phase = isPast ? "Growth (Historical)" : "Growth Phase";
+                detail = "Accumulating Value";
+            }
         }
-    } else {
-        // --- POST-PREMIUM / INCOME PHASE ---
-        if (loopPayout) {
-            // It's a MoneyBack/Income year
-            color = isPast ? "bg-amber-600" : "bg-amber-400"; // Gold/Amber for Income
-            phase = isPast ? "Payout Received" : "Scheduled Payout";
-            detail = `Income: ${autoFmt(loopPayout, sym)}`;
-        } else {
-            // It's a standard Growth year
-            color = isPast ? "bg-history-brown" : "bg-future-light-brown";
-            phase = isPast ? "Growth (Historical)" : "Growth Phase";
-            detail = "Accumulating Value";
-        }
+        
+        timelineHtml += `
+            <div class="segment ${color}">
+                <div class="tooltip">
+                    <b class="${loopPayout ? 'text-amber-300' : 'text-emerald-400'} uppercase tracking-tighter">${phase}</b><br>
+                    ${detail}<br>
+                    <span class="opacity-40 text-[9px]">Year ${loopPolY} (${yr})</span>
+                </div>
+                ${loopPayout ? `<div class="payout-dot"></div>` : ''} 
+            </div>`;
     }
-    
+
+    // --- DYNAMIC MATURITY HOVER LOGIC ---
+    let matHoverDetail = "";
+    if (isULIP) {
+        matHoverDetail = `<span class="text-[10px] font-black leading-tight text-white">${p.maturityAmt}</span>`;
+    } else if (p.calculatedMaturity) {
+        matHoverDetail = `
+            <div class="text-[10px] font-black text-white">${autoFmt(p.calculatedMaturity, sym)}</div>
+            <div class="text-[8px] opacity-60 mt-1 italic leading-tight">${p.maturityFormula}</div>
+        `;
+    } else {
+        matHoverDetail = `<div class="text-[10px] font-black text-white">${autoFmt(p.sumAssured, sym)}</div>`;
+    }
+
     timelineHtml += `
-        <div class="segment ${color}">
-            <div class="tooltip">
-                <b class="${loopPayout ? 'text-amber-300' : 'text-emerald-400'} uppercase tracking-tighter">${phase}</b><br>
-                ${detail}<br>
-                <span class="opacity-40 text-[9px]">Year ${loopPolY} (${yr})</span>
+        <div class="mat-star">
+            ★
+            <div class="tooltip" style="min-width: 150px;">
+                <b class="text-orange-400 uppercase tracking-widest text-[9px]">${isULIP ? 'Projected Maturity*' : 'Maturity Benefit'}</b><br>
+                ${matHoverDetail}
             </div>
-            ${loopPayout ? `<div class="payout-dot"></div>` : ''} 
         </div>`;
-}
-    timelineHtml += `<div class="mat-star">★<div class="tooltip" style="min-width: 140px;"><b class="text-orange-400 uppercase tracking-widest text-[9px]">${isULIP ? 'Projected Maturity*' : 'Maturity'}</b><br><span class="text-[10px] font-black leading-tight text-white">${p.maturityAmt || autoFmt(p.sumAssured, sym)}</span></div></div>`;
 
     return `
     <div class="policy-card mb-6" id="card-${p.id}" style="border-left: 16px solid ${brandColor}; border-color: ${brandColor};">
