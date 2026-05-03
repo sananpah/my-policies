@@ -177,46 +177,51 @@ function mapProjections(p, match, country) {
         
         p.maturityAmt = `Est. @4%: ${autoFmt(r4.v, sym)}<br>Est. @8%: ${autoFmt(r8.v, sym)}${disclaimer}`;
     } else {
-        // --- NEW: DYNAMIC MATURITY LOGIC FOR NON-ULIP ---
         const rawBenefits = String(match["Other Coverage & Benefits"] || "");
         const mbLine = rawBenefits.split(/\r?\n/).find(l => l.toLowerCase().includes("maturity benefit"));
         
         if (mbLine && mbLine.includes(":")) {
             const formula = mbLine.split(":")[1].trim();
             let totalMaturity = 0;
+            let componentsFound = 0;
 
             // 1. Base Sum Assured check
             if (formula.toLowerCase().includes("bsa")) {
                 totalMaturity += (p.sumAssured || 0);
             }
             
-            // 2. Percentage of BSA check (e.g., 30%BSA, 15%BSA)
+            // 2. Percentage of BSA check (e.g., 30%BSA)
             const bsaMatches = formula.match(/(\d+)%BSA/gi);
             if (bsaMatches) {
+                componentsFound += bsaMatches.length;
                 bsaMatches.forEach(m => {
-                    const pct = parseInt(m);
-                    totalMaturity += ((p.sumAssured || 0) * (pct / 100));
+                    totalMaturity += ((p.sumAssured || 0) * (parseInt(m) / 100));
                 });
             }
 
             // 3. Total MoneyBack check
             if (formula.toLowerCase().includes("total moneyback")) {
+                componentsFound++;
                 const totalMB = Object.values(p.payoutSchedule || {}).reduce((a, b) => a + b, 0);
                 totalMaturity += totalMB;
             }
 
-            // 4. Fixed Value addition (e.g., Bonus or flat amounts)
-            // This captures flat numbers in the formula that aren't percentages
+            // 4. Fixed Value addition
             const flatValues = formula.match(/(?:\+|\s|^)(\d+(?:\.\d+)?)(?!%|BSA)/g);
             if (flatValues) {
+                componentsFound += flatValues.length;
                 flatValues.forEach(val => {
                     totalMaturity += parseFloat(val.trim().replace('+', ''));
                 });
             }
 
-            if (totalMaturity > 0) {
+            // --- SURGICAL LOGIC FOR NON-NUMERIC USE CASES ---
+            if (totalMaturity === 0 && componentsFound === 0) {
+                // If no math was triggered, treat the formula as a descriptive label
+                p.calculatedMaturity = null;
+                p.maturityLabel = formula; 
+            } else {
                 p.calculatedMaturity = totalMaturity;
-                // --- NEW LOGIC: If only "BSA" was mentioned with no extras, show "BSA Only" ---
                 p.maturityFormula = (componentsFound === 0 && formula.toUpperCase() === "BSA") 
                     ? "BSA Only" 
                     : formula;
@@ -224,7 +229,6 @@ function mapProjections(p, match, country) {
         }
     }
 }
-
 function mapMoneyBack(p, match) {
     const rawBenefits = String(match["Other Coverage & Benefits"] || "");
     const benefitsLines = rawBenefits.split(/\r?\n/);
