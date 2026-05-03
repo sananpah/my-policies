@@ -92,18 +92,25 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
             </div>`;
     }
 
+
     // --- DYNAMIC MATURITY HOVER LOGIC ---
     let matHoverDetail = "";
-    if (isULIP) {
-        matHoverDetail = `<span class="text-[10px] font-black leading-tight text-white">${p.maturityAmt}</span>`;
-    } else if (p.calculatedMaturity) {
-        matHoverDetail = `
-            <div class="text-[10px] font-black text-white">${autoFmt(p.calculatedMaturity, sym)}</div>
-            <div class="text-[8px] opacity-60 mt-1 italic leading-tight">${p.maturityFormula}</div>
-        `;
-    } else {
-        matHoverDetail = `<div class="text-[10px] font-black text-white">${autoFmt(p.sumAssured, sym)}</div>`;
-    }
+      if (isULIP) {
+          matHoverDetail = `<span class="text-[10px] font-black leading-tight text-white">${p.maturityAmt}</span>`;
+      } else if (p.maturityLabel) {
+         // Handle "Special Surrender Value" or other text-based benefits
+          matHoverDetail = `
+              <div class="text-[10px] font-black text-orange-300 uppercase leading-tight">${p.maturityLabel}</div>
+              <div class="text-[8px] opacity-60 mt-1 italic leading-tight">Refer Policy Doc for Value</div>
+            `;
+        } else if (p.calculatedMaturity) {
+            matHoverDetail = `
+              <div class="text-[10px] font-black text-white">${autoFmt(p.calculatedMaturity, sym)}</div>
+              <div class="text-[8px] opacity-60 mt-1 italic leading-tight">${p.maturityFormula}</div>
+            `;
+        } else {
+            matHoverDetail = `<div class="text-[10px] font-black text-white">${autoFmt(p.sumAssured, sym)}</div>`;
+        }
 
     timelineHtml += `
         <div class="mat-star">
