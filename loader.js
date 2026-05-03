@@ -176,6 +176,49 @@ function mapProjections(p, match, country) {
         const disclaimer = `<div style="font-size:0.55rem; opacity:0.6; margin-top:4px; font-style:italic;">*Pay till ${r4.s}, Grow till ${r4.t}</div>`;
         
         p.maturityAmt = `Est. @4%: ${autoFmt(r4.v, sym)}<br>Est. @8%: ${autoFmt(r8.v, sym)}${disclaimer}`;
+    } else {
+        // --- NEW: DYNAMIC MATURITY LOGIC FOR NON-ULIP ---
+        const rawBenefits = String(match["Other Coverage & Benefits"] || "");
+        const mbLine = rawBenefits.split(/\r?\n/).find(l => l.toLowerCase().includes("maturity benefit"));
+        
+        if (mbLine && mbLine.includes(":")) {
+            const formula = mbLine.split(":")[1].trim();
+            let totalMaturity = 0;
+
+            // 1. Base Sum Assured check
+            if (formula.toLowerCase().includes("bsa")) {
+                totalMaturity += (p.sumAssured || 0);
+            }
+            
+            // 2. Percentage of BSA check (e.g., 30%BSA, 15%BSA)
+            const bsaMatches = formula.match(/(\d+)%BSA/gi);
+            if (bsaMatches) {
+                bsaMatches.forEach(m => {
+                    const pct = parseInt(m);
+                    totalMaturity += ((p.sumAssured || 0) * (pct / 100));
+                });
+            }
+
+            // 3. Total MoneyBack check
+            if (formula.toLowerCase().includes("total moneyback")) {
+                const totalMB = Object.values(p.payoutSchedule || {}).reduce((a, b) => a + b, 0);
+                totalMaturity += totalMB;
+            }
+
+            // 4. Fixed Value addition (e.g., Bonus or flat amounts)
+            // This captures flat numbers in the formula that aren't percentages
+            const flatValues = formula.match(/(?:\+|\s|^)(\d+(?:\.\d+)?)(?!%|BSA)/g);
+            if (flatValues) {
+                flatValues.forEach(val => {
+                    totalMaturity += parseFloat(val.trim().replace('+', ''));
+                });
+            }
+
+            if (totalMaturity > 0) {
+                p.calculatedMaturity = totalMaturity;
+                p.maturityFormula = formula; // Passed to component_in.js for tooltip
+            }
+        }
     }
 }
 
