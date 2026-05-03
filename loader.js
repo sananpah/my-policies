@@ -188,27 +188,47 @@ function mapMoneyBack(p, match) {
     
     if (mbLine && mbLine.includes(":")) {
         const content = mbLine.substring(mbLine.indexOf(":") + 1).trim();
+        
         content.split(",").forEach(seg => {
             const parts = seg.split(":").map(s => s.trim());
             if (parts.length < 2) return;
             
             const range = parts[0];
             const rawVal = parts[1];
-            
-            // Calculate value: handle %BSA or flat numeric
-            const baseVal = rawVal.toLowerCase().includes("%bsa") 
+            let currentVal = rawVal.toLowerCase().includes("%bsa") 
                 ? (p.sumAssured * (toNum(rawVal) / 100)) 
                 : toNum(rawVal);
             
-            if (range.includes("-")) {
+            // Check for STEP logic: Range:Value:STEP:Interval:Percent
+            // e.g. 11-30:133974:STEP:5:20
+            if (parts[2] && parts[2].toUpperCase() === "STEP") {
+                const interval = parseInt(parts[3]) || 1;
+                const percentIncrease = (parseInt(parts[4]) || 0) / 100;
+                const [start, end] = range.split("-").map(Number);
+                
+                let stepsTaken = 0;
+                for (let y = start; y <= end; y++) {
+                    // Every time we hit the interval, increase the value
+                    if (stepsTaken > 0 && stepsTaken % interval === 0) {
+                        currentVal = currentVal * (1 + percentIncrease);
+                    }
+                    p.payoutSchedule[y] = currentVal;
+                    stepsTaken++;
+                }
+            } 
+            // Standard Range Logic (e.g., 5-10: 5000)
+            else if (range.includes("-")) {
                 const [s, e] = range.split("-").map(Number);
-                for (let y = s; y <= e; y++) p.payoutSchedule[y] = baseVal;
-            } else if (!isNaN(parseInt(range))) { 
-                p.payoutSchedule[parseInt(range)] = baseVal; 
+                for (let y = s; y <= e; y++) p.payoutSchedule[y] = currentVal;
+            } 
+            // Single Year Logic (e.g., 5: 5000)
+            else if (!isNaN(parseInt(range))) { 
+                p.payoutSchedule[parseInt(range)] = currentVal; 
             }
         });
     }
 }
+
 function processCSV(csv) {
     const rows = [];
     let currentRow = [''], inQuote = false;
