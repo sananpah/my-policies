@@ -47,26 +47,59 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
     const finalDueDate = isPaidUp ? "PAID UP" : nextDueStr;
 
     // --- TIMELINE (Abbreviated for brevity, logic remains same) ---
-    let timelineHtml = '';
-    const premEndYear = safeGetYear(p.premiumEnds);
-    for(let yr = startY; yr < matY; yr++) {
-        const loopPolY = yr - startY + 1;
-        const isPast = yr < CURRENT_YEAR;
-        const isLoopCurrent = yr === CURRENT_YEAR;
-        let color = "", phase = "", detail = "";
-        if (yr <= premEndYear) {
-            const isEffectivelyPaid = isPast || (isPaidUp && yr === premEndYear) || (isLoopCurrent && TODAY >= anniversaryThisYear);
+// --- TIMELINE LOGIC ---
+let timelineHtml = '';
+const premEndYear = safeGetYear(p.premiumEnds);
+
+for(let yr = startY; yr < matY; yr++) {
+    const loopPolY = yr - startY + 1;
+    const isPast = yr < CURRENT_YEAR;
+    const isLoopCurrent = yr === CURRENT_YEAR;
+    
+    // Check if this specific year has a scheduled MoneyBack payout
+    const loopPayout = (p.payoutSchedule && p.payoutSchedule[loopPolY]);
+    
+    let color = "", phase = "", detail = "";
+
+    if (yr <= premEndYear) {
+        // --- PREMIUM PAYMENT PHASE ---
+        const isEffectivelyPaid = isPast || (isPaidUp && yr === premEndYear) || (isLoopCurrent && TODAY >= anniversaryThisYear);
+        
+        // If there's a payout DURING the premium years (rare but possible)
+        if (loopPayout) {
+            color = isPast ? "bg-emerald-600" : "bg-emerald-400"; // Distinct Green for MB during PPT
+            phase = "Premium + Payout";
+            detail = `Pay: ${autoFmt(p.premium, sym)} | Get: ${autoFmt(loopPayout, sym)}`;
+        } else {
             color = (isLoopCurrent && TODAY < anniversaryThisYear && !isPaidUp) ? "bg-current" : (isEffectivelyPaid ? "bg-prem-past" : "bg-prem-future");
             phase = isEffectivelyPaid ? "Premium Completed" : "Premium Payment";
             detail = `Amt: ${autoFmt(p.premium, sym)}`;
-        } else {
-            const loopPayout = (p.payoutSchedule && p.payoutSchedule[loopPolY]);
-            color = loopPayout ? (isPast ? "bg-payout-past" : "bg-payout-future") : (isPast ? "bg-history-brown" : "bg-future-light-brown");
-            phase = loopPayout ? (isPast ? "Payout Received" : "Income Phase") : (isPast ? "Growth (Historical)" : "Growth Phase");
-            detail = loopPayout ? `Payout: ${autoFmt(loopPayout, sym)}` : "Accumulating Value";
         }
-        timelineHtml += `<div class="segment ${color}"><div class="tooltip"><b class="text-emerald-400 uppercase tracking-tighter">${phase}</b><br>${detail}<br><span class="opacity-40 text-[9px]">Year ${loopPolY} (${yr})</span></div></div>`;
+    } else {
+        // --- POST-PREMIUM / INCOME PHASE ---
+        if (loopPayout) {
+            // It's a MoneyBack/Income year
+            color = isPast ? "bg-amber-600" : "bg-amber-400"; // Gold/Amber for Income
+            phase = isPast ? "Payout Received" : "Scheduled Payout";
+            detail = `Income: ${autoFmt(loopPayout, sym)}`;
+        } else {
+            // It's a standard Growth year
+            color = isPast ? "bg-history-brown" : "bg-future-light-brown";
+            phase = isPast ? "Growth (Historical)" : "Growth Phase";
+            detail = "Accumulating Value";
+        }
     }
+    
+    timelineHtml += `
+        <div class="segment ${color}">
+            <div class="tooltip">
+                <b class="${loopPayout ? 'text-amber-300' : 'text-emerald-400'} uppercase tracking-tighter">${phase}</b><br>
+                ${detail}<br>
+                <span class="opacity-40 text-[9px]">Year ${loopPolY} (${yr})</span>
+            </div>
+            ${loopPayout ? `<div class="payout-dot"></div>` : ''} 
+        </div>`;
+}
     timelineHtml += `<div class="mat-star">★<div class="tooltip" style="min-width: 140px;"><b class="text-orange-400 uppercase tracking-widest text-[9px]">${isULIP ? 'Projected Maturity*' : 'Maturity'}</b><br><span class="text-[10px] font-black leading-tight text-white">${p.maturityAmt || autoFmt(p.sumAssured, sym)}</span></div></div>`;
 
     return `
