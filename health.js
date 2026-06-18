@@ -43,10 +43,15 @@ export function createHealthCard(p, isMobile = false) {
     const fallbackIcon = iconMap[p.holderType] || "person";
 
     return `
+    // --- NOMINEE AVATAR HTML ---
+    const nomineeHtml = (p.nomineeStatus === "NA") ? `<span class="text-[11px] font-black text-slate-400 uppercase italic">N/A</span>` :
+                      (!p.nominees || p.nominees.length === 0 || p.nomineeStatus === "EMPTY") ? `<span class="text-[11px] font-black text-rose-500 animate-pulse uppercase">Unassigned</span>` :
+                      `<div class="flex -space-x-3 items-center">${p.nominees.map(n => `<img src="${n.img}" class="w-9 h-9 rounded-full border-2 border-white shadow-md object-cover ring-1 ring-slate-100 transition-transform hover:scale-110 hover:z-20">`).join('')}</div>`;
+
+    return `
     <div class="health-card policy-card mb-6" id="card-${p.id}" style="border-left: 16px solid ${brandColor}; border-color: ${brandColor};">
         
         <div class="card-header transition-colors" style="background: ${brandBg};" onclick="toggleCard('${p.id}')">
-            
             <div class="w-32 flex justify-center"><img src="${logoSrc}" class="max-h-12 object-contain" alt="${p.name}"></div>
             
             <div class="flex-1 ml-10">
@@ -100,11 +105,16 @@ export function createHealthCard(p, isMobile = false) {
 
         <div class="content-area" style="background: linear-gradient(to bottom, ${brandBg}, #ffffff)">
             <div class="detail-grid">
+                <div class="detail-item"><p>Policy Number</p><p style="font-family:'Orbitron'; font-weight:700;">${p.id || 'N/A'}</p></div>
                 <div class="detail-item"><p>Total Invested</p><p style="font-family:'Orbitron'; font-weight:700;">${autoFmt(p.totalPaid, sym)}</p></div>
                 <div class="detail-item"><p>Covered Till</p><p style="font-family:'Orbitron'; font-weight:700;">${p.expiryDate}</p></div>
-                <div class="detail-item"><p>Nominee</p><p style="font-family:'Orbitron'; font-weight:700;">${p.nominee || 'N/A'}</p></div>
             </div>
             
+            <div class="mt-4 p-4 bg-white/50 border border-slate-100 rounded-2xl shadow-sm flex flex-col gap-3">
+                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">Nominee(s)</p>
+                <div class="flex items-center h-10">${nomineeHtml}</div>
+            </div>
+
             <div class="mt-4 p-5 bg-white/50 border border-slate-100 rounded-2xl shadow-sm">
                 <p class="text-[9px] font-black text-sky-600 uppercase mb-3 tracking-widest">Key Coverage Benefits</p>
                 <div class="grid grid-cols-2 gap-x-4 gap-y-2">
