@@ -86,13 +86,35 @@ export function render(cat) {
     }
 
     container.innerHTML = list.map(p => {
-        if (cat === 'health') {
+     if (cat === 'health') {
             // Inject avatar and type into the health policy object before rendering
             const identity = insuredMap[p.owner] || { type: "Other", img: null };
+            
+            // --- NEW: Parse Health Nominees using insuredMap ---
+            const rawNom = String(p.nominee || "").trim();
+            let parsedNominees = [];
+            let nomStatus = "ASSIGNED";
+            
+            if (!rawNom || rawNom.toLowerCase() === "n/a") {
+                nomStatus = rawNom.toLowerCase() === "n/a" ? "NA" : "EMPTY";
+            } else {
+                const names = rawNom.split(/,|\band\b|&|\n|\r/).map(n => n.trim());
+                names.forEach(name => {
+                    const clean = name.replace(/[^\x20-\x7E]/g, "").trim();
+                    if (!clean) return;
+                    let img = "avatar_unknown.png";
+                    const mapped = Object.entries(insuredMap).find(([full]) => clean.toLowerCase().includes(full.toLowerCase()));
+                    if (mapped) img = mapped[1].img;
+                    parsedNominees.push({ name: clean, img: img });
+                });
+            }
+
             const healthPolicy = { 
                 ...p, 
                 avatar: identity.img, 
-                holderType: identity.type 
+                holderType: identity.type,
+                nominees: parsedNominees,
+                nomineeStatus: nomStatus
             };
             return createHealthCard(healthPolicy);
         }
