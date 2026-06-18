@@ -98,7 +98,7 @@ export function render(cat) {
             if (!rawNom || rawNom.toLowerCase() === "n/a") {
                 nomStatus = rawNom.toLowerCase() === "n/a" ? "NA" : "EMPTY";
             } else {
-                const names = rawNom.split(/,|\band\b|&|\n|\r/).map(n => n.trim());
+                const names = rawNom.split(/,|\/|\band\b|&|\n|\r/).map(n => n.trim());
                 names.forEach(name => {
                     const clean = name.replace(/[^\x20-\x7E]/g, "").trim();
                     if (!clean) return;
