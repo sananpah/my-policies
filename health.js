@@ -80,7 +80,7 @@ export function createHealthCard(p, isMobile = false) {
                 </div>
                 <div class="text-center border-l-2 border-slate-100 pl-10 min-w-[140px]">
                     <div>
-                        <p class="text-[9px] font-bold text-slate-400 uppercase leading-none mb-1">Limit / SA</p>
+                        <p class="text-[9px] font-bold text-slate-400 uppercase leading-none mb-1">Sum Assured</p>
                         <p class="text-lg font-black text-slate-800 leading-none">${p.sumAssured === 0 ? 'Rider' : autoFmt(p.sumAssured, sym)}</p>
                     </div>
                 </div>
