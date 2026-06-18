@@ -65,7 +65,8 @@ export const healthData = [
             "Lifetime Cover: Protection active until 2086"
         ],
         nominee: "Wife/Daughter",
-        color: "#ED1B2E"
+        color: "#ED1B2E",
+        isOverlap: true
     },
     {
         id: "P565596237",
@@ -161,7 +162,8 @@ export const healthData = [
             "Father Critical Illness Waiver: Premium Waiver"
         ],
         nominee: "N/A",
-        color: "#ED1B2E"
+        color: "#ED1B2E",
+        isOverlap: true
     },
     {
         id: "2470883285",
