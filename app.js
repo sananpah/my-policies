@@ -136,7 +136,10 @@ export function handleToggle(id) {
 
 function updateHealthSummary(bar) {
     bar.className = "flex items-center justify-between bg-slate-900 p-6 rounded-[40px] text-white shadow-2xl relative overflow-hidden transition-all duration-500";
-    const totals = calculateHealthTotals(healthData);
+    
+    // Filter out policies that are also covered in the Singapore portfolio
+    const uniqueHealthData = healthData.filter(p => !p.isOverlap);
+    const totals = calculateHealthTotals(uniqueHealthData);
     
     bar.innerHTML = `
         <div class="flex items-center gap-2 pl-4">
