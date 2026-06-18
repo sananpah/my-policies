@@ -1,5 +1,5 @@
-/* component_sg.js - v7.2.0 - Clean View: Removed Capital Analysis Breakdown */
-import { autoFmt, toNum, getTimeRemaining } from './utils.js';
+/* component_sg.js - v7.2.1 - Sync: Next Due Label & Blinking Logic */
+import { autoFmt, toNum, getTimeRemaining, checkIsDueSoon } from './utils.js';
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const commDate = new Date(p.commenced);
@@ -37,7 +37,13 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     }
     const timeLeftDisplay = (premRemainingStr === "VESTED" || premRemainingStr === "PAID UP") ? premRemainingStr : `LEFT: ${premRemainingStr}`;
 
-    // --- MATH (Calculated in background, no longer printed in breakdown) ---
+    // --- DUE DATE & BLINKING LOGIC (Synced with India) ---
+    const nextDueDateStr = new Date(hasPassedThisYear ? CURRENT_YEAR + 1 : CURRENT_YEAR, commMonth, commDay).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    const isFinishedPaying = isPaidUp || premRemainingStr === "VESTED";
+    const finalDueDate = isFinishedPaying ? (isPaidUp ? "PAID UP" : "VESTED") : nextDueDateStr;
+    const dueBlinkClass = (!isFinishedPaying && checkIsDueSoon(finalDueDate)) ? 'text-red-500 animate-pulse' : 'text-slate-700';
+
+    // --- MATH ---
     const accountValue = Math.round(toNum(p.currentUnitValue || 0));
     const annualPremium = toNum(p.premium || 0);
     const actualTotalPaid = p.totalPremiumPaid > 0 ? p.totalPremiumPaid : (annualPremium * policyYearIdx);
@@ -98,11 +104,13 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
             <div class="flex items-center gap-10 text-right px-4 relative z-20">
                 <div><p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Annual Premium</p><p class="text-2xl font-black text-[#059669]">${autoFmt(p.premium, sym)}</p></div>
                 <div><p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Sum Assured</p><p class="text-2xl font-black text-slate-800">${autoFmt(toNum(p.sumAssured) === 0 ? accountValue : p.sumAssured, sym)}</p></div>
-                <div class="bg-white/60 px-6 py-3 rounded-[20px] border border-white/50 flex flex-col justify-center min-w-[125px] h-[64px]">
-                    <p class="text-[10px] font-black ${premRemainingStr === 'VESTED' ? 'text-emerald-500' : 'text-indigo-500'} uppercase text-center">${premRemainingStr === 'VESTED' || isPaidUp ? premRemainingStr : 'LEFT: ' + premRemainingStr}</p>
-                    <div class="h-[1px] bg-slate-200/40 w-full my-1"></div>
-                    <p class="text-sm font-black text-slate-700 text-center tracking-tight">${new Date(hasPassedThisYear ? CURRENT_YEAR + 1 : CURRENT_YEAR, commMonth, commDay).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
+                
+                <div class="bg-white/60 px-4 py-2 rounded-[20px] border border-white/50 flex flex-col justify-center min-w-[125px] h-[64px]">
+                    <p class="text-[10px] font-black ${premRemainingStr === 'VESTED' ? 'text-emerald-500' : 'text-indigo-500'} uppercase text-center leading-none mb-1.5">${premRemainingStr === 'VESTED' || isPaidUp ? premRemainingStr : 'LEFT: ' + premRemainingStr}</p>
+                    <p class="text-[8px] font-bold text-slate-400 uppercase text-center leading-none mb-1">Next Due</p>
+                    <p class="text-[12px] font-black ${dueBlinkClass} text-center tracking-tight leading-none">${finalDueDate}</p>
                 </div>
+
             </div>
         </div>
         <div class="content-area px-10 pb-10 pt-2 relative z-20" style="background: linear-gradient(to bottom, ${brandBg}, #ffffff)">
