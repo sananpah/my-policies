@@ -1,4 +1,4 @@
-/* health.js - v1.6.0 - Synced with India Layout & Full Life Logic */
+/* health.js - v1.6.5 - Full Layout Sync & Nominee Avatars */
 import { autoFmt, checkIsDueSoon, githubLogo } from './utils.js?v=1.0.4';
 
 function getNextDue(expiryDateStr) {
@@ -21,7 +21,7 @@ export function createHealthCard(p, isMobile = false) {
     const premium = (parseFloat(p.cashAmount || 0) + parseFloat(p.cpfAmount || 0));
     const nextDue = getNextDue(p.expiryDate);
 
-    // Asset logic: Logos from GitHub, Avatars from local root (relative path)
+    // Asset logic
     const logoSrc = `${githubLogo}${p.logo}`;
     const avatarSrc = p.avatar || null;
 
@@ -38,11 +38,9 @@ export function createHealthCard(p, isMobile = false) {
     const isFullLife = years > 20;
     const timeRemaining = `${String(Math.max(0, years)).padStart(2, '0')}y ${String(Math.max(0, months)).padStart(2, '0')}m`;
 
-    // Modern Icon Mapping (Self, Wife, Daughter, Family)
     const iconMap = { "Self": "man", "Wife": "woman", "Daughter": "child_care", "Family": "family_restroom" };
     const fallbackIcon = iconMap[p.holderType] || "person";
 
-    return `
     // --- NOMINEE AVATAR HTML ---
     const nomineeHtml = (p.nomineeStatus === "NA") ? `<span class="text-[11px] font-black text-slate-400 uppercase italic">N/A</span>` :
                       (!p.nominees || p.nominees.length === 0 || p.nomineeStatus === "EMPTY") ? `<span class="text-[11px] font-black text-rose-500 animate-pulse uppercase">Unassigned</span>` :
@@ -52,6 +50,7 @@ export function createHealthCard(p, isMobile = false) {
     <div class="health-card policy-card mb-6" id="card-${p.id}" style="border-left: 16px solid ${brandColor}; border-color: ${brandColor};">
         
         <div class="card-header transition-colors" style="background: ${brandBg};" onclick="toggleCard('${p.id}')">
+            
             <div class="w-32 flex justify-center"><img src="${logoSrc}" class="max-h-12 object-contain" alt="${p.name}"></div>
             
             <div class="flex-1 ml-10">
