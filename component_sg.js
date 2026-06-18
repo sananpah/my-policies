@@ -1,4 +1,4 @@
-/* component_sg.js - v7.2.1 - Sync: Next Due Label & Blinking Logic */
+/* component_sg.js - v7.3.0 - Layout Synced: Match India Height & Attribute Placement */
 import { autoFmt, toNum, getTimeRemaining, checkIsDueSoon } from './utils.js';
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -35,13 +35,12 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
             premRemainingStr = `${String(Math.max(0, y)).padStart(2, '0')}Y ${String(Math.max(0, m)).padStart(2, '0')}M`;
         }
     }
-    const timeLeftDisplay = (premRemainingStr === "VESTED" || premRemainingStr === "PAID UP") ? premRemainingStr : `LEFT: ${premRemainingStr}`;
-
-    // --- DUE DATE & BLINKING LOGIC (Synced with India) ---
+    
+    // --- DUE DATE & BLINKING LOGIC ---
     const nextDueDateStr = new Date(hasPassedThisYear ? CURRENT_YEAR + 1 : CURRENT_YEAR, commMonth, commDay).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
     const isFinishedPaying = isPaidUp || premRemainingStr === "VESTED";
     const finalDueDate = isFinishedPaying ? (isPaidUp ? "PAID UP" : "VESTED") : nextDueDateStr;
-    const dueBlinkClass = (!isFinishedPaying && checkIsDueSoon(finalDueDate)) ? 'text-red-500 animate-pulse' : 'text-slate-700';
+    const dueBlinkClass = (!isFinishedPaying && checkIsDueSoon(finalDueDate)) ? 'text-red-500 animate-pulse' : 'text-slate-900';
 
     // --- MATH ---
     const accountValue = Math.round(toNum(p.currentUnitValue || 0));
@@ -89,31 +88,47 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
                       `<div class="flex -space-x-3 items-center">${p.nominees.map(n => `<img src="${n.img}" class="w-9 h-9 rounded-full border-2 border-white shadow-md object-cover ring-1 ring-slate-100 transition-transform hover:scale-110 hover:z-20">`).join('')}</div>`;
 
     return `
-    <div class="policy-card mb-10 rounded-[40px] bg-white overflow-hidden shadow-sm border-2 relative" id="card-${p.id}" style="border-left: 16px solid ${brandColor}; border-color: ${brandColor};">
-        <div class="p-8 flex items-center justify-between cursor-pointer relative" style="background: ${brandBg}" onclick="toggleCard('${p.id}')">
-            <div class="flex items-center gap-8 pl-6 pr-4">
-                <div class="w-20 h-20 flex-shrink-0 flex items-center justify-center bg-white rounded-[24px] shadow-sm p-3 relative z-20"><img src="${p.logo}" class="max-h-full object-contain"></div>
-                <div class="relative z-20">
-                    <div class="flex items-center gap-4 mb-2">
-                        <h3 class="font-black text-3xl text-slate-900 tracking-tight leading-none">${p.name}</h3>
-                        <img src="${p.avatarPath || 'avatar_self.png'}" class="w-8 h-8 rounded-full border-2 border-white shadow-sm object-cover ring-1 ring-slate-200">
+    <div class="policy-card mb-6" id="card-${p.id}" style="border-left: 16px solid ${brandColor}; border-color: ${brandColor};">
+        
+        <div class="card-header transition-colors" style="background: ${brandBg};" onclick="toggleCard('${p.id}')">
+            
+            <div class="w-32 flex justify-center"><img src="${p.logo}" class="max-h-12"></div>
+            
+            <div class="flex-1 ml-10">
+                <h3 class="font-black text-slate-800 text-xl tracking-tight flex items-center gap-3">
+                    ${p.name}
+                    ${p.avatarPath ? `<img src="${p.avatarPath}" class="w-8 h-8 rounded-full border-2 border-white shadow-sm object-cover ring-1 ring-slate-200">` : ''}
+                </h3>
+            </div>
+            
+            <div class="flex gap-12 items-center mr-6">
+                <div class="flex items-center w-[260px] -ml-4">
+                    <div class="funky-badge-v2" style="border-color:${brandColor}; color:${brandColor}; background:#fff; font-size:10px; font-weight:900; padding:2px 8px; border-radius:6px; border:1.5px solid; text-transform:uppercase;">${p.type || 'Savings'}</div>
+                    <div class="ml-6 relative min-w-[140px] flex items-center h-12">
+                        <div>
+                            <p class="text-[9px] font-bold text-slate-400 uppercase leading-none mb-1">Annual Premium</p>
+                            <p class="text-lg text-[#059669] font-black leading-none">${autoFmt(p.premium, sym)}</p>
+                        </div>
                     </div>
-                    <div class="funky-badge-v2" style="border-color:${brandColor}; color:${brandColor}; background:#fff; font-size:10px; font-weight:900; padding:2px 8px; border-radius:6px; border:1.5px solid; text-transform:uppercase; display:inline-block;">${p.type || 'Savings'}</div>
+                </div>
+                <div class="text-center border-l-2 border-slate-100 pl-10 min-w-[140px]">
+                    <div>
+                        <p class="text-[9px] font-bold text-slate-400 uppercase leading-none mb-1">Sum Assured</p>
+                        <p class="text-lg font-black text-slate-800 leading-none">${autoFmt(toNum(p.sumAssured) === 0 ? accountValue : p.sumAssured, sym)}</p>
+                    </div>
                 </div>
             </div>
-            <div class="flex items-center gap-10 text-right px-4 relative z-20">
-                <div><p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Annual Premium</p><p class="text-2xl font-black text-[#059669]">${autoFmt(p.premium, sym)}</p></div>
-                <div><p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Sum Assured</p><p class="text-2xl font-black text-slate-800">${autoFmt(toNum(p.sumAssured) === 0 ? accountValue : p.sumAssured, sym)}</p></div>
-                
-                <div class="bg-white/60 px-4 py-2 rounded-[20px] border border-white/50 flex flex-col justify-center min-w-[125px] h-[64px]">
-                    <p class="text-[10px] font-black ${premRemainingStr === 'VESTED' ? 'text-emerald-500' : 'text-indigo-500'} uppercase text-center leading-none mb-1.5">${premRemainingStr === 'VESTED' || isPaidUp ? premRemainingStr : 'LEFT: ' + premRemainingStr}</p>
-                    <p class="text-[8px] font-bold text-slate-400 uppercase text-center leading-none mb-1">Next Due</p>
-                    <p class="text-[12px] font-black ${dueBlinkClass} text-center tracking-tight leading-none">${finalDueDate}</p>
+            
+            <div class="w-40 text-center flex flex-col justify-center min-h-[60px]">
+                <div class="bg-white/60 p-2 rounded-xl border border-white/50 shadow-sm">
+                    <p class="text-[9px] font-black ${premRemainingStr === 'VESTED' ? 'text-emerald-500' : 'text-indigo-500'} uppercase leading-none mb-1">${premRemainingStr === 'VESTED' || isPaidUp ? premRemainingStr : 'Left: ' + premRemainingStr}</p>
+                    <p class="text-[9px] font-bold text-slate-400 uppercase leading-none mb-1">Next Due</p>
+                    <div class="font-black text-[11px] ${dueBlinkClass}">${finalDueDate}</div>
                 </div>
-
             </div>
         </div>
-        <div class="content-area px-10 pb-10 pt-2 relative z-20" style="background: linear-gradient(to bottom, ${brandBg}, #ffffff)">
+
+        <div class="content-area" style="background: linear-gradient(to bottom, ${brandBg}, #ffffff)">
             <div class="grid grid-cols-2 gap-4 mb-4">
                 <div class="p-4 rounded-xl bg-slate-50/50 border border-slate-100 shadow-sm"><p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Policy Number</p><p class="text-[17px] font-bold text-slate-800 tracking-widest" style="font-family:'Orbitron'">${p.id}</p></div>
                 <div class="p-4 rounded-xl bg-white border border-slate-100 shadow-sm"><p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Current Valuation</p><p class="text-[19px] font-black text-slate-900 tracking-tighter" style="font-family:'Orbitron'">${autoFmt(accountValue, sym)}</p></div>
