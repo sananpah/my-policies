@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Nami">
+    <meta name="theme-color" content="#0f172a">
+    <title>Nami Portfolio</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="assets/logo/logo_AIA.png">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"/>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="mobile.css">
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════
+     PIN LOCK SCREEN
+═══════════════════════════════════════ -->
+<div id="lock-screen">
+    <div class="lock-inner">
+        <div class="lock-logo">N</div>
+        <h1 class="lock-title">Nami Portfolio</h1>
+        <p class="lock-sub">Enter PIN to continue</p>
+        <div class="pin-dots" id="pin-dots">
+            <span class="pin-dot"></span>
+            <span class="pin-dot"></span>
+            <span class="pin-dot"></span>
+            <span class="pin-dot"></span>
+        </div>
+        <div class="pin-error" id="pin-error">Incorrect PIN</div>
+        <div class="numpad">
+            <button class="num-btn" onclick="pinPress('1')">1</button>
+            <button class="num-btn" onclick="pinPress('2')">2</button>
+            <button class="num-btn" onclick="pinPress('3')">3</button>
+            <button class="num-btn" onclick="pinPress('4')">4</button>
+            <button class="num-btn" onclick="pinPress('5')">5</button>
+            <button class="num-btn" onclick="pinPress('6')">6</button>
+            <button class="num-btn" onclick="pinPress('7')">7</button>
+            <button class="num-btn" onclick="pinPress('8')">8</button>
+            <button class="num-btn" onclick="pinPress('9')">9</button>
+            <button class="num-btn num-clear" onclick="pinClear()">⌫</button>
+            <button class="num-btn" onclick="pinPress('0')">0</button>
+            <button class="num-btn num-ok" onclick="pinSubmit()">OK</button>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     MAIN APP
+═══════════════════════════════════════ -->
+<div id="app" style="display:none;">
+
+    <!-- Top Header -->
+    <header class="app-header">
+        <div class="app-header-inner">
+            <div class="app-brand">
+                <span class="app-brand-mark">N</span>
+                <span class="app-brand-name">Nami Portfolio</span>
+            </div>
+            <div class="header-right">
+                <div class="sync-pill" id="sync-pill">
+                    <span class="sync-dot" id="sync-dot"></span>
+                    <span id="sync-label">Syncing…</span>
+                </div>
+                <span class="version-chip" id="version-chip"></span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Summary Strip -->
+    <div class="summary-strip" id="summary-strip">
+        <!-- Populated by JS -->
+    </div>
+
+    <!-- Scrollable Cards Area -->
+    <main class="app-main" id="app-main">
+        <div id="container" class="cards-container"></div>
+    </main>
+
+    <!-- Bottom Nav -->
+    <nav class="bottom-nav">
+        <button class="nav-btn active" id="nav-india" onclick="switchTab('india')">
+            <img src="https://flagcdn.com/w40/in.png" class="nav-flag" alt="">
+            <span>India</span>
+        </button>
+        <button class="nav-btn" id="nav-singapore" onclick="switchTab('singapore')">
+            <img src="https://flagcdn.com/w40/sg.png" class="nav-flag" alt="">
+            <span>Singapore</span>
+        </button>
+        <button class="nav-btn nav-btn-health" id="nav-health" onclick="switchTab('health')">
+            <span class="material-symbols-outlined nav-icon">medical_services</span>
+            <span>Health</span>
+        </button>
+    </nav>
+
+</div>
+
+<!-- ═══════════════════════════════════════
+     CARD DETAIL SHEET (bottom drawer)
+═══════════════════════════════════════ -->
+<div class="detail-overlay" id="detail-overlay" onclick="closeDetail()"></div>
+<div class="detail-sheet" id="detail-sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-scroll" id="sheet-content"></div>
+</div>
+
+
+<script type="module">
+const VERSION = "4.1.96";
+const PIN = "1977";
+
+// ── PIN Logic ──────────────────────────────────────────
+let pinBuffer = "";
+document.getElementById('version-chip').textContent = "v" + VERSION;
+
+window.pinPress = (d) => {
+    if (pinBuffer.length >= 4) return;
+    pinBuffer += d;
+    updateDots();
+    if (pinBuffer.length === 4) setTimeout(pinSubmit, 120);
+};
+window.pinClear = () => {
+    pinBuffer = pinBuffer.slice(0, -1);
+    updateDots();
+    document.getElementById('pin-error').style.opacity = 0;
+};
+window.pinSubmit = () => {
+    if (pinBuffer === PIN) {
+        sessionStorage.setItem('nami_auth', 'true');
+        document.getElementById('lock-screen').style.opacity = '0';
+        setTimeout(() => {
+            document.getElementById('lock-screen').style.display = 'none';
+            document.getElementById('app').style.display = 'flex';
+        }, 300);
+        boot();
+    } else {
+        document.getElementById('pin-error').style.opacity = 1;
+        const dots = document.querySelectorAll('.pin-dot');
+        dots.forEach(d => { d.style.background = '#ef4444'; });
+        setTimeout(() => { pinBuffer = ""; updateDots(); dots.forEach(d => d.style.background = ''); }, 600);
+    }
+};
+const updateDots = () => {
+    document.querySelectorAll('.pin-dot').forEach((d, i) => {
+        d.classList.toggle('filled', i < pinBuffer.length);
+    });
+};
+
+// Skip lock if already authed
+if (sessionStorage.getItem('nami_auth') === 'true') {
+    document.getElementById('lock-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    boot();
+}
+
+// ── Imports & Boot ─────────────────────────────────────
+async function boot() {
+    let syncWithGoogleSheets, createPolicyCard, createSGCard, createHealthCard;
+    let healthData, POLICY_DATA;
+    let toNum, parseDate, autoFmt, calculatePortfolioTotals, calculateHealthTotals, insuredMap;
+
+    try {
+        const [loader, compIn, compSg, health, dataH, dataP, utils] = await Promise.all([
+            import(`./loader.js?v=${VERSION}`),
+            import(`./component_in.js?v=${VERSION}`),
+            import(`./component_sg.js?v=${VERSION}`),
+            import(`./health.js?v=${VERSION}`),
+            import(`./data_health.js?v=${VERSION}`),
+            import(`./data.js?v=${VERSION}`),
+            import(`./utils.js?v=${VERSION}`)
+        ]);
+
+        syncWithGoogleSheets = loader.syncWithGoogleSheets;
+        createPolicyCard     = compIn.createPolicyCard;
+        createSGCard         = compSg.createSGCard;
+        createHealthCard     = health.createHealthCard;
+        healthData           = dataH.healthData;
+        POLICY_DATA          = dataP.POLICY_DATA;
+        ({ toNum, parseDate, autoFmt, calculatePortfolioTotals, calculateHealthTotals, insuredMap } = utils);
+
+        let localPolicyData = await syncWithGoogleSheets(POLICY_DATA);
+        setSync('live');
+
+        // ── Tab Switch ─────────────────────────────────
+        window.switchTab = (cat) => {
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('nav-' + cat).classList.add('active');
+            render(cat);
+        };
+
+        // ── Card Toggle (sheet) ────────────────────────
+        window.toggleCard = (id) => {
+            const p = findPolicy(id, localPolicyData, healthData);
+            if (!p) return;
+            openSheet(id);
+        };
+
+        function findPolicy(id, localData, hData) {
+            for (const cat of ['india', 'singapore']) {
+                const found = (localData[cat] || []).find(p => String(p.id) === String(id));
+                if (found) return { ...found, _cat: cat };
+            }
+            const h = hData.find(p => String(p.id) === String(id));
+            if (h) return { ...h, _cat: 'health' };
+            return null;
+        }
+
+        // ── Render ─────────────────────────────────────
+        function render(cat) {
+            const TODAY        = new Date();
+            const CURRENT_YEAR = TODAY.getFullYear();
+            const sym          = cat === 'singapore' ? "$" : "₹";
+            const container    = document.getElementById('container');
+
+            let list = cat === 'health' ? [...healthData] : [...(localPolicyData[cat] || [])];
+
+            // Inject identity for health cards
+            if (cat === 'health') {
+                list = list.map(p => {
+                    const identity = insuredMap[p.owner] || { type: "Other", img: null };
+                    const rawNom = String(p.nominee || "").trim();
+                    let parsedNominees = [], nomStatus = "ASSIGNED";
+                    if (!rawNom || rawNom.toLowerCase() === "n/a") {
+                        nomStatus = rawNom.toLowerCase() === "n/a" ? "NA" : "EMPTY";
+                    } else {
+                        rawNom.split(/,|\/|\band\b|&|\n|\r/).map(n => n.trim()).forEach(name => {
+                            const clean = name.replace(/[^\x20-\x7E]/g, "").trim();
+                            if (!clean) return;
+                            let img = "avatar_unknown.png";
+                            const mapped = Object.entries(insuredMap).find(([full]) => clean.toLowerCase().includes(full.toLowerCase()));
+                            if (mapped) img = mapped[1].img;
+                            parsedNominees.push({ name: clean, img });
+                        });
+                    }
+                    return { ...p, avatar: identity.img, holderType: identity.type, nominees: parsedNominees, nomineeStatus: nomStatus };
+                });
+            }
+
+            // Render summary strip
+            updateSummary(cat, list, sym, localPolicyData, healthData, toNum, autoFmt, calculatePortfolioTotals, calculateHealthTotals);
+
+            // Render cards as MOBILE cards (not desktop HTML)
+            container.innerHTML = list.map(p => buildMobileCard(p, cat, sym, TODAY, CURRENT_YEAR, toNum, autoFmt)).join('');
+        }
+
+        // Initial render
+        render('india');
+
+    } catch (e) {
+        console.error("Boot failed:", e);
+        setSync('error');
+        document.getElementById('container').innerHTML = `<div class="error-card">Failed to load. Check connection.<br><small>${e.message}</small></div>`;
+    }
+}
+
+function setSync(state) {
+    const dot   = document.getElementById('sync-dot');
+    const label = document.getElementById('sync-label');
+    dot.className = 'sync-dot ' + state;
+    label.textContent = state === 'live' ? 'Live' : state === 'error' ? 'Offline' : 'Syncing…';
+}
+
+// ── Summary Strip ──────────────────────────────────────
+function updateSummary(cat, list, sym, localPolicyData, healthData, toNum, autoFmt, calculatePortfolioTotals, calculateHealthTotals) {
+    const strip = document.getElementById('summary-strip');
+
+    if (cat === 'health') {
+        const unique = list.filter(p => !p.isOverlap);
+        const totals = calculateHealthTotals(unique);
+        strip.innerHTML = `
+            <div class="summary-health">
+                <div class="sum-health-item">
+                    <img src="https://flagcdn.com/w40/sg.png" class="sum-flag" alt="">
+                    <div>
+                        <div class="sum-lbl">SG Premium</div>
+                        <div class="sum-val sg">$${Math.round(totals.sg).toLocaleString()}</div>
+                    </div>
+                </div>
+                <div class="sum-divider"></div>
+                <div class="sum-health-item">
+                    <img src="https://flagcdn.com/w40/in.png" class="sum-flag" alt="">
+                    <div>
+                        <div class="sum-lbl">IN Premium</div>
+                        <div class="sum-val in">₹${Math.round(totals.inr).toLocaleString('en-IN')}</div>
+                    </div>
+                </div>
+            </div>`;
+        return;
+    }
+
+    const totals = calculatePortfolioTotals(list);
+    strip.innerHTML = `
+        <div class="summary-grid">
+            <div class="sum-item">
+                <div class="sum-lbl">Sum Assured</div>
+                <div class="sum-val emerald">${autoFmt(totals.sa, sym)}</div>
+            </div>
+            <div class="sum-item">
+                <div class="sum-lbl">Annual Premium</div>
+                <div class="sum-val indigo">${autoFmt(totals.premium, sym)}</div>
+            </div>
+            <div class="sum-item">
+                <div class="sum-lbl">Portfolio Value</div>
+                <div class="sum-val rose">${autoFmt(totals.unitValue, sym)}</div>
+            </div>
+        </div>`;
+}
+
+// ── Mobile Card Builder ────────────────────────────────
+function buildMobileCard(p, cat, sym, TODAY, CURRENT_YEAR, toNum, autoFmt) {
+    const bc      = p.color || "#64748b";
+    const name    = p.name || p.id;
+    const company = p.company || "";
+    const type    = p.type || p.category || "";
+
+    if (cat === 'health') {
+        const prem   = (parseFloat(p.cashAmount || 0) + parseFloat(p.cpfAmount || 0));
+        const hsym   = p.currency === "SGD" ? "$" : "₹";
+        const cov    = toNum(p.sumAssured || p.coverage || 0);
+        const hasCpf = p.cpfAmount > 0;
+        return `
+        <div class="m-card" id="mcard-${p.id}" onclick="toggleCard('${p.id}')" style="border-top: 4px solid ${bc};">
+            <div class="m-card-top">
+                <img src="assets/logo/${p.logo}" class="m-logo" onerror="this.style.display='none'" alt="">
+                <div class="m-card-info">
+                    <div class="m-type">${type}</div>
+                    <div class="m-name">${name}</div>
+                    <div class="m-company">${company}</div>
+                </div>
+                ${p.avatar ? `<img src="${p.avatar}" class="m-avatar" alt="" onerror="this.style.display='none'">` : `<span class="material-symbols-outlined m-avatar-icon">person</span>`}
+            </div>
+            <div class="m-card-row">
+                <div class="m-stat">
+                    <div class="m-stat-lbl">Coverage</div>
+                    <div class="m-stat-val">${cov > 0 ? hsym + Math.round(cov).toLocaleString('en-IN') : '—'}</div>
+                </div>
+                <div class="m-stat">
+                    <div class="m-stat-lbl">Premium</div>
+                    <div class="m-stat-val indigo">${hsym}${Math.round(prem).toLocaleString()}${hasCpf ? '<span class="cpf-tag">+CPF</span>' : ''}</div>
+                </div>
+                <div class="m-stat">
+                    <div class="m-stat-lbl">Renewal</div>
+                    <div class="m-stat-val small">${p.expiryDate || '—'}</div>
+                </div>
+            </div>
+        </div>`;
+    }
+
+    if (cat === 'singapore') {
+        const commDate  = new Date(p.commenced);
+        const startY    = commDate.getFullYear();
+        const commMonth = commDate.getMonth();
+        const commDay   = commDate.getDate();
+        const mip       = p.mip || 0;
+        const thisAnn   = new Date(CURRENT_YEAR, commMonth, commDay);
+        const passed    = TODAY >= thisAnn;
+        const nextDue   = new Date(passed ? CURRENT_YEAR + 1 : CURRENT_YEAR, commMonth, commDay)
+                            .toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+        const isPaidUp  = p.dueDate === "PAID UP";
+        let vestStr     = "";
+        if (isPaidUp) vestStr = "PAID UP";
+        else if (mip === 0) vestStr = "VESTED";
+        else {
+            const vDate = new Date(startY + mip, commMonth, commDay);
+            vestStr = vDate <= TODAY ? "VESTED" : `${Math.max(0, vDate.getFullYear() - TODAY.getFullYear())}Y left`;
+        }
+        const acctVal = Math.round(toNum(p.currentUnitValue || 0));
+        const isVested = vestStr === "VESTED" || vestStr === "PAID UP";
+        return `
+        <div class="m-card" id="mcard-${p.id}" onclick="toggleCard('${p.id}')" style="border-top: 4px solid ${bc};">
+            <div class="m-card-top">
+                <img src="assets/logo/${p.logo}" class="m-logo" onerror="this.style.display='none'" alt="">
+                <div class="m-card-info">
+                    <div class="m-type">${type}</div>
+                    <div class="m-name">${name}</div>
+                    <div class="m-company">${company}</div>
+                </div>
+                <span class="vest-badge ${isVested ? 'vested' : 'locked'}">${vestStr}</span>
+            </div>
+            <div class="m-card-row">
+                <div class="m-stat">
+                    <div class="m-stat-lbl">Current Value</div>
+                    <div class="m-stat-val emerald">${sym}${acctVal > 0 ? acctVal.toLocaleString() : '—'}</div>
+                </div>
+                <div class="m-stat">
+                    <div class="m-stat-lbl">Premium</div>
+                    <div class="m-stat-val">${autoFmt(p.premium, sym)}</div>
+                </div>
+                <div class="m-stat">
+                    <div class="m-stat-lbl">Next Due</div>
+                    <div class="m-stat-val small">${isPaidUp ? 'PAID UP' : nextDue}</div>
+                </div>
+            </div>
+        </div>`;
+    }
+
+    // India
+    const commStr   = p.commenced || "01 Jan 2000";
+    const sp        = commStr.split(' ');
+    const annDay    = parseInt(sp[0]);
+    const annMo     = { "Jan":0,"Feb":1,"Mar":2,"Apr":3,"May":4,"Jun":5,"Jul":6,"Aug":7,"Sep":8,"Oct":9,"Nov":10,"Dec":11 }[sp[1]] || 0;
+    const startY    = parseInt(sp[2]);
+    const annThis   = new Date(CURRENT_YEAR, annMo, annDay);
+    const isPaidUp  = p.status === "PAID UP" || (p.premiumEnds && TODAY > new Date(p.premiumEnds));
+    const dueStr    = isPaidUp ? "PAID UP" : `${annDay} ${sp[1]} ${TODAY >= annThis ? CURRENT_YEAR + 1 : CURRENT_YEAR}`;
+    const isDueSoon = !isPaidUp && ((new Date(dueStr) - TODAY) / 86400000 <= 30);
+    const yComp     = CURRENT_YEAR - startY - (TODAY < annThis ? 1 : 0);
+    const payout    = p.payoutSchedule && p.payoutSchedule[yComp + 1];
+    const isIncome  = !p.premiumEnds || TODAY > new Date(p.premiumEnds) ? !!payout : false;
+
+    let midLbl = "Sum Assured", midVal = autoFmt(p.sumAssured, sym), midCls = "";
+    if (!isPaidUp && p.premiumEnds && TODAY <= new Date(p.premiumEnds)) {
+        midLbl = "Annual Premium"; midVal = autoFmt(p.premium, sym); midCls = "emerald";
+    } else if (isIncome) {
+        midLbl = "Annual Payout"; midVal = autoFmt(payout, sym); midCls = "amber";
+    }
+
+    return `
+    <div class="m-card" id="mcard-${p.id}" onclick="toggleCard('${p.id}')" style="border-top: 4px solid ${bc};">
+        <div class="m-card-top">
+            <img src="assets/logo/${p.logo}" class="m-logo" onerror="this.style.display='none'" alt="">
+            <div class="m-card-info">
+                <div class="m-type">${isIncome ? 'Income Phase' : (type || 'Life')}</div>
+                <div class="m-name">${name}</div>
+                <div class="m-company">${company}</div>
+            </div>
+            ${p.avatarPath ? `<img src="${p.avatarPath}" class="m-avatar" alt="" onerror="this.style.display='none'">` : ''}
+        </div>
+        <div class="m-card-row">
+            <div class="m-stat">
+                <div class="m-stat-lbl">${midLbl}</div>
+                <div class="m-stat-val ${midCls}">${midVal}</div>
+            </div>
+            <div class="m-stat">
+                <div class="m-stat-lbl">Sum Assured</div>
+                <div class="m-stat-val">${autoFmt(p.sumAssured, sym)}</div>
+            </div>
+            <div class="m-stat">
+                <div class="m-stat-lbl">Next Due</div>
+                <div class="m-stat-val small ${isDueSoon ? 'due-blink' : ''}">${dueStr}</div>
+            </div>
+        </div>
+        ${isPaidUp ? '<div class="paid-ribbon">PAID UP</div>' : ''}
+    </div>`;
+}
+
+// ── Detail Sheet ───────────────────────────────────────
+window.openSheet = (id) => {
+    const overlay = document.getElementById('detail-overlay');
+    const sheet   = document.getElementById('detail-sheet');
+    const card    = document.getElementById('mcard-' + id);
+    if (!card) return;
+
+    // Pull content from the desktop card if it exists (rendered by existing components)
+    // Otherwise show a basic detail view
+    const content = document.getElementById('sheet-content');
+    content.innerHTML = `<div class="sheet-loading"><span class="material-symbols-outlined spin">sync</span></div>`;
+
+    overlay.classList.add('active');
+    sheet.classList.add('active');
+
+    // Give browser a tick then populate
+    requestAnimationFrame(() => {
+        const desktopCard = document.getElementById('card-' + id);
+        if (desktopCard) {
+            const bodyEl = desktopCard.querySelector('.content-area');
+            if (bodyEl) {
+                content.innerHTML = `<div class="sheet-desktop-content">${bodyEl.innerHTML}</div>`;
+                return;
+            }
+        }
+        // Fallback: show what we know from the mobile card
+        content.innerHTML = `<div class="sheet-fallback"><p>Tap the desktop site for full details.</p></div>`;
+    });
+};
+
+window.closeDetail = () => {
+    document.getElementById('detail-overlay').classList.remove('active');
+    document.getElementById('detail-sheet').classList.remove('active');
+};
+
+// Swipe down to close sheet
+let touchStartY = 0;
+document.getElementById('detail-sheet').addEventListener('touchstart', e => { touchStartY = e.touches[0].clientY; }, { passive: true });
+document.getElementById('detail-sheet').addEventListener('touchmove', e => {
+    const dy = e.touches[0].clientY - touchStartY;
+    if (dy > 80) closeDetail();
+}, { passive: true });
+
+</script>
+</body>
+</html>
