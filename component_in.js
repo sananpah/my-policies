@@ -55,6 +55,19 @@ function irrBadgeHtml(irr, label = 'IRR p.a.') {
     return `<div class="irr-badge" style="display:inline-flex;align-items:center;gap:5px;background:${bgClr};border:1.5px solid ${border};color:${color};border-radius:8px;padding:3px 10px;transform:skewX(-8deg);font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:0.05em;box-shadow:2px 2px 0 ${border};white-space:nowrap;cursor:default;" title="Annualised Internal Rate of Return on premiums paid to date"><span style="transform:skewX(8deg);display:flex;align-items:center;gap:4px;"><span style="font-size:8px;opacity:0.65;">${label}</span><span style="font-size:13px;letter-spacing:-0.02em;">${arrow} ${sign}${irr.toFixed(1)}%</span></span></div>`;
 }
 
+/**
+ * Present Value badge for pension/annuity policies.
+ * Shows the lump-sum equivalent of the remaining pension stream.
+ * pvAmt: calculated PV in rupees
+ * discountPct: rate used (e.g. 6)
+ * years: pension duration remaining
+ */
+function pvBadgeHtml(pvAmt, sym, discountPct, years) {
+    if (!pvAmt || pvAmt <= 0) return '';
+    const fmt = (n) => sym + Math.round(n).toLocaleString('en-IN');
+    return `<div class="irr-badge" style="display:inline-flex;align-items:center;gap:5px;background:#eff6ff;border:1.5px solid #93c5fd;color:#1d4ed8;border-radius:8px;padding:3px 10px;transform:skewX(-8deg);font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:0.05em;box-shadow:2px 2px 0 #93c5fd;white-space:nowrap;cursor:default;margin-left:4px;" title="Present Value of remaining pension stream: what a lump sum today would equal this pension, discounted at ${discountPct}% for ${years} years"><span style="transform:skewX(8deg);display:flex;align-items:center;gap:4px;"><span style="font-size:8px;opacity:0.65;">PV@${discountPct}%</span><span style="font-size:12px;letter-spacing:-0.02em;">≈ ${fmt(pvAmt)}</span></span></div>`;
+}
+
 export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
     const isULIP = (p.type || "").toUpperCase().includes("ULIP");
     const commStr = p.commenced || "01 Jan 2000";
@@ -98,12 +111,64 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
     
     const badgeText = isIncomePhase ? "Income Phase" : (p.type || "Savings");
 
-    // --- IRR CALCULATION (ULIP only) ---
+    // --- POLICY TYPE DETECTION ---
+    // Pension/Annuity = has annualPayout OR payoutSchedule with many years but type isn't ULIP
+    const isPension = !isULIP && (
+        toNum(p.annualPayout) > 0 ||
+        (p.payoutSchedule && Object.keys(p.payoutSchedule).length > 3 && !isULIP)
+    );
+
+    // --- IRR + PENSION PV CALCULATION ---
     let irrHtml = '';
+
     if (isULIP) {
+        // ULIP IRR: premiums paid → current unit value
         const flows = buildIndiaULIPCashflows(p, yearsCompleted);
         const irr   = calcIRR(flows);
         irrHtml = irrBadgeHtml(irr, 'IRR p.a.');
+
+    } else if (isPension) {
+        // PENSION: full cashflow = premiums paid + pension received + PV of future pension
+        // Phase 1: premium outflows (years 0..yearsCompleted-1 while still paying)
+        // Phase 2: pension inflows from payoutSchedule
+        // Phase 3: PV of remaining future pension (discounted at 6% as terminal value today)
+        const DISCOUNT_RATE = 0.06; // conservative PPF-equivalent benchmark
+        const annualPension = toNum(p.annualPayout) ||
+            (p.payoutSchedule ? Math.max(...Object.values(p.payoutSchedule)) : 0);
+
+        if (annualPension > 0) {
+            // Count future pension years (from today to maturity)
+            const matYear     = safeGetYear(p.maturity);
+            const TODAY_YEAR  = safeGetYear(new Date().getFullYear().toString());
+            const futureYears = Math.max(0, matYear - CURRENT_YEAR);
+
+            // PV of remaining pension stream (annuity formula)
+            const pvPension = futureYears > 0
+                ? annualPension * (1 - Math.pow(1 + DISCOUNT_RATE, -futureYears)) / DISCOUNT_RATE
+                : 0;
+
+            // Build full IRR cashflows: all paying years + pension received + PV of future pension as terminal
+            const premEndYear = safeGetYear(p.premiumEnds);
+            const flows = [];
+            for (let y = 0; y <= yearsCompleted; y++) {
+                let cf = 0;
+                const yr = startY + y;
+                // Premium outflow
+                if (yr <= premEndYear && !isPaidUp) cf -= toNum(p.premium);
+                // Pension already received this year (from payoutSchedule)
+                if (p.payoutSchedule && p.payoutSchedule[y]) cf += toNum(p.payoutSchedule[y]);
+                // At the end: add PV of remaining future pension as terminal value
+                if (y === yearsCompleted) cf += pvPension;
+                flows.push(cf);
+            }
+
+            const irr = calcIRR(flows);
+            // Show both IRR and PV badge side by side
+            irrHtml = [
+                irrBadgeHtml(irr, 'IRR p.a.'),
+                pvBadgeHtml(pvPension, '₹', DISCOUNT_RATE * 100, futureYears)
+            ].join('');
+        }
     }
     const nextDueStr = `${annDay} ${startParts[1]} ${TODAY >= anniversaryThisYear ? CURRENT_YEAR + 1 : CURRENT_YEAR}`; 
     const finalDueDate = isPaidUp ? "PAID UP" : nextDueStr;

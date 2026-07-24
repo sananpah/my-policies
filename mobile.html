@@ -311,7 +311,7 @@ function updateSummary(cat, list, sym, localPolicyData, healthData, toNum, autoF
 }
 
 
-// ── Shared IRR Engine ──────────────────────────────────
+// ── Shared IRR + PV Engine ────────────────────────────
 function calcIRR(cashflows, guess = 0.08, maxIter = 200, tol = 1e-8) {
     if (!cashflows || cashflows.length < 2) return null;
     if (!cashflows.some(c => c < 0) || !cashflows.some(c => c > 0)) return null;
@@ -332,6 +332,13 @@ function calcIRR(cashflows, guess = 0.08, maxIter = 200, tol = 1e-8) {
     return (pct > -50 && pct < 200) ? pct : null;
 }
 
+// PV of annuity: PMT × [1-(1+r)^(-n)] / r, discounted back by deferYears
+function calcPensionPV(annualPmt, rate, years, deferYears = 0) {
+    if (!annualPmt || years <= 0) return 0;
+    const pvStream = annualPmt * (1 - Math.pow(1 + rate, -years)) / rate;
+    return pvStream / Math.pow(1 + rate, deferYears);
+}
+
 function mobileIrrBadge(irr) {
     if (irr === null || irr === undefined) return '';
     const isGood = irr >= 10, isMid = irr >= 5 && irr < 10;
@@ -341,6 +348,12 @@ function mobileIrrBadge(irr) {
     const arrow  = isGood ? '▲' : isMid ? '◆' : '▼';
     const sign   = irr > 0 ? '+' : '';
     return `<div class="m-irr-badge" style="background:${bgClr};border:1.5px solid ${border};color:${color};">${arrow} IRR ${sign}${irr.toFixed(1)}%</div>`;
+}
+
+function mobilePvBadge(pv, sym) {
+    if (!pv || pv <= 0) return '';
+    const fmt = n => sym + Math.round(n).toLocaleString('en-IN');
+    return `<div class="m-irr-badge" style="background:#eff6ff;border:1.5px solid #93c5fd;color:#1d4ed8;">PV@6% ${fmt(pv)}</div>`;
 }
 
 // ── Mobile Card Builder ────────────────────────────────
@@ -517,10 +530,17 @@ function buildMobileCard(p, cat, sym, TODAY, CURRENT_YEAR, toNum, autoFmt) {
     // LEFT: time until premium ends
     const leftIndia = (!isPaidUp && finalPremDate) ? calcLeft(finalPremDate) : null;
 
-    // IRR for ULIP policies
+    // Policy type detection
     const isULIPMobile = (p.type || '').toUpperCase().includes('ULIP');
+    const isPensionMobile = !isULIPMobile && (
+        toNum(p.annualPayout) > 0 ||
+        (p.payoutSchedule && Object.keys(p.payoutSchedule).length > 3)
+    );
+
     let indiaIrrBadge = '';
+
     if (isULIPMobile && yComp >= 1) {
+        // ULIP: premiums → current unit value
         const pptY = toNum(p.ppt || 99);
         const iFlows = [];
         for (let y = 0; y <= yComp; y++) {
@@ -531,6 +551,32 @@ function buildMobileCard(p, cat, sym, TODAY, CURRENT_YEAR, toNum, autoFmt) {
             iFlows.push(cf);
         }
         indiaIrrBadge = mobileIrrBadge(calcIRR(iFlows));
+
+    } else if (isPensionMobile) {
+        // PENSION: IRR + PV of remaining pension stream
+        const RATE = 0.06;
+        const annPension = toNum(p.annualPayout) ||
+            (p.payoutSchedule ? Math.max(...Object.values(p.payoutSchedule).map(toNum)) : 0);
+
+        if (annPension > 0) {
+            const matYear    = p.maturity ? parseInt(p.maturity.split(' ').pop()) : CURRENT_YEAR + 20;
+            const futureYrs  = Math.max(0, matYear - CURRENT_YEAR);
+            const pvPension  = calcPensionPV(annPension, RATE, futureYrs, 0);
+
+            // Build full IRR cashflows
+            const premEndYear = p.premiumEnds ? parseInt(p.premiumEnds.split(' ').pop()) : startY + 20;
+            const iFlows = [];
+            for (let y = 0; y <= yComp; y++) {
+                let cf = 0;
+                const yr = startY + y;
+                if (yr <= premEndYear && !isPaidUp) cf -= toNum(p.premium);
+                if (p.payoutSchedule && p.payoutSchedule[y]) cf += toNum(p.payoutSchedule[y]);
+                if (y === yComp) cf += pvPension;
+                iFlows.push(cf);
+            }
+            const irr = calcIRR(iFlows);
+            indiaIrrBadge = mobileIrrBadge(irr) + mobilePvBadge(pvPension, '₹');
+        }
     }
 
     let midLbl = "Sum Assured", midVal = autoFmt(p.sumAssured, sym), midCls = "";
