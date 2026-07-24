@@ -20,11 +20,15 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const policyYearIdx = yearsPassed + 1;
 
     // --- COUNTDOWN ---
+    // mip = minimum premium term (number of payments).
+    // The LAST premium falls on the anniversary at year index (mip-1) after start,
+    // i.e. startY + (mip - 1). E.g. mip=3, start=2025 → last payment = 02 Jul 2027.
     let premRemainingStr = "";
     if (isPaidUp) { premRemainingStr = "PAID UP"; }
     else if (mip === 0) { premRemainingStr = "VESTED"; }
     else {
-        let targetDate = new Date(startY + mip, commMonth, commDay);
+        // Last premium anniversary = startY + (mip - 1) years from inception
+        let targetDate = new Date(startY + mip - 1, commMonth, commDay);
         if (targetDate <= TODAY) { premRemainingStr = "VESTED"; }
         else {
             let y = targetDate.getFullYear() - TODAY.getFullYear();
@@ -97,7 +101,10 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
             <div class="flex-1 ml-10">
                 <h3 class="font-black text-slate-800 text-xl tracking-tight flex items-center gap-3">
                     ${p.name}
-                    ${p.avatarPath ? `<img src="${p.avatarPath}" class="w-8 h-8 rounded-full border-2 border-white shadow-sm object-cover ring-1 ring-slate-200">` : ''}
+                    ${p.avatarPath
+                        ? `<img src="${p.avatarPath}" class="w-8 h-8 rounded-full border-2 border-white shadow-sm object-cover ring-1 ring-slate-200" onerror="this.style.display='none'">`
+                        : `<div class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center border-2 border-white shadow-sm"><span class="material-symbols-outlined text-slate-400" style="font-size:16px;">person</span></div>`
+                    }
                 </h3>
             </div>
             

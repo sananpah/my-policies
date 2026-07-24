@@ -311,79 +311,126 @@ function updateSummary(cat, list, sym, localPolicyData, healthData, toNum, autoF
 }
 
 // ── Mobile Card Builder ────────────────────────────────
+// p.logo is already a full URL from the loader (github raw URL).
+// p.avatarPath is set by mapIdentity() in loader for both India and SG cards.
 function buildMobileCard(p, cat, sym, TODAY, CURRENT_YEAR, toNum, autoFmt) {
     const bc      = p.color || "#64748b";
     const name    = p.name || p.id;
     const company = p.company || "";
     const type    = p.type || p.category || "";
 
+    // ── Logo: p.logo is a full URL from loader; fall back to local path if not ──
+    const logoSrc = p.logo || `assets/logo/logo_${(company || '').replace(/[\s.]/g, '')}.png`;
+
+    // ── Avatar: p.avatarPath set by mapIdentity for both India & SG ──
+    const avatarHtml = p.avatarPath
+        ? `<img src="${p.avatarPath}" class="m-avatar" alt="" onerror="this.style.display='none'">`
+        : `<span class="material-symbols-outlined m-avatar-icon">person</span>`;
+
+    // ── LEFT helper: months+years between two dates ──
+    const calcLeft = (targetDate) => {
+        if (!targetDate || targetDate <= TODAY) return null;
+        let y = targetDate.getFullYear() - TODAY.getFullYear();
+        let m = targetDate.getMonth() - TODAY.getMonth();
+        let d = targetDate.getDate() - TODAY.getDate();
+        if (d < 0) m--;
+        if (m < 0) { y--; m += 12; }
+        if (y < 0) return null;
+        if (y === 0) return `${m}M`;
+        return `${y}Y ${String(m).padStart(2,'0')}M`;
+    };
+
+    // ════════════════════════
+    // HEALTH CARD
+    // ════════════════════════
     if (cat === 'health') {
-        const prem   = (parseFloat(p.cashAmount || 0) + parseFloat(p.cpfAmount || 0));
-        const hsym   = p.currency === "SGD" ? "$" : "₹";
-        const cov    = toNum(p.sumAssured || p.coverage || 0);
-        const hasCpf = p.cpfAmount > 0;
+        const prem    = (parseFloat(p.cashAmount || 0) + parseFloat(p.cpfAmount || 0));
+        const hsym    = p.currency === "SGD" ? "$" : "₹";
+        const cov     = toNum(p.sumAssured || p.coverage || 0);
+        const hasCpf  = p.cpfAmount > 0;
+
+        // Fix D: FULL LIFE for policies with very long coverage (>20 years remaining)
+        const expiryDate  = new Date(p.expiryDate);
+        const yearsLeft   = expiryDate.getFullYear() - TODAY.getFullYear();
+        const isFullLife  = yearsLeft > 20;
+        const leftDisplay = isFullLife
+            ? `<span class="fulllife-badge">Full Life ♾️</span>`
+            : `<span class="m-stat-val small indigo">${calcLeft(expiryDate) || 'Active'}</span>`;
+
         return `
         <div class="m-card" id="mcard-${p.id}" onclick="toggleCard('${p.id}')" style="border-top: 4px solid ${bc};">
             <div class="m-card-top">
-                <img src="assets/logo/${p.logo}" class="m-logo" onerror="this.style.display='none'" alt="">
+                <img src="${logoSrc}" class="m-logo" onerror="this.style.display='none'" alt="">
                 <div class="m-card-info">
                     <div class="m-type">${type}</div>
                     <div class="m-name">${name}</div>
                     <div class="m-company">${company}</div>
                 </div>
-                ${p.avatar ? `<img src="${p.avatar}" class="m-avatar" alt="" onerror="this.style.display='none'">` : `<span class="material-symbols-outlined m-avatar-icon">person</span>`}
+                ${avatarHtml}
             </div>
             <div class="m-card-row">
                 <div class="m-stat">
                     <div class="m-stat-lbl">Coverage</div>
-                    <div class="m-stat-val">${cov > 0 ? hsym + Math.round(cov).toLocaleString('en-IN') : '—'}</div>
+                    <div class="m-stat-val">${cov > 0 ? hsym + Math.round(cov).toLocaleString('en-IN') : 'Rider'}</div>
                 </div>
                 <div class="m-stat">
                     <div class="m-stat-lbl">Premium</div>
                     <div class="m-stat-val indigo">${hsym}${Math.round(prem).toLocaleString()}${hasCpf ? '<span class="cpf-tag">+CPF</span>' : ''}</div>
                 </div>
                 <div class="m-stat">
-                    <div class="m-stat-lbl">Renewal</div>
-                    <div class="m-stat-val small">${p.expiryDate || '—'}</div>
+                    <div class="m-stat-lbl">Left</div>
+                    <div>${leftDisplay}</div>
                 </div>
             </div>
         </div>`;
     }
 
+    // ════════════════════════
+    // SINGAPORE CARD
+    // ════════════════════════
     if (cat === 'singapore') {
         const commDate  = new Date(p.commenced);
         const startY    = commDate.getFullYear();
         const commMonth = commDate.getMonth();
         const commDay   = commDate.getDate();
         const mip       = p.mip || 0;
-        const thisAnn   = new Date(CURRENT_YEAR, commMonth, commDay);
-        const passed    = TODAY >= thisAnn;
-        const nextDue   = new Date(passed ? CURRENT_YEAR + 1 : CURRENT_YEAR, commMonth, commDay)
-                            .toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
         const isPaidUp  = p.dueDate === "PAID UP";
-        let vestStr     = "";
-        if (isPaidUp) vestStr = "PAID UP";
-        else if (mip === 0) vestStr = "VESTED";
+
+        // Fix A (mobile): use startY + mip - 1 for last premium anniversary
+        // mip=3 → payments in year 1,2,3 → last anniversary at startY+(3-1) = startY+2
+        let leftStr = "";
+        let isVested = false;
+        if (isPaidUp) { leftStr = "PAID UP"; isVested = true; }
+        else if (mip === 0) { leftStr = "VESTED"; isVested = true; }
         else {
-            const vDate = new Date(startY + mip, commMonth, commDay);
-            vestStr = vDate <= TODAY ? "VESTED" : `${Math.max(0, vDate.getFullYear() - TODAY.getFullYear())}Y left`;
+            const lastPremDate = new Date(startY + mip - 1, commMonth, commDay);
+            if (lastPremDate <= TODAY) { leftStr = "VESTED"; isVested = true; }
+            else {
+                const lStr = calcLeft(lastPremDate);
+                leftStr = lStr ? `${lStr} left` : "VESTED";
+            }
         }
+
+        const thisAnn = new Date(CURRENT_YEAR, commMonth, commDay);
+        const passed  = TODAY >= thisAnn;
+        const nextDue = new Date(passed ? CURRENT_YEAR + 1 : CURRENT_YEAR, commMonth, commDay)
+                          .toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
         const acctVal = Math.round(toNum(p.currentUnitValue || 0));
-        const isVested = vestStr === "VESTED" || vestStr === "PAID UP";
+
         return `
         <div class="m-card" id="mcard-${p.id}" onclick="toggleCard('${p.id}')" style="border-top: 4px solid ${bc};">
             <div class="m-card-top">
-                <img src="assets/logo/${p.logo}" class="m-logo" onerror="this.style.display='none'" alt="">
+                <img src="${logoSrc}" class="m-logo" onerror="this.style.display='none'" alt="">
                 <div class="m-card-info">
                     <div class="m-type">${type}</div>
                     <div class="m-name">${name}</div>
                     <div class="m-company">${company}</div>
                 </div>
-                <span class="vest-badge ${isVested ? 'vested' : 'locked'}">${vestStr}</span>
+                ${avatarHtml}
             </div>
             <div class="m-card-row">
                 <div class="m-stat">
-                    <div class="m-stat-lbl">Current Value</div>
+                    <div class="m-stat-lbl">Value</div>
                     <div class="m-stat-val emerald">${sym}${acctVal > 0 ? acctVal.toLocaleString() : '—'}</div>
                 </div>
                 <div class="m-stat">
@@ -391,29 +438,37 @@ function buildMobileCard(p, cat, sym, TODAY, CURRENT_YEAR, toNum, autoFmt) {
                     <div class="m-stat-val">${autoFmt(p.premium, sym)}</div>
                 </div>
                 <div class="m-stat">
-                    <div class="m-stat-lbl">Next Due</div>
-                    <div class="m-stat-val small">${isPaidUp ? 'PAID UP' : nextDue}</div>
+                    <div class="m-stat-lbl">Left</div>
+                    <span class="vest-badge ${isVested ? 'vested' : 'locked'}">${leftStr}</span>
                 </div>
             </div>
         </div>`;
     }
 
-    // India
-    const commStr   = p.commenced || "01 Jan 2000";
-    const sp        = commStr.split(' ');
-    const annDay    = parseInt(sp[0]);
-    const annMo     = { "Jan":0,"Feb":1,"Mar":2,"Apr":3,"May":4,"Jun":5,"Jul":6,"Aug":7,"Sep":8,"Oct":9,"Nov":10,"Dec":11 }[sp[1]] || 0;
-    const startY    = parseInt(sp[2]);
-    const annThis   = new Date(CURRENT_YEAR, annMo, annDay);
-    const isPaidUp  = p.status === "PAID UP" || (p.premiumEnds && TODAY > new Date(p.premiumEnds));
-    const dueStr    = isPaidUp ? "PAID UP" : `${annDay} ${sp[1]} ${TODAY >= annThis ? CURRENT_YEAR + 1 : CURRENT_YEAR}`;
-    const isDueSoon = !isPaidUp && ((new Date(dueStr) - TODAY) / 86400000 <= 30);
-    const yComp     = CURRENT_YEAR - startY - (TODAY < annThis ? 1 : 0);
-    const payout    = p.payoutSchedule && p.payoutSchedule[yComp + 1];
-    const isIncome  = !p.premiumEnds || TODAY > new Date(p.premiumEnds) ? !!payout : false;
+    // ════════════════════════
+    // INDIA CARD
+    // ════════════════════════
+    const commStr  = p.commenced || "01 Jan 2000";
+    const sp       = commStr.split(' ');
+    const annDay   = parseInt(sp[0]);
+    const annMo    = { "Jan":0,"Feb":1,"Mar":2,"Apr":3,"May":4,"Jun":5,"Jul":6,"Aug":7,"Sep":8,"Oct":9,"Nov":10,"Dec":11 }[sp[1]] || 0;
+    const startY   = parseInt(sp[2]);
+    const annThis  = new Date(CURRENT_YEAR, annMo, annDay);
+
+    const finalPremDate = p.premiumEnds ? new Date(p.premiumEnds.replace(/\./g,' ')) : null;
+    const isPaidUp      = p.status === "PAID UP" || (finalPremDate && TODAY > finalPremDate);
+    const dueStr        = isPaidUp ? "PAID UP" : `${annDay} ${sp[1]} ${TODAY >= annThis ? CURRENT_YEAR + 1 : CURRENT_YEAR}`;
+    const isDueSoon     = !isPaidUp && ((new Date(dueStr) - TODAY) / 86400000 <= 30);
+
+    const yComp  = CURRENT_YEAR - startY - (TODAY < annThis ? 1 : 0);
+    const payout = p.payoutSchedule && p.payoutSchedule[yComp + 1];
+    const isIncome = isPaidUp && !!payout;
+
+    // LEFT: time until premium ends
+    const leftIndia = (!isPaidUp && finalPremDate) ? calcLeft(finalPremDate) : null;
 
     let midLbl = "Sum Assured", midVal = autoFmt(p.sumAssured, sym), midCls = "";
-    if (!isPaidUp && p.premiumEnds && TODAY <= new Date(p.premiumEnds)) {
+    if (!isPaidUp && finalPremDate && TODAY <= finalPremDate) {
         midLbl = "Annual Premium"; midVal = autoFmt(p.premium, sym); midCls = "emerald";
     } else if (isIncome) {
         midLbl = "Annual Payout"; midVal = autoFmt(payout, sym); midCls = "amber";
@@ -422,13 +477,13 @@ function buildMobileCard(p, cat, sym, TODAY, CURRENT_YEAR, toNum, autoFmt) {
     return `
     <div class="m-card" id="mcard-${p.id}" onclick="toggleCard('${p.id}')" style="border-top: 4px solid ${bc};">
         <div class="m-card-top">
-            <img src="assets/logo/${p.logo}" class="m-logo" onerror="this.style.display='none'" alt="">
+            <img src="${logoSrc}" class="m-logo" onerror="this.style.display='none'" alt="">
             <div class="m-card-info">
                 <div class="m-type">${isIncome ? 'Income Phase' : (type || 'Life')}</div>
                 <div class="m-name">${name}</div>
                 <div class="m-company">${company}</div>
             </div>
-            ${p.avatarPath ? `<img src="${p.avatarPath}" class="m-avatar" alt="" onerror="this.style.display='none'">` : ''}
+            ${avatarHtml}
         </div>
         <div class="m-card-row">
             <div class="m-stat">
@@ -440,11 +495,11 @@ function buildMobileCard(p, cat, sym, TODAY, CURRENT_YEAR, toNum, autoFmt) {
                 <div class="m-stat-val">${autoFmt(p.sumAssured, sym)}</div>
             </div>
             <div class="m-stat">
-                <div class="m-stat-lbl">Next Due</div>
-                <div class="m-stat-val small ${isDueSoon ? 'due-blink' : ''}">${dueStr}</div>
+                <div class="m-stat-lbl">${leftIndia ? 'Prem. Left' : 'Next Due'}</div>
+                <div class="m-stat-val small ${isDueSoon ? 'due-blink' : ''}">${leftIndia || dueStr}</div>
             </div>
         </div>
-        ${isPaidUp ? '<div class="paid-ribbon">PAID UP</div>' : ''}
+        ${isPaidUp && !isIncome ? '<div class="paid-ribbon">PAID UP</div>' : ''}
     </div>`;
 }
 

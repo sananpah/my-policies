@@ -467,6 +467,28 @@ html, body {
     text-transform: uppercase;
 }
 
+/* Fix D: Health Full Life badge */
+.fulllife-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #6366f1, #a855f7, #ec4899);
+    color: white;
+    font-size: 8px; font-weight: 900;
+    letter-spacing: 0.05em;
+    padding: 3px 7px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    line-height: 1.4;
+}
+
+/* Fix B/C: vest-badge in the LEFT stat cell — smaller to fit */
+.m-stat .vest-badge {
+    font-size: 8px;
+    padding: 2px 6px;
+    display: inline-block;
+    margin-top: 2px;
+}
+
 .error-card {
     background: #fff1f2;
     border: 1px solid #fecdd3;
