@@ -311,7 +311,7 @@ function updateSummary(cat, list, sym, localPolicyData, healthData, toNum, autoF
 }
 
 
-// ── Shared IRR + PV Engine ────────────────────────────
+// ── Shared IRR + PV Engine (Irregular-Payment-Aware) ─────────────
 function calcIRR(cashflows, guess = 0.08, maxIter = 200, tol = 1e-8) {
     if (!cashflows || cashflows.length < 2) return null;
     if (!cashflows.some(c => c < 0) || !cashflows.some(c => c > 0)) return null;
@@ -332,14 +332,69 @@ function calcIRR(cashflows, guess = 0.08, maxIter = 200, tol = 1e-8) {
     return (pct > -50 && pct < 200) ? pct : null;
 }
 
-// PV of annuity: PMT × [1-(1+r)^(-n)] / r, discounted back by deferYears
+// PV of annuity discounted back to today
 function calcPensionPV(annualPmt, rate, years, deferYears = 0) {
     if (!annualPmt || years <= 0) return 0;
     const pvStream = annualPmt * (1 - Math.pow(1 + rate, -years)) / rate;
     return pvStream / Math.pow(1 + rate, deferYears);
 }
 
-function mobileIrrBadge(irr) {
+/**
+ * Build IRR cashflows for India ULIP/Savings and SG Investment policies.
+ * Three patterns — no single-lump-sum-at-inception (not in your portfolio).
+ *
+ * annualPrem:  p.premium (nominal annual instalment)
+ * payingYears: min(ppt, yearsCompleted)
+ * totalPaid:   p.totalPremiumPaid (actual cumulative total from your Sheet)
+ * exitValue:   current portfolio/unit value
+ * payouts:     moneyback schedule (India) or null
+ * withdrawals: array of withdrawal amounts taken (SG)
+ *
+ * Pattern 1: totalPaid ≈ annualPrem × payingYears → regular flows only
+ * Pattern 2: totalPaid > regular by >5% → residual at last paying year
+ * Pattern 3: sumAssured = 0 (assigned/collateral) → same flows, different badge label
+ */
+function buildFlows(annualPrem, payingYears, totalPaid, exitValue, payouts, withdrawals) {
+    if (annualPrem <= 0 || exitValue <= 0 || payingYears < 1) return null;
+
+    const regularOutflow = annualPrem * payingYears;
+    const residual       = totalPaid > 0 ? Math.max(0, totalPaid - regularOutflow) : 0;
+    const hasIrregular   = residual > (Math.max(totalPaid, regularOutflow) * 0.05);
+    const lastPayingYear = Math.max(0, payingYears - 1);
+    const wds            = withdrawals || [];
+
+    // Total slots: at least payingYears, extended if payouts run longer
+    const maxPayoutYear = payouts ? Math.max(...Object.keys(payouts).map(Number), 0) : 0;
+    const totalSlots    = Math.max(payingYears, maxPayoutYear);
+
+    const flows = [];
+    for (let y = 0; y <= totalSlots; y++) {
+        let cf = 0;
+
+        // Regular annual outflow during premium-paying window
+        if (y < payingYears) cf -= annualPrem;
+
+        // Top-up / irregular residual at last paying year
+        if (hasIrregular && y === lastPayingYear) cf -= residual;
+
+        // Withdrawals received (SG: index 0 = earliest)
+        if (y > 0 && wds[y - 1]) cf += toNum(wds[y - 1]);
+
+        // Moneyback payouts received (India)
+        if (payouts && payouts[y]) cf += toNum(payouts[y]);
+
+        // Terminal: current portfolio value
+        if (y === totalSlots) cf += exitValue;
+
+        flows.push(cf);
+    }
+
+    flows._isIrregular = hasIrregular;
+    flows._residual    = residual;
+    return flows;
+}
+
+function mobileIrrBadge(irr, flows) {
     if (irr === null || irr === undefined) return '';
     const isGood = irr >= 10, isMid = irr >= 5 && irr < 10;
     const color  = isGood ? '#059669' : isMid ? '#d97706' : '#e11d48';
@@ -347,7 +402,11 @@ function mobileIrrBadge(irr) {
     const border = isGood ? '#6ee7b7' : isMid ? '#fcd34d' : '#fecaca';
     const arrow  = isGood ? '▲' : isMid ? '◆' : '▼';
     const sign   = irr > 0 ? '+' : '';
-    return `<div class="m-irr-badge" style="background:${bgClr};border:1.5px solid ${border};color:${color};">${arrow} IRR ${sign}${irr.toFixed(1)}%</div>`;
+    const lbl    = flows && flows._isIrregular ? 'IRR (Irr.)' : 'IRR';
+    const tip    = flows && flows._isIrregular
+        ? `Includes lump-sum/top-up of ${Math.round(flows._residual).toLocaleString()}`
+        : 'Annualised IRR on all premiums paid to date';
+    return `<div class="m-irr-badge" title="${tip}" style="background:${bgClr};border:1.5px solid ${border};color:${color};">${arrow} ${lbl} ${sign}${irr.toFixed(1)}%</div>`;
 }
 
 function mobilePvBadge(pv, sym) {
@@ -465,18 +524,18 @@ function buildMobileCard(p, cat, sym, TODAY, CURRENT_YEAR, toNum, autoFmt) {
 
         // SG IRR calculation
         let sgIrrBadge = '';
-        if (acctVal > 0 && toNum(p.premium) > 0 && policyYearIdx >= 1) {
+        if (acctVal > 0 && policyYearIdx >= 1) {
             const pptY   = p.ppt || policyYearIdx;
-            const wdList = p.withdrawals || [];
-            const sFlows = [];
-            for (let y = 0; y <= policyYearIdx; y++) {
-                let cf = 0;
-                if (y < policyYearIdx && y < pptY) cf -= toNum(p.premium);
-                if (y > 0 && wdList[y - 1]) cf += toNum(wdList[y - 1]);
-                if (y === policyYearIdx) cf += acctVal;
-                sFlows.push(cf);
-            }
-            sgIrrBadge = mobileIrrBadge(calcIRR(sFlows));
+            const payYrs = Math.min(pptY, policyYearIdx);
+            const sFlows = buildFlows(
+                toNum(p.premium),
+                payYrs,
+                toNum(p.totalPremiumPaid || 0),
+                acctVal,
+                null,
+                p.withdrawals || []
+            );
+            sgIrrBadge = mobileIrrBadge(calcIRR(sFlows), sFlows);
         }
 
         return `
@@ -540,17 +599,18 @@ function buildMobileCard(p, cat, sym, TODAY, CURRENT_YEAR, toNum, autoFmt) {
     let indiaIrrBadge = '';
 
     if (isULIPMobile && yComp >= 1) {
-        // ULIP: premiums → current unit value
-        const pptY = toNum(p.ppt || 99);
-        const iFlows = [];
-        for (let y = 0; y <= yComp; y++) {
-            let cf = 0;
-            if (y < yComp && y < pptY) cf -= toNum(p.premium);
-            if (p.payoutSchedule && p.payoutSchedule[y]) cf += toNum(p.payoutSchedule[y]);
-            if (y === yComp) cf += toNum(p.unitValueNumeric || 0);
-            iFlows.push(cf);
-        }
-        indiaIrrBadge = mobileIrrBadge(calcIRR(iFlows));
+        // ULIP: use irregular-payment-aware flow builder
+        const pptY     = toNum(p.ppt || yComp);
+        const payYrs   = Math.min(pptY, yComp);
+        const iFlows   = buildFlows(
+            toNum(p.premium),
+            payYrs,
+            toNum(p.totalPremiumPaid || 0),
+            toNum(p.unitValueNumeric || 0),
+            p.payoutSchedule,
+            []
+        );
+        indiaIrrBadge = mobileIrrBadge(calcIRR(iFlows), iFlows);
 
     } else if (isPensionMobile) {
         // PENSION: IRR + PV of remaining pension stream

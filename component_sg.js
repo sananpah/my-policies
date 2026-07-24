@@ -23,40 +23,79 @@ function calcIRR(cashflows, guess = 0.08, maxIter = 200, tol = 1e-8) {
 }
 
 /**
- * SG Investment/Savings cashflows:
- * Year 0..policyYearIdx-1 = -premium (outflows paid)
- * Any withdrawals in the year they were taken = +withdrawal (inflow received)
- * Final slot = +currentUnitValue (exit value today)
- * Withdrawals array is total list; we spread them across years (last year first).
+ * SG Investment/Savings cashflows — three real payment patterns.
+ *
+ * Pattern 1 — Regular annual premiums
+ *   totalPremiumPaid ≈ annualPremium × payingYears → equal annual outflows
+ *
+ * Pattern 2 — Top-up or recent large additional payment
+ *   totalPremiumPaid > annualPremium × payingYears by >5%
+ *   → regular flows + residual at last paying year
+ *   → badge: "IRR (Irregular)"
+ *
+ * Pattern 3 — (Not applicable for SG: no assigned SG policies)
+ *
+ * Withdrawals: placed chronologically (index 0 = earliest withdrawal taken)
+ * Source of truth: p.totalPremiumPaid from "Total Premium" in your Sheet.
  */
 function buildSGCashflows(p, policyYearIdx, accountValue, annualPremium, totalWithdrawn) {
-    if (annualPremium <= 0 || accountValue <= 0 || policyYearIdx < 1) return null;
-    const pptYears = toNum(p.ppt || policyYearIdx);
+    if (accountValue <= 0 || policyYearIdx < 1 || annualPremium <= 0) return null;
+
+    const totalPaid      = toNum(p.totalPremiumPaid || 0);
+    const pptYears       = toNum(p.ppt || policyYearIdx);
+    const withdrawals    = p.withdrawals || [];
+
+    const payingYears    = Math.min(pptYears, policyYearIdx);
+    const regularOutflow = annualPremium * payingYears;
+
+    const residual       = totalPaid > 0 ? Math.max(0, totalPaid - regularOutflow) : 0;
+    const hasIrregular   = residual > (Math.max(totalPaid, regularOutflow) * 0.05);
+
     const flows = [];
-    // Spread withdrawals: assume they were taken evenly or just lump on last year we know
-    // Simplest accurate model: spread across all completed years, last withdrawal last
-    const withdrawals = p.withdrawals || [];
     for (let y = 0; y <= policyYearIdx; y++) {
         let cf = 0;
-        if (y < policyYearIdx && y < pptYears) cf -= annualPremium;
-        // Add withdrawal received in this year (match by index order)
+
+        // Regular annual outflow
+        if (y < payingYears) cf -= annualPremium;
+
+        // Irregular top-up at last paying year
+        if (hasIrregular && y === Math.max(0, payingYears - 1)) cf -= residual;
+
+        // Withdrawals received (index 0 = earliest)
         if (y > 0 && withdrawals[y - 1]) cf += toNum(withdrawals[y - 1]);
+
+        // Terminal value
         if (y === policyYearIdx) cf += accountValue;
+
         flows.push(cf);
     }
+
+    flows._isIrregular = hasIrregular;
+    flows._residual    = residual;
+
     return flows;
 }
 
-/** Funky skewed IRR pill badge */
-function irrBadgeHtml(irr, label = 'IRR p.a.') {
+/** Funky skewed IRR pill badge — aware of irregular payment patterns */
+function irrBadgeHtml(irr, label = 'IRR p.a.', flows = null) {
     if (irr === null || irr === undefined) return '';
+
+    let displayLabel = label;
+    let tooltip      = 'Annualised IRR: total premiums paid vs current portfolio value';
+
+    if (flows && flows._isIrregular && flows._residual > 0) {
+        const resFmt = '$' + Math.round(flows._residual).toLocaleString();
+        displayLabel = 'IRR (Irregular)';
+        tooltip = `IRR includes ${resFmt} lump-sum/top-up beyond regular premiums. Actual total outflow used.`;
+    }
+
     const isGood = irr >= 10, isMid = irr >= 5 && irr < 10;
     const color  = isGood ? '#059669' : isMid ? '#d97706' : '#e11d48';
     const bgClr  = isGood ? '#ecfdf5' : isMid ? '#fffbeb' : '#fff1f2';
     const border = isGood ? '#6ee7b7' : isMid ? '#fcd34d' : '#fecaca';
     const arrow  = isGood ? '▲' : isMid ? '◆' : '▼';
     const sign   = irr > 0 ? '+' : '';
-    return `<div class="irr-badge" style="display:inline-flex;align-items:center;gap:5px;background:${bgClr};border:1.5px solid ${border};color:${color};border-radius:8px;padding:3px 10px;transform:skewX(-8deg);font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:0.05em;box-shadow:2px 2px 0 ${border};white-space:nowrap;cursor:default;" title="Annualised IRR on premiums paid to date vs current portfolio value"><span style="transform:skewX(8deg);display:flex;align-items:center;gap:4px;"><span style="font-size:8px;opacity:0.65;">${label}</span><span style="font-size:13px;letter-spacing:-0.02em;">${arrow} ${sign}${irr.toFixed(1)}%</span></span></div>`;
+    return `<div class="irr-badge" style="display:inline-flex;align-items:center;gap:5px;background:${bgClr};border:1.5px solid ${border};color:${color};border-radius:8px;padding:3px 10px;transform:skewX(-8deg);font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:0.05em;box-shadow:2px 2px 0 ${border};white-space:nowrap;cursor:default;" title="${tooltip}"><span style="transform:skewX(8deg);display:flex;align-items:center;gap:4px;"><span style="font-size:8px;opacity:0.65;">${displayLabel}</span><span style="font-size:13px;letter-spacing:-0.02em;">${arrow} ${sign}${irr.toFixed(1)}%</span></span></div>`;
 }
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -114,7 +153,7 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     // --- IRR CALCULATION ---
     const sgFlows = buildSGCashflows(p, policyYearIdx, accountValue, annualPremium, totalWithdrawn);
     const sgIrr   = calcIRR(sgFlows);
-    const irrHtml = irrBadgeHtml(sgIrr, 'IRR p.a.');
+    const irrHtml = irrBadgeHtml(sgIrr, 'IRR p.a.', sgFlows);
 
     const chargePct = (p.surrenderCharges && p.surrenderCharges[policyYearIdx]) || 0;
     let surrenderValue = (p.surrenderBase === "PREMIUM") 

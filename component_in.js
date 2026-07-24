@@ -25,34 +25,106 @@ function calcIRR(cashflows, guess = 0.08, maxIter = 200, tol = 1e-8) {
     return (pct > -50 && pct < 200) ? pct : null;
 }
 
-/** India ULIP cashflows: -premium each paying year, +payouts received, +currentValue at end */
+/**
+ * Builds accurate IRR cashflows for India ULIP / Savings policies.
+ *
+ * Three real payment patterns handled:
+ *
+ * Pattern 1 — Regular annual premiums (standard ULIP)
+ *   totalPremiumPaid ≈ premium × yearsCompleted
+ *   → equal outflows every paying year, no residual
+ *
+ * Pattern 2 — Regular premiums + top-up or recent large additional payment
+ *   totalPremiumPaid > premium × yearsCompleted by >5% margin
+ *   → annual flows for each paying year; residual placed at last paying year
+ *   → badge label changes to "IRR (Irregular)" with tooltip showing top-up amount
+ *
+ * Pattern 3 — Assigned policy (sumAssured = 0, policy used as loan collateral)
+ *   Payment schedule is still regular annual — only the beneficiary changed.
+ *   → flows identical to Pattern 1 or 2 depending on totalPremiumPaid
+ *   → badge label changes to "IRR (Assigned)" to signal the loan-collateral context
+ *
+ * Source of truth: p.totalPremiumPaid from "Total Premium" column in your Sheet.
+ * p.premium × years is the expected schedule; the difference is the irregular component.
+ */
 function buildIndiaULIPCashflows(p, yearsCompleted) {
-    const premium   = toNum(p.premium);
-    const exitValue = toNum(p.unitValueNumeric || 0);
-    if (premium <= 0 || exitValue <= 0 || yearsCompleted < 1) return null;
-    const pptYears  = toNum(p.ppt || 99);
+    const premium    = toNum(p.premium);
+    const totalPaid  = toNum(p.totalPremiumPaid || 0);
+    const exitValue  = toNum(p.unitValueNumeric || 0);
+    const pptYears   = toNum(p.ppt || yearsCompleted);
+
+    // Need exit value and at least one year + some premium paid
+    if (exitValue <= 0 || yearsCompleted < 1 || premium <= 0) return null;
+
+    // How much does the regular annual schedule account for?
+    const payingYears    = Math.min(pptYears, yearsCompleted);
+    const regularOutflow = premium * payingYears;
+
+    // Residual = actual total paid minus what regular schedule predicts
+    // Only meaningful when totalPremiumPaid is populated in the Sheet
+    const residual     = totalPaid > 0 ? Math.max(0, totalPaid - regularOutflow) : 0;
+    const hasIrregular = residual > (Math.max(totalPaid, regularOutflow) * 0.05);
+
     const flows = [];
     for (let y = 0; y <= yearsCompleted; y++) {
         let cf = 0;
-        if (y < yearsCompleted && y < pptYears) cf -= premium;
+
+        // Regular annual outflow during premium-paying window
+        if (y < payingYears) cf -= premium;
+
+        // Irregular top-up: place residual at the last regular paying year
+        // (This is when the lump-sum top-up or large recent payment was made)
+        if (hasIrregular && y === Math.max(0, payingYears - 1)) cf -= residual;
+
+        // Moneyback / income payouts received in this year
         if (p.payoutSchedule && p.payoutSchedule[y]) cf += toNum(p.payoutSchedule[y]);
+
+        // Terminal: current portfolio / unit value (what you'd get if you exit today)
         if (y === yearsCompleted) cf += exitValue;
+
         flows.push(cf);
     }
+
+    // Metadata for badge label — never changes the IRR maths, only the display
+    flows._isIrregular = hasIrregular;
+    flows._residual    = residual;
+    flows._isAssigned  = toNum(p.sumAssured) === 0;
+
     return flows;
 }
 
-/** Funky skewed IRR pill badge */
-function irrBadgeHtml(irr, label = 'IRR p.a.') {
+/**
+ * Funky skewed IRR pill badge.
+ * flows: the cashflow array (may have ._isIrregular, ._isAssigned metadata)
+ * label: base label text
+ */
+function irrBadgeHtml(irr, label = 'IRR p.a.', flows = null) {
     if (irr === null || irr === undefined) return '';
-    const isGood   = irr >= 10;
-    const isMid    = irr >= 5 && irr < 10;
-    const color    = isGood ? '#059669' : isMid ? '#d97706' : '#e11d48';
-    const bgClr    = isGood ? '#ecfdf5' : isMid ? '#fffbeb' : '#fff1f2';
-    const border   = isGood ? '#6ee7b7' : isMid ? '#fcd34d' : '#fecaca';
-    const arrow    = isGood ? '▲' : isMid ? '◆' : '▼';
-    const sign     = irr > 0 ? '+' : '';
-    return `<div class="irr-badge" style="display:inline-flex;align-items:center;gap:5px;background:${bgClr};border:1.5px solid ${border};color:${color};border-radius:8px;padding:3px 10px;transform:skewX(-8deg);font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:0.05em;box-shadow:2px 2px 0 ${border};white-space:nowrap;cursor:default;" title="Annualised Internal Rate of Return on premiums paid to date"><span style="transform:skewX(8deg);display:flex;align-items:center;gap:4px;"><span style="font-size:8px;opacity:0.65;">${label}</span><span style="font-size:13px;letter-spacing:-0.02em;">${arrow} ${sign}${irr.toFixed(1)}%</span></span></div>`;
+
+    // Build smart label based on payment pattern
+    let displayLabel = label;
+    let tooltip      = 'Annualised IRR on all premiums paid to date vs current portfolio value';
+
+    if (flows) {
+        if (flows._isAssigned) {
+            displayLabel = 'IRR (Assigned)';
+            tooltip = `IRR on assigned policy. Total paid used as cashflow basis.`;
+        } else if (flows._isIrregular && flows._residual > 0) {
+            const sym     = '₹';
+            const residFmt = sym + Math.round(flows._residual).toLocaleString('en-IN');
+            displayLabel = 'IRR (Irregular)';
+            tooltip = `IRR includes ${residFmt} lump-sum/top-up in addition to regular premiums. Total actual outflow used.`;
+        }
+    }
+
+    const isGood = irr >= 10, isMid = irr >= 5 && irr < 10;
+    const color  = isGood ? '#059669' : isMid ? '#d97706' : '#e11d48';
+    const bgClr  = isGood ? '#ecfdf5' : isMid ? '#fffbeb' : '#fff1f2';
+    const border = isGood ? '#6ee7b7' : isMid ? '#fcd34d' : '#fecaca';
+    const arrow  = isGood ? '▲' : isMid ? '◆' : '▼';
+    const sign   = irr > 0 ? '+' : '';
+
+    return `<div class="irr-badge" style="display:inline-flex;align-items:center;gap:5px;background:${bgClr};border:1.5px solid ${border};color:${color};border-radius:8px;padding:3px 10px;transform:skewX(-8deg);font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:0.05em;box-shadow:2px 2px 0 ${border};white-space:nowrap;cursor:default;" title="${tooltip}"><span style="transform:skewX(8deg);display:flex;align-items:center;gap:4px;"><span style="font-size:8px;opacity:0.65;">${displayLabel}</span><span style="font-size:13px;letter-spacing:-0.02em;">${arrow} ${sign}${irr.toFixed(1)}%</span></span></div>`;
 }
 
 /**
@@ -122,10 +194,10 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
     let irrHtml = '';
 
     if (isULIP) {
-        // ULIP IRR: premiums paid → current unit value
+        // ULIP IRR: premiums paid → current unit value (handles irregular payments)
         const flows = buildIndiaULIPCashflows(p, yearsCompleted);
         const irr   = calcIRR(flows);
-        irrHtml = irrBadgeHtml(irr, 'IRR p.a.');
+        irrHtml = irrBadgeHtml(irr, 'IRR p.a.', flows);
 
     } else if (isPension) {
         // PENSION: full cashflow = premiums paid + pension received + PV of future pension
