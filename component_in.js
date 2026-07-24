@@ -1,5 +1,59 @@
-/* component_in.js - v4.1.46 - Dynamic Maturity & Step Logic Integration */
+/* component_in.js - v4.2.0 - IRR Badge Added */
 import { checkIsDueSoon, autoFmt, toNum, safeParseDate, safeGetYear, monthMap, getTimeRemaining } from './utils.js';
+
+/**
+ * IRR via Newton-Raphson. cashflows[t] = net cash at year t.
+ * Returns IRR as a percentage (e.g. 8.34) or null if no solution.
+ */
+function calcIRR(cashflows, guess = 0.08, maxIter = 200, tol = 1e-8) {
+    if (!cashflows || cashflows.length < 2) return null;
+    if (!cashflows.some(c => c < 0) || !cashflows.some(c => c > 0)) return null;
+    let rate = guess;
+    for (let i = 0; i < maxIter; i++) {
+        let npv = 0, dnpv = 0;
+        for (let t = 0; t < cashflows.length; t++) {
+            const d = Math.pow(1 + rate, t);
+            npv  += cashflows[t] / d;
+            dnpv -= t * cashflows[t] / (d * (1 + rate));
+        }
+        if (Math.abs(dnpv) < 1e-14) break;
+        const nr = rate - npv / dnpv;
+        if (Math.abs(nr - rate) < tol) { rate = nr; break; }
+        rate = Math.max(-0.99, Math.min(10, nr));
+    }
+    const pct = Math.round(rate * 10000) / 100;
+    return (pct > -50 && pct < 200) ? pct : null;
+}
+
+/** India ULIP cashflows: -premium each paying year, +payouts received, +currentValue at end */
+function buildIndiaULIPCashflows(p, yearsCompleted) {
+    const premium   = toNum(p.premium);
+    const exitValue = toNum(p.unitValueNumeric || 0);
+    if (premium <= 0 || exitValue <= 0 || yearsCompleted < 1) return null;
+    const pptYears  = toNum(p.ppt || 99);
+    const flows = [];
+    for (let y = 0; y <= yearsCompleted; y++) {
+        let cf = 0;
+        if (y < yearsCompleted && y < pptYears) cf -= premium;
+        if (p.payoutSchedule && p.payoutSchedule[y]) cf += toNum(p.payoutSchedule[y]);
+        if (y === yearsCompleted) cf += exitValue;
+        flows.push(cf);
+    }
+    return flows;
+}
+
+/** Funky skewed IRR pill badge */
+function irrBadgeHtml(irr, label = 'IRR p.a.') {
+    if (irr === null || irr === undefined) return '';
+    const isGood   = irr >= 10;
+    const isMid    = irr >= 5 && irr < 10;
+    const color    = isGood ? '#059669' : isMid ? '#d97706' : '#e11d48';
+    const bgClr    = isGood ? '#ecfdf5' : isMid ? '#fffbeb' : '#fff1f2';
+    const border   = isGood ? '#6ee7b7' : isMid ? '#fcd34d' : '#fecaca';
+    const arrow    = isGood ? '▲' : isMid ? '◆' : '▼';
+    const sign     = irr > 0 ? '+' : '';
+    return `<div class="irr-badge" style="display:inline-flex;align-items:center;gap:5px;background:${bgClr};border:1.5px solid ${border};color:${color};border-radius:8px;padding:3px 10px;transform:skewX(-8deg);font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:0.05em;box-shadow:2px 2px 0 ${border};white-space:nowrap;cursor:default;" title="Annualised Internal Rate of Return on premiums paid to date"><span style="transform:skewX(8deg);display:flex;align-items:center;gap:4px;"><span style="font-size:8px;opacity:0.65;">${label}</span><span style="font-size:13px;letter-spacing:-0.02em;">${arrow} ${sign}${irr.toFixed(1)}%</span></span></div>`;
+}
 
 export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
     const isULIP = (p.type || "").toUpperCase().includes("ULIP");
@@ -43,6 +97,14 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
     else if (isIncomePhase) { middleLabel = "Annual Payout"; middleValue = autoFmt(scheduledPayout, sym); middleColor = "text-[#854d0e] font-black"; }
     
     const badgeText = isIncomePhase ? "Income Phase" : (p.type || "Savings");
+
+    // --- IRR CALCULATION (ULIP only) ---
+    let irrHtml = '';
+    if (isULIP) {
+        const flows = buildIndiaULIPCashflows(p, yearsCompleted);
+        const irr   = calcIRR(flows);
+        irrHtml = irrBadgeHtml(irr, 'IRR p.a.');
+    }
     const nextDueStr = `${annDay} ${startParts[1]} ${TODAY >= anniversaryThisYear ? CURRENT_YEAR + 1 : CURRENT_YEAR}`; 
     const finalDueDate = isPaidUp ? "PAID UP" : nextDueStr;
 
@@ -133,7 +195,10 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
             </div>
             <div class="flex gap-12 items-center mr-6">
                 <div class="flex items-center w-[260px] -ml-4">
-                    <div class="funky-badge-v2" style="border-color:${brandColor}; color:${brandColor}; background:#fff; font-size:10px; font-weight:900; padding:2px 8px; border-radius:6px; border:1.5px solid; text-transform:uppercase;">${badgeText}</div>
+                    <div style="display:flex; flex-direction:column; gap:5px; align-items:flex-start;">
+                        <div class="funky-badge-v2" style="border-color:${brandColor}; color:${brandColor}; background:#fff; font-size:10px; font-weight:900; padding:2px 8px; border-radius:6px; border:1.5px solid; text-transform:uppercase;">${badgeText}</div>
+                        ${irrHtml}
+                    </div>
                     <div class="ml-6 relative min-w-[140px] flex items-center h-12">
                         <div><p class="text-[9px] font-bold text-slate-400 uppercase leading-none mb-1">${middleLabel}</p><p class="text-lg ${middleColor} leading-none">${middleValue}</p></div>
                     </div>

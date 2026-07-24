@@ -310,6 +310,39 @@ function updateSummary(cat, list, sym, localPolicyData, healthData, toNum, autoF
         </div>`;
 }
 
+
+// ── Shared IRR Engine ──────────────────────────────────
+function calcIRR(cashflows, guess = 0.08, maxIter = 200, tol = 1e-8) {
+    if (!cashflows || cashflows.length < 2) return null;
+    if (!cashflows.some(c => c < 0) || !cashflows.some(c => c > 0)) return null;
+    let rate = guess;
+    for (let i = 0; i < maxIter; i++) {
+        let npv = 0, dnpv = 0;
+        for (let t = 0; t < cashflows.length; t++) {
+            const d = Math.pow(1 + rate, t);
+            npv  += cashflows[t] / d;
+            dnpv -= t * cashflows[t] / (d * (1 + rate));
+        }
+        if (Math.abs(dnpv) < 1e-14) break;
+        const nr = rate - npv / dnpv;
+        if (Math.abs(nr - rate) < tol) { rate = nr; break; }
+        rate = Math.max(-0.99, Math.min(10, nr));
+    }
+    const pct = Math.round(rate * 10000) / 100;
+    return (pct > -50 && pct < 200) ? pct : null;
+}
+
+function mobileIrrBadge(irr) {
+    if (irr === null || irr === undefined) return '';
+    const isGood = irr >= 10, isMid = irr >= 5 && irr < 10;
+    const color  = isGood ? '#059669' : isMid ? '#d97706' : '#e11d48';
+    const bgClr  = isGood ? '#ecfdf5' : isMid ? '#fffbeb' : '#fff1f2';
+    const border = isGood ? '#6ee7b7' : isMid ? '#fcd34d' : '#fecaca';
+    const arrow  = isGood ? '▲' : isMid ? '◆' : '▼';
+    const sign   = irr > 0 ? '+' : '';
+    return `<div class="m-irr-badge" style="background:${bgClr};border:1.5px solid ${border};color:${color};">${arrow} IRR ${sign}${irr.toFixed(1)}%</div>`;
+}
+
 // ── Mobile Card Builder ────────────────────────────────
 // p.logo is already a full URL from the loader (github raw URL).
 // p.avatarPath is set by mapIdentity() in loader for both India and SG cards.
@@ -417,6 +450,22 @@ function buildMobileCard(p, cat, sym, TODAY, CURRENT_YEAR, toNum, autoFmt) {
                           .toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
         const acctVal = Math.round(toNum(p.currentUnitValue || 0));
 
+        // SG IRR calculation
+        let sgIrrBadge = '';
+        if (acctVal > 0 && toNum(p.premium) > 0 && policyYearIdx >= 1) {
+            const pptY   = p.ppt || policyYearIdx;
+            const wdList = p.withdrawals || [];
+            const sFlows = [];
+            for (let y = 0; y <= policyYearIdx; y++) {
+                let cf = 0;
+                if (y < policyYearIdx && y < pptY) cf -= toNum(p.premium);
+                if (y > 0 && wdList[y - 1]) cf += toNum(wdList[y - 1]);
+                if (y === policyYearIdx) cf += acctVal;
+                sFlows.push(cf);
+            }
+            sgIrrBadge = mobileIrrBadge(calcIRR(sFlows));
+        }
+
         return `
         <div class="m-card" id="mcard-${p.id}" onclick="toggleCard('${p.id}')" style="border-top: 4px solid ${bc};">
             <div class="m-card-top">
@@ -425,6 +474,7 @@ function buildMobileCard(p, cat, sym, TODAY, CURRENT_YEAR, toNum, autoFmt) {
                     <div class="m-type">${type}</div>
                     <div class="m-name">${name}</div>
                     <div class="m-company">${company}</div>
+                    ${sgIrrBadge}
                 </div>
                 ${avatarHtml}
             </div>
@@ -467,6 +517,22 @@ function buildMobileCard(p, cat, sym, TODAY, CURRENT_YEAR, toNum, autoFmt) {
     // LEFT: time until premium ends
     const leftIndia = (!isPaidUp && finalPremDate) ? calcLeft(finalPremDate) : null;
 
+    // IRR for ULIP policies
+    const isULIPMobile = (p.type || '').toUpperCase().includes('ULIP');
+    let indiaIrrBadge = '';
+    if (isULIPMobile && yComp >= 1) {
+        const pptY = toNum(p.ppt || 99);
+        const iFlows = [];
+        for (let y = 0; y <= yComp; y++) {
+            let cf = 0;
+            if (y < yComp && y < pptY) cf -= toNum(p.premium);
+            if (p.payoutSchedule && p.payoutSchedule[y]) cf += toNum(p.payoutSchedule[y]);
+            if (y === yComp) cf += toNum(p.unitValueNumeric || 0);
+            iFlows.push(cf);
+        }
+        indiaIrrBadge = mobileIrrBadge(calcIRR(iFlows));
+    }
+
     let midLbl = "Sum Assured", midVal = autoFmt(p.sumAssured, sym), midCls = "";
     if (!isPaidUp && finalPremDate && TODAY <= finalPremDate) {
         midLbl = "Annual Premium"; midVal = autoFmt(p.premium, sym); midCls = "emerald";
@@ -482,6 +548,7 @@ function buildMobileCard(p, cat, sym, TODAY, CURRENT_YEAR, toNum, autoFmt) {
                 <div class="m-type">${isIncome ? 'Income Phase' : (type || 'Life')}</div>
                 <div class="m-name">${name}</div>
                 <div class="m-company">${company}</div>
+                ${indiaIrrBadge}
             </div>
             ${avatarHtml}
         </div>

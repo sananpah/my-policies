@@ -467,6 +467,26 @@ html, body {
     text-transform: uppercase;
 }
 
+/* IRR Badge — mobile version */
+.m-irr-badge {
+    display: inline-flex;
+    align-items: center;
+    font-size: 9px;
+    font-weight: 900;
+    letter-spacing: 0.04em;
+    padding: 2px 8px;
+    border-radius: 6px;
+    border: 1.5px solid;
+    transform: skewX(-7deg);
+    text-transform: uppercase;
+    box-shadow: 1px 1px 0 currentColor;
+    margin-top: 3px;
+    width: fit-content;
+    cursor: default;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
 /* Fix D: Health Full Life badge */
 .fulllife-badge {
     display: inline-block;
