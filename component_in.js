@@ -394,7 +394,7 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR, allPolicies = []) 
 
                 // IRR label and tooltip — clearly flag bonus exclusion
                 const irrLbl = 'IRR (BSA)';
-                const irrTip = `Conservative IRR using BSA only (₹${BSA.toLocaleString('en-IN')}) at maturity ${start.getFullYear ? '' : ''}${safeGetYear(p.maturity)}.`
+                const irrTip = `Conservative IRR using BSA only (₹${BSA.toLocaleString('en-IN')}) at maturity ${safeGetYear(p.maturity)}.`
                     + (hasBonus ? ` Bonus is NOT included — actual IRR will be higher once bonus formula is added to your sheet.` : '');
 
                 _irrHtml = _irrBadge(irr, irrLbl, irrTip)
