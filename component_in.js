@@ -359,6 +359,48 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR, allPolicies = []) 
                 `Full ${matYrs}-yr projected cashflow: premiums + moneyback payouts + maturity benefit.`) +
                 (pvInflows > 0 ? _pvBadge(pvInflows, sym,
                     `Present value of all remaining payouts + maturity @ 6% discount = ${sym}${Math.round(pvInflows).toLocaleString('en-IN')} in today's money`) : '');
+
+        } else {
+            // ── PURE ENDOWMENT BRANCH ─────────────────────────────────────────
+            // No payoutSchedule, no unitValueNumeric — e.g. "Maturity Benefit: BSA + Bonus"
+            // These are pure endowment / whole-life savings plans.
+            // IRR uses BSA as the conservative terminal value (bonus unknown from sheet).
+            // Badge shows IRR clearly labelled as conservative and flags missing bonus.
+            const prem    = toNum(p.premium);
+            const ppt     = toNum(p.ppt || 0);
+            const matYrs  = safeGetYear(p.maturity) - parseInt(commStr.split(' ')[2]);
+            const BSA     = toNum(p.sumAssured);
+            const hasBonus = (p.maturityLabel || '').toLowerCase().includes('bonus') ||
+                             (p.maturityFormula || '').toLowerCase().includes('bonus');
+
+            if (prem > 0 && ppt > 0 && matYrs > 0 && BSA > 0) {
+                // Build flows: -prem for ppt years, +BSA at maturity
+                const flows = [];
+                for (let ann = 0; ann <= matYrs; ann++) {
+                    let cf = ann < ppt ? -prem : 0;
+                    if (ann === matYrs) cf += BSA;
+                    flows.push(cf);
+                }
+                const irr = _calcIRR(flows);
+
+                // PV of BSA at maturity discounted to today
+                const RATE   = 0.06;
+                const yrsNow = (TODAY - new Date(
+                    parseInt(commStr.split(' ')[2]),
+                    monthMap[commStr.split(' ')[1]] || 0,
+                    parseInt(commStr.split(' ')[0])
+                )).valueOf() / (365.25 * 86400000);
+                const pvBSA  = BSA / Math.pow(1 + RATE, matYrs);
+
+                // IRR label and tooltip — clearly flag bonus exclusion
+                const irrLbl = 'IRR (BSA)';
+                const irrTip = `Conservative IRR using BSA only (₹${BSA.toLocaleString('en-IN')}) at maturity ${start.getFullYear ? '' : ''}${safeGetYear(p.maturity)}.`
+                    + (hasBonus ? ` Bonus is NOT included — actual IRR will be higher once bonus formula is added to your sheet.` : '');
+
+                _irrHtml = _irrBadge(irr, irrLbl, irrTip)
+                    + (pvBSA > 0 ? _pvBadge(pvBSA, sym,
+                        `BSA ₹${BSA.toLocaleString('en-IN')} at maturity (${safeGetYear(p.maturity)}) discounted to today @ 6%. Conservative — excludes bonus.`) : '');
+            }
         }
     }
     const nextDueStr = `${annDay} ${startParts[1]} ${TODAY >= anniversaryThisYear ? CURRENT_YEAR + 1 : CURRENT_YEAR}`; 
