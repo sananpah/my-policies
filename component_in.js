@@ -1,143 +1,87 @@
-/* component_in.js - v4.2.0 - IRR Badge Added */
+/* component_in.js - v4.1.46 - Dynamic Maturity & Step Logic Integration */
 import { checkIsDueSoon, autoFmt, toNum, safeParseDate, safeGetYear, monthMap, getTimeRemaining } from './utils.js';
 
-/**
- * IRR via Newton-Raphson. cashflows[t] = net cash at year t.
- * Returns IRR as a percentage (e.g. 8.34) or null if no solution.
- */
-function calcIRR(cashflows, guess = 0.08, maxIter = 200, tol = 1e-8) {
-    if (!cashflows || cashflows.length < 2) return null;
-    if (!cashflows.some(c => c < 0) || !cashflows.some(c => c > 0)) return null;
-    let rate = guess;
-    for (let i = 0; i < maxIter; i++) {
-        let npv = 0, dnpv = 0;
-        for (let t = 0; t < cashflows.length; t++) {
-            const d = Math.pow(1 + rate, t);
-            npv  += cashflows[t] / d;
-            dnpv -= t * cashflows[t] / (d * (1 + rate));
+/* ── IRR ENGINE ─────────────────────────────────────────────────────────
+ * Placed here so it is tree-shaken with this module only.
+ * Three payment patterns (no single-lump-sum; not in this portfolio):
+ *   Pattern 1 — regular annual premiums
+ *   Pattern 2 — regular premiums + top-up  (totalPremiumPaid > premium×years by >5%)
+ *   Pattern 3 — assigned policy (sumAssured=0); same flows, different badge label
+ * Bug fix: use policyYearIdx (payments actually made) not yearsCompleted (calendar years)
+ * ──────────────────────────────────────────────────────────────────────── */
+function _calcIRR(flows, guess = 0.08, iter = 200, tol = 1e-10) {
+    if (!flows || flows.length < 2) return null;
+    if (!flows.some(c => c < 0) || !flows.some(c => c > 0)) return null;
+    let r = guess;
+    for (let i = 0; i < iter; i++) {
+        let npv = 0, d = 0;
+        for (let t = 0; t < flows.length; t++) {
+            const disc = Math.pow(1 + r, t);
+            npv += flows[t] / disc;
+            d   -= t * flows[t] / (disc * (1 + r));
         }
-        if (Math.abs(dnpv) < 1e-14) break;
-        const nr = rate - npv / dnpv;
-        if (Math.abs(nr - rate) < tol) { rate = nr; break; }
-        rate = Math.max(-0.99, Math.min(10, nr));
+        if (Math.abs(d) < 1e-14) break;
+        const nr = r - npv / d;
+        if (Math.abs(nr - r) < tol) { r = nr; break; }
+        r = Math.max(-0.99, Math.min(10, nr));
     }
-    const pct = Math.round(rate * 10000) / 100;
+    const pct = Math.round(r * 10000) / 100;
     return (pct > -50 && pct < 200) ? pct : null;
 }
 
-/**
- * Builds accurate IRR cashflows for India ULIP / Savings policies.
- *
- * Three real payment patterns handled:
- *
- * Pattern 1 — Regular annual premiums (standard ULIP)
- *   totalPremiumPaid ≈ premium × yearsCompleted
- *   → equal outflows every paying year, no residual
- *
- * Pattern 2 — Regular premiums + top-up or recent large additional payment
- *   totalPremiumPaid > premium × yearsCompleted by >5% margin
- *   → annual flows for each paying year; residual placed at last paying year
- *   → badge label changes to "IRR (Irregular)" with tooltip showing top-up amount
- *
- * Pattern 3 — Assigned policy (sumAssured = 0, policy used as loan collateral)
- *   Payment schedule is still regular annual — only the beneficiary changed.
- *   → flows identical to Pattern 1 or 2 depending on totalPremiumPaid
- *   → badge label changes to "IRR (Assigned)" to signal the loan-collateral context
- *
- * Source of truth: p.totalPremiumPaid from "Total Premium" column in your Sheet.
- * p.premium × years is the expected schedule; the difference is the irregular component.
- */
-function buildIndiaULIPCashflows(p, yearsCompleted) {
-    const premium    = toNum(p.premium);
-    const totalPaid  = toNum(p.totalPremiumPaid || 0);
-    const exitValue  = toNum(p.unitValueNumeric || 0);
-    const pptYears   = toNum(p.ppt || yearsCompleted);
+function _buildIndiaFlows(p, policyYearIdx, yearsCompleted) {
+    const premium   = toNum(p.premium);
+    const totalPaid = toNum(p.totalPremiumPaid || 0);
+    const exitVal   = toNum(p.unitValueNumeric || 0);
+    const pptYears  = toNum(p.ppt || policyYearIdx);
+    // Use policyYearIdx (payments actually made) to avoid off-by-one with anniversary timing
+    const payYrs    = Math.min(pptYears, policyYearIdx);
+    if (premium <= 0 || exitVal <= 0 || payYrs < 1) return null;
 
-    // Need exit value and at least one year + some premium paid
-    if (exitValue <= 0 || yearsCompleted < 1 || premium <= 0) return null;
-
-    // How much does the regular annual schedule account for?
-    const payingYears    = Math.min(pptYears, yearsCompleted);
-    const regularOutflow = premium * payingYears;
-
-    // Residual = actual total paid minus what regular schedule predicts
-    // Only meaningful when totalPremiumPaid is populated in the Sheet
-    const residual     = totalPaid > 0 ? Math.max(0, totalPaid - regularOutflow) : 0;
-    const hasIrregular = residual > (Math.max(totalPaid, regularOutflow) * 0.05);
+    const regular   = premium * payYrs;
+    const residual  = totalPaid > 0 ? Math.max(0, totalPaid - regular) : 0;
+    const isIrreg   = residual > Math.max(totalPaid, regular) * 0.05;
+    const lastPayY  = Math.max(0, payYrs - 1);
 
     const flows = [];
     for (let y = 0; y <= yearsCompleted; y++) {
         let cf = 0;
-
-        // Regular annual outflow during premium-paying window
-        if (y < payingYears) cf -= premium;
-
-        // Irregular top-up: place residual at the last regular paying year
-        // (This is when the lump-sum top-up or large recent payment was made)
-        if (hasIrregular && y === Math.max(0, payingYears - 1)) cf -= residual;
-
-        // Moneyback / income payouts received in this year
-        if (p.payoutSchedule && p.payoutSchedule[y]) cf += toNum(p.payoutSchedule[y]);
-
-        // Terminal: current portfolio / unit value (what you'd get if you exit today)
-        if (y === yearsCompleted) cf += exitValue;
-
+        if (y < payYrs)                                    cf -= premium;
+        if (isIrreg && y === lastPayY)                     cf -= residual;
+        if (p.payoutSchedule && p.payoutSchedule[y])       cf += toNum(p.payoutSchedule[y]);
+        if (y === yearsCompleted)                           cf += exitVal;
         flows.push(cf);
     }
-
-    // Metadata for badge label — never changes the IRR maths, only the display
-    flows._isIrregular = hasIrregular;
-    flows._residual    = residual;
-    flows._isAssigned  = toNum(p.sumAssured) === 0;
-
+    flows._isIrreg   = isIrreg;
+    flows._residual  = residual;
+    flows._isAssign  = toNum(p.sumAssured) === 0;
     return flows;
 }
 
-/**
- * Funky skewed IRR pill badge.
- * flows: the cashflow array (may have ._isIrregular, ._isAssigned metadata)
- * label: base label text
- */
-function irrBadgeHtml(irr, label = 'IRR p.a.', flows = null) {
+function _irrBadgeIndia(irr, flows) {
     if (irr === null || irr === undefined) return '';
-
-    // Build smart label based on payment pattern
-    let displayLabel = label;
-    let tooltip      = 'Annualised IRR on all premiums paid to date vs current portfolio value';
-
-    if (flows) {
-        if (flows._isAssigned) {
-            displayLabel = 'IRR (Assigned)';
-            tooltip = `IRR on assigned policy. Total paid used as cashflow basis.`;
-        } else if (flows._isIrregular && flows._residual > 0) {
-            const sym     = '₹';
-            const residFmt = sym + Math.round(flows._residual).toLocaleString('en-IN');
-            displayLabel = 'IRR (Irregular)';
-            tooltip = `IRR includes ${residFmt} lump-sum/top-up in addition to regular premiums. Total actual outflow used.`;
-        }
-    }
-
     const isGood = irr >= 10, isMid = irr >= 5 && irr < 10;
-    const color  = isGood ? '#059669' : isMid ? '#d97706' : '#e11d48';
-    const bgClr  = isGood ? '#ecfdf5' : isMid ? '#fffbeb' : '#fff1f2';
-    const border = isGood ? '#6ee7b7' : isMid ? '#fcd34d' : '#fecaca';
-    const arrow  = isGood ? '▲' : isMid ? '◆' : '▼';
-    const sign   = irr > 0 ? '+' : '';
-
-    return `<div class="irr-badge" style="display:inline-flex;align-items:center;gap:5px;background:${bgClr};border:1.5px solid ${border};color:${color};border-radius:8px;padding:3px 10px;transform:skewX(-8deg);font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:0.05em;box-shadow:2px 2px 0 ${border};white-space:nowrap;cursor:default;" title="${tooltip}"><span style="transform:skewX(8deg);display:flex;align-items:center;gap:4px;"><span style="font-size:8px;opacity:0.65;">${displayLabel}</span><span style="font-size:13px;letter-spacing:-0.02em;">${arrow} ${sign}${irr.toFixed(1)}%</span></span></div>`;
+    const bg  = isGood ? '#ecfdf5' : isMid ? '#fffbeb' : '#fff1f2';
+    const fg  = isGood ? '#059669' : isMid ? '#d97706' : '#e11d48';
+    const bd  = isGood ? '#6ee7b7' : isMid ? '#fcd34d' : '#fecaca';
+    const ar  = isGood ? '▲'       : isMid ? '◆'       : '▼';
+    const sgn = irr > 0 ? '+' : '';
+    let lbl   = 'IRR p.a.';
+    let tip   = 'Annualised IRR on all premiums paid to date vs current portfolio value';
+    if (flows && flows._isAssign) {
+        lbl = 'IRR (Assigned)';
+        tip = 'Policy assigned as collateral. IRR on actual premiums paid.';
+    } else if (flows && flows._isIrreg) {
+        lbl = 'IRR (Top-up)';
+        tip = 'IRR includes ₹' + Math.round(flows._residual).toLocaleString('en-IN') + ' top-up beyond regular premiums.';
+    }
+    return `<div title="${tip}" style="display:inline-flex;align-items:center;gap:4px;background:${bg};border:1.5px solid ${bd};color:${fg};border-radius:8px;padding:4px 11px;transform:skewX(-7deg);font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:0.05em;box-shadow:2px 2px 0 ${bd};white-space:nowrap;cursor:default;"><span style="transform:skewX(7deg);display:flex;align-items:center;gap:4px;"><span style="font-size:8px;opacity:0.65;">${lbl}</span><span style="font-size:13px;letter-spacing:-0.02em;">${ar} ${sgn}${irr.toFixed(1)}%</span></span></div>`;
 }
 
-/**
- * Present Value badge for pension/annuity policies.
- * Shows the lump-sum equivalent of the remaining pension stream.
- * pvAmt: calculated PV in rupees
- * discountPct: rate used (e.g. 6)
- * years: pension duration remaining
- */
-function pvBadgeHtml(pvAmt, sym, discountPct, years) {
-    if (!pvAmt || pvAmt <= 0) return '';
-    const fmt = (n) => sym + Math.round(n).toLocaleString('en-IN');
-    return `<div class="irr-badge" style="display:inline-flex;align-items:center;gap:5px;background:#eff6ff;border:1.5px solid #93c5fd;color:#1d4ed8;border-radius:8px;padding:3px 10px;transform:skewX(-8deg);font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:0.05em;box-shadow:2px 2px 0 #93c5fd;white-space:nowrap;cursor:default;margin-left:4px;" title="Present Value of remaining pension stream: what a lump sum today would equal this pension, discounted at ${discountPct}% for ${years} years"><span style="transform:skewX(8deg);display:flex;align-items:center;gap:4px;"><span style="font-size:8px;opacity:0.65;">PV@${discountPct}%</span><span style="font-size:12px;letter-spacing:-0.02em;">≈ ${fmt(pvAmt)}</span></span></div>`;
+function _pvBadge(pv, sym, ratePct, years) {
+    if (!pv || pv <= 0) return '';
+    const fmt = n => sym + Math.round(n).toLocaleString('en-IN');
+    return `<div title="Present Value of remaining pension stream @ ${ratePct}% discount rate over ${years} years — lump-sum equivalent today" style="display:inline-flex;align-items:center;gap:4px;background:#eff6ff;border:1.5px solid #93c5fd;color:#1d4ed8;border-radius:8px;padding:4px 11px;transform:skewX(-7deg);font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:0.05em;box-shadow:2px 2px 0 #93c5fd;white-space:nowrap;cursor:default;"><span style="transform:skewX(7deg);display:flex;align-items:center;gap:4px;"><span style="font-size:8px;opacity:0.65;">PV@${ratePct}%</span><span style="font-size:12px;letter-spacing:-0.02em;">≈ ${fmt(pv)}</span></span></div>`;
 }
 
 export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -151,6 +95,9 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
     const anniversaryThisYear = new Date(CURRENT_YEAR, annMonthNum, annDay);
     let yearsCompleted = CURRENT_YEAR - startY;
     if (TODAY < anniversaryThisYear) yearsCompleted--;
+    // policyYearIdx = number of annual premium payments actually made so far
+    // (differs from yearsCompleted when anniversary has already passed this calendar year)
+    const policyYearIdx = (TODAY >= anniversaryThisYear) ? yearsCompleted + 1 : yearsCompleted;
     
     const matStr = p.maturity || "01 Jan 2050";
     const matY = safeGetYear(matStr);
@@ -181,67 +128,43 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
     if (isPaidUp && !isIncomePhase) middleColor = "text-slate-400 line-through font-bold";
     else if (isIncomePhase) { middleLabel = "Annual Payout"; middleValue = autoFmt(scheduledPayout, sym); middleColor = "text-[#854d0e] font-black"; }
     
-    const badgeText = isIncomePhase ? "Income Phase" : (p.type || "Savings");
-
-    // --- POLICY TYPE DETECTION ---
-    // Pension/Annuity = has annualPayout OR payoutSchedule with many years but type isn't ULIP
+    // ── IRR / PV CALCULATION ──────────────────────────────────────────────
+    let _irrBadgeHtml = '';
     const isPension = !isULIP && (
         toNum(p.annualPayout) > 0 ||
-        (p.payoutSchedule && Object.keys(p.payoutSchedule).length > 3 && !isULIP)
+        (p.payoutSchedule && Object.keys(p.payoutSchedule).length > 3)
     );
 
-    // --- IRR + PENSION PV CALCULATION ---
-    let irrHtml = '';
-
     if (isULIP) {
-        // ULIP IRR: premiums paid → current unit value (handles irregular payments)
-        const flows = buildIndiaULIPCashflows(p, yearsCompleted);
-        const irr   = calcIRR(flows);
-        irrHtml = irrBadgeHtml(irr, 'IRR p.a.', flows);
+        const flows = _buildIndiaFlows(p, policyYearIdx, yearsCompleted);
+        const irr   = _calcIRR(flows);
+        _irrBadgeHtml = _irrBadgeIndia(irr, flows);
 
     } else if (isPension) {
-        // PENSION: full cashflow = premiums paid + pension received + PV of future pension
-        // Phase 1: premium outflows (years 0..yearsCompleted-1 while still paying)
-        // Phase 2: pension inflows from payoutSchedule
-        // Phase 3: PV of remaining future pension (discounted at 6% as terminal value today)
-        const DISCOUNT_RATE = 0.06; // conservative PPF-equivalent benchmark
-        const annualPension = toNum(p.annualPayout) ||
-            (p.payoutSchedule ? Math.max(...Object.values(p.payoutSchedule)) : 0);
+        const RATE       = 0.06;
+        const annPension = toNum(p.annualPayout) ||
+            (p.payoutSchedule ? Math.max(...Object.values(p.payoutSchedule).map(toNum)) : 0);
+        if (annPension > 0) {
+            const futureYrs = Math.max(0, safeGetYear(p.maturity) - CURRENT_YEAR);
+            const pvStream  = annPension * (1 - Math.pow(1 + RATE, -futureYrs)) / RATE;
+            const pvToday   = pvStream;
 
-        if (annualPension > 0) {
-            // Count future pension years (from today to maturity)
-            const matYear     = safeGetYear(p.maturity);
-            const TODAY_YEAR  = safeGetYear(new Date().getFullYear().toString());
-            const futureYears = Math.max(0, matYear - CURRENT_YEAR);
-
-            // PV of remaining pension stream (annuity formula)
-            const pvPension = futureYears > 0
-                ? annualPension * (1 - Math.pow(1 + DISCOUNT_RATE, -futureYears)) / DISCOUNT_RATE
-                : 0;
-
-            // Build full IRR cashflows: all paying years + pension received + PV of future pension as terminal
-            const premEndYear = safeGetYear(p.premiumEnds);
+            // Full IRR: premiums paid + PV of remaining pension as terminal value
+            const premEndY  = safeGetYear(p.premiumEnds);
             const flows = [];
             for (let y = 0; y <= yearsCompleted; y++) {
                 let cf = 0;
-                const yr = startY + y;
-                // Premium outflow
-                if (yr <= premEndYear && !isPaidUp) cf -= toNum(p.premium);
-                // Pension already received this year (from payoutSchedule)
+                if (startY + y <= premEndY && !isPaidUp) cf -= toNum(p.premium);
                 if (p.payoutSchedule && p.payoutSchedule[y]) cf += toNum(p.payoutSchedule[y]);
-                // At the end: add PV of remaining future pension as terminal value
-                if (y === yearsCompleted) cf += pvPension;
+                if (y === yearsCompleted) cf += pvToday;
                 flows.push(cf);
             }
-
-            const irr = calcIRR(flows);
-            // Show both IRR and PV badge side by side
-            irrHtml = [
-                irrBadgeHtml(irr, 'IRR p.a.'),
-                pvBadgeHtml(pvPension, '₹', DISCOUNT_RATE * 100, futureYears)
-            ].join('');
+            const irr = _calcIRR(flows);
+            _irrBadgeHtml = _irrBadgeIndia(irr, null) + ' ' + _pvBadge(pvToday, sym, 6, futureYrs);
         }
     }
+
+    const badgeText = isIncomePhase ? "Income Phase" : (p.type || "Savings");
     const nextDueStr = `${annDay} ${startParts[1]} ${TODAY >= anniversaryThisYear ? CURRENT_YEAR + 1 : CURRENT_YEAR}`; 
     const finalDueDate = isPaidUp ? "PAID UP" : nextDueStr;
 
@@ -332,10 +255,7 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
             </div>
             <div class="flex gap-12 items-center mr-6">
                 <div class="flex items-center w-[260px] -ml-4">
-                    <div style="display:flex; flex-direction:column; gap:5px; align-items:flex-start;">
-                        <div class="funky-badge-v2" style="border-color:${brandColor}; color:${brandColor}; background:#fff; font-size:10px; font-weight:900; padding:2px 8px; border-radius:6px; border:1.5px solid; text-transform:uppercase;">${badgeText}</div>
-                        ${irrHtml}
-                    </div>
+                    <div class="funky-badge-v2" style="border-color:${brandColor}; color:${brandColor}; background:#fff; font-size:10px; font-weight:900; padding:2px 8px; border-radius:6px; border:1.5px solid; text-transform:uppercase;">${badgeText}</div>
                     <div class="ml-6 relative min-w-[140px] flex items-center h-12">
                         <div><p class="text-[9px] font-bold text-slate-400 uppercase leading-none mb-1">${middleLabel}</p><p class="text-lg ${middleColor} leading-none">${middleValue}</p></div>
                     </div>
@@ -363,9 +283,17 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
                 `<div class="detail-item"><p>Customer ID</p><p style="font-family:'Orbitron'; font-weight:700;">${p.clientId || 'N/A'}</p></div>`}
             </div>
             
-            <div class="mt-4 p-4 bg-white/50 border border-slate-100 rounded-2xl shadow-sm flex flex-col gap-3">
-                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">Nominee</p>
-                <div class="flex items-center h-10">${nomineeBoxContent}</div>
+            <div class="mt-4 p-4 bg-white/50 border border-slate-100 rounded-2xl shadow-sm">
+                <div class="flex items-center justify-between gap-4">
+                    <div class="flex flex-col gap-2 min-w-0">
+                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">Nominee</p>
+                        <div class="flex items-center h-10">${nomineeBoxContent}</div>
+                    </div>
+                    ${_irrBadgeHtml ? `<div class="flex flex-col items-end gap-2 flex-shrink-0">
+                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">Returns</p>
+                        <div class="flex items-center gap-2 flex-wrap justify-end">${_irrBadgeHtml}</div>
+                    </div>` : ''}
+                </div>
             </div>
 
             <div class="timeline-track">

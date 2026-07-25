@@ -1,101 +1,70 @@
-/* component_sg.js - v7.4.0 - IRR Badge Added */
+/* component_sg.js - v7.3.0 - Layout Synced: Match India Height & Attribute Placement */
 import { autoFmt, toNum, getTimeRemaining, checkIsDueSoon } from './utils.js';
 
-/** IRR via Newton-Raphson. Returns % (e.g. 8.34) or null. */
-function calcIRR(cashflows, guess = 0.08, maxIter = 200, tol = 1e-8) {
-    if (!cashflows || cashflows.length < 2) return null;
-    if (!cashflows.some(c => c < 0) || !cashflows.some(c => c > 0)) return null;
-    let rate = guess;
-    for (let i = 0; i < maxIter; i++) {
-        let npv = 0, dnpv = 0;
-        for (let t = 0; t < cashflows.length; t++) {
-            const d = Math.pow(1 + rate, t);
-            npv  += cashflows[t] / d;
-            dnpv -= t * cashflows[t] / (d * (1 + rate));
+/* ── IRR ENGINE (SG) ──────────────────────────────────────────────────────
+ * Uses policyYearIdx (payments actually made) not calendar years elapsed.
+ * Three patterns: regular, top-up/irregular, no single-lump-sum in portfolio.
+ * ──────────────────────────────────────────────────────────────────────── */
+function _calcIRR(flows, guess = 0.08, iter = 200, tol = 1e-10) {
+    if (!flows || flows.length < 2) return null;
+    if (!flows.some(c => c < 0) || !flows.some(c => c > 0)) return null;
+    let r = guess;
+    for (let i = 0; i < iter; i++) {
+        let npv = 0, d = 0;
+        for (let t = 0; t < flows.length; t++) {
+            const disc = Math.pow(1 + r, t);
+            npv += flows[t] / disc;
+            d   -= t * flows[t] / (disc * (1 + r));
         }
-        if (Math.abs(dnpv) < 1e-14) break;
-        const nr = rate - npv / dnpv;
-        if (Math.abs(nr - rate) < tol) { rate = nr; break; }
-        rate = Math.max(-0.99, Math.min(10, nr));
+        if (Math.abs(d) < 1e-14) break;
+        const nr = r - npv / d;
+        if (Math.abs(nr - r) < tol) { r = nr; break; }
+        r = Math.max(-0.99, Math.min(10, nr));
     }
-    const pct = Math.round(rate * 10000) / 100;
+    const pct = Math.round(r * 10000) / 100;
     return (pct > -50 && pct < 200) ? pct : null;
 }
 
-/**
- * SG Investment/Savings cashflows — three real payment patterns.
- *
- * Pattern 1 — Regular annual premiums
- *   totalPremiumPaid ≈ annualPremium × payingYears → equal annual outflows
- *
- * Pattern 2 — Top-up or recent large additional payment
- *   totalPremiumPaid > annualPremium × payingYears by >5%
- *   → regular flows + residual at last paying year
- *   → badge: "IRR (Irregular)"
- *
- * Pattern 3 — (Not applicable for SG: no assigned SG policies)
- *
- * Withdrawals: placed chronologically (index 0 = earliest withdrawal taken)
- * Source of truth: p.totalPremiumPaid from "Total Premium" in your Sheet.
- */
-function buildSGCashflows(p, policyYearIdx, accountValue, annualPremium, totalWithdrawn) {
-    if (accountValue <= 0 || policyYearIdx < 1 || annualPremium <= 0) return null;
-
-    const totalPaid      = toNum(p.totalPremiumPaid || 0);
-    const pptYears       = toNum(p.ppt || policyYearIdx);
-    const withdrawals    = p.withdrawals || [];
-
-    const payingYears    = Math.min(pptYears, policyYearIdx);
-    const regularOutflow = annualPremium * payingYears;
-
-    const residual       = totalPaid > 0 ? Math.max(0, totalPaid - regularOutflow) : 0;
-    const hasIrregular   = residual > (Math.max(totalPaid, regularOutflow) * 0.05);
+function _buildSGFlows(p, policyYearIdx, accountValue, annualPremium) {
+    if (annualPremium <= 0 || accountValue <= 0 || policyYearIdx < 1) return null;
+    const pptYears   = toNum(p.ppt || policyYearIdx);
+    const totalPaid  = toNum(p.totalPremiumPaid || 0);
+    const withdrawals = p.withdrawals || [];
+    const payYrs     = Math.min(pptYears, policyYearIdx);
+    const regular    = annualPremium * payYrs;
+    const residual   = totalPaid > 0 ? Math.max(0, totalPaid - regular) : 0;
+    const isIrreg    = residual > Math.max(totalPaid, regular) * 0.05;
+    const lastPayY   = Math.max(0, payYrs - 1);
 
     const flows = [];
     for (let y = 0; y <= policyYearIdx; y++) {
         let cf = 0;
-
-        // Regular annual outflow
-        if (y < payingYears) cf -= annualPremium;
-
-        // Irregular top-up at last paying year
-        if (hasIrregular && y === Math.max(0, payingYears - 1)) cf -= residual;
-
-        // Withdrawals received (index 0 = earliest)
-        if (y > 0 && withdrawals[y - 1]) cf += toNum(withdrawals[y - 1]);
-
-        // Terminal value
-        if (y === policyYearIdx) cf += accountValue;
-
+        if (y < payYrs)                              cf -= annualPremium;
+        if (isIrreg && y === lastPayY)               cf -= residual;
+        if (y > 0 && withdrawals[y - 1])             cf += toNum(withdrawals[y - 1]);
+        if (y === policyYearIdx)                     cf += accountValue;
         flows.push(cf);
     }
-
-    flows._isIrregular = hasIrregular;
-    flows._residual    = residual;
-
+    flows._isIrreg  = isIrreg;
+    flows._residual = residual;
     return flows;
 }
 
-/** Funky skewed IRR pill badge — aware of irregular payment patterns */
-function irrBadgeHtml(irr, label = 'IRR p.a.', flows = null) {
+function _sgIrrBadge(irr, flows, sym) {
     if (irr === null || irr === undefined) return '';
-
-    let displayLabel = label;
-    let tooltip      = 'Annualised IRR: total premiums paid vs current portfolio value';
-
-    if (flows && flows._isIrregular && flows._residual > 0) {
-        const resFmt = '$' + Math.round(flows._residual).toLocaleString();
-        displayLabel = 'IRR (Irregular)';
-        tooltip = `IRR includes ${resFmt} lump-sum/top-up beyond regular premiums. Actual total outflow used.`;
-    }
-
     const isGood = irr >= 10, isMid = irr >= 5 && irr < 10;
-    const color  = isGood ? '#059669' : isMid ? '#d97706' : '#e11d48';
-    const bgClr  = isGood ? '#ecfdf5' : isMid ? '#fffbeb' : '#fff1f2';
-    const border = isGood ? '#6ee7b7' : isMid ? '#fcd34d' : '#fecaca';
-    const arrow  = isGood ? '▲' : isMid ? '◆' : '▼';
-    const sign   = irr > 0 ? '+' : '';
-    return `<div class="irr-badge" style="display:inline-flex;align-items:center;gap:5px;background:${bgClr};border:1.5px solid ${border};color:${color};border-radius:8px;padding:3px 10px;transform:skewX(-8deg);font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:0.05em;box-shadow:2px 2px 0 ${border};white-space:nowrap;cursor:default;" title="${tooltip}"><span style="transform:skewX(8deg);display:flex;align-items:center;gap:4px;"><span style="font-size:8px;opacity:0.65;">${displayLabel}</span><span style="font-size:13px;letter-spacing:-0.02em;">${arrow} ${sign}${irr.toFixed(1)}%</span></span></div>`;
+    const bg  = isGood ? '#ecfdf5' : isMid ? '#fffbeb' : '#fff1f2';
+    const fg  = isGood ? '#059669' : isMid ? '#d97706' : '#e11d48';
+    const bd  = isGood ? '#6ee7b7' : isMid ? '#fcd34d' : '#fecaca';
+    const ar  = isGood ? '▲'       : isMid ? '◆'       : '▼';
+    const sgn = irr > 0 ? '+' : '';
+    let lbl   = 'IRR p.a.';
+    let tip   = 'Annualised IRR: total premiums paid (minus withdrawals) vs current portfolio value';
+    if (flows && flows._isIrreg) {
+        lbl = 'IRR (Top-up)';
+        tip = 'IRR includes ' + sym + Math.round(flows._residual).toLocaleString() + ' top-up beyond regular premiums.';
+    }
+    return `<div title="${tip}" style="display:inline-flex;align-items:center;gap:4px;background:${bg};border:1.5px solid ${bd};color:${fg};border-radius:8px;padding:4px 11px;transform:skewX(-7deg);font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:0.05em;box-shadow:2px 2px 0 ${bd};white-space:nowrap;cursor:default;"><span style="transform:skewX(7deg);display:flex;align-items:center;gap:4px;"><span style="font-size:8px;opacity:0.65;">${lbl}</span><span style="font-size:13px;letter-spacing:-0.02em;">${ar} ${sgn}${irr.toFixed(1)}%</span></span></div>`;
 }
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -117,15 +86,11 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const policyYearIdx = yearsPassed + 1;
 
     // --- COUNTDOWN ---
-    // mip = minimum premium term (number of payments).
-    // The LAST premium falls on the anniversary at year index (mip-1) after start,
-    // i.e. startY + (mip - 1). E.g. mip=3, start=2025 → last payment = 02 Jul 2027.
     let premRemainingStr = "";
     if (isPaidUp) { premRemainingStr = "PAID UP"; }
     else if (mip === 0) { premRemainingStr = "VESTED"; }
     else {
-        // Last premium anniversary = startY + (mip - 1) years from inception
-        let targetDate = new Date(startY + mip - 1, commMonth, commDay);
+        let targetDate = new Date(startY + mip, commMonth, commDay);
         if (targetDate <= TODAY) { premRemainingStr = "VESTED"; }
         else {
             let y = targetDate.getFullYear() - TODAY.getFullYear();
@@ -150,11 +115,6 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const totalWithdrawn = (p.withdrawals || []).reduce((sum, val) => sum + val, 0);
     const netInvested = Math.round(actualTotalPaid - totalWithdrawn);
 
-    // --- IRR CALCULATION ---
-    const sgFlows = buildSGCashflows(p, policyYearIdx, accountValue, annualPremium, totalWithdrawn);
-    const sgIrr   = calcIRR(sgFlows);
-    const irrHtml = irrBadgeHtml(sgIrr, 'IRR p.a.', sgFlows);
-
     const chargePct = (p.surrenderCharges && p.surrenderCharges[policyYearIdx]) || 0;
     let surrenderValue = (p.surrenderBase === "PREMIUM") 
         ? Math.round(Math.max(0, accountValue - (chargePct / 100 * actualTotalPaid)))
@@ -163,6 +123,11 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const lockedDisplay = (accountValue - surrenderValue) <= 0 
         ? `<span class="text-slate-400 text-sm font-bold uppercase tracking-widest">Fully Vested</span>` 
         : `-${autoFmt(accountValue - surrenderValue, sym)}`;
+
+    // ── IRR CALCULATION ──────────────────────────────────────────────────
+    const _sgFlows   = _buildSGFlows(p, policyYearIdx, accountValue, annualPremium);
+    const _sgIrr     = _calcIRR(_sgFlows);
+    const _irrBadge  = _sgIrrBadge(_sgIrr, _sgFlows, sym);
 
     // --- UI ELEMENTS ---
     const brandColor = p.color || "#000000";
@@ -203,19 +168,13 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
             <div class="flex-1 ml-10">
                 <h3 class="font-black text-slate-800 text-xl tracking-tight flex items-center gap-3">
                     ${p.name}
-                    ${p.avatarPath
-                        ? `<img src="${p.avatarPath}" class="w-8 h-8 rounded-full border-2 border-white shadow-sm object-cover ring-1 ring-slate-200" onerror="this.style.display='none'">`
-                        : `<div class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center border-2 border-white shadow-sm"><span class="material-symbols-outlined text-slate-400" style="font-size:16px;">person</span></div>`
-                    }
+                    ${p.avatarPath ? `<img src="${p.avatarPath}" class="w-8 h-8 rounded-full border-2 border-white shadow-sm object-cover ring-1 ring-slate-200">` : ''}
                 </h3>
             </div>
             
             <div class="flex gap-12 items-center mr-6">
                 <div class="flex items-center w-[260px] -ml-4">
-                    <div style="display:flex; flex-direction:column; gap:5px; align-items:flex-start;">
-                        <div class="funky-badge-v2" style="border-color:${brandColor}; color:${brandColor}; background:#fff; font-size:10px; font-weight:900; padding:2px 8px; border-radius:6px; border:1.5px solid; text-transform:uppercase;">${p.type || 'Savings'}</div>
-                        ${irrHtml}
-                    </div>
+                    <div class="funky-badge-v2" style="border-color:${brandColor}; color:${brandColor}; background:#fff; font-size:10px; font-weight:900; padding:2px 8px; border-radius:6px; border:1.5px solid; text-transform:uppercase;">${p.type || 'Savings'}</div>
                     <div class="ml-6 relative min-w-[140px] flex items-center h-12">
                         <div>
                             <p class="text-[9px] font-bold text-slate-400 uppercase leading-none mb-1">Annual Premium</p>
@@ -255,9 +214,17 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
                 <div class="p-4 rounded-xl bg-red-50/50 border border-red-100 text-center shadow-sm flex flex-col justify-center items-center"><p class="text-[9px] font-bold text-red-400 uppercase mb-1.5">Locked</p><p class="text-[20px] font-black text-red-600 leading-none" style="font-family:'Orbitron'">${lockedDisplay}</p></div>
             </div>
 
-            <div class="mb-6 p-4 bg-white/50 border border-slate-100 rounded-[24px] shadow-sm flex flex-col gap-2">
-                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">Nominee(s)</p>
-                <div class="flex items-center h-10">${nomineeHtml}</div>
+            <div class="mb-6 p-4 bg-white/50 border border-slate-100 rounded-[24px] shadow-sm">
+                <div class="flex items-center justify-between gap-4">
+                    <div class="flex flex-col gap-2 min-w-0">
+                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">Nominee(s)</p>
+                        <div class="flex items-center h-10">${nomineeHtml}</div>
+                    </div>
+                    ${_irrBadge ? `<div class="flex flex-col items-end gap-2 flex-shrink-0">
+                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">Returns</p>
+                        <div class="flex items-center gap-2">${_irrBadge}</div>
+                    </div>` : ''}
+                </div>
             </div>
             <div class="flex justify-between items-end mb-4 px-2">
                 <div><p class="text-[10px] font-black text-slate-400 uppercase mb-1">Commencement</p><p class="text-sm font-bold text-slate-700 underline decoration-sky-300 underline-offset-4">${p.commenced}</p></div>
