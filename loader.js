@@ -189,7 +189,7 @@ function mapProjections(p, match, country) {
         const mbLine = rawBenefits.split(/\r?\n/).find(l => l.toLowerCase().includes("maturity benefit"));
         
         if (mbLine && mbLine.includes(":")) {
-            const formula = mbLine.split(":", 1)[1].trim();  // maxsplit=1 — preserve colons inside formula values
+            const formula = mbLine.split(":").slice(1).join(":").trim();  // everything after the first colon, colons inside values preserved
             let totalMaturity = 0;
             let componentsFound = 0;
 
