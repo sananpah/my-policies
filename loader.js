@@ -114,6 +114,13 @@ function mapTechnicalData(p, match) {
             if (cleanLine.startsWith("uin:")) p.uin = line.split(":")[1]?.trim() || "N/A";
             else if (cleanLine.startsWith("clientid:")) {
                 if (!(p.type || "").toUpperCase().includes("ULIP")) p.clientId = line.split(":")[1]?.trim() || "N/A";
+            } else if (cleanLine.startsWith("premiumlinked:")) {
+                // PremiumLinked: <parentPolicyId>
+                // Marks this policy as a child whose premium is funded from the
+                // parent's accumulated CV — not new external cash.
+                // Effect: excluded from Annual Premium total in summary bar,
+                // and rendered as a sub-card inside the parent's expanded view.
+                p.linkedTo = line.split(":")[1]?.trim() || null;
             } else if (cleanLine.startsWith("surrender:")) {
                 const content = line.split(":")[1] || "";
                 p.surrenderBase = content.includes("[pp]") ? "PREMIUM" : "VALUATION";

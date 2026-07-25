@@ -149,21 +149,36 @@ export function getTimeRemaining(targetDateStr, TODAY) {
 
 // --- CALCULATION LOGIC (Moved from app.js) ---
 
-/** Calculates SA, Premium (excluding paid up), and Unit Value */
+/**
+ * Calculates SA, Premium (excluding paid up), and Unit Value.
+ *
+ * LINKED POLICY RULE (parent/child pairs):
+ * A child policy (p.linkedTo is set) is funded entirely from its parent's
+ * accumulated value — no new external cash leaves the policyholder's bank.
+ * Counting the child's premium would double-count money already inside
+ * the parent. So child policies are EXCLUDED from the Annual Premium total.
+ *
+ * Sum Assured and Unit Value are still included for children (they are real
+ * coverage and real portfolio value).
+ *
+ * Example: 425335400 (parent, ₹60k/yr) → 0660434052 (child, ₹1,20,000 funded
+ * from parent CV). Annual premium total shows ₹60k only, not ₹1,80,000.
+ */
 export function calculatePortfolioTotals(list) {
     return list.reduce((acc, p) => {
         const status = (p.status || "").toUpperCase();
         const finalPremiumDate = safeParseDate(p.premiumEnds);
         const isPaidUp = (status === "PAID UP" || TODAY > finalPremiumDate);
- 
-        acc.sa += toNum(p.sumAssured);
+        const isChild  = !!p.linkedTo;   // child = funded from another policy's CV
+
+        acc.sa        += toNum(p.sumAssured);
         acc.unitValue += (p.unitValueNumeric || 0);
-        
-        // Only add premium if the policy is still active and not assigned (SA > 0)
-        if (!isPaidUp && toNum(p.sumAssured) > 0) {
+
+        // Annual Premium: exclude paid-up, assigned (SA=0), AND child policies
+        if (!isPaidUp && toNum(p.sumAssured) > 0 && !isChild) {
             acc.premium += toNum(p.premium);
         }
-        
+
         return acc;
     }, { sa: 0, premium: 0, unitValue: 0 });
 }

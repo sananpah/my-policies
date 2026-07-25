@@ -85,7 +85,10 @@ export function render(cat) {
         else if (sortBy === 'time') list.sort((a, b) => parseDate(a.premiumEnds) - parseDate(b.premiumEnds));
     }
 
-    container.innerHTML = list.map(p => {
+    // Child policies (p.linkedTo set) render inside their parent card — skip at top level
+    const renderList = (cat === 'india') ? list.filter(p => !p.linkedTo) : list;
+
+    container.innerHTML = renderList.map(p => {
      if (cat === 'health') {
             // Inject avatar and type into the health policy object before rendering
             const identity = insuredMap[p.owner] || { type: "Other", img: null };
@@ -122,7 +125,7 @@ export function render(cat) {
         if (cat === 'singapore') return createSGCard(p, sym, TODAY, CURRENT_YEAR);
         
         // India logic
-        return createPolicyCard(p, sym, TODAY, CURRENT_YEAR);
+        return createPolicyCard(p, sym, TODAY, CURRENT_YEAR, list);
     }).join('');
 }
 
