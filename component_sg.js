@@ -27,22 +27,22 @@ function _calcIRR(flows, guess = 0.08, iter = 200, tol = 1e-10) {
 
 function _buildSGFlows(p, policyYearIdx, accountValue, annualPremium) {
     if (annualPremium <= 0 || accountValue <= 0 || policyYearIdx < 1) return null;
-    const pptYears   = toNum(p.ppt || policyYearIdx);
-    const totalPaid  = toNum(p.totalPremiumPaid || 0);
+    const pptYears    = toNum(p.ppt || policyYearIdx);
+    const totalPaid   = toNum(p.totalPremiumPaid || 0);
     const withdrawals = p.withdrawals || [];
-    const payYrs     = Math.min(pptYears, policyYearIdx);
-    const regular    = annualPremium * payYrs;
-    const residual   = totalPaid > 0 ? Math.max(0, totalPaid - regular) : 0;
-    const isIrreg    = residual > Math.max(totalPaid, regular) * 0.05;
-    const lastPayY   = Math.max(0, payYrs - 1);
+    const payYrs      = Math.min(pptYears, policyYearIdx);
+    const regular     = annualPremium * payYrs;
+    const residual    = totalPaid > 0 ? Math.max(0, totalPaid - regular) : 0;
+    const isIrreg     = residual > Math.max(totalPaid, regular) * 0.05;
+    const lastPayY    = Math.max(0, payYrs - 1);
 
     const flows = [];
     for (let y = 0; y <= policyYearIdx; y++) {
         let cf = 0;
-        if (y < payYrs)                              cf -= annualPremium;
-        if (isIrreg && y === lastPayY)               cf -= residual;
-        if (y > 0 && withdrawals[y - 1])             cf += toNum(withdrawals[y - 1]);
-        if (y === policyYearIdx)                     cf += accountValue;
+        if (y < payYrs)                  cf -= annualPremium;
+        if (isIrreg && y === lastPayY)   cf -= residual;
+        if (y > 0 && withdrawals[y - 1]) cf += toNum(withdrawals[y - 1]);
+        if (y === policyYearIdx)         cf += accountValue;
         flows.push(cf);
     }
     flows._isIrreg  = isIrreg;
@@ -50,21 +50,43 @@ function _buildSGFlows(p, policyYearIdx, accountValue, annualPremium) {
     return flows;
 }
 
-function _sgIrrBadge(irr, flows, sym) {
+/**
+ * Prorated simple annualisation for SG policies ≤ 1 year old.
+ * monthsElapsed = months since commencement date.
+ * annualised = (value/cost - 1) × (12 / monthsElapsed)
+ */
+function _sgProratedReturn(costPaid, accountValue, commencedStr, TODAY) {
+    if (costPaid <= 0 || accountValue <= 0) return null;
+    const start       = new Date(commencedStr);
+    if (isNaN(start)) return null;
+    const daysElapsed = (TODAY - start) / 86400000;
+    if (daysElapsed < 7) return null;
+    const monthsElapsed = daysElapsed / 30.44;
+    const totalReturn   = (accountValue / costPaid) - 1;
+    const annualised    = totalReturn * (12 / monthsElapsed);
+    const pct           = Math.round(annualised * 10000) / 100;
+    return (pct > -200 && pct < 500) ? { pct, monthsElapsed: Math.round(monthsElapsed), isProrated: true } : null;
+}
+
+function _sgIrrBadge(irr, flows, sym, isProrated = false, monthsElapsed = null) {
     if (irr === null || irr === undefined) return '';
-    const isGood = irr >= 10, isMid = irr >= 5 && irr < 10;
-    const bg  = isGood ? '#ecfdf5' : isMid ? '#fffbeb' : '#fff1f2';
-    const fg  = isGood ? '#059669' : isMid ? '#d97706' : '#e11d48';
-    const bd  = isGood ? '#6ee7b7' : isMid ? '#fcd34d' : '#fecaca';
-    const ar  = isGood ? '▲'       : isMid ? '◆'       : '▼';
-    const sgn = irr > 0 ? '+' : '';
+    const isGood  = irr >= 6;
+    const isNeg   = irr < 0;
+    const bg   = isGood ? '#ecfdf5' : isNeg ? '#fff1f2' : '#fffbeb';
+    const fg   = isGood ? '#059669' : isNeg ? '#dc2626' : '#d97706';
+    const bd   = isGood ? '#6ee7b7' : isNeg ? '#fca5a5' : '#fcd34d';
+    const ar   = irr >= 8 ? '▲' : isNeg ? '▼' : '◆';
+    const pfx  = isNeg ? '−' : '';   // minus sign only for negative; no + ever
     let lbl   = 'IRR p.a.';
     let tip   = 'Annualised IRR: total premiums paid (minus withdrawals) vs current portfolio value';
-    if (flows && flows._isIrreg) {
+    if (isProrated && monthsElapsed !== null) {
+        lbl = 'Ann. %';
+        tip = 'Policy < 1 year old (' + monthsElapsed + ' months). Simple annualised return prorated from actual gain to date. Not a full IRR.';
+    } else if (flows && flows._isIrreg) {
         lbl = 'IRR (Top-up)';
         tip = 'IRR includes ' + sym + Math.round(flows._residual).toLocaleString() + ' top-up beyond regular premiums.';
     }
-    return `<div title="${tip}" style="display:inline-flex;align-items:center;gap:4px;background:${bg};border:1.5px solid ${bd};color:${fg};border-radius:8px;padding:4px 11px;transform:skewX(-7deg);font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:0.05em;box-shadow:2px 2px 0 ${bd};white-space:nowrap;cursor:default;"><span style="transform:skewX(7deg);display:flex;align-items:center;gap:4px;"><span style="font-size:8px;opacity:0.65;">${lbl}</span><span style="font-size:13px;letter-spacing:-0.02em;">${ar} ${sgn}${irr.toFixed(1)}%</span></span></div>`;
+    return `<div title="${tip}" style="display:inline-flex;align-items:center;gap:4px;background:${bg};border:1.5px solid ${bd};color:${fg};border-radius:8px;padding:4px 11px;transform:skewX(-7deg);font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:0.05em;box-shadow:2px 2px 0 ${bd};white-space:nowrap;cursor:default;"><span style="transform:skewX(7deg);display:flex;align-items:center;gap:4px;"><span style="font-size:8px;opacity:0.65;">${lbl}</span><span style="font-size:13px;letter-spacing:-0.02em;">${ar} ${pfx}${Math.abs(irr).toFixed(1)}%</span></span></div>`;
 }
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
@@ -125,9 +147,20 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
         : `-${autoFmt(accountValue - surrenderValue, sym)}`;
 
     // ── IRR CALCULATION ──────────────────────────────────────────────────
-    const _sgFlows   = _buildSGFlows(p, policyYearIdx, accountValue, annualPremium);
-    const _sgIrr     = _calcIRR(_sgFlows);
-    const _irrBadge  = _sgIrrBadge(_sgIrr, _sgFlows, sym);
+    const _sgFlows  = _buildSGFlows(p, policyYearIdx, accountValue, annualPremium);
+    let   _irrBadge = '';
+
+    if (policyYearIdx <= 1) {
+        // Young policy: prorated simple annualisation (Newton-Raphson unreliable < 2 years)
+        const costBasis = toNum(p.totalPremiumPaid || 0) || annualPremium;
+        const prorated  = _sgProratedReturn(costBasis, accountValue, p.commenced, TODAY);
+        if (prorated) {
+            _irrBadge = _sgIrrBadge(prorated.pct, _sgFlows, sym, true, prorated.monthsElapsed);
+        }
+    } else {
+        const _sgIrr = _calcIRR(_sgFlows);
+        _irrBadge    = _sgIrrBadge(_sgIrr, _sgFlows, sym, false, null);
+    }
 
     // --- UI ELEMENTS ---
     const brandColor = p.color || "#000000";

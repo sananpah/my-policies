@@ -34,7 +34,6 @@ function _buildIndiaFlows(p, policyYearIdx, yearsCompleted) {
     const totalPaid = toNum(p.totalPremiumPaid || 0);
     const exitVal   = toNum(p.unitValueNumeric || 0);
     const pptYears  = toNum(p.ppt || policyYearIdx);
-    // Use policyYearIdx (payments actually made) to avoid off-by-one with anniversary timing
     const payYrs    = Math.min(pptYears, policyYearIdx);
     if (premium <= 0 || exitVal <= 0 || payYrs < 1) return null;
 
@@ -46,36 +45,66 @@ function _buildIndiaFlows(p, policyYearIdx, yearsCompleted) {
     const flows = [];
     for (let y = 0; y <= yearsCompleted; y++) {
         let cf = 0;
-        if (y < payYrs)                                    cf -= premium;
-        if (isIrreg && y === lastPayY)                     cf -= residual;
-        if (p.payoutSchedule && p.payoutSchedule[y])       cf += toNum(p.payoutSchedule[y]);
-        if (y === yearsCompleted)                           cf += exitVal;
+        if (y < payYrs)                              cf -= premium;
+        if (isIrreg && y === lastPayY)               cf -= residual;
+        if (p.payoutSchedule && p.payoutSchedule[y]) cf += toNum(p.payoutSchedule[y]);
+        if (y === yearsCompleted)                    cf += exitVal;
         flows.push(cf);
     }
-    flows._isIrreg   = isIrreg;
-    flows._residual  = residual;
-    flows._isAssign  = toNum(p.sumAssured) === 0;
+    flows._isIrreg  = isIrreg;
+    flows._residual = residual;
+    flows._isAssign = toNum(p.sumAssured) === 0;
     return flows;
 }
 
-function _irrBadgeIndia(irr, flows) {
+/**
+ * For policies ≤ 1 year old: Newton-Raphson is unreliable with only 1-2 data points.
+ * Use prorated simple annualisation instead:
+ *   monthly gain = (exitValue / totalCost) − 1
+ *   annualised   = monthly gain × (12 / monthsElapsed)
+ * e.g. −1% over 1 month → −12% annualised; +2% over 6 months → +4% annualised.
+ * Label changes to "Ann. %" to signal it is a projection, not a full IRR.
+ */
+function _proratedReturn(costPaid, exitVal, commencedStr, TODAY) {
+    if (costPaid <= 0 || exitVal <= 0) return null;
+    // Parse commenced date
+    const mp = { "Jan":0,"Feb":1,"Mar":2,"Apr":3,"May":4,"Jun":5,
+                 "Jul":6,"Aug":7,"Sep":8,"Oct":9,"Nov":10,"Dec":11 };
+    const parts = (commencedStr || '').replace(/\./g,' ').split(' ');
+    if (parts.length < 3) return null;
+    const start = new Date(parseInt(parts[2]), mp[parts[1]]||0, parseInt(parts[0]));
+    const msElapsed   = TODAY - start;
+    const daysElapsed = msElapsed / 86400000;
+    if (daysElapsed < 7) return null;      // too fresh — meaningless
+    const monthsElapsed = daysElapsed / 30.44;
+    const totalReturn   = (exitVal / costPaid) - 1;       // e.g. −0.01 for −1%
+    const annualised    = totalReturn * (12 / monthsElapsed);  // prorated to 1 year
+    const pct           = Math.round(annualised * 10000) / 100;
+    return (pct > -200 && pct < 500) ? { pct, monthsElapsed: Math.round(monthsElapsed), isProrated: true } : null;
+}
+
+function _irrBadgeIndia(irr, flows, isProrated = false, monthsElapsed = null) {
     if (irr === null || irr === undefined) return '';
-    const isGood = irr >= 10, isMid = irr >= 5 && irr < 10;
-    const bg  = isGood ? '#ecfdf5' : isMid ? '#fffbeb' : '#fff1f2';
-    const fg  = isGood ? '#059669' : isMid ? '#d97706' : '#e11d48';
-    const bd  = isGood ? '#6ee7b7' : isMid ? '#fcd34d' : '#fecaca';
-    const ar  = isGood ? '▲'       : isMid ? '◆'       : '▼';
-    const sgn = irr > 0 ? '+' : '';
+    const isGood  = irr >= 6;
+    const isNeg   = irr < 0;
+    const bg   = isGood ? '#ecfdf5' : isNeg ? '#fff1f2' : '#fffbeb';
+    const fg   = isGood ? '#059669' : isNeg ? '#dc2626' : '#d97706';
+    const bd   = isGood ? '#6ee7b7' : isNeg ? '#fca5a5' : '#fcd34d';
+    const ar   = irr >= 8 ? '▲' : isNeg ? '▼' : '◆';
+    const pfx  = isNeg ? '−' : '';   // minus sign only for negative; no + ever
     let lbl   = 'IRR p.a.';
     let tip   = 'Annualised IRR on all premiums paid to date vs current portfolio value';
-    if (flows && flows._isAssign) {
+    if (isProrated && monthsElapsed !== null) {
+        lbl = 'Ann. %';
+        tip = 'Policy < 1 year old (' + monthsElapsed + ' months). Simple annualised return — prorated from actual gain to date. Not a full IRR.';
+    } else if (flows && flows._isAssign) {
         lbl = 'IRR (Assigned)';
         tip = 'Policy assigned as collateral. IRR on actual premiums paid.';
     } else if (flows && flows._isIrreg) {
         lbl = 'IRR (Top-up)';
         tip = 'IRR includes ₹' + Math.round(flows._residual).toLocaleString('en-IN') + ' top-up beyond regular premiums.';
     }
-    return `<div title="${tip}" style="display:inline-flex;align-items:center;gap:4px;background:${bg};border:1.5px solid ${bd};color:${fg};border-radius:8px;padding:4px 11px;transform:skewX(-7deg);font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:0.05em;box-shadow:2px 2px 0 ${bd};white-space:nowrap;cursor:default;"><span style="transform:skewX(7deg);display:flex;align-items:center;gap:4px;"><span style="font-size:8px;opacity:0.65;">${lbl}</span><span style="font-size:13px;letter-spacing:-0.02em;">${ar} ${sgn}${irr.toFixed(1)}%</span></span></div>`;
+    return `<div title="${tip}" style="display:inline-flex;align-items:center;gap:4px;background:${bg};border:1.5px solid ${bd};color:${fg};border-radius:8px;padding:4px 11px;transform:skewX(-7deg);font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:0.05em;box-shadow:2px 2px 0 ${bd};white-space:nowrap;cursor:default;"><span style="transform:skewX(7deg);display:flex;align-items:center;gap:4px;"><span style="font-size:8px;opacity:0.65;">${lbl}</span><span style="font-size:13px;letter-spacing:-0.02em;">${ar} ${pfx}${Math.abs(irr).toFixed(1)}%</span></span></div>`;
 }
 
 function _pvBadge(pv, sym, ratePct, years) {
@@ -137,8 +166,20 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR) {
 
     if (isULIP) {
         const flows = _buildIndiaFlows(p, policyYearIdx, yearsCompleted);
-        const irr   = _calcIRR(flows);
-        _irrBadgeHtml = _irrBadgeIndia(irr, flows);
+
+        // Young policy (≤1 full year of data): prorated simple annualisation
+        // Newton-Raphson is unreliable with only 1-2 data points
+        if (yearsCompleted <= 1) {
+            const costBasis = toNum(p.totalPremiumPaid || 0) || toNum(p.premium);
+            const exitVal   = toNum(p.unitValueNumeric || 0);
+            const prorated  = _proratedReturn(costBasis, exitVal, p.commenced, TODAY);
+            if (prorated) {
+                _irrBadgeHtml = _irrBadgeIndia(prorated.pct, flows, true, prorated.monthsElapsed);
+            }
+        } else {
+            const irr = _calcIRR(flows);
+            _irrBadgeHtml = _irrBadgeIndia(irr, flows, false, null);
+        }
 
     } else if (isPension) {
         const RATE       = 0.06;
