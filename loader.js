@@ -189,7 +189,7 @@ function mapProjections(p, match, country) {
         const mbLine = rawBenefits.split(/\r?\n/).find(l => l.toLowerCase().includes("maturity benefit"));
         
         if (mbLine && mbLine.includes(":")) {
-            const formula = mbLine.split(":")[1].trim();
+            const formula = mbLine.split(":", 1)[1].trim();  // maxsplit=1 — preserve colons inside formula values
             let totalMaturity = 0;
             let componentsFound = 0;
 
@@ -214,53 +214,70 @@ function mapProjections(p, match, country) {
                 totalMaturity += totalMB;
             }
 
-            // 4. GA(amount) — Guaranteed Addition as lump sum at maturity
-            // e.g. "BSA + GA(699120)" → maturity = BSA + 699120
-            // Used when Guaranteed Additions are credited internally, not paid out annually
-            const gaMatch = formula.match(/GA\((\d+(?:\.\d+)?)\)/i);
-            if (gaMatch) {
+            // 4. PIPE FORMAT — simple human-readable maturity values
+            // ──────────────────────────────────────────────────────────────
+            // Guaranteed Addition (GA): internal credit, paid as lump sum at maturity
+            //   Sheet entry: "BSA + GA | 699120"
+            //   Old format still supported: "BSA + GA(699120)"
+            //
+            // Non-guaranteed Bonus — single scenario (conservative):
+            //   Sheet entry: "BSA + Bonus | 1159095"
+            //
+            // Non-guaranteed Bonus — two scenarios (conservative + optimistic):
+            //   Sheet entry: "BSA + Bonus | 1159095 | 1275974"
+            //   IRR uses first (conservative). Star shows both.
+            //
+            // Pipe format is simpler to type and read in the sheet.
+            // Old parenthesis format (e.g. GA(699120)) still works for backward compat.
+
+            const pipeValues = formula.split("|").map(s => s.trim());
+            // pipeValues[0] = type label (e.g. "BSA + GA", "BSA + Bonus")
+            // pipeValues[1] = first/conservative total
+            // pipeValues[2] = second/optimistic total (optional)
+
+            const isGAPipe    = pipeValues[0].toUpperCase().includes("GA");
+            const isBonusPipe = pipeValues[0].toUpperCase().includes("BONUS");
+
+            if (pipeValues.length >= 2 && (isGAPipe || isBonusPipe) && parseFloat(pipeValues[1]) > 0) {
                 componentsFound++;
-                const gaAmt = parseFloat(gaMatch[1]);
-                totalMaturity += gaAmt;
+                const lowTotal  = parseFloat(pipeValues[1]);
+                const highTotal = pipeValues[2] ? parseFloat(pipeValues[2]) : null;
+                const BSA       = toNum(p.sumAssured);
+
+                if (isGAPipe) {
+                    // GA: bonus amount = total − BSA (exact, guaranteed)
+                    const gaAmt         = lowTotal - BSA;
+                    p.maturityBonus     = gaAmt > 0 ? gaAmt : lowTotal;
+                    p.maturityBonusType = "GA";
+                    p.maturityLabel     = "BSA + GA";
+                    totalMaturity       = lowTotal;
+                } else {
+                    // Bonus: non-guaranteed, show conservative + optimistic
+                    p.maturityBonus          = lowTotal - BSA;  // bonus portion
+                    p.maturityBonusTotal     = lowTotal;
+                    p.maturityBonusHigh      = highTotal ? highTotal - BSA : null;
+                    p.maturityBonusTotalHigh = highTotal;
+                    p.maturityBonusType      = "Bonus";
+                    p.maturityLabel          = "BSA + Bonus";
+                    totalMaturity            = lowTotal;        // IRR uses conservative total
+                }
+            }
+
+            // Backward-compat: old GA(amount) parenthesis format
+            const gaMatchOld = !isGAPipe && formula.match(/GA\((\d+(?:\.\d+)?)\)/i);
+            if (gaMatchOld) {
+                componentsFound++;
+                const gaAmt         = parseFloat(gaMatchOld[1]);
+                const BSA           = toNum(p.sumAssured);
+                totalMaturity      += gaAmt;
                 p.maturityBonus     = gaAmt;
                 p.maturityBonusType = "GA";
                 p.maturityLabel     = "BSA + GA";
             }
 
-            // 5. Bonus(low:total_low,high:total_high) — two-scenario non-guaranteed bonus
-            // e.g. "BSA + Bonus(285122:1159095,402001:1275974)"
-            // low scenario: bonus=285122, total maturity=1159095
-            // high scenario: bonus=402001, total maturity=1275974
-            // IRR uses low (conservative). Star tooltip shows both.
-            const bonusRangeMatch = formula.match(/Bonus\((\d+):(\d+),(\d+):(\d+)\)/i);
-            if (bonusRangeMatch) {
-                componentsFound++;
-                p.maturityBonus      = parseFloat(bonusRangeMatch[1]);  // low bonus
-                p.maturityBonusTotal = parseFloat(bonusRangeMatch[2]);  // low total
-                p.maturityBonusHigh  = parseFloat(bonusRangeMatch[3]);  // high bonus
-                p.maturityBonusTotalHigh = parseFloat(bonusRangeMatch[4]); // high total
-                p.maturityBonusType  = "Bonus";
-                p.maturityLabel      = "BSA + Bonus";
-                // Override totalMaturity with the low-scenario total for conservative IRR
-                // (first remove the BSA we added above, then use the stated total)
-                totalMaturity = p.maturityBonusTotal;
-            }
-
-            // 6. Simple Bonus(amount:total) — single scenario
-            // e.g. "BSA + Bonus(285122:1159095)"
-            const bonusSingleMatch = !bonusRangeMatch && formula.match(/Bonus\((\d+):(\d+)\)/i);
-            if (bonusSingleMatch) {
-                componentsFound++;
-                p.maturityBonus      = parseFloat(bonusSingleMatch[1]);
-                p.maturityBonusTotal = parseFloat(bonusSingleMatch[2]);
-                p.maturityBonusType  = "Bonus";
-                p.maturityLabel      = "BSA + Bonus";
-                totalMaturity = p.maturityBonusTotal;
-            }
-
-            // 7. Fixed Value addition (plain number)
+            // 5. Fixed Value addition (plain number, not caught above)
             const flatValues = formula.match(/(?:\+|\s|^)(\d+(?:\.\d+)?)(?!%|BSA)/g);
-            if (flatValues && !gaMatch && !bonusRangeMatch && !bonusSingleMatch) {
+            if (flatValues && pipeValues.length < 2 && !gaMatchOld) {
                 componentsFound += flatValues.length;
                 flatValues.forEach(val => {
                     totalMaturity += parseFloat(val.trim().replace('+', ''));
