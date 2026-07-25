@@ -224,11 +224,12 @@ function _irrBadge(irr, lbl = 'IRR p.a.', tip = '') {
     return `<div class="irr-badge" style="display:inline-flex;align-items:center;gap:4px;background:${bg};border:1.5px solid ${bd};color:${fg};border-radius:8px;padding:4px 11px;transform:skewX(-7deg);font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;box-shadow:2px 2px 0 ${bd};white-space:nowrap;cursor:default;" title="${fullTip}"><span style="transform:skewX(7deg);display:flex;align-items:center;gap:4px;"><span style="font-size:8px;opacity:.65;">${lbl}</span><span style="font-size:13px;letter-spacing:-.02em;">${ar} ${pfx}${Math.abs(irr).toFixed(1)}%</span></span></div>`;
 }
 
-/** PV badge for pension policies */
-function _pvBadge(pv, sym) {
+/** PV badge — future inflows discounted to today @ 6% */
+function _pvBadge(pv, sym, customTip) {
     if (!pv || pv <= 0) return '';
     const fmt = n => sym + Math.round(n).toLocaleString('en-IN');
-    return `<div class="irr-badge" style="display:inline-flex;align-items:center;gap:4px;background:#eff6ff;border:1.5px solid #93c5fd;color:#1d4ed8;border-radius:8px;padding:4px 11px;transform:skewX(-7deg);font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;box-shadow:2px 2px 0 #93c5fd;white-space:nowrap;cursor:default;margin-left:4px;" title="Present Value of remaining pension stream @ 6% discount — lump-sum equivalent today"><span style="transform:skewX(7deg);display:flex;align-items:center;gap:4px;"><span style="font-size:8px;opacity:.65;">PV@6%</span><span style="font-size:12px;letter-spacing:-.02em;">≈ ${fmt(pv)}</span></span></div>`;
+    const tip = customTip || `Present value of remaining contractual inflows @ 6% discount`;
+    return `<div class="irr-badge" style="display:inline-flex;align-items:center;gap:4px;background:#eff6ff;border:1.5px solid #93c5fd;color:#1d4ed8;border-radius:8px;padding:4px 11px;transform:skewX(-7deg);font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;box-shadow:2px 2px 0 #93c5fd;white-space:nowrap;cursor:default;margin-left:4px;" title="${tip}"><span style="transform:skewX(7deg);display:flex;align-items:center;gap:4px;"><span style="font-size:8px;opacity:.65;">PV@6%</span><span style="font-size:12px;letter-spacing:-.02em;">≈ ${fmt(pv)}</span></span></div>`;
 }
 
 export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR, allPolicies = []) {
@@ -331,15 +332,33 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR, allPolicies = []) 
             const pvVal   = annPmt > 0 && futYrs > 0
                 ? annPmt * (1 - Math.pow(1 + RATE, -futYrs)) / RATE : 0;
             _irrHtml = _irrBadge(irr, 'IRR p.a.', `Full ${safeGetYear(p.maturity)-parseInt(commStr.split(' ')[2])}-yr projected cashflow. Conservative: no terminal SSV.`) +
-                       (pvVal > 0 ? _pvBadge(pvVal, sym) : '');
+                       (pvVal > 0 ? _pvBadge(pvVal, sym, `Lump-sum equivalent of ₹${Math.round(annPmt).toLocaleString('en-IN')}/yr pension stream @ 6% discount for ${futYrs} years`) : '');
 
         } else if (isMoneyback) {
-            // Moneyback / Savings: full projected cashflow to maturity
-            const flows = _buildProjectedFlows(p);
-            const irr   = _calcIRR(flows);
+            // Moneyback / Savings: full projected cashflow to maturity + PV of future inflows
+            const flows  = _buildProjectedFlows(p);
+            const irr    = _calcIRR(flows);
             const matYrs = safeGetYear(p.maturity) - parseInt(commStr.split(' ')[2]);
+
+            // PV of future inflows only (payouts + maturity, discounted @ 6% to today)
+            // "What are all remaining contractual receipts worth in today's money?"
+            const RATE   = 0.06;
+            const yrsNow = (TODAY - new Date(
+                parseInt(commStr.split(' ')[2]),
+                monthMap[commStr.split(' ')[1]] || 0,
+                parseInt(commStr.split(' ')[0])
+            )).valueOf() / (365.25 * 86400000);
+
+            const pvInflows = (flows || []).reduce((sum, cf, ann) => {
+                // Only future inflows (positive cashflows at anniversaries still to come)
+                if (ann > yrsNow && cf > 0) sum += cf / Math.pow(1 + RATE, ann);
+                return sum;
+            }, 0);
+
             _irrHtml = _irrBadge(irr, 'IRR p.a.',
-                `Full ${matYrs}-yr projected cashflow: premiums + moneyback payouts + maturity benefit.`);
+                `Full ${matYrs}-yr projected cashflow: premiums + moneyback payouts + maturity benefit.`) +
+                (pvInflows > 0 ? _pvBadge(pvInflows, sym,
+                    `Present value of all remaining payouts + maturity @ 6% discount = ${sym}${Math.round(pvInflows).toLocaleString('en-IN')} in today's money`) : '');
         }
     }
     const nextDueStr = `${annDay} ${startParts[1]} ${TODAY >= anniversaryThisYear ? CURRENT_YEAR + 1 : CURRENT_YEAR}`; 
