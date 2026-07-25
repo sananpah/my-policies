@@ -307,14 +307,18 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR, allPolicies = []) 
             const days = (TODAY - new Date(parseInt(commStr.split(' ')[2]), monthMap[commStr.split(' ')[1]], parseInt(commStr.split(' ')[0]))).valueOf() / 86400000;
             const months = days / 30.44;
 
-            if (yc <= 1 && months > 30) {
-                // Prorated for young policies (< ~1yr of full data)
+            // Prorated for young policies (yc ≤ 1, i.e. ≤ 1 full anniversary passed).
+            // Covers: < 1yr (e.g. K7639543: 8 months, yc=0) and just-over-1yr
+            // (e.g. 3N307267702: 15 months, yc=1 — NR unreliable with 2 data points).
+            // For 6-monthly payers: totalPremiumPaid is the true cost basis.
+            // Minimum 7 days elapsed to avoid division-by-zero / nonsense results.
+            if (yc <= 1 && days >= 7) {
                 const costBasis = toNum(p.totalPremiumPaid || 0) || toNum(p.premium);
                 if (costBasis > 0 && combCV > 0) {
                     const proratedPct = Math.round(((combCV / costBasis) - 1) * (12 / months) * 10000) / 100;
                     const mo = Math.round(months);
                     _irrHtml = _irrBadge(proratedPct, 'Ann. %',
-                        `Policy ${mo} months old. Prorated: (CV/paid−1)×(12/${mo}). Not a full IRR.`);
+                        `Policy ${mo} month${mo===1?'':'s'} old. Simple annualised return: (CV ÷ paid − 1) × (12 ÷ ${mo}). Cost basis: ₹${costBasis.toLocaleString('en-IN')} actual total paid. Not a full IRR.`);
                 }
             } else {
                 const flows = _buildULIPFlows(p, yc, pyi, isParent ? combCV : null);
