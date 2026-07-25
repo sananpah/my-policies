@@ -134,12 +134,22 @@ function _calcIRR(flows, guess = 0.05, iter = 500, tol = 1e-10) {
 function _maturityTerminal(p) {
     const BSA = toNum(p.sumAssured);
     const cal = toNum(p.calculatedMaturity || 0);
+
+    // GA(amount): maturity = BSA + GA, already computed by loader into calculatedMaturity
+    if (p.maturityBonusType === "GA" && p.maturityBonus) {
+        return BSA + toNum(p.maturityBonus);
+    }
+
+    // Bonus(low:total_low,...): use the low-scenario total (conservative IRR)
+    if (p.maturityBonusType === "Bonus" && p.maturityBonusTotal) {
+        return toNum(p.maturityBonusTotal);
+    }
+
     if (!cal && !BSA) return 0;
     // If formula is just "BSA" (calculatedMaturity = BSA already from loader)
     if (p.maturityFormula && p.maturityFormula.toUpperCase() === 'BSA ONLY') return cal;
-    // If formula includes bonuses (Loyalty, Additional): cal = bonus only, add BSA
+    // If formula includes bonuses: cal may be bonus only — add BSA if not already included
     if (p.maturityFormula && (p.maturityFormula.includes('BSA') || cal > 0) && BSA > 0) {
-        // Check if cal already includes BSA (cal >= BSA means BSA was added)
         return cal >= BSA ? cal : BSA + cal;
     }
     // Special Surrender Value or undefined — conservative: use 0
@@ -455,22 +465,47 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR, allPolicies = []) 
 
     // --- DYNAMIC MATURITY HOVER LOGIC ---
     let matHoverDetail = "";
-      if (isULIP) {
-          matHoverDetail = `<span class="text-[10px] font-black leading-tight text-white">${p.maturityAmt}</span>`;
-      } else if (p.maturityLabel) {
-         // Handle "Special Surrender Value" or other text-based benefits
-          matHoverDetail = `
-              <div class="text-[10px] font-black text-orange-300 uppercase leading-tight">${p.maturityLabel}</div>
-              <div class="text-[8px] opacity-60 mt-1 italic leading-tight">Refer Policy Doc for Value</div>
-            `;
-        } else if (p.calculatedMaturity) {
-            matHoverDetail = `
-              <div class="text-[10px] font-black text-white">${autoFmt(p.calculatedMaturity, sym)}</div>
-              <div class="text-[8px] opacity-60 mt-1 italic leading-tight">${p.maturityFormula}</div>
-            `;
-        } else {
-            matHoverDetail = `<div class="text-[10px] font-black text-white">${autoFmt(p.sumAssured, sym)}</div>`;
-        }
+    if (isULIP) {
+        matHoverDetail = `<span class="text-[10px] font-black leading-tight text-white">${p.maturityAmt}</span>`;
+
+    } else if (p.maturityBonusType === "Bonus" && p.maturityBonusTotal) {
+        const lowTotal  = p.maturityBonusTotal;
+        const highTotal = p.maturityBonusTotalHigh;
+        const lowBonus  = p.maturityBonus;
+        const highBonus = p.maturityBonusHigh;
+        const BSAval    = toNum(p.sumAssured);
+        matHoverDetail = `
+            <div class="text-[9px] text-orange-300 uppercase font-black leading-none mb-1">BSA + Bonus</div>
+            <div class="text-[13px] font-black text-white leading-none">${autoFmt(lowTotal, sym)}</div>
+            <div class="text-[8px] opacity-60 mt-1 leading-tight">BSA ${autoFmt(BSAval, sym)} + Bonus ${autoFmt(lowBonus, sym)}</div>
+            ${highTotal ? `<div class="mt-1 pt-1 border-t border-white/10 text-[8px] leading-tight"><span class="opacity-50">@8% scenario: </span><span class="text-emerald-300 font-black">${autoFmt(highTotal, sym)}</span><span class="opacity-40"> (Bonus ${autoFmt(highBonus, sym)})</span></div>` : ""}
+            <div class="text-[7px] opacity-40 mt-1 italic">Non-guaranteed bonus. IRR uses @4% (conservative).</div>`;
+
+    } else if (p.maturityBonusType === "GA" && p.maturityBonus) {
+        const gaAmt = p.maturityBonus;
+        const total = toNum(p.sumAssured) + gaAmt;
+        matHoverDetail = `
+            <div class="text-[9px] text-orange-300 uppercase font-black leading-none mb-1">BSA + GA</div>
+            <div class="text-[13px] font-black text-white leading-none">${autoFmt(total, sym)}</div>
+            <div class="text-[8px] opacity-60 mt-1 leading-tight">BSA ${autoFmt(toNum(p.sumAssured), sym)} + Guaranteed Addition ${autoFmt(gaAmt, sym)}</div>`;
+
+    } else if (p.maturityLabel) {
+        matHoverDetail = `
+            <div class="text-[10px] font-black text-orange-300 uppercase leading-tight">${p.maturityLabel}</div>
+            <div class="text-[8px] opacity-60 mt-1 italic leading-tight">Refer Policy Doc for Value</div>`;
+
+    } else if (p.calculatedMaturity) {
+        const displayTotal = toNum(p.calculatedMaturity);
+        const BSAval       = toNum(p.sumAssured);
+        const bonusPart    = displayTotal - BSAval;
+        matHoverDetail = `
+            <div class="text-[13px] font-black text-white leading-none">${autoFmt(displayTotal, sym)}</div>
+            ${bonusPart > 0 ? `<div class="text-[8px] opacity-60 mt-1 leading-tight">BSA ${autoFmt(BSAval, sym)} + Bonus ${autoFmt(bonusPart, sym)}</div>` : ""}
+            <div class="text-[8px] opacity-60 mt-1 italic leading-tight">${p.maturityFormula || "BSA + Bonus"}</div>`;
+
+    } else {
+        matHoverDetail = `<div class="text-[10px] font-black text-white">${autoFmt(p.sumAssured, sym)}</div>`;
+    }
 
     timelineHtml += `
         <div class="mat-star">

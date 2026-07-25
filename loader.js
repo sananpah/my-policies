@@ -214,9 +214,53 @@ function mapProjections(p, match, country) {
                 totalMaturity += totalMB;
             }
 
-            // 4. Fixed Value addition
+            // 4. GA(amount) — Guaranteed Addition as lump sum at maturity
+            // e.g. "BSA + GA(699120)" → maturity = BSA + 699120
+            // Used when Guaranteed Additions are credited internally, not paid out annually
+            const gaMatch = formula.match(/GA\((\d+(?:\.\d+)?)\)/i);
+            if (gaMatch) {
+                componentsFound++;
+                const gaAmt = parseFloat(gaMatch[1]);
+                totalMaturity += gaAmt;
+                p.maturityBonus     = gaAmt;
+                p.maturityBonusType = "GA";
+                p.maturityLabel     = "BSA + GA";
+            }
+
+            // 5. Bonus(low:total_low,high:total_high) — two-scenario non-guaranteed bonus
+            // e.g. "BSA + Bonus(285122:1159095,402001:1275974)"
+            // low scenario: bonus=285122, total maturity=1159095
+            // high scenario: bonus=402001, total maturity=1275974
+            // IRR uses low (conservative). Star tooltip shows both.
+            const bonusRangeMatch = formula.match(/Bonus\((\d+):(\d+),(\d+):(\d+)\)/i);
+            if (bonusRangeMatch) {
+                componentsFound++;
+                p.maturityBonus      = parseFloat(bonusRangeMatch[1]);  // low bonus
+                p.maturityBonusTotal = parseFloat(bonusRangeMatch[2]);  // low total
+                p.maturityBonusHigh  = parseFloat(bonusRangeMatch[3]);  // high bonus
+                p.maturityBonusTotalHigh = parseFloat(bonusRangeMatch[4]); // high total
+                p.maturityBonusType  = "Bonus";
+                p.maturityLabel      = "BSA + Bonus";
+                // Override totalMaturity with the low-scenario total for conservative IRR
+                // (first remove the BSA we added above, then use the stated total)
+                totalMaturity = p.maturityBonusTotal;
+            }
+
+            // 6. Simple Bonus(amount:total) — single scenario
+            // e.g. "BSA + Bonus(285122:1159095)"
+            const bonusSingleMatch = !bonusRangeMatch && formula.match(/Bonus\((\d+):(\d+)\)/i);
+            if (bonusSingleMatch) {
+                componentsFound++;
+                p.maturityBonus      = parseFloat(bonusSingleMatch[1]);
+                p.maturityBonusTotal = parseFloat(bonusSingleMatch[2]);
+                p.maturityBonusType  = "Bonus";
+                p.maturityLabel      = "BSA + Bonus";
+                totalMaturity = p.maturityBonusTotal;
+            }
+
+            // 7. Fixed Value addition (plain number)
             const flatValues = formula.match(/(?:\+|\s|^)(\d+(?:\.\d+)?)(?!%|BSA)/g);
-            if (flatValues) {
+            if (flatValues && !gaMatch && !bonusRangeMatch && !bonusSingleMatch) {
                 componentsFound += flatValues.length;
                 flatValues.forEach(val => {
                     totalMaturity += parseFloat(val.trim().replace('+', ''));
