@@ -195,6 +195,19 @@ function mapProjections(p, match, country) {
         p.maturityAmt = `Est. @4%: ${autoFmt(r4.v, sym)}<br>Est. @8%: ${autoFmt(r8.v, sym)}${disclaimer}`;
     } else {
         const rawBenefits = String(match["Other Coverage & Benefits"] || "");
+
+        // ── WITHDRAWAL PARSING ────────────────────────────────────────────
+        // Format in sheet: "Withdrawal : $9195"  or  "Withdrawal : $27481.38, $12072.37"
+        // Parsed into p.withdrawals = [amount1, amount2, ...]
+        const wdLine = rawBenefits.split(/\r?\n/).find(l => l.toLowerCase().startsWith("withdrawal"));
+        if (wdLine && wdLine.includes(":")) {
+            const wdRaw = wdLine.split(":").slice(1).join(":").trim();
+            p.withdrawals = wdRaw
+                .split(",")
+                .map(v => parseFloat(v.replace(/[^\d.]/g, "")))
+                .filter(v => v > 0);
+        }
+
         const mbLine = rawBenefits.split(/\r?\n/).find(l => l.toLowerCase().includes("maturity benefit"));
         
         if (mbLine && mbLine.includes(":")) {

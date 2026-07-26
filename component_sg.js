@@ -68,6 +68,13 @@ function _sgProratedReturn(costPaid, accountValue, commencedStr, TODAY) {
     return (pct > -200 && pct < 500) ? { pct, monthsElapsed: Math.round(monthsElapsed), isProrated: true } : null;
 }
 
+/** Exceptional badge for policies where withdrawals exceeded total invested */
+function _sgExceptionalBadge(totalRetPct, totalBenefit, sym, totalWithdrawn, currentVal) {
+    const fmt = n => sym + Math.round(n).toLocaleString();
+    const tip = `Withdrew ${fmt(totalWithdrawn)} (more than total invested) and still hold ${fmt(currentVal)}. Total benefit: ${fmt(totalBenefit)}. IRR is undefined when net investment is zero or negative.`;
+    return `<div title="${tip}" style="display:inline-flex;align-items:center;gap:5px;background:linear-gradient(135deg,#0f172a,#1e3a5f);border:1.5px solid #38bdf8;color:#38bdf8;border-radius:8px;padding:5px 12px;transform:skewX(-7deg);font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;box-shadow:3px 3px 0 #0ea5e9,0 0 12px rgba(56,189,248,0.25);white-space:nowrap;cursor:default;"><span style="transform:skewX(7deg);display:flex;align-items:center;gap:5px;"><span style="font-size:8px;opacity:.75;">Total Return</span><span style="font-size:13px;letter-spacing:-.02em;">★ ${totalRetPct.toFixed(0)}%</span></span></div>`;
+}
+
 function _sgIrrBadge(irr, flows, sym, isProrated = false, monthsElapsed = null) {
     if (irr === null || irr === undefined) return '';
     const isGood  = irr >= 6;
@@ -150,13 +157,23 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const _sgFlows  = _buildSGFlows(p, policyYearIdx, accountValue, annualPremium);
     let   _irrBadge = '';
 
+    // Check if withdrawals exceeded total invested (exceptional return case)
+    const totalWithdrawn = (p.withdrawals || []).reduce((s, v) => s + toNum(v), 0);
+    const totalInvested  = toNum(p.totalPremiumPaid || 0) || (annualPremium * policyYearIdx);
+    const netInvested    = totalInvested - totalWithdrawn;
+
     if (policyYearIdx <= 1) {
-        // Young policy: prorated simple annualisation (Newton-Raphson unreliable < 2 years)
         const costBasis = toNum(p.totalPremiumPaid || 0) || annualPremium;
         const prorated  = _sgProratedReturn(costBasis, accountValue, p.commenced, TODAY);
         if (prorated) {
             _irrBadge = _sgIrrBadge(prorated.pct, _sgFlows, sym, true, prorated.monthsElapsed);
         }
+    } else if (netInvested <= 0 && accountValue > 0) {
+        // Exceptional case: withdrew MORE than invested AND still holding value
+        // IRR is mathematically undefined (no net outflow). Show total return instead.
+        const totalBenefit  = totalWithdrawn + accountValue;
+        const totalRetPct   = totalInvested > 0 ? Math.round((totalBenefit / totalInvested - 1) * 1000) / 10 : 0;
+        _irrBadge = _sgExceptionalBadge(totalRetPct, totalBenefit, sym, totalWithdrawn, accountValue);
     } else {
         const _sgIrr = _calcIRR(_sgFlows);
         _irrBadge    = _sgIrrBadge(_sgIrr, _sgFlows, sym, false, null);

@@ -286,25 +286,27 @@ function _buildULIPFlows(p, yearsCompleted, pyi, cvToUse) {
     return flows;
 }
 
-/** IRR badge — funky skewed pill with correct colour/arrow/sign rules */
+/** IRR badge — vibrant dark-gradient pill with glow effect */
 function _irrBadge(irr, lbl = 'IRR p.a.', tip = '') {
     if (irr === null || irr === undefined) return '';
     const isGood = irr >= 6, isNeg = irr < 0;
-    const bg  = isGood ? '#ecfdf5' : isNeg ? '#fff1f2' : '#fffbeb';
-    const fg  = isGood ? '#059669' : isNeg ? '#dc2626' : '#d97706';
-    const bd  = isGood ? '#6ee7b7' : isNeg ? '#fca5a5' : '#fcd34d';
     const ar  = irr >= 8 ? '▲' : isNeg ? '▼' : '◆';
     const pfx = isNeg ? '−' : '';
     const fullTip = tip || 'Annualised IRR on all premiums paid to date';
-    return `<div class="irr-badge" style="display:inline-flex;align-items:center;gap:4px;background:${bg};border:1.5px solid ${bd};color:${fg};border-radius:8px;padding:4px 11px;transform:skewX(-7deg);font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;box-shadow:2px 2px 0 ${bd};white-space:nowrap;cursor:default;" title="${fullTip}"><span style="transform:skewX(7deg);display:flex;align-items:center;gap:4px;"><span style="font-size:8px;opacity:.65;">${lbl}</span><span style="font-size:13px;letter-spacing:-.02em;">${ar} ${pfx}${Math.abs(irr).toFixed(1)}%</span></span></div>`;
+    const style = isGood
+        ? 'background:linear-gradient(135deg,#064e3b,#065f46);border:1.5px solid #34d399;color:#6ee7b7;box-shadow:3px 3px 0 #059669,0 0 12px rgba(52,211,153,0.2);'
+        : isNeg
+        ? 'background:linear-gradient(135deg,#450a0a,#7f1d1d);border:1.5px solid #f87171;color:#fca5a5;box-shadow:3px 3px 0 #dc2626,0 0 12px rgba(248,113,113,0.2);'
+        : 'background:linear-gradient(135deg,#451a03,#78350f);border:1.5px solid #fbbf24;color:#fcd34d;box-shadow:3px 3px 0 #d97706,0 0 12px rgba(251,191,36,0.2);';
+    return `<div class="irr-badge" style="display:inline-flex;align-items:center;gap:4px;${style}border-radius:8px;padding:5px 12px;transform:skewX(-7deg);font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;cursor:default;" title="${fullTip}"><span style="transform:skewX(7deg);display:flex;align-items:center;gap:4px;"><span style="font-size:8px;opacity:.75;">${lbl}</span><span style="font-size:14px;letter-spacing:-.02em;">${ar} ${pfx}${Math.abs(irr).toFixed(1)}%</span></span></div>`;
 }
 
-/** PV badge — future inflows discounted to today @ 6% */
+/** PV badge — vibrant dark-blue gradient */
 function _pvBadge(pv, sym, customTip) {
     if (!pv || pv <= 0) return '';
     const fmt = n => sym + Math.round(n).toLocaleString('en-IN');
     const tip = customTip || `Present value of remaining contractual inflows @ 6% discount`;
-    return `<div class="irr-badge" style="display:inline-flex;align-items:center;gap:4px;background:#eff6ff;border:1.5px solid #93c5fd;color:#1d4ed8;border-radius:8px;padding:4px 11px;transform:skewX(-7deg);font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;box-shadow:2px 2px 0 #93c5fd;white-space:nowrap;cursor:default;margin-left:4px;" title="${tip}"><span style="transform:skewX(7deg);display:flex;align-items:center;gap:4px;"><span style="font-size:8px;opacity:.65;">PV@6%</span><span style="font-size:12px;letter-spacing:-.02em;">≈ ${fmt(pv)}</span></span></div>`;
+    return `<div class="irr-badge" style="display:inline-flex;align-items:center;gap:4px;background:linear-gradient(135deg,#0c1445,#1e3a8a);border:1.5px solid #60a5fa;color:#93c5fd;border-radius:8px;padding:5px 12px;transform:skewX(-7deg);font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;box-shadow:3px 3px 0 #1d4ed8,0 0 12px rgba(96,165,250,0.2);white-space:nowrap;cursor:default;margin-left:4px;" title="${tip}"><span style="transform:skewX(7deg);display:flex;align-items:center;gap:4px;"><span style="font-size:8px;opacity:.75;">PV@6%</span><span style="font-size:12px;letter-spacing:-.02em;">≈ ${fmt(pv)}</span></span></div>`;
 }
 
 export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR, allPolicies = []) {
@@ -467,10 +469,12 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR, allPolicies = []) 
                 return sum;
             }, 0);
 
+            // PV label: show how many future inflows are included so it's not alarming
+            const futureInflows = (flows || []).filter((cf, ann) => ann > yrsNow && cf > 0);
+            const pvTip = `PV of ${futureInflows.length} future cashflow(s) discounted @ 6% to today. Includes all moneyback payouts + maturity BSA. High PV reflects the full ${matYrs}-year contractual stream — not just premiums paid so far.`;
             _irrHtml = _irrBadge(irr, 'IRR p.a.',
                 `Full ${matYrs}-yr projected cashflow: premiums + moneyback payouts + maturity benefit.`) +
-                (pvInflows > 0 ? _pvBadge(pvInflows, sym,
-                    `Present value of all remaining payouts + maturity @ 6% discount = ${sym}${Math.round(pvInflows).toLocaleString('en-IN')} in today's money`) : '');
+                (pvInflows > 0 ? _pvBadge(pvInflows, sym, pvTip) : '');
 
         } else {
             // ── PURE ENDOWMENT BRANCH ─────────────────────────────────────────
