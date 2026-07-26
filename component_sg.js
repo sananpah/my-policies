@@ -77,23 +77,23 @@ function _sgExceptionalBadge(totalRetPct, totalBenefit, sym, totalWithdrawn, cur
 
 function _sgIrrBadge(irr, flows, sym, isProrated = false, monthsElapsed = null) {
     if (irr === null || irr === undefined) return '';
-    const isGood  = irr >= 6;
-    const isNeg   = irr < 0;
-    const bg   = isGood ? '#ecfdf5' : isNeg ? '#fff1f2' : '#fffbeb';
-    const fg   = isGood ? '#059669' : isNeg ? '#dc2626' : '#d97706';
-    const bd   = isGood ? '#6ee7b7' : isNeg ? '#fca5a5' : '#fcd34d';
-    const ar   = irr >= 8 ? '▲' : isNeg ? '▼' : '◆';
-    const pfx  = isNeg ? '−' : '';   // minus sign only for negative; no + ever
-    let lbl   = 'IRR p.a.';
-    let tip   = 'Annualised IRR: total premiums paid (minus withdrawals) vs current portfolio value';
+    const isGood = irr >= 6, isNeg = irr < 0;
+    const ar  = irr >= 8 ? '▲' : isNeg ? '▼' : '◆';
+    const pfx = isNeg ? '−' : '';
+    let lbl = 'IRR p.a.', tip = 'Annualised IRR: premiums paid (minus withdrawals) vs current portfolio value';
     if (isProrated && monthsElapsed !== null) {
         lbl = 'Ann. %';
-        tip = 'Policy < 1 year old (' + monthsElapsed + ' months). Simple annualised return prorated from actual gain to date. Not a full IRR.';
+        tip = `Policy ${monthsElapsed} month${monthsElapsed===1?'':'s'} old. Simple annualised return prorated from actual gain. Not a full IRR.`;
     } else if (flows && flows._isIrreg) {
         lbl = 'IRR (Top-up)';
-        tip = 'IRR includes ' + sym + Math.round(flows._residual).toLocaleString() + ' top-up beyond regular premiums.';
+        tip = `IRR includes ${sym}${Math.round(flows._residual).toLocaleString()} top-up beyond regular premiums.`;
     }
-    return `<div title="${tip}" style="display:inline-flex;align-items:center;gap:4px;background:${bg};border:1.5px solid ${bd};color:${fg};border-radius:8px;padding:4px 11px;transform:skewX(-7deg);font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:0.05em;box-shadow:2px 2px 0 ${bd};white-space:nowrap;cursor:default;"><span style="transform:skewX(7deg);display:flex;align-items:center;gap:4px;"><span style="font-size:8px;opacity:0.65;">${lbl}</span><span style="font-size:13px;letter-spacing:-0.02em;">${ar} ${pfx}${Math.abs(irr).toFixed(1)}%</span></span></div>`;
+    const style = isGood
+        ? 'background:linear-gradient(135deg,#064e3b,#065f46);border:1.5px solid #34d399;color:#6ee7b7;box-shadow:3px 3px 0 #059669,0 0 12px rgba(52,211,153,0.2);'
+        : isNeg
+        ? 'background:linear-gradient(135deg,#450a0a,#7f1d1d);border:1.5px solid #f87171;color:#fca5a5;box-shadow:3px 3px 0 #dc2626,0 0 12px rgba(248,113,113,0.2);'
+        : 'background:linear-gradient(135deg,#451a03,#78350f);border:1.5px solid #fbbf24;color:#fcd34d;box-shadow:3px 3px 0 #d97706,0 0 12px rgba(251,191,36,0.2);';
+    return `<div title="${tip}" style="display:inline-flex;align-items:center;gap:4px;${style}border-radius:8px;padding:5px 12px;transform:skewX(-7deg);font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;cursor:default;"><span style="transform:skewX(7deg);display:flex;align-items:center;gap:4px;"><span style="font-size:8px;opacity:.75;">${lbl}</span><span style="font-size:14px;letter-spacing:-.02em;">${ar} ${pfx}${Math.abs(irr).toFixed(1)}%</span></span></div>`;
 }
 
 export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {

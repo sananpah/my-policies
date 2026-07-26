@@ -169,6 +169,19 @@ function mapProjections(p, match, country) {
     const sym = (country === "singapore") ? "$" : "₹";
     const TODAY = new Date();
 
+    // ── WITHDRAWAL PARSING (all policies) ───────────────────────────────
+    // "Withdrawal : $9195"  or  "Withdrawal : $27481.38, $12072.37"
+    // Must run for ALL policies including SG ULIPs which otherwise skip this.
+    const _rawBenAll = String(match["Other Coverage & Benefits"] || "");
+    const _wdLine    = _rawBenAll.split(/\r?\n/).find(l => l.toLowerCase().startsWith("withdrawal"));
+    if (_wdLine && _wdLine.includes(":")) {
+        const _wdRaw = _wdLine.split(":").slice(1).join(":").trim();
+        p.withdrawals = _wdRaw
+            .split(",")
+            .map(v => parseFloat(v.replace(/[^\d.]/g, "")))
+            .filter(v => v > 0);
+    }
+
     if (isULIP) {
         const calc = (rate) => {
             let projected = p.unitValueNumeric;
@@ -195,19 +208,6 @@ function mapProjections(p, match, country) {
         p.maturityAmt = `Est. @4%: ${autoFmt(r4.v, sym)}<br>Est. @8%: ${autoFmt(r8.v, sym)}${disclaimer}`;
     } else {
         const rawBenefits = String(match["Other Coverage & Benefits"] || "");
-
-        // ── WITHDRAWAL PARSING ────────────────────────────────────────────
-        // Format in sheet: "Withdrawal : $9195"  or  "Withdrawal : $27481.38, $12072.37"
-        // Parsed into p.withdrawals = [amount1, amount2, ...]
-        const wdLine = rawBenefits.split(/\r?\n/).find(l => l.toLowerCase().startsWith("withdrawal"));
-        if (wdLine && wdLine.includes(":")) {
-            const wdRaw = wdLine.split(":").slice(1).join(":").trim();
-            p.withdrawals = wdRaw
-                .split(",")
-                .map(v => parseFloat(v.replace(/[^\d.]/g, "")))
-                .filter(v => v > 0);
-        }
-
         const mbLine = rawBenefits.split(/\r?\n/).find(l => l.toLowerCase().includes("maturity benefit"));
         
         if (mbLine && mbLine.includes(":")) {
