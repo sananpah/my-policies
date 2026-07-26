@@ -157,10 +157,8 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     const _sgFlows  = _buildSGFlows(p, policyYearIdx, accountValue, annualPremium);
     let   _irrBadge = '';
 
-    // Check if withdrawals exceeded total invested (exceptional return case)
-    const totalWithdrawn = (p.withdrawals || []).reduce((s, v) => s + toNum(v), 0);
+    // totalWithdrawn and netInvested already declared in MATH section above — reuse them
     const totalInvested  = toNum(p.totalPremiumPaid || 0) || (annualPremium * policyYearIdx);
-    const netInvested    = totalInvested - totalWithdrawn;
 
     if (policyYearIdx <= 1) {
         const costBasis = toNum(p.totalPremiumPaid || 0) || annualPremium;
