@@ -505,7 +505,12 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR, allPolicies = []) 
                     const lastPrem4 = premEndP.length===3
                         ? new Date(parseInt(premEndP[2]), monthMap4[premEndP[1]]||0, parseInt(premEndP[0]))
                         : new Date(9999,0,1);
-                    const matDate4 = new Date(aDate.getFullYear() + matYrs, aDate.getMonth(), aDate.getDate());
+                    // Maturity is fixed at the ORIGINAL maturity date (from commenced + mat years),
+                    // NOT from assign date + matYrs. Parse p.maturity directly.
+                    const matParts4  = (p.maturity||"").replace(/\./g,' ').trim().split(/\s+/);
+                    const matDate4   = matParts4.length === 3
+                        ? new Date(parseInt(matParts4[2]), monthMap4[matParts4[1]]||0, parseInt(matParts4[0]))
+                        : new Date(aDate.getFullYear() + matYrs, aDate.getMonth(), aDate.getDate());
                     const slotsToMat = Math.round((matDate4 - aDate) / (365.25*86400000));
                     flows = [-toNum(p.assignAmt)];
                     for (let s = 1; s <= slotsToMat; s++) {
