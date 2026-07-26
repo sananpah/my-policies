@@ -115,12 +115,21 @@ function mapTechnicalData(p, match) {
             else if (cleanLine.startsWith("clientid:")) {
                 if (!(p.type || "").toUpperCase().includes("ULIP")) p.clientId = line.split(":")[1]?.trim() || "N/A";
             } else if (cleanLine.startsWith("premiumlinked:")) {
-                // PremiumLinked: <parentPolicyId>
-                // Marks this policy as a child whose premium is funded from the
-                // parent's accumulated CV — not new external cash.
-                // Effect: excluded from Annual Premium total in summary bar,
-                // and rendered as a sub-card inside the parent's expanded view.
                 p.linkedTo = line.split(":")[1]?.trim() || null;
+
+            } else if (cleanLine.startsWith("assign date:")) {
+                // Assignment date: when the policy was assigned TO the user.
+                // This becomes the user's effective "commenced date" for IRR purposes.
+                // All cashflows (IRR, PV) are computed from this date, not the
+                // original policy commencement date.
+                p.assignDate = line.split(":").slice(1).join(":").trim();
+
+            } else if (cleanLine.startsWith("assign amt:")) {
+                // Assignment amount: the discounted price paid to acquire the policy.
+                // This is the user's t=0 outflow for IRR — NOT the original premium history.
+                const rawAmt = line.split(":").slice(1).join(":").trim();
+                // Strip currency symbols, commas, spaces
+                p.assignAmt = parseFloat(rawAmt.replace(/[^\d.]/g, "")) || 0;
             } else if (cleanLine.startsWith("surrender:")) {
                 const content = line.split(":")[1] || "";
                 p.surrenderBase = content.includes("[pp]") ? "PREMIUM" : "VALUATION";

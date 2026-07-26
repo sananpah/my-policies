@@ -195,13 +195,78 @@ function _buildProjectedFlows(p) {
  * Handles irregular payments (totalPremiumPaid > regular schedule).
  * For parent policies: uses combined CV (parent + children).
  */
+/**
+ * Builds ULIP IRR cashflows.
+ *
+ * ASSIGNMENT POLICIES (p.assignAmt > 0):
+ *   The original policyholder's payment history is IRRELEVANT to the assignee.
+ *   MY cashflows start from the assign date:
+ *     t=0: −assignAmt  (what I paid to acquire the policy)
+ *     t=1,2,...: −premium for each anniversary I pay after assign date
+ *     terminal: +currentUnitValue (exit today)
+ *   The "years elapsed" is measured from ASSIGN DATE, not commenced date.
+ *
+ * REGULAR ULIP (p.assignAmt = 0 or absent):
+ *   Standard: −premium for each paying year, +CV as terminal.
+ *   Handles irregular payments via totalPremiumPaid residual.
+ */
 function _buildULIPFlows(p, yearsCompleted, pyi, cvToUse) {
     const prem    = toNum(p.premium);
-    const total   = toNum(p.totalPremiumPaid || 0);
     const exitVal = cvToUse || toNum(p.unitValueNumeric || 0);
+    const isAssignPolicy = toNum(p.assignAmt || 0) > 0;
+
+    if (exitVal <= 0) return null;
+
+    if (isAssignPolicy) {
+        // ── ASSIGNMENT POLICY ──────────────────────────────────────────
+        // Parse assign date and compute my elapsed time + future premiums
+        const assignAmt  = toNum(p.assignAmt);
+        const monthMap2  = { "Jan":0,"Feb":1,"Mar":2,"Apr":3,"May":4,"Jun":5,
+                             "Jul":6,"Aug":7,"Sep":8,"Oct":9,"Nov":10,"Dec":11 };
+        const adParts    = (p.assignDate || "").replace(/\./g, ' ').trim().split(/\s+/);
+        const assignDate = adParts.length === 3
+            ? new Date(parseInt(adParts[2]), monthMap2[adParts[1]] || 0, parseInt(adParts[0]))
+            : new Date();
+
+        // Last premium date from p.premiumEnds
+        const premEndParts = (p.premiumEnds || "").replace(/\./g,' ').trim().split(/\s+/);
+        const lastPremDate = premEndParts.length === 3
+            ? new Date(parseInt(premEndParts[2]), monthMap2[premEndParts[1]] || 0, parseInt(premEndParts[0]))
+            : new Date(9999, 0, 1);
+
+        // Anniversary day/month = from original commenced date (policy anniversary)
+        const commParts = (p.commenced || "").replace(/\./g,' ').trim().split(/\s+/);
+        const annMonth  = commParts.length === 3 ? (monthMap2[commParts[1]] || 0) : assignDate.getMonth();
+        const annDay    = commParts.length === 3 ? parseInt(commParts[0]) : assignDate.getDate();
+
+        // Build annual slots from assign date
+        // Slot 0 = assign date (t=0), slot N = Nth anniversary after assign date
+        const TODAY_D = new Date();
+        const yrsFromAssign = Math.max(1, Math.ceil((TODAY_D - assignDate) / (365.25 * 86400000)));
+
+        const flows = [-assignAmt];  // t=0: assignment cost
+        for (let y = 1; y <= yrsFromAssign; y++) {
+            const annDate = new Date(assignDate.getFullYear() + y, annMonth, annDay);
+            let cf = 0;
+            // Pay premium if this anniversary falls after assign date AND before/on last premium
+            if (annDate > assignDate && annDate <= lastPremDate) cf -= prem;
+            // Terminal: CV at the end of current slot
+            if (y === yrsFromAssign) cf += exitVal;
+            flows.push(cf);
+        }
+
+        flows._isAssign    = true;
+        flows._assignAmt   = assignAmt;
+        flows._isIrreg     = false;
+        flows._residual    = 0;
+        return flows;
+    }
+
+    // ── REGULAR ULIP ────────────────────────────────────────────────────
+    const total   = toNum(p.totalPremiumPaid || 0);
     const pptYrs  = toNum(p.ppt || pyi);
     const payYrs  = Math.min(pptYrs, pyi);
-    if (prem <= 0 || exitVal <= 0 || payYrs < 1) return null;
+    if (prem <= 0 || payYrs < 1) return null;
 
     const regular  = prem * payYrs;
     const residual = total > 0 ? Math.max(0, total - regular) : 0;
@@ -217,7 +282,7 @@ function _buildULIPFlows(p, yearsCompleted, pyi, cvToUse) {
     }
     flows._isIrreg  = isIrreg;
     flows._residual = residual;
-    flows._isAssign = toNum(p.sumAssured) === 0;
+    flows._isAssign = false;
     return flows;
 }
 
@@ -312,19 +377,52 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR, allPolicies = []) 
             // (e.g. 3N307267702: 15 months, yc=1 — NR unreliable with 2 data points).
             // For 6-monthly payers: totalPremiumPaid is the true cost basis.
             // Minimum 7 days elapsed to avoid division-by-zero / nonsense results.
-            if (yc <= 1 && days >= 7) {
-                const costBasis = toNum(p.totalPremiumPaid || 0) || toNum(p.premium);
-                if (costBasis > 0 && combCV > 0) {
-                    const proratedPct = Math.round(((combCV / costBasis) - 1) * (12 / months) * 10000) / 100;
-                    const mo = Math.round(months);
-                    _irrHtml = _irrBadge(proratedPct, 'Ann. %',
-                        `Policy ${mo} month${mo===1?'':'s'} old. Simple annualised return: (CV ÷ paid − 1) × (12 ÷ ${mo}). Cost basis: ₹${costBasis.toLocaleString('en-IN')} actual total paid. Not a full IRR.`);
+            // For assignment policies: re-measure time and cost from ASSIGN DATE
+            const isAssignPolicy  = toNum(p.assignAmt || 0) > 0;
+            const monthMap3       = { "Jan":0,"Feb":1,"Mar":2,"Apr":3,"May":4,"Jun":5,
+                                      "Jul":6,"Aug":7,"Sep":8,"Oct":9,"Nov":10,"Dec":11 };
+
+            let effectiveDays     = days;
+            let effectiveMonths   = months;
+            let effectiveCostBasis;
+
+            if (isAssignPolicy) {
+                // Time from assign date (not commenced date)
+                const adP = (p.assignDate || "").replace(/\./g,' ').trim().split(/\s+/);
+                const assignDate = adP.length === 3
+                    ? new Date(parseInt(adP[2]), monthMap3[adP[1]]||0, parseInt(adP[0]))
+                    : new Date();
+                effectiveDays   = (TODAY - assignDate) / 86400000;
+                effectiveMonths = effectiveDays / 30.44;
+                // Cost = assignAmt + any premiums paid after assign date (= totalPremiumPaid)
+                effectiveCostBasis = toNum(p.totalPremiumPaid || 0) || toNum(p.assignAmt || 0);
+            } else {
+                effectiveCostBasis = toNum(p.totalPremiumPaid || 0) || toNum(p.premium);
+            }
+
+            // Effective years completed from the relevant start date
+            const effectiveYC = isAssignPolicy
+                ? Math.floor(effectiveDays / 365.25)
+                : yc;
+
+            if (effectiveYC <= 1 && effectiveDays >= 7) {
+                if (effectiveCostBasis > 0 && combCV > 0) {
+                    const proratedPct = Math.round(((combCV / effectiveCostBasis) - 1) * (12 / effectiveMonths) * 10000) / 100;
+                    const mo = Math.round(effectiveMonths);
+                    const lbl = isAssignPolicy ? 'Ann. % (Assigned)' : 'Ann. %';
+                    const tip = isAssignPolicy
+                        ? `${mo} month${mo===1?'':'s'} since assignment on ${p.assignDate}. Return: (CV ÷ my total cost − 1) × (12 ÷ ${mo}). My cost: ₹${effectiveCostBasis.toLocaleString('en-IN')} (assign price + premiums paid).`
+                        : `Policy ${mo} month${mo===1?'':'s'} old. Simple annualised return: (CV ÷ paid − 1) × (12 ÷ ${mo}). Cost basis: ₹${effectiveCostBasis.toLocaleString('en-IN')} actual total paid. Not a full IRR.`;
+                    _irrHtml = _irrBadge(proratedPct, lbl, tip);
                 }
             } else {
                 const flows = _buildULIPFlows(p, yc, pyi, isParent ? combCV : null);
                 const irr   = _calcIRR(flows);
                 let lbl = 'IRR p.a.', tip = `${Math.min(toNum(p.ppt||pyi), pyi)} premiums → CV today`;
-                if (flows && flows._isAssign) { lbl = 'IRR (Assigned)'; tip = 'Policy assigned as collateral.'; }
+                if (flows && flows._isAssign) {
+                    lbl = 'IRR (Assigned)';
+                    tip = `IRR from MY perspective: assignment price ₹${Math.round(flows._assignAmt||0).toLocaleString('en-IN')} as t=0 cost, plus premiums I paid after, vs current portfolio value today.`;
+                }
                 else if (flows && flows._isIrreg) { lbl = 'IRR (Top-up)'; tip = `Includes top-up of ${sym}${Math.round(flows._residual).toLocaleString('en-IN')} beyond regular premiums.`; }
                 if (isParent) tip += ` Combined with ${children.length} linked child.`;
                 _irrHtml = _irrBadge(irr, lbl, tip);
@@ -387,13 +485,43 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR, allPolicies = []) 
             const hasBonus = (p.maturityLabel || '').toLowerCase().includes('bonus') ||
                              (p.maturityFormula || '').toLowerCase().includes('bonus');
 
-            if (prem > 0 && ppt > 0 && matYrs > 0 && BSA > 0) {
-                // Build flows: -prem for ppt years, +BSA at maturity
-                const flows = [];
-                for (let ann = 0; ann <= matYrs; ann++) {
-                    let cf = ann < ppt ? -prem : 0;
-                    if (ann === matYrs) cf += BSA;
-                    flows.push(cf);
+            if (prem > 0 && matYrs > 0 && BSA > 0) {
+                const isAssignEndo = toNum(p.assignAmt || 0) > 0;
+                let flows;
+
+                if (isAssignEndo) {
+                    // ASSIGNMENT ENDOWMENT: MY cashflows from assign date
+                    // t=0: −assignAmt, then −prem for each future anniversary, +BSA at maturity
+                    const monthMap4 = { "Jan":0,"Feb":1,"Mar":2,"Apr":3,"May":4,"Jun":5,
+                                        "Jul":6,"Aug":7,"Sep":8,"Oct":9,"Nov":10,"Dec":11 };
+                    const adP4 = (p.assignDate||"").replace(/\./g,' ').trim().split(/\s+/);
+                    const aDate = adP4.length===3
+                        ? new Date(parseInt(adP4[2]), monthMap4[adP4[1]]||0, parseInt(adP4[0]))
+                        : new Date();
+                    const commP = (p.commenced||"").replace(/\./g,' ').trim().split(/\s+/);
+                    const aMonth = commP.length===3?(monthMap4[commP[1]]||0):aDate.getMonth();
+                    const aDay   = commP.length===3?parseInt(commP[0]):aDate.getDate();
+                    const premEndP = (p.premiumEnds||"").replace(/\./g,' ').trim().split(/\s+/);
+                    const lastPrem4 = premEndP.length===3
+                        ? new Date(parseInt(premEndP[2]), monthMap4[premEndP[1]]||0, parseInt(premEndP[0]))
+                        : new Date(9999,0,1);
+                    const matDate4 = new Date(aDate.getFullYear() + matYrs, aDate.getMonth(), aDate.getDate());
+                    const slotsToMat = Math.round((matDate4 - aDate) / (365.25*86400000));
+                    flows = [-toNum(p.assignAmt)];
+                    for (let s = 1; s <= slotsToMat; s++) {
+                        const annD4 = new Date(aDate.getFullYear()+s, aMonth, aDay);
+                        let cf = (annD4 > aDate && annD4 <= lastPrem4) ? -prem : 0;
+                        if (s === slotsToMat) cf += BSA;
+                        flows.push(cf);
+                    }
+                } else {
+                    // Regular endowment
+                    flows = [];
+                    for (let ann = 0; ann <= matYrs; ann++) {
+                        let cf = ann < ppt ? -prem : 0;
+                        if (ann === matYrs) cf += BSA;
+                        flows.push(cf);
+                    }
                 }
                 const irr = _calcIRR(flows);
 
@@ -407,7 +535,8 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR, allPolicies = []) 
                 const pvBSA  = BSA / Math.pow(1 + RATE, matYrs);
 
                 // IRR label and tooltip — clearly flag bonus exclusion
-                const irrLbl = 'IRR (BSA)';
+                if (!flows) flows = [];
+                const irrLbl = isAssignEndo ? 'IRR (Assigned)' : 'IRR (BSA)';
                 const irrTip = `Conservative IRR using BSA only (₹${BSA.toLocaleString('en-IN')}) at maturity ${safeGetYear(p.maturity)}.`
                     + (hasBonus ? ` Bonus is NOT included — actual IRR will be higher once bonus formula is added to your sheet.` : '');
 
