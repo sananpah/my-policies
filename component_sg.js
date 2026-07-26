@@ -112,7 +112,7 @@ export function createSGCard(p, sym, TODAY, CURRENT_YEAR) {
     if (isPaidUp) { premRemainingStr = "PAID UP"; }
     else if (mip === 0) { premRemainingStr = "VESTED"; }
     else {
-        let targetDate = new Date(startY + mip, commMonth, commDay);
+        let targetDate = new Date(startY + mip - 1, commMonth, commDay);
         if (targetDate <= TODAY) { premRemainingStr = "VESTED"; }
         else {
             let y = targetDate.getFullYear() - TODAY.getFullYear();
