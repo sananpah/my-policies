@@ -600,7 +600,7 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR, allPolicies = []) 
         // Compute inline style for dual-colour (premium+bonus) segments
         const isDualPayout = color === "dual-payout";
         const dualStyle = isDualPayout
-            ? `style="background:linear-gradient(90deg,${isEffectivelyPaid?'#475569':'#93c5fd'} 50%,${isEffectivelyPaid?'#d97706':'#fbbf24'} 50%);"`
+            ? `style="background:linear-gradient(135deg,${isEffectivelyPaid?'#0f4c3a':'#0d9488'} 48%,#fff 49%,#fff 51%,${isEffectivelyPaid?'#92400e':'#f59e0b'} 52%);box-shadow:inset 0 0 0 1px rgba(255,255,255,0.15);"`
             : "";
 
         timelineHtml += `
@@ -706,7 +706,6 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR, allPolicies = []) 
                 <div class="detail-item"><p>UIN Number</p><p style="font-family:'Orbitron'; font-weight:700;">${p.uin || 'N/A'}</p></div>
                 ${isULIP ? `<div class="detail-item" style="background: #eef2ff; border: 2px solid #6366f1; border-radius: 12px; padding: 10px;"><p style="color:#4338ca; font-weight:800; font-size:10px; text-transform:uppercase;">${isParent ? 'Combined Portfolio Value' : 'Portfolio Value'}</p><p style="font-weight:900; color:#1e1b4b; font-size:18px; font-family:'Orbitron';">${isParent ? autoFmt(combCV, sym) : (p.currentUnitValue || 'No Value')}</p>${isParent ? '<p style="font-size:8px;color:#6366f1;margin-top:3px;">Parent + ' + children.length + ' linked policy</p>' : ''}</div>` :
                 `<div class="detail-item"><p>Customer ID</p><p style="font-family:'Orbitron'; font-weight:700;">${p.clientId || 'N/A'}</p></div>`}
-                ${toNum(p.totalPremiumPaid) > 0 ? `<div class="detail-item" style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:12px;padding:10px;"><p style="color:#166534;font-weight:800;font-size:10px;text-transform:uppercase;">Total Paid</p><p style="font-weight:900;color:#14532d;font-size:18px;font-family:'Orbitron';">${autoFmt(p.totalPremiumPaid, sym)}</p>${isPaidUp ? '<p style="font-size:8px;color:#16a34a;margin-top:3px;font-weight:700;">✓ PAID UP</p>' : ''}</div>` : ''}
             </div>
             
             <div class="mt-4 p-4 bg-white/50 border border-slate-100 rounded-2xl shadow-sm flex flex-col gap-3">
@@ -714,6 +713,13 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR, allPolicies = []) 
                     <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-2">Nominee</p>
                     <div class="flex items-center h-10">${nomineeBoxContent}</div>
                 </div>
+                ${toNum(p.totalPremiumPaid) > 0 ? `<div>
+                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-2">Total Paid</p>
+                    <div class="flex items-center gap-2">
+                        <span style="font-family:'Orbitron';font-weight:900;font-size:16px;color:#14532d;background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:4px 14px;letter-spacing:-.02em;">${autoFmt(p.totalPremiumPaid, sym)}</span>
+                        ${isPaidUp ? '<span style="font-size:10px;font-weight:800;color:#16a34a;background:#dcfce7;border:1px solid #86efac;border-radius:6px;padding:2px 8px;text-transform:uppercase;">✓ Paid Up</span>' : ''}
+                    </div>
+                </div>` : ''}
                 ${_irrHtml ? `<div>
                     <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-2">Returns</p>
                     <div class="flex items-center gap-2 flex-wrap">${_irrHtml}</div>
