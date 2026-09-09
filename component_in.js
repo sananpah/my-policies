@@ -573,8 +573,12 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR, allPolicies = []) 
         if (yr <= premEndYear) {
             const isEffectivelyPaid = isPast || (isPaidUp && yr === premEndYear) || (isLoopCurrent && TODAY >= anniversaryThisYear);
             if (loopPayout) {
-                color = isPast ? "bg-emerald-600" : "bg-emerald-400";
-                phase = "Premium + Payout";
+                // Dual-colour segment: left = premium colour, right = bonus amber
+                // Shows visually that this year has BOTH a premium payment AND a bonus/payout
+                const premClr = isEffectivelyPaid ? "#475569" : "#93c5fd";
+                const payClr  = isEffectivelyPaid ? "#d97706" : "#fbbf24";
+                color = `dual-payout`;  // marker class; style applied on the div
+                phase = "Premium + Bonus";
                 detail = `Pay: ${autoFmt(p.premium, sym)} | Get: ${autoFmt(loopPayout, sym)}`;
             } else {
                 color = (isLoopCurrent && TODAY < anniversaryThisYear && !isPaidUp) ? "bg-current" : (isEffectivelyPaid ? "bg-prem-past" : "bg-prem-future");
@@ -593,8 +597,14 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR, allPolicies = []) 
             }
         }
         
+        // Compute inline style for dual-colour (premium+bonus) segments
+        const isDualPayout = color === "dual-payout";
+        const dualStyle = isDualPayout
+            ? `style="background:linear-gradient(90deg,${isEffectivelyPaid?'#475569':'#93c5fd'} 50%,${isEffectivelyPaid?'#d97706':'#fbbf24'} 50%);"`
+            : "";
+
         timelineHtml += `
-            <div class="segment ${color}">
+            <div class="segment ${isDualPayout ? '' : color}" ${dualStyle}>
                 <div class="tooltip">
                     <b class="${loopPayout ? 'text-amber-300' : 'text-emerald-400'} uppercase tracking-tighter">${phase}</b><br>
                     ${detail}<br>
@@ -696,20 +706,18 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR, allPolicies = []) 
                 <div class="detail-item"><p>UIN Number</p><p style="font-family:'Orbitron'; font-weight:700;">${p.uin || 'N/A'}</p></div>
                 ${isULIP ? `<div class="detail-item" style="background: #eef2ff; border: 2px solid #6366f1; border-radius: 12px; padding: 10px;"><p style="color:#4338ca; font-weight:800; font-size:10px; text-transform:uppercase;">${isParent ? 'Combined Portfolio Value' : 'Portfolio Value'}</p><p style="font-weight:900; color:#1e1b4b; font-size:18px; font-family:'Orbitron';">${isParent ? autoFmt(combCV, sym) : (p.currentUnitValue || 'No Value')}</p>${isParent ? '<p style="font-size:8px;color:#6366f1;margin-top:3px;">Parent + ' + children.length + ' linked policy</p>' : ''}</div>` :
                 `<div class="detail-item"><p>Customer ID</p><p style="font-family:'Orbitron'; font-weight:700;">${p.clientId || 'N/A'}</p></div>`}
-                ${toNum(p.totalPremiumPaid) > 0 ? `<div class="detail-item" style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:12px;padding:10px;"><p style="color:#166534;font-weight:800;font-size:10px;text-transform:uppercase;">Total Paid</p><p style="font-weight:900;color:#14532d;font-size:18px;font-family:'Orbitron';">${autoFmt(p.totalPremiumPaid, sym)}</p>${isPaidUp ? '<p style="font-size:8px;color:#16a34a;margin-top:3px;font-weight:700;">✓ PAID UP</p>' : `<p style="font-size:8px;color:#166534;margin-top:3px;opacity:.7;">${autoFmt(p.premium, sym)}/yr</p>`}</div>` : ''}
+                ${toNum(p.totalPremiumPaid) > 0 ? `<div class="detail-item" style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:12px;padding:10px;"><p style="color:#166534;font-weight:800;font-size:10px;text-transform:uppercase;">Total Paid</p><p style="font-weight:900;color:#14532d;font-size:18px;font-family:'Orbitron';">${autoFmt(p.totalPremiumPaid, sym)}</p>${isPaidUp ? '<p style="font-size:8px;color:#16a34a;margin-top:3px;font-weight:700;">✓ PAID UP</p>' : ''}</div>` : ''}
             </div>
             
-            <div class="mt-4 p-4 bg-white/50 border border-slate-100 rounded-2xl shadow-sm">
-                <div class="flex items-center justify-between gap-4 flex-wrap">
-                    <div class="flex flex-col gap-2 min-w-0">
-                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">Nominee</p>
-                        <div class="flex items-center h-10">${nomineeBoxContent}</div>
-                    </div>
-                    ${_irrHtml ? `<div class="flex flex-col items-end gap-2 flex-shrink-0">
-                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">Returns</p>
-                        <div class="flex items-center gap-2 flex-wrap justify-end">${_irrHtml}</div>
-                    </div>` : ''}
+            <div class="mt-4 p-4 bg-white/50 border border-slate-100 rounded-2xl shadow-sm flex flex-col gap-3">
+                <div>
+                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-2">Nominee</p>
+                    <div class="flex items-center h-10">${nomineeBoxContent}</div>
                 </div>
+                ${_irrHtml ? `<div>
+                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-2">Returns</p>
+                    <div class="flex items-center gap-2 flex-wrap">${_irrHtml}</div>
+                </div>` : ''}
             </div>
 
             ${isParent ? children.map(c => childSubCard(c, sym)).join('') : ''}
