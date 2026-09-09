@@ -708,22 +708,24 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR, allPolicies = []) 
                 `<div class="detail-item"><p>Customer ID</p><p style="font-family:'Orbitron'; font-weight:700;">${p.clientId || 'N/A'}</p></div>`}
             </div>
             
-            <div class="mt-4 p-4 bg-white/50 border border-slate-100 rounded-2xl shadow-sm flex flex-col gap-3">
-                <div>
-                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-2">Nominee</p>
-                    <div class="flex items-center h-10">${nomineeBoxContent}</div>
-                </div>
-                ${toNum(p.totalPremiumPaid) > 0 ? `<div>
-                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-2">Total Paid</p>
-                    <div class="flex items-center gap-2">
-                        <span style="font-family:'Orbitron';font-weight:900;font-size:16px;color:#14532d;background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:4px 14px;letter-spacing:-.02em;">${autoFmt(p.totalPremiumPaid, sym)}</span>
-                        ${isPaidUp ? '<span style="font-size:10px;font-weight:800;color:#16a34a;background:#dcfce7;border:1px solid #86efac;border-radius:6px;padding:2px 8px;text-transform:uppercase;">✓ Paid Up</span>' : ''}
+            <div class="mt-4 p-4 bg-white/50 border border-slate-100 rounded-2xl shadow-sm">
+                <div class="flex items-center justify-between gap-4">
+                    <div class="flex flex-col gap-1 min-w-0">
+                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">Nominee</p>
+                        <div class="flex items-center h-10">${nomineeBoxContent}</div>
                     </div>
-                </div>` : ''}
-                ${_irrHtml ? `<div>
-                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-2">Returns</p>
-                    <div class="flex items-center gap-2 flex-wrap">${_irrHtml}</div>
-                </div>` : ''}
+                    ${toNum(p.totalPremiumPaid) > 0 ? `<div class="flex flex-col gap-1 items-center flex-shrink-0">
+                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">Total Paid</p>
+                        <div class="flex items-center gap-2 mt-1">
+                            <span style="font-family:'Orbitron';font-weight:900;font-size:14px;color:#14532d;background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:4px 12px;letter-spacing:-.02em;white-space:nowrap;">${autoFmt(p.totalPremiumPaid, sym)}</span>
+                            ${isPaidUp ? '<span style="font-size:9px;font-weight:800;color:#16a34a;background:#dcfce7;border:1px solid #86efac;border-radius:6px;padding:2px 7px;text-transform:uppercase;white-space:nowrap;">✓ Paid Up</span>' : ''}
+                        </div>
+                    </div>` : ''}
+                    ${_irrHtml ? `<div class="flex flex-col gap-1 items-end flex-shrink-0">
+                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">Returns</p>
+                        <div class="flex items-center gap-2 flex-wrap justify-end mt-1">${_irrHtml}</div>
+                    </div>` : ''}
+                </div>
             </div>
 
             ${isParent ? children.map(c => childSubCard(c, sym)).join('') : ''}
