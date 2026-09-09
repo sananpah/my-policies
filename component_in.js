@@ -569,9 +569,9 @@ export function createPolicyCard(p, sym, TODAY, CURRENT_YEAR, allPolicies = []) 
         const loopPayout = (p.payoutSchedule && p.payoutSchedule[loopPolY]);
         
         let color = "", phase = "", detail = "";
+        const isEffectivelyPaid = isPast || (isPaidUp && yr === premEndYear) || (isLoopCurrent && TODAY >= anniversaryThisYear);
 
         if (yr <= premEndYear) {
-            const isEffectivelyPaid = isPast || (isPaidUp && yr === premEndYear) || (isLoopCurrent && TODAY >= anniversaryThisYear);
             if (loopPayout) {
                 // Dual-colour segment: left = premium colour, right = bonus amber
                 // Shows visually that this year has BOTH a premium payment AND a bonus/payout
