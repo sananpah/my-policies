@@ -75,8 +75,9 @@ export function render(cat) {
         container.style.display = 'none';
         cfSection.style.display = 'block';
         statusBadge.innerHTML = '<span class="material-symbols-outlined text-xs align-middle mr-1">waterfall_chart</span> CASHFLOW';
-        updateCashflowSummary(summaryBar);
-        renderCashflow(cfSection);
+        const indiaList = localPolicyData.india || [];
+        updateCashflowSummary(summaryBar, indiaList);
+        renderCashflow(cfSection, indiaList);
         return;
     }
 
