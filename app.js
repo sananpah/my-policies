@@ -1,9 +1,10 @@
-/* app.js - v4.1.35 - Dynamic Asset Loading & Health Avatar Injection */
+/* app.js - v4.2.22 - Dynamic Asset Loading & Health Avatar Injection */
 
 // We define these as placeholders to be populated during initDashboard
 let syncWithGoogleSheets, createPolicyCard, createSGCard, createHealthCard;
 let healthData, POLICY_DATA;
 let toNum, parseDate, autoFmt, calculatePortfolioTotals, calculateFamilyBreakdown, calculateHealthTotals, insuredMap;
+let renderCashflow, updateCashflowSummary;
 
 window.currentCategory = 'india';
 let localPolicyData = {};
@@ -14,17 +15,18 @@ let localPolicyData = {};
  */
 export async function initDashboard(version) {
     console.log("Nami Portfolio Engine [Build " + version + "]");
-    
+
     try {
         // --- STEP 1: DYNAMIC ASSET LOADING ---
-        const [loader, compIn, compSg, health, dataH, dataP, utils] = await Promise.all([
+        const [loader, compIn, compSg, health, dataH, dataP, utils, cashflow] = await Promise.all([
             import(`./loader.js?v=${version}`),
             import(`./component_in.js?v=${version}`),
             import(`./component_sg.js?v=${version}`),
             import(`./health.js?v=${version}`),
             import(`./data_health.js?v=${version}`),
             import(`./data.js?v=${version}`),
-            import(`./utils.js?v=${version}`)
+            import(`./utils.js?v=${version}`),
+            import(`./cashflow.js?v=${version}`)
         ]);
 
         // --- STEP 2: ASSIGN IMPORTS TO LOCAL SCOPE ---
@@ -34,13 +36,15 @@ export async function initDashboard(version) {
         createHealthCard = health.createHealthCard;
         healthData = dataH.healthData;
         POLICY_DATA = dataP.POLICY_DATA;
-        
+        renderCashflow = cashflow.renderCashflow;
+        updateCashflowSummary = cashflow.updateCashflowSummary;
+
         // Destructure Utils
         ({ toNum, parseDate, autoFmt, calculatePortfolioTotals, calculateFamilyBreakdown, calculateHealthTotals, insuredMap } = utils);
 
         // --- STEP 3: INITIALIZE DATA ---
         localPolicyData = await syncWithGoogleSheets(POLICY_DATA);
-        
+
         // Initial Render
         render('india');
 
@@ -57,13 +61,29 @@ export function render(cat) {
     window.currentCategory = cat;
     const sortBy = document.getElementById('sort-trigger').value;
     const container = document.getElementById('container');
+    const cfSection = document.getElementById('cf-section');
     const statusBadge = document.getElementById('portfolio-status');
     const sortContainer = document.getElementById('sort-container');
     const summaryBar = document.getElementById('summary-bar');
 
     const TODAY = new Date();
     const CURRENT_YEAR = TODAY.getFullYear();
-  
+
+    // --- CASHFLOW TAB ---
+    if (cat === 'cashflow') {
+        sortContainer.classList.add('invisible');
+        container.style.display = 'none';
+        cfSection.style.display = 'block';
+        statusBadge.innerHTML = '<span class="material-symbols-outlined text-xs align-middle mr-1">waterfall_chart</span> CASHFLOW';
+        updateCashflowSummary(summaryBar);
+        renderCashflow(cfSection);
+        return;
+    }
+
+    // For all other tabs, hide cf-section and show container
+    if (cfSection) cfSection.style.display = 'none';
+    container.style.display = '';
+
     if (cat === 'health') {
         sortContainer.classList.add('invisible');
         statusBadge.innerHTML = '<span class="material-symbols-outlined text-xs align-middle mr-1">medical_services</span> HEALTH PORTFOLIO';
@@ -85,19 +105,16 @@ export function render(cat) {
         else if (sortBy === 'time') list.sort((a, b) => parseDate(a.premiumEnds) - parseDate(b.premiumEnds));
     }
 
-    // Child policies (p.linkedTo set) render inside their parent card — skip at top level
-    const renderList = (cat === 'india') ? list.filter(p => !p.linkedTo) : list;
-
-    container.innerHTML = renderList.map(p => {
+    container.innerHTML = list.map(p => {
      if (cat === 'health') {
             // Inject avatar and type into the health policy object before rendering
             const identity = insuredMap[p.owner] || { type: "Other", img: null };
-            
+
             // --- NEW: Parse Health Nominees using insuredMap ---
             const rawNom = String(p.nominee || "").trim();
             let parsedNominees = [];
             let nomStatus = "ASSIGNED";
-            
+
             if (!rawNom || rawNom.toLowerCase() === "n/a") {
                 nomStatus = rawNom.toLowerCase() === "n/a" ? "NA" : "EMPTY";
             } else {
@@ -112,20 +129,20 @@ export function render(cat) {
                 });
             }
 
-            const healthPolicy = { 
-                ...p, 
-                avatar: identity.img, 
+            const healthPolicy = {
+                ...p,
+                avatar: identity.img,
                 holderType: identity.type,
                 nominees: parsedNominees,
                 nomineeStatus: nomStatus
             };
             return createHealthCard(healthPolicy);
         }
-        
+
         if (cat === 'singapore') return createSGCard(p, sym, TODAY, CURRENT_YEAR);
-        
+
         // India logic
-        return createPolicyCard(p, sym, TODAY, CURRENT_YEAR, list);
+        return createPolicyCard(p, sym, TODAY, CURRENT_YEAR);
     }).join('');
 }
 
@@ -139,11 +156,11 @@ export function handleToggle(id) {
 
 function updateHealthSummary(bar) {
     bar.className = "flex items-center justify-between bg-slate-900 p-6 rounded-[40px] text-white shadow-2xl relative overflow-hidden transition-all duration-500";
-    
+
     // Filter out policies that are also covered in the Singapore portfolio
     const uniqueHealthData = healthData.filter(p => !p.isOverlap);
     const totals = calculateHealthTotals(uniqueHealthData);
-    
+
     bar.innerHTML = `
         <div class="flex items-center gap-2 pl-4">
             <span class="material-symbols-outlined text-emerald-500 text-3xl">medical_services</span>
@@ -165,7 +182,7 @@ function updatePolicySummary(bar, cat) {
     const list = localPolicyData[cat] || [];
     const sym = (cat === 'singapore') ? "$" : "₹";
     const totals = calculatePortfolioTotals(list);
-    
+
     bar.className = "grid grid-cols-[1.2fr_1fr_1fr] gap-6 bg-slate-900 p-8 rounded-[40px] text-white shadow-2xl relative overflow-hidden transition-all duration-500";
 
     let familyHtml = '';
