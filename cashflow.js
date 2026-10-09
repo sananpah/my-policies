@@ -76,7 +76,12 @@ function resolvePolicy(p) {
   if (isULIP) {
     const cv = p.unitValueNumeric || 0;
     if (isAssignedULIP(p)) {
-      const surrenderY = Math.max(commencedY + 6, premEndY);
+      // Policy year 6 ends at commencedY + 5 (year 1 = commencedY).
+      // Surrender is allowed once BOTH conditions are met:
+      //   1. At least 6 policy years have elapsed  → commencedY + 5
+      //   2. Premium payment term is complete       → premEndY
+      const sixthYearEnd = commencedY + 5;
+      const surrenderY = Math.max(sixthYearEnd, premEndY);
       const years = surrenderY - TODAY_YEAR;
       matY = surrenderY;
       matAmt = years >= 0 ? Math.round(cv * Math.pow(1.04, years)) : cv;
@@ -96,16 +101,24 @@ function resolvePolicy(p) {
     }
   }
 
+  // For assigned ULIPs: premiums stop the year BEFORE surrender
+  // (the policy is surrendered in matY, so no annual premium is due that year).
+  const isAssigned = isULIP && isAssignedULIP(p);
+  const effectivePremEndY = isAssigned
+    ? Math.min(isNaN(premEndY) ? matY : premEndY, matY - 1)
+    : premEndY;
+
   return {
     id: p.id || p.name,
     name: p.name,
     type: p.type || 'Savings',
     premium: p.premium || 0,
     premStartY: isNaN(premStartY) ? TODAY_YEAR : premStartY,
-    premEndY: isNaN(premEndY) ? TODAY_YEAR : premEndY,
+    premEndY: isNaN(effectivePremEndY) ? TODAY_YEAR : effectivePremEndY,
     matY: isNaN(matY) ? 0 : matY,
     matAmt: matAmt || 0,
     payouts,
+    isAssigned,
   };
 }
 
