@@ -4,72 +4,44 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title id="main-title">Nami Portfolio</title>
-    
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
     <link rel="stylesheet" href="main.css">
 </head>
-
 <body class="bg-slate-50">
-
-    <div id="version-tag" class="fixed top-4 right-4 font-black text-[10px] text-slate-400 bg-white/80 backdrop-blur-sm px-3 py-1 rounded-lg border border-slate-200 uppercase tracking-tighter z-50 shadow-sm"></div>
-
-    <div class="max-w-7xl mx-auto mb-6 pt-10 px-4">
-        <div class="flex justify-between items-end mb-6">
-            <h1 class="text-5xl font-black text-slate-900 tracking-tighter">Nami Portfolio</h1>
-            <div id="portfolio-status" class="funky-badge">Portfolio</div>
-        </div>
+    <div id="version-tag" class="fixed top-3 right-4 text-[10px] font-mono text-slate-400 z-50 bg-white/60 backdrop-blur px-2 py-0.5 rounded-full border border-slate-200"></div>
+    <div class="max-w-7xl mx-auto pt-10 pb-4 px-4 flex items-center justify-between">
+        <h1 class="brand-header">Nami Portfolio</h1>
+        <div id="portfolio-status" class="funky-badge">Portfolio</div>
     </div>
-
-    <div class="max-w-7xl mx-auto px-4 flex flex-wrap items-center justify-between gap-4 mb-8">
-        <div class="flex gap-4">
-            <button onclick="render('india')" class="px-8 py-3 bg-slate-800 text-white rounded-full font-bold hover:bg-slate-700 transition shadow-lg flex items-center gap-3">
-                <img src="https://flagcdn.com/w40/in.png" class="w-6 h-auto rounded-sm shadow-sm">
-                <span>India</span>
-            </button>
-        
-            <button onclick="render('singapore')" class="px-8 py-3 bg-slate-800 text-white rounded-full font-bold hover:bg-slate-700 transition shadow-lg flex items-center gap-3">
-                <img src="https://flagcdn.com/w40/sg.png" class="w-6 h-auto rounded-sm shadow-sm">
-                <span>Singapore</span>
-            </button>
-
-            <button onclick="render('health')" class="px-8 py-3 bg-emerald-600 text-white rounded-full font-bold hover:bg-emerald-700 transition shadow-lg flex items-center gap-3">
-                <span class="material-symbols-outlined text-white">medical_services</span>
-                <span>Health</span>
-            </button>
+    <div class="max-w-7xl mx-auto px-4 mb-6">
+        <div class="flex gap-4 flex-wrap">
+            <button class="nav-btn" onclick="render('india')">🇮🇳 India</button>
+            <button class="nav-btn" onclick="render('singapore')">🇸🇬 Singapore</button>
+            <button class="nav-btn" onclick="render('health')">🏥 Health</button>
+            <button class="nav-btn" onclick="render('cashflow')">📊 Cashflow</button>
         </div>
-
-        <div id="sort-container" class="flex items-center gap-3 bg-white p-2 rounded-2xl border border-slate-200 shadow-sm">
-            <span class="text-[10px] font-black uppercase text-slate-400 ml-2">Sort By</span>
-            <select id="sort-trigger" onchange="render(window.currentCategory)" class="bg-transparent text-xs font-bold rounded-lg px-2 py-1 outline-none cursor-pointer">
-                <option value="default">Default Order</option>
-                <option value="premium">Premium: High to Low</option>
-                <option value="time">Maturity: Soonest First</option>
-                <option value="due">Due Date: Earliest First</option>
+        <div id="sort-container" class="mt-3">
+            <select id="sort-trigger" onchange="render(window.currentCategory)" class="sort-select">
+                <option value="default">Sort: Default</option>
+                <option value="premium">Sort: Premium ↓</option>
+                <option value="due">Sort: Due Date</option>
+                <option value="time">Sort: Time Left</option>
             </select>
         </div>
     </div>
-
-    <div id="summary-section" class="max-w-7xl mx-auto px-4 mb-10">
-        <div id="summary-bar" class="grid grid-cols-[1.2fr_1fr_1fr] gap-6 bg-slate-900 p-8 rounded-[40px] text-white shadow-2xl relative overflow-hidden transition-all duration-500">
-            </div>
+    <div id="summary-section" class="max-w-7xl mx-auto px-4 mb-6">
+        <div id="summary-bar" class="bg-slate-900 p-6 rounded-[40px] text-white shadow-2xl"></div>
     </div>
-
     <div id="container" class="max-w-7xl mx-auto pb-20 px-4"></div>
-    
+    <div id="cf-section" class="max-w-7xl mx-auto px-4 pb-20" style="display:none;"></div>
     <script type="module">
-    const VERSION = "4.2.22";
-
-    // Dynamic import() works with backticks — static import does NOT
+    const VERSION = "4.2.23";
     const { initDashboard, render, handleToggle } = await import(`./app.js?v=${VERSION}`);
-
-    // Attach to window IMMEDIATELY, not inside DOMContentLoaded
     window.render = render;
     window.toggleCard = handleToggle;
-
     document.getElementById('version-tag').innerText = "v" + VERSION;
     await initDashboard(VERSION);
     </script>
-    
 </body>
 </html>
