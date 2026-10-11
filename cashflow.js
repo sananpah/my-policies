@@ -6,6 +6,8 @@
  *
  * Policy object shape (from loader.js / data.js):
  *   p.name             — policy name string
+ *   p.company          — insurer name e.g. "LIC", "HDFC Life" (used for logo)
+ *   p.logo             — full logo URL (set by loader: githubLogo + logo_<company>.png)
  *   p.type             — "ULIP", "Savings", "Pension", "Retirement", "Term", etc.
  *   p.premium          — annual premium (number)
  *   p.commenced        — "DD MMM YYYY" string
@@ -165,6 +167,8 @@ function resolvePolicy(p, drawdownMode) {
   return {
     id: p.id || p.name,
     name: p.name,
+    company: p.company || '',
+    logo: p.logo || '',
     type: p.type || 'Savings',
     premium: p.premium || 0,
     premStartY: isNaN(premStartY) ? TODAY_YEAR : premStartY,
@@ -189,26 +193,26 @@ function buildYearMap(resolved, rangeStart, rangeEnd) {
     // Premiums (outflows)
     for (let y = Math.max(rangeStart, r.premStartY); y <= Math.min(rangeEnd, r.premEndY); y++) {
       if (map[y] && r.premium > 0)
-        map[y].outflows.push({ type: r.type, name: r.name, amt: r.premium });
+        map[y].outflows.push({ type: r.type, name: r.name, amt: r.premium, logo: r.logo, company: r.company });
     }
     // Money-back payouts
     r.payouts.forEach(({ year, amt }) => {
       if (year >= rangeStart && year <= rangeEnd && map[year])
-        map[year].inflows.push({ type: r.type, name: r.name, amt });
+        map[year].inflows.push({ type: r.type, name: r.name, amt, logo: r.logo, company: r.company });
     });
     // Drawdown annual inflows (standard ULIP in drawdown mode)
     r.drawdowns.forEach(({ year, annualAmt, monthlyAmt }) => {
       if (year >= rangeStart && year <= rangeEnd && map[year])
         map[year].inflows.push({
           type: r.type, name: r.name, amt: annualAmt,
-          isDrawdown: true, monthlyAmt,
+          isDrawdown: true, monthlyAmt, logo: r.logo, company: r.company,
         });
     });
     // Maturity / surrender inflow
     if (r.matY >= rangeStart && r.matY <= rangeEnd && r.matAmt > 0 && map[r.matY])
       map[r.matY].inflows.push({
         type: r.type, name: r.name, amt: r.matAmt,
-        isMat: true, isSurrender: r.isAssigned,
+        isMat: true, isSurrender: r.isAssigned, logo: r.logo, company: r.company,
       });
   });
 
@@ -238,7 +242,10 @@ function renderDrilldown(panel, year, yearMap, cfState) {
         </span>
       </td>
       <td class="cf-dd-name">
-        ${f.name}
+        <span class="cf-dd-name-inner">
+          ${f.logo ? `<img class="cf-dd-logo" src="${f.logo}" alt="${f.company || ''}" title="${f.company || ''}" onerror="this.style.display='none'">` : (f.company ? `<span class="cf-dd-logo-initials" title="${f.company}">${f.company.replace(/[^A-Z]/g,'').slice(0,3) || f.company.slice(0,2).toUpperCase()}</span>` : '')}
+          <span>${f.name}</span>
+        </span>
         ${f.isMat && !f.isSurrender ? '<span class="cf-dd-star">★ maturity</span>' : ''}
         ${f.isSurrender ? '<span class="cf-dd-star" style="background:rgba(251,146,60,0.15);color:#fb923c;border-color:rgba(251,146,60,0.3)">⚡ surrender</span>' : ''}
         ${f.isDrawdown ? `<span class="cf-dd-drawdown-badge">↓ ${fmtInr(f.monthlyAmt)}/mo</span>` : ''}
@@ -524,6 +531,18 @@ function injectCFStyles() {
       letter-spacing: 0.04em; border: 1px solid; white-space: nowrap;
     }
     .cf-dd-name { color: #cbd5e1; padding-left: 4px; }
+    .cf-dd-name-inner { display: inline-flex; align-items: center; gap: 6px; }
+    .cf-dd-logo {
+      width: 20px; height: 20px; border-radius: 4px; object-fit: contain;
+      background: rgba(255,255,255,0.08); flex-shrink: 0;
+      vertical-align: middle; padding: 1px;
+    }
+    .cf-dd-logo-initials {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 20px; height: 20px; border-radius: 4px; flex-shrink: 0;
+      background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15);
+      font-size: 7px; font-weight: 900; color: #94a3b8; letter-spacing: -0.5px;
+    }
     .cf-dd-star {
       display: inline-block; margin-left: 5px;
       background: rgba(251,191,36,0.15); color: #fbbf24;
@@ -721,7 +740,8 @@ function drawChart(container, resolved, cfState) {
         html += `<div style="font-size:10px;color:#34d399;font-weight:700;margin-bottom:4px;">▲ INFLOWS</div>`;
         inflows.slice(0, 4).forEach(f => {
           const tag = f.isDrawdown ? ` <span style="color:#60a5fa;font-size:9px;">(${fmtInr(f.monthlyAmt)}/mo)</span>` : (f.isSurrender ? ' ⚡' : f.isMat ? ' ★' : '');
-          html += `<div class="tt-row"><span class="tt-dot" style="background:${typeColor(f.type)}"></span><span class="tt-name">${f.name}${tag}</span><span class="tt-amt" style="color:${typeColor(f.type)}">${fmtInr(f.amt)}</span></div>`;
+          const logoHtml = f.logo ? `<img src="${f.logo}" style="width:14px;height:14px;border-radius:3px;object-fit:contain;background:rgba(255,255,255,0.08);flex-shrink:0;padding:1px;" onerror="this.style.display='none'">` : '';
+          html += `<div class="tt-row">${logoHtml}<span class="tt-dot" style="background:${typeColor(f.type)}"></span><span class="tt-name">${f.name}${tag}</span><span class="tt-amt" style="color:${typeColor(f.type)}">${fmtInr(f.amt)}</span></div>`;
         });
         if (inflows.length > 4) html += `<div style="font-size:10px;color:#475569;margin:2px 0 4px">+${inflows.length - 4} more</div>`;
         html += `<div class="tt-row" style="border-top:1px solid rgba(255,255,255,0.08);margin-top:4px;padding-top:4px;"><span style="flex:1;font-size:10px;color:#94a3b8">Total in</span><span class="tt-amt" style="color:#34d399">${fmtInr(totalIn)}</span></div>`;
@@ -729,7 +749,8 @@ function drawChart(container, resolved, cfState) {
       if (outflows.length) {
         html += `<div style="font-size:10px;color:#f87171;font-weight:700;margin:6px 0 4px;">▼ PREMIUMS</div>`;
         outflows.slice(0, 3).forEach(f => {
-          html += `<div class="tt-row"><span class="tt-dot" style="background:${typeColor(f.type)};opacity:0.55"></span><span class="tt-name">${f.name}</span><span class="tt-amt" style="color:#f87171">${fmtInr(f.amt)}</span></div>`;
+          const logoHtml = f.logo ? `<img src="${f.logo}" style="width:14px;height:14px;border-radius:3px;object-fit:contain;background:rgba(255,255,255,0.08);flex-shrink:0;padding:1px;" onerror="this.style.display='none'">` : '';
+          html += `<div class="tt-row">${logoHtml}<span class="tt-dot" style="background:${typeColor(f.type)};opacity:0.55"></span><span class="tt-name">${f.name}</span><span class="tt-amt" style="color:#f87171">${fmtInr(f.amt)}</span></div>`;
         });
         if (outflows.length > 3) html += `<div style="font-size:10px;color:#475569;margin-top:2px;">+${outflows.length - 3} more</div>`;
         html += `<div class="tt-row" style="border-top:1px solid rgba(255,255,255,0.08);margin-top:4px;padding-top:4px;"><span style="flex:1;font-size:10px;color:#94a3b8">Total out</span><span class="tt-amt" style="color:#f87171">${fmtInr(totalOut)}</span></div>`;
