@@ -35,7 +35,8 @@ export const getColorMap = (companyName) => {
         "SingLife" : "#E60000",
         "IndiaFirstLife" : "#F3792B",
         "GeneraliCentral" : "#C1271D",
-        "Edelweiss" : "#16539C"
+        "Edelweiss" : "#16539C",
+        "AgeasFederal" : "#7C24B6"
     };
     return colors[companyName] || "#64748b";
 };
