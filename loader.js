@@ -50,6 +50,34 @@ export async function syncWithGoogleSheets(masterList) {
             updatedList[country].push(p);
         });
 
+        // ── Bajaj Life ULIP cross-servicing ──────────────────────────────────
+        // The two newer Goal Assure IV policies are "serviced by" their paired
+        // older policies — they display the source policy's current fund value
+        // for projection purposes (since the newer policies' own NAV is not
+        // the operative figure).
+        //
+        // Pairs (source policy ID → target policy ID):
+        //   425335400  (Life Assure Goal)     → 0660434052  (Goal Assure IV, 120k)
+        //   378816898  (Life Future Gain II)  → 0660434468  (Goal Assure IV, 60k)
+        const BAJAJ_SERVICE_PAIRS = {
+            "425335400":  "0660434052",
+            "378816898":  "0660434468",
+        };
+        const indiaById = {};
+        updatedList.india.forEach(p => { indiaById[String(p.id).trim()] = p; });
+
+        Object.entries(BAJAJ_SERVICE_PAIRS).forEach(([sourceId, targetId]) => {
+            const source = indiaById[sourceId];
+            const target = indiaById[targetId];
+            if (!source || !target) return;
+            // Override target's fund value with source's current value
+            target.unitValueNumeric = source.unitValueNumeric || 0;
+            target.currentUnitValue  = source.currentUnitValue  || "No Value";
+            // Re-run projections so maturityAmt on the India card is also correct
+            mapProjections(target, {}, "india");
+        });
+        // ─────────────────────────────────────────────────────────────────────
+
         return updatedList;
     } catch (e) {
         console.warn("Sync failed:", e);
@@ -114,22 +142,6 @@ function mapTechnicalData(p, match) {
             if (cleanLine.startsWith("uin:")) p.uin = line.split(":")[1]?.trim() || "N/A";
             else if (cleanLine.startsWith("clientid:")) {
                 if (!(p.type || "").toUpperCase().includes("ULIP")) p.clientId = line.split(":")[1]?.trim() || "N/A";
-            } else if (cleanLine.startsWith("premiumlinked:")) {
-                p.linkedTo = line.split(":")[1]?.trim() || null;
-
-            } else if (cleanLine.startsWith("assign date:")) {
-                // Assignment date: when the policy was assigned TO the user.
-                // This becomes the user's effective "commenced date" for IRR purposes.
-                // All cashflows (IRR, PV) are computed from this date, not the
-                // original policy commencement date.
-                p.assignDate = line.split(":").slice(1).join(":").trim();
-
-            } else if (cleanLine.startsWith("assign amt:")) {
-                // Assignment amount: the discounted price paid to acquire the policy.
-                // This is the user's t=0 outflow for IRR — NOT the original premium history.
-                const rawAmt = line.split(":").slice(1).join(":").trim();
-                // Strip currency symbols, commas, spaces
-                p.assignAmt = parseFloat(rawAmt.replace(/[^\d.]/g, "")) || 0;
             } else if (cleanLine.startsWith("surrender:")) {
                 const content = line.split(":")[1] || "";
                 p.surrenderBase = content.includes("[pp]") ? "PREMIUM" : "VALUATION";
@@ -169,19 +181,6 @@ function mapProjections(p, match, country) {
     const sym = (country === "singapore") ? "$" : "₹";
     const TODAY = new Date();
 
-    // ── WITHDRAWAL PARSING (all policies) ───────────────────────────────
-    // "Withdrawal : $9195"  or  "Withdrawal : $27481.38, $12072.37"
-    // Must run for ALL policies including SG ULIPs which otherwise skip this.
-    const _rawBenAll = String(match["Other Coverage & Benefits"] || "");
-    const _wdLine    = _rawBenAll.split(/\r?\n/).find(l => l.toLowerCase().startsWith("withdrawal"));
-    if (_wdLine && _wdLine.includes(":")) {
-        const _wdRaw = _wdLine.split(":").slice(1).join(":").trim();
-        p.withdrawals = _wdRaw
-            .split(",")
-            .map(v => parseFloat(v.replace(/[^\d.]/g, "")))
-            .filter(v => v > 0);
-    }
-
     if (isULIP) {
         const calc = (rate) => {
             let projected = p.unitValueNumeric;
@@ -211,7 +210,7 @@ function mapProjections(p, match, country) {
         const mbLine = rawBenefits.split(/\r?\n/).find(l => l.toLowerCase().includes("maturity benefit"));
         
         if (mbLine && mbLine.includes(":")) {
-            const formula = mbLine.split(":").slice(1).join(":").trim();  // everything after the first colon, colons inside values preserved
+            const formula = mbLine.split(":")[1].trim();
             let totalMaturity = 0;
             let componentsFound = 0;
 
@@ -236,70 +235,9 @@ function mapProjections(p, match, country) {
                 totalMaturity += totalMB;
             }
 
-            // 4. PIPE FORMAT — simple human-readable maturity values
-            // ──────────────────────────────────────────────────────────────
-            // Guaranteed Addition (GA): internal credit, paid as lump sum at maturity
-            //   Sheet entry: "BSA + GA | 699120"
-            //   Old format still supported: "BSA + GA(699120)"
-            //
-            // Non-guaranteed Bonus — single scenario (conservative):
-            //   Sheet entry: "BSA + Bonus | 1159095"
-            //
-            // Non-guaranteed Bonus — two scenarios (conservative + optimistic):
-            //   Sheet entry: "BSA + Bonus | 1159095 | 1275974"
-            //   IRR uses first (conservative). Star shows both.
-            //
-            // Pipe format is simpler to type and read in the sheet.
-            // Old parenthesis format (e.g. GA(699120)) still works for backward compat.
-
-            const pipeValues = formula.split("|").map(s => s.trim());
-            // pipeValues[0] = type label (e.g. "BSA + GA", "BSA + Bonus")
-            // pipeValues[1] = first/conservative total
-            // pipeValues[2] = second/optimistic total (optional)
-
-            const isGAPipe    = pipeValues[0].toUpperCase().includes("GA");
-            const isBonusPipe = pipeValues[0].toUpperCase().includes("BONUS");
-
-            if (pipeValues.length >= 2 && (isGAPipe || isBonusPipe) && parseFloat(pipeValues[1]) > 0) {
-                componentsFound++;
-                const lowTotal  = parseFloat(pipeValues[1]);
-                const highTotal = pipeValues[2] ? parseFloat(pipeValues[2]) : null;
-                const BSA       = toNum(p.sumAssured);
-
-                if (isGAPipe) {
-                    // GA: bonus amount = total − BSA (exact, guaranteed)
-                    const gaAmt         = lowTotal - BSA;
-                    p.maturityBonus     = gaAmt > 0 ? gaAmt : lowTotal;
-                    p.maturityBonusType = "GA";
-                    p.maturityLabel     = "BSA + GA";
-                    totalMaturity       = lowTotal;
-                } else {
-                    // Bonus: non-guaranteed, show conservative + optimistic
-                    p.maturityBonus          = lowTotal - BSA;  // bonus portion
-                    p.maturityBonusTotal     = lowTotal;
-                    p.maturityBonusHigh      = highTotal ? highTotal - BSA : null;
-                    p.maturityBonusTotalHigh = highTotal;
-                    p.maturityBonusType      = "Bonus";
-                    p.maturityLabel          = "BSA + Bonus";
-                    totalMaturity            = lowTotal;        // IRR uses conservative total
-                }
-            }
-
-            // Backward-compat: old GA(amount) parenthesis format
-            const gaMatchOld = !isGAPipe && formula.match(/GA\((\d+(?:\.\d+)?)\)/i);
-            if (gaMatchOld) {
-                componentsFound++;
-                const gaAmt         = parseFloat(gaMatchOld[1]);
-                const BSA           = toNum(p.sumAssured);
-                totalMaturity      += gaAmt;
-                p.maturityBonus     = gaAmt;
-                p.maturityBonusType = "GA";
-                p.maturityLabel     = "BSA + GA";
-            }
-
-            // 5. Fixed Value addition (plain number, not caught above)
+            // 4. Fixed Value addition
             const flatValues = formula.match(/(?:\+|\s|^)(\d+(?:\.\d+)?)(?!%|BSA)/g);
-            if (flatValues && pipeValues.length < 2 && !gaMatchOld) {
+            if (flatValues) {
                 componentsFound += flatValues.length;
                 flatValues.forEach(val => {
                     totalMaturity += parseFloat(val.trim().replace('+', ''));
