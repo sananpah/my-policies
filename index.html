@@ -22,7 +22,7 @@
     </div>
 
     <div class="max-w-7xl mx-auto px-4 flex flex-wrap items-center justify-between gap-4 mb-8">
-        <div class="flex gap-4 flex-wrap">
+        <div class="flex gap-4">
             <button onclick="render('india')" class="px-8 py-3 bg-slate-800 text-white rounded-full font-bold hover:bg-slate-700 transition shadow-lg flex items-center gap-3">
                 <img src="https://flagcdn.com/w40/in.png" class="w-6 h-auto rounded-sm shadow-sm">
                 <span>India</span>
@@ -36,11 +36,6 @@
             <button onclick="render('health')" class="px-8 py-3 bg-emerald-600 text-white rounded-full font-bold hover:bg-emerald-700 transition shadow-lg flex items-center gap-3">
                 <span class="material-symbols-outlined text-white">medical_services</span>
                 <span>Health</span>
-            </button>
-
-            <button onclick="render('cashflow')" class="px-8 py-3 bg-indigo-600 text-white rounded-full font-bold hover:bg-indigo-700 transition shadow-lg flex items-center gap-3">
-                <span class="material-symbols-outlined text-white">waterfall_chart</span>
-                <span>Cashflow</span>
             </button>
         </div>
 
@@ -57,17 +52,18 @@
 
     <div id="summary-section" class="max-w-7xl mx-auto px-4 mb-10">
         <div id="summary-bar" class="grid grid-cols-[1.2fr_1fr_1fr] gap-6 bg-slate-900 p-8 rounded-[40px] text-white shadow-2xl relative overflow-hidden transition-all duration-500">
-        </div>
+            </div>
     </div>
 
     <div id="container" class="max-w-7xl mx-auto pb-20 px-4"></div>
-    <div id="cf-section" class="max-w-7xl mx-auto px-4 pb-20" style="display:none;"></div>
     
     <script type="module">
-    const VERSION = "4.2.29";
+    const VERSION = "4.2.30";
 
+    // Dynamic import() works with backticks — static import does NOT
     const { initDashboard, render, handleToggle } = await import(`./app.js?v=${VERSION}`);
 
+    // Attach to window IMMEDIATELY, not inside DOMContentLoaded
     window.render = render;
     window.toggleCard = handleToggle;
 
