@@ -73,6 +73,9 @@ export async function syncWithGoogleSheets(masterList) {
             // Override target's fund value with source's current value
             target.unitValueNumeric = source.unitValueNumeric || 0;
             target.currentUnitValue  = source.currentUnitValue  || "No Value";
+            // Mark target as serviced-by so portfolio totals can skip it (avoids double-counting)
+            target._servicedBy = sourceId;
+            target._servicedByName = source.name || sourceId;
             // Re-run projections so maturityAmt on the India card is also correct
             mapProjections(target, {}, "india");
         });
